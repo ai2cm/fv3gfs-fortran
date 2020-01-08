@@ -1,0 +1,81 @@
+/**
+\page GFS_RRTMG GFS RRTMG Shortwave/Longwave Radiation Scheme
+
+\section des_rrtmg Description
+ Radiative processes are among the most complex and
+ computationally intensive parts of all model physics. As an
+ essential component of modeling the atmosphere, radiation directly
+ and indirectly connects all physics processes with model dynamics,
+ and it regulates the overall earth-atmosphere energy exchanges and
+ transformations.
+
+ The schematic radiation module structure is shown in Figure 1.
+ \image html schematic_Rad_mod.png "Figure 1: Schematic Radiation Module Structure" width=10cm
+
+ GFS radiation package is intended to provide a fast and accurate
+ method of determining the total radiative flux at any given
+ location. These calculations provide both the total radiative flux
+ at the ground surface, which is needed to establish the surface
+ energy budget, and the vertical radiative flux divergence, which is
+ used to calculate the radiative heating and cooling rates of a given
+ atmospheric layer. The magnitude of the terms in the surface energy
+ budget can set the stage for moist deep convection and are crucial
+ to the formation of low-level clouds. In addition, the vertical
+ radiative flux divergence can produce substantial cooling,
+ particularly at the tops of clouds, which can have strong dynamical
+ effects on cloud evolution.
+ 
+ Since 2007, the longwave (LW) and the shortwave (SW) radiation
+ parameterizations in NCEP's operational GFS are both modified and
+ optimized versions of the Rapid Radiative Transfer Model for GCMs
+ (RRTMG_LW v2.3 and RRTMG_SW v2.3, respectively) developed at AER \a inc.
+ (Atmospheric and Environmental Research)
+ (Iacono et al.(2008) \cite iacono_et_al_2008; Mlawer et al.(1997) \cite mlawer_et_al_1997; 
+  Iacono et al.(2000) \cite iacono_et_al_2000; Clough et al. 2005 \cite clough_et_al_2005). The LW algorithm
+ contains 140 unevenly distributed g-points (quadrature points) in 16
+ broad spectral bands, while the SW algorithm includes 112 g-points
+ in 14 bands. In addition to the major atmospheric absorbing gases of
+ ozone, water vapor, and carbon dioxide, the algorithm also includes
+ various minor absorbing species such as methane, nitrous oxide,
+ oxygen, and in the longwave up to four types of halocarbons (CFCs).
+ To represent statistically the unresolved subgrid cloud variability
+ when dealing multi layered clouds, a Monte-Carlo Independent Column
+ Approximation (\b McICA) method is used in the RRTMG radiative transfer.
+ A maximum-random cloud overlap method is used in both LW and SW
+ radiation calculations. 
+
+ Radiative fields from model outputs (\f$W m^{-2}\f$) include:
+- At surface total sky
+ - DLWRFsfc: Downward LW
+ - DSWRFsfc: Downward SW
+ - ULWRFsfc: Upward LW
+ - USWRFsfc: Upward SW
+ - NBDSFsfc: Near IR beam downward
+ - NDDSFsfc: Near IR diffuse downward
+ - VBDSFsfc: UV+Visible beam downward
+ - VDDSFsfc: UV+Visible diffuse downward
+ - DUVBsfc:  UV-B downward flux
+- At surface clear sky
+ - CSDLFsfc: Downward LW
+ - CSDSFsfc: Downward SW
+ - CSULFsfc: Upward LW
+ - CSULFsfc: Upward LW
+ - CSUSFsfc: Upward sw
+ - CDUVBsfc: UV-B downward flux
+- At TOA total sky
+ - DSWRFtoa: Downward SW
+ - ULWRFtoa: Upward LW
+ - USWRFtoa: Upward SW
+- At TOA clear sky:
+ - CSULFtoa: Upward LW
+ - CSUSFtoa: Upward SW
+
+\section  intraphysics_rrtmg Intraphysics Communication
+ + For RRTMG-Longwave radiation parameterization (\ref arg_table_rrtmg_lw_run)
+ + For RRTMG-Shortwave radiation parameterization (\ref arg_table_rrtmg_sw_run) 
+
+\section  gen_al_rrtmg General Algorithm
+ + \ref gen_lwrad
+ + \ref gen_swrad
+
+*/
