@@ -128,6 +128,8 @@ public atmos_model_exchange_phase_1, atmos_model_exchange_phase_2
 public atmos_model_restart
 public get_atmos_model_ungridded_dim
 public addLsmask2grid
+public Atm_block, IPD_Data, IPD_Control
+
 !-----------------------------------------------------------------------
 
 !<PUBLICTYPE >

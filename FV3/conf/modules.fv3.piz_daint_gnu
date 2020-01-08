@@ -1,0 +1,16 @@
+##
+## purge all currently loaded modules.
+## do not rely on user's environment
+##
+module rm PrgEnv-cray PrgEnv-intel PrgEnv-gnu 
+
+##
+## load programming environment
+## this typically includes compiler, MPI and job scheduler
+##
+module load daint-mc PrgEnv-gnu cray-netcdf
+
+##
+## load nwprod libraries
+##
+export NCEPLIBS_DIR=${SCRATCH}/NCEP/gnu
