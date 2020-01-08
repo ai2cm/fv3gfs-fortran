@@ -1,0 +1,48 @@
+/**
+\page GFS_SAMFshal GFS SAS-based Mass-Flux Scheme for Shallow convection (sa-MF)
+
+\section des_shal Description
+ \ref SAMF_shal is an updated version of the previous mass-flux shallow
+ convection scheme with scale and aerosol awareness and
+ parameterizes the effect of shallow convection on the environment.
+ \ref SAMF_shal is similar to \ref SAMFdeep
+ but with a few key differences. First, no quasi-equilibrium assumption
+ is used for any grid size and the shallow cloud base mass flux is
+ parameterized using a mean updraft velocity. Further, there are no
+ convective downdrafts, the entrainment rate is greater than for deep
+ convection, and the shallow convection is limited to not extend over
+ the level where \f$p=0.7p_{sfc}\f$. The paramerization of scale and
+ aerosol awareness follows that of the SAMF deep convection scheme,
+ although it can be interpreted as only having the "static" and "feedback" control
+ portions, since the "dynamic" control is not necessary to find the 
+ cloud base mass flux. 
+
+ The previous version of the shallow convection scheme (shalcnv.f)
+ is described in Han and Pan (2011) \cite han_and_pan_2011 and differences
+ between the shallow and deep convection schemes are presented in
+ Han and Pan (2011) \cite han_and_pan_2011 and Han et al. (2017) \cite han_et_al_2017 . 
+ Details of scale- and aerosol-aware parameterizations
+ are described in Han et al. (2017) \cite han_et_al_2017 .
+
+ In further update for FY19 GFS implementation, interaction with turbulent
+ kinetic energy (TKE), which is a prognostic variable used in a scale-aware
+ TKE-based moist EDMF vertical turbulent mixing scheme, is included.
+ Entrainment rates in updrafts are proportional to sub-cloud mean TKE. TKE is
+ transported by cumulus convection. TKE contribution from cumulus convection
+ is deduced from cumulus mass flux. On the other hand, tracers such as ozone
+ and aerosol are also transported by cumulus convection.
+
+ To reduce too much convective cooling at the cloud top, the convection
+ schemes have been modified for the rain conversion rate, entrainment and
+ detrainment rates, overshooting layers, and maximum allowable cloudbase mass
+ flux (as of June 2018).
+
+
+\section intr_shal Intraphysics Communication
+\ref arg_table_samfshalcnv_run
+
+\section gen_shal General Algorithm
+\ref gen_samfshalcnv
+
+
+*/
