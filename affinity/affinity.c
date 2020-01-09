@@ -27,12 +27,6 @@
 #include <sys/resource.h>
 #include <sys/syscall.h>
 
-#ifndef __APPLE__
-static pid_t gettid(void)
-{
-  return syscall(__NR_gettid);
-}
-#endif
 
 /*
  * Returns this thread's CPU affinity, if bound to a single core,
