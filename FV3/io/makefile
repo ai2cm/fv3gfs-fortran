@@ -25,8 +25,8 @@ POST_SRC = \
 		   ./post_gfs_stub.F90
 else
 POST_SRC = \
-		   ./post_gfs.F90                      \
-		   ./post_nems_routines.F90
+		   ./post_gfs.F90
+# 		   ./post_nems_routines.F90
 endif
 
 SRCS_f   =
@@ -38,12 +38,12 @@ SRCS_F   =
 SRCS_F90 = \
 		   ./ffsync.F90                        \
 		   ./FV3GFS_io.F90                     \
-		   $(POST_SRC)                         \
-		   ./module_write_nemsio.F90           \
-		   ./module_write_netcdf.F90           \
-		   ./module_fv3_io_def.F90             \
-		   ./module_write_internal_state.F90   \
-		   ./module_wrt_grid_comp.F90
+		   $(POST_SRC)
+# 		   ./module_write_nemsio.F90           \
+# 		   ./module_write_netcdf.F90           \
+# 		   ./module_fv3_io_def.F90             \
+# 		   ./module_write_internal_state.F90   \
+# 		   ./module_wrt_grid_comp.F90
 
 SRCS_c   = 
 
@@ -65,7 +65,7 @@ $(LIBRARY): $(OBJS)
 FV3GFS_io.o: FV3GFS_io.F90
 	$(FC) $(CPPDEFS) $(CPPFLAGS) $(FPPFLAGS) $(FFLAGS) $(OTHERFLAGS) $(OTHER_FFLAGS) $(ESMF_INC) -c FV3GFS_io.F90
 post_nems_routines.o: post_nems_routines.F90
-	$(FC) $(CPPDEFS) $(CPPFLAGS) $(FPPFLAGS) $(FFLAGS) $(OTHERFLAGS) $(OTHER_FFLAGS) -I$(POST_INC) -c post_nems_routines.F90
+	$(FC) $(CPPDEFS) $(CPPFLAGS) $(FPPFLAGS) $(FFLAGS) $(OTHERFLAGS) $(OTHER_FFLAGS) -c post_nems_routines.F90
 module_write_nemsio.o: module_write_nemsio.F90
 	$(FC) $(CPPDEFS) $(CPPFLAGS) $(FPPFLAGS) $(FFLAGS) $(OTHERFLAGS) $(OTHER_FFLAGS) $(ESMF_INC) $(NEMSIOINC) -c module_write_nemsio.F90
 module_write_netcdf.o: module_write_netcdf.F90
@@ -74,9 +74,9 @@ module_write_internal_state.o: module_write_internal_state.F90
 	$(FC) $(CPPDEFS) $(CPPFLAGS) $(FPPFLAGS) $(FFLAGS) $(OTHERFLAGS) $(OTHER_FFLAGS) $(ESMF_INC) -c module_write_internal_state.F90
 module_wrt_grid_comp.o: module_wrt_grid_comp.F90
 	$(FC) $(CPPDEFS) $(CPPFLAGS) $(FPPFLAGS) $(FFLAGS) $(OTHERFLAGS) $(OTHER_FFLAGS) $(ESMF_INC) -c module_wrt_grid_comp.F90
-post_gfs.o: post_gfs.F90
-	$(FC) $(CPPDEFS) $(CPPFLAGS) $(FPPFLAGS) $(FFLAGS) $(OTHERFLAGS) $(OTHER_FFLAGS) $(ESMF_INC) -I$(POST_INC) -c post_gfs.F90
-post_gfs_stub.o: post_gfs_stub.F90
+post_gfs.o: post_gfs.F90 module_fv3_io_def.o module_write_internal_state.o
+	$(FC) $(CPPDEFS) $(CPPFLAGS) $(FPPFLAGS) $(FFLAGS) $(OTHERFLAGS) $(OTHER_FFLAGS) $(ESMF_INC) -c post_gfs.F90
+post_gfs_stub.o: post_gfs_stub.F90 module_fv3_io_def.o module_write_internal_state.o
 	$(FC) $(CPPDEFS) $(CPPFLAGS) $(FPPFLAGS) $(FFLAGS) $(OTHERFLAGS) $(OTHER_FFLAGS) $(ESMF_INC) -c post_gfs_stub.F90
 
 

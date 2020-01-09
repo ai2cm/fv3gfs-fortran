@@ -1,0 +1,13 @@
+*.o
+__pycache__
+*.pyc
+*.mod
+*.a
+.DS_Store
+inputdata
+experiments
+.idea
+/TAGS
+.DS_Store
+*.tar.gz
+

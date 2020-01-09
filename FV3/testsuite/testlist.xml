@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<testlist>
+
+  <test name="test_baseline" type="c48_basic">
+    <description>Baseline test with setup and data from GFDL</description>
+    <executable>fv3.exe</executable>
+    <checker>run_success_check.py</checker>
+    <checker>tolerance_check.py</checker>
+    <autoparallel>1</autoparallel>
+  </test>
+
+</testlist>

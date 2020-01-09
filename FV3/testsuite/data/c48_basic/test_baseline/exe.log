@@ -1,0 +1,2393 @@
+NOTE from PE     0: MPP_DOMAINS_SET_STACK_SIZE: stack size set to    32768.
+&MPP_IO_NML
+ HEADER_BUFFER_VAL=16384      ,
+ GLOBAL_FIELD_ON_ROOT_PE=T,
+ IO_CLOCKS_ON=F,
+ SHUFFLE=0          ,
+ DEFLATE_LEVEL=-1         ,
+ CF_COMPLIANCE=F,
+ /
+NOTE from PE     0: MPP_IO_SET_STACK_SIZE: stack size set to     131072.
+NOTE from PE     0: MPP_DOMAINS_SET_STACK_SIZE: stack size set to  3000000.
+Using n_split from the namelist: 006
+ Off center implicit scheme param=   1.0000000000000000     
+  p_fac=  0.10000000000000001     
+Using n_sponge : 004
+Using non_ortho :       T
+ Cubic: cubed-sphere domain decomposition
+whalo =    3, ehalo =    3, shalo =    3, nhalo =    3
+  X-AXIS =   48
+  Y-AXIS =   48
+ Cubic: cubed-sphere domain decomposition
+whalo =    3, ehalo =    3, shalo =    3, nhalo =    3
+  X-AXIS =   48
+  Y-AXIS =   48
+ Cubic: cubed-sphere domain decomposition
+whalo =    3, ehalo =    3, shalo =    3, nhalo =    3
+  X-AXIS =   48
+  Y-AXIS =   48
+ Cubic: cubed-sphere domain decomposition
+whalo =    3, ehalo =    3, shalo =    3, nhalo =    3
+  X-AXIS =   48
+ Starting PEs :            6
+ Starting Threads :            1
+  Y-AXIS =   48
+ Cubic: cubed-sphere domain decomposition
+whalo =    3, ehalo =    3, shalo =    3, nhalo =    3
+  X-AXIS =   48
+  Y-AXIS =   48
+ Cubic: cubed-sphere domain decomposition
+whalo =    3, ehalo =    3, shalo =    3, nhalo =    3
+  X-AXIS =   48
+  Y-AXIS =   48
+ Cubic: cubed-sphere domain decomposition
+whalo =    1, ehalo =    1, shalo =    1, nhalo =    1
+  X-AXIS =   48
+  Y-AXIS =   48
+ Cubic: cubed-sphere domain decomposition
+ Cubic: cubed-sphere domain decomposition
+whalo =    1, ehalo =    1, shalo =    1, nhalo =    1
+  X-AXIS =   48
+  Y-AXIS =   48
+ Cubic: cubed-sphere domain decomposition
+whalo =    1, ehalo =    1, shalo =    1, nhalo =    1
+  X-AXIS =   48
+  Y-AXIS =   48
+ Cubic: cubed-sphere domain decomposition
+whalo =    1, ehalo =    1, shalo =    1, nhalo =    1
+  X-AXIS =   48
+  Y-AXIS =   48
+whalo =    1, ehalo =    1, shalo =    1, nhalo =    1
+  X-AXIS =   48
+  Y-AXIS =   48
+ Cubic: cubed-sphere domain decomposition
+whalo =    1, ehalo =    1, shalo =    1, nhalo =    1
+  X-AXIS =   48
+  Y-AXIS =   48
+NOTE from PE     0: mpp_domains_define.inc(mpp_define_io_domain): io domain will not be defined for Cubic: cubed-sphere when one or both entry of io_layout is not positive
+NOTE from PE     0: mpp_domains_define.inc(mpp_define_io_domain): io domain will not be defined for Cubic: cubed-sphere when one or both entry of io_layout is not positive
+ ncnst=           8  num_prog=           8  pnats=           0  dnats=           1  num_family=           0
+ 
+ Gird distance at face edge (km)=   163389.34666170005     
+MAX    AREA (m*m): 0.53345393142788E+11          MIN AREA (m*m): 0.23547028204749E+11
+GLOBAL AREA (m*m): 0.51009649655145E+15 IDEAL GLOBAL AREA (m*m): 0.51009649655132E+15
+ 
+  Cubed-Sphere Grid Stats :           49 x          49 x           6
+      Grid Length               : min: 163389.35 max: 231016.80 avg: 193073.65 min/max:      0.71
+      Deviation from Orthogonal : min:      0.00 max:     29.08 avg:      8.76
+      Aspect Ratio              : min:      1.00 max:      1.07 avg:      1.02
+ 
+ Grid_init          63          23   64.247000000000000     
+ Hybrid Sigma-P: minimum allowable surface pressure (hpa)=   183.44082543978328     
+ Corner interpolation coefficient=   1.4864111357884311     
+ Corner interpolation coefficient=   1.4864111357884122     
+ Corner interpolation coefficient=   1.4864111357884076     
+ Corner interpolation coefficient=   1.4864111357884220     
+ Corner interpolation coefficient=   1.4864111357884215     
+ Corner interpolation coefficient=   1.4864111357884175     
+ da_max/da_min=   2.2654830443541312     
+ da_max_c/da_min_c=   2.2867226134919445     
+  
+ Divergence damping Coefficients
+ For small dt=   75.000000000000000     
+ External mode del-2 (m**2/s)=   0.0000000000000000     
+ Internal mode del-2 SMAG dimensionless coeff=  0.20000000000000001     
+ Internal mode del-2 background diff=   0.0000000000000000     
+ Internal mode del-6 background diff=  0.14999999999999999     
+ tracer del-2 diff=   0.0000000000000000     
+ Vorticity del-4 (m**4/s)=   26614201789.212078     
+ beta=   0.0000000000000000     
+  
+ FV_RESTART:            1 T
+NOTE from PE     0: READING FROM SST_RESTART DISABLED
+Tracer sphum initialized with surface value of 0.100000E+31 and vertical multiplier of   1.000000
+Tracer liq_wat initialized with surface value of 0.100000E+31 and vertical multiplier of   1.000000
+Tracer rainwat initialized with surface value of 0.100000E+31 and vertical multiplier of   1.000000
+Tracer ice_wat initialized with surface value of 0.100000E+31 and vertical multiplier of   1.000000
+Tracer snowwat initialized with surface value of 0.100000E+31 and vertical multiplier of   1.000000
+Tracer graupel initialized with surface value of 0.100000E+31 and vertical multiplier of   1.000000
+Tracer o3mr initialized with surface value of 0.100000E+31 and vertical multiplier of   1.000000
+Tracer cld_amt initialized with surface value of 0.100000E+31 and vertical multiplier of   1.000000
+ Calling get_external_ic
+NOTE from PE     0: Using external_IC::get_nggps_ic which is valid only for data which has been horizontally interpolated to the current cubed-sphere grid
+NOTE from PE     0: External_IC::get_nggps_ic -  use externally-generated, filtered terrain and FV3 pressure levels (vertical remapping)
+NOTE from PE     0: ==> External_ic::get_nggps_ic: using control file gfs_ctrl.nc for NGGPS IC
+NOTE from PE     0: ==> External_ic::get_nggps_ic: using tiled data file oro_data.nc for NGGPS IC
+NOTE from PE     0: ==> External_ic::get_nggps_ic: using tiled data file sfc_data.nc for NGGPS IC
+NOTE from PE     0: ==> External_ic::get_nggps_ic: using tiled data file gfs_data.nc for NGGPS IC
+Tracer sphum initialized with surface value of 0.100000E+31 and vertical multiplier of   1.000000
+Tracer liq_wat initialized with surface value of 0.100000E+31 and vertical multiplier of   1.000000
+Tracer rainwat initialized with surface value of 0.100000E+31 and vertical multiplier of   1.000000
+Tracer ice_wat initialized with surface value of 0.100000E+31 and vertical multiplier of   1.000000
+Tracer snowwat initialized with surface value of 0.100000E+31 and vertical multiplier of   1.000000
+Tracer graupel initialized with surface value of 0.100000E+31 and vertical multiplier of   1.000000
+Tracer o3mr initialized with surface value of 0.100000E+31 and vertical multiplier of   1.000000
+Tracer cld_amt initialized with surface value of 0.100000E+31 and vertical multiplier of   1.000000
+NOTE from PE     0: MPP_IO_SET_STACK_SIZE: stack size set to     150528.
+ sphum =            1
+ clwmr =            2
+  o3mr =            7
+ ncnst =            8
+ GFS ak =   0.0000000000000000        64.247001647949219        137.78999328613281        221.95799255371094        318.26599121093750        428.43399047851562        554.42401123046875        698.45697021484375        863.05798339843750        1051.0799560546875        1265.7519531250000        1510.7110595703125        1790.0510253906250        2108.3659667968750        2470.7880859375000        2883.0380859375000        3351.4599609375000        3883.0520019531250        4485.4931640625000        5167.1459960937500        5937.0498046875000        6804.8740234375000        7777.1499023437500        8832.5371093750000        9936.6142578125000        11054.852539062500        12152.936523437500        13197.065429687500        14154.316406250000        14993.074218750000        15683.489257812500        16197.966796875000        16511.736328125000        16611.603515625000        16503.144531250000        16197.315429687500        15708.892578125000        15056.341796875000        14261.434570312500        13348.670898437500        12344.490234375000        11276.347656250000        10171.711914062500        9057.0507812500000        7956.9082031250000        6893.1171875000000        5884.2060546875000        4945.0288085937500        4086.6140136718750        3316.2170410156250        2637.5529785156250        2051.1499023437500        1554.7889404296875        1143.9880371093750        812.48901367187500        552.71997070312500        356.22299194335938        214.01499938964844        116.89900207519531        55.712001800537109        21.516000747680664        5.7410001754760742       0.57499998807907104        0.0000000000000000        0.0000000000000000       FV3 ak=   64.247000000000000        137.78999999999999        221.95800000000000        318.26600000000002        428.43400000000003        554.42399999999998        698.45699999999999        863.05803000000003        1051.0799500000001        1265.7519400000001        1510.7110100000000        1790.0509800000000        2108.3660399999999        2470.7881699999998        2883.0381100000000        3351.4600200000000        3883.0518699999998        4485.4931500000002        5167.1460299999999        5937.0499099999997        6804.8737899999996        7780.8469800000003        8875.6433799999995        10100.205340000000        11264.356730000000        12190.643660000000        12905.425460000000        13430.878670000000        13785.887650000001        13986.779870000000        14047.963350000000        13982.467699999999        13802.403310000000        13519.338410000000        13144.594859999999        12689.456080000000        12165.287660000000        11583.570060000000        10955.847780000000        10293.604020000001        9608.0830600000008        8910.0767799999994        8209.7013100000004        7516.1855999999998        6837.6925000000001        6181.1947300000002        5552.3965300000000        4955.7263199999998        4394.3762900000002        3870.3868200000002        3384.7658600000000        2937.6348899999998        2528.3766599999999        2155.7838499999998        1818.2072200000000        1513.6817300000000        1240.0358500000000        994.99144000000001        776.23590999999999        581.48797000000002        408.53399999999999        255.26519999999999        119.70243000000001        0.0000000000000000     
+ PS_model (mb)   1036.7079409812923        535.58744489194873     
+ PT_model   313.94687873884692        178.91762415893626     
+ Global Area=   510096496551450.94     
+ ZS_diff (m)   1055.7476348876953       -965.28856658935547        1.5548647793361909     
+ GFS_IC Z500   5701.1185397602130        5792.5568060194200        5459.8738017242113        5865.8110555403327     
+ fv3_IC Z500   5701.0220933679439        5792.4217707303151        5459.8087166316873        5865.7222480554010     
+ PS_diff (mb)   113.08349040923393       -112.66804484509180      -0.15248770050998198     
+ done remap_scalar_nggps
+ done remap_dwinds
+ PS max =    1036.7079409812923       min =    535.58744489194873     
+ T max =    313.94687873884692       min =    178.91762415893626     
+ W max =   0.37971803013553823       min =  -0.59539272233377083     
+ SPHUM max =    2.0847122025108536E-002  min =    0.0000000000000000     
+ TS max =    324.74008178710938       min =    208.79690551757812     
+ liq_wat max =    9.7395859647336400E-004  min =   -7.4333284620597227E-005
+ ice_wat max =    7.9477091599982697E-004  min =   -3.1444144769910902E-005
+ rainwat max =    0.0000000000000000       min =    0.0000000000000000     
+ snowwat max =    0.0000000000000000       min =    0.0000000000000000     
+ graupel max =    0.0000000000000000       min =    0.0000000000000000     
+ O3MR max =    1.8551050743553787E-005  min =    1.6044703289183057E-008
+ IC generated from the specified external source
+ in fv_restart ncnst=           8
+
+ fv_restart u    =   8015250055556348856
+ fv_restart v    =  -3886425706845799638
+ fv_restart w    =  -7704647956465507175
+ fv_restart delp =   7544548215442807266
+ fv_restart phis =  -9174519327653082789
+ fv_restart pt   =   2479404170963384125
+ fv_restart q(prog) nq   =           8 -2651350680511061832
+ fv_restart sphum =  -8196046192496826953
+ fv_restart liq_wat =  -6722516236126709166
+ fv_restart rainwat =                     0
+ fv_restart ice_wat =   1350328009219897793
+ fv_restart snowwat =                     0
+ fv_restart graupel =                     0
+ fv_restart o3mr =  -7529860334816975122
+ fv_restart cld_amt =                     0
+ ZS   5269.7612304687500       -25.890581130981445        232.90803120603272     
+ PS   1036.7076522435468        535.58813747026204        985.75920916350367     
+ T    313.94687873884692        178.91762415893626        289.81350803747267     
+ sphum   2.0847122025108536E-002   0.0000000000000000        1.0143402569135863E-002
+ liq_wat   9.7395859647336400E-004  -7.4333284620597227E-005   5.4845005865734322E-007
+ rainwat   0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ ice_wat   7.9477091599982697E-004  -3.1444144769910902E-005   2.0089556092902732E-007
+ snowwat   0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ graupel   0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ o3mr   1.8551050743553787E-005   1.6044703289183057E-008   5.5073194987140510E-008
+ cld_amt   0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ U  max =    160.52527443335026       min =   -120.34819871234072     
+ V  max =    111.06095069851403       min =   -137.35226481923695     
+ W   0.37971803013553823      -0.59539272233377083       -4.6341790858016167E-004
+
+ mp_top=           1 pfull=  0.96387167729658152     
+ Mean specific humidity (mg/kg) above 75 mb=   5.3014420868572536     
+ Total surface pressure (mb) =    985.75920916350367     
+ mean dry surface pressure =    983.06346940117749     
+ Total Water Vapor (kg/m**2) =   27.417800002481027     
+ --- Micro Phys water substances (kg/m**2) ---
+ Total cloud water=   3.9211551911841371E-002
+ Total rain  water=   0.0000000000000000     
+ Total cloud ice  =   3.1883861740332704E-002
+ Total snow       =   0.0000000000000000     
+ Total graupel    =   0.0000000000000000     
+ ---------------------------------------------
+ Before adi: W max =   0.37971803013553823       min =  -0.59539272233377083     
+NOTE from PE     0: Performing adiabatic init   1 times
+           1  0.96387167729658163     
+           2   1.7654262347594856     
+           3   2.6722579730761620     
+           4   3.7062506453425077     
+           5   4.8872538110863806     
+           6   6.2367099927383975     
+           7   7.7785710001204489     
+           8   9.5398286049112091     
+           9   11.550931569855985     
+          10   13.846219658340800     
+          11   16.464334009588001     
+          12   19.448689172369235     
+          13   22.847883773786144     
+          14   26.716141397733608     
+          15   31.113744844000621     
+          16   36.107363177046373     
+          17   41.770343256904951     
+          18   48.182860326166029     
+          19   55.431897191726996     
+          20   63.610987115199528     
+          21   72.819631562422387     
+          22   83.162382177589450     
+          23   94.747389952189096     
+          24   107.68362723394152     
+ Rayleigh friction E-folding time (days):
+           1  0.96387167729658163        5.3332746998155658     
+           2   1.7654262347594856        7.6537115394771611     
+           3   2.6722579730761620        12.553280813563154     
+           4   3.7062506453425077        23.515693248038023     
+           5   4.8872538110863806        54.764651284098399     
+           6   6.2367099927383975        209.55749761495238     
+           7   7.7785710001204489        16359.556318297035     
+ top layer for gfdl_mp =            9
+ After adi: W max =   0.32699958443114663       min =  -0.27545834755850257     
+ na_ini Z500   5701.0406887235904        5792.4752333135366        5459.7421118675329        5865.7823782311389     
+  dxmax=   18.199108087004454       dxmin=   24.516413583664988       dxinv= -0.15829533660017264      max_lon=        5000  max_lat=        2000  min_lon=         192  min_lat=          94  rhc_max=  0.99999990000000005     
+  NOAH Land Surface Model used
+  nst_anl= T  use_ufo= T
+  scale & aerosol-aware mass-flux deep conv scheme
+  New PBL scheme used
+  scale- & aerosol-aware mass-flux shallow conv scheme (2017)
+  Convective GWD parameterization used
+  Radiative heating calculated at          63  layers
+  max-random cloud overlap for Shortwave IOVR_SW=           1
+  max-random cloud overlap for Longwave IOVR_LW=           1
+  sub-grid cloud for Shortwave ISUBC_SW=           2
+  sub-grid cloud for Longwave ISUBC_LW=           2
+  Using GFDL Cloud Microphysics
+  num_p3d=           1  num_p2d=           1  crtrh=  0.90000000000000002       0.90000000000000002       0.90000000000000002       npdf3d=           0  pdfcld= F  shcnvcw= F  cnvcld= F  ncnvcld3d=           0  do_shoc= F  nshoc3d=           0  nshoc_2d=           0  shoc_cld= F  ntot3d=           1  ntot2d=           1  shocaftcnv= F  shoc_pcrit=   7000.0000000000000     
+  
+ basic control parameters
+  me                :            0
+  master            :            0
+  nlunit            :         9999
+  fn_nml            : using internal file
+  fhzero            :    1.0000000000000000     
+  lprecip_accu      :  T
+  continuous accumulation precip bucket is used
+  ldiag3d           :  F
+  lssav             :  F
+  fhcyc             :    24.000000000000000     
+  lgocart           :  F
+  fhgoc3d           :    0.0000000000000000     
+  thermodyn_id      :            1
+  sfcpress_id       :            1
+  gen_coord_hybrid  :  F
+  
+ grid extent parameters
+  isc               :            1
+  jsc               :            1
+  nx                :           48
+  ny                :           48
+  levs              :           63
+  cnx               :           48
+  cny               :           48
+  lonr              :          192
+  latr              :           96
+  
+ coupling parameters
+  cplflx            :  F
+  cplwav            :  F
+  
+ integrated dynamics through earth atmosphere
+  lsidea            :  F
+  
+ calendars and time parameters and activation triggers
+  dtp               :    450.00000000000000     
+  dtf               :    450.00000000000000     
+  nscyc             :          192
+  nszero            :            8
+  idat              :         2016           8           1           0           0           0           0           0
+  idate             :            0           8           1        2016
+  
+ radiation control parameters
+  fhswr             :    3600.0000000000000     
+  fhlwr             :    3600.0000000000000     
+  nsswr             :            8
+  nslwr             :            8
+  levr              :           63
+  nfxr              :           45
+  aero_in           :  F
+  lmfshal           :  T
+  lmfdeep2          :  T
+  nrcm              :            2
+  iflip             :            1
+  isol              :            2
+  ico2              :            2
+  ialb              :            1
+  iems              :            1
+  iaer              :          111
+  iovr_sw           :            1
+  iovr_lw           :            1
+  ictm              :            1
+  isubc_sw          :            2
+  isubc_lw          :            2
+  crick_proof       :  F
+  ccnorm            :  F
+  norad_precip      :  F
+  lwhtr             :  T
+  swhtr             :  T
+  
+ microphysical switch
+  ncld              :            5
+  imp_physics       :           11
+  
+  GFDL microphysical parameters
+  GFDL MP radiation inter:  F
+  
+ land/surface model parameters
+  lsm               :            1
+  lsoil             :            4
+  ivegsrc           :            1
+  isot              :            1
+  mom4ice           :  F
+  use_ufo           :  T
+  
+ tuning parameters for physical parameterizations
+  ras               :  F
+  flipv             :  T
+  trans_trac        :  T
+  old_monin         :  F
+  cnvgwd            :  T
+  mstrat            :  F
+  moist_adj         :  F
+  cscnv             :  F
+  cal_pre           :  F
+  do_aw             :  F
+  do_shoc           :  F
+  shoc_pcrit        :    7000.0000000000000     
+  shocaftcnv        :  F
+  shoc_cld          :  F
+  uni_cld           :  F
+  h2o_phys          :  F
+  pdfcld            :  F
+  shcnvcw           :  F
+  redrag            :  T
+  hybedmf           :  T
+  dspheat           :  T
+  cnvcld            :  F
+  random_clds       :  F
+  shal_cnv          :  T
+  imfshalcnv        :            2
+  imfdeepcnv        :            2
+  do_deep           :  T
+  nmtvr             :           14
+  jcap              :            1
+  cs_parm           :    10.000000000000000        4.0000000000000000        1000.0000000000000        2000.0000000000000        20.000000000000000        1.0000000000000000       -999.00000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+  flgmin            :   0.17999999999999999       0.22000000000000000     
+  cgwf              :   0.50000000000000000        5.0000000000000003E-002
+  ccwf              :    1.0000000000000000        1.0000000000000000     
+  cdmbgwd           :    3.5000000000000000       0.25000000000000000     
+  sup               :    1.0000000000000000     
+  ctei_rm           :    10.000000000000000        10.000000000000000     
+  crtrh             :   0.90000000000000002       0.90000000000000002       0.90000000000000002     
+  dlqf              :    0.0000000000000000        0.0000000000000000     
+  seed0             :            0
+  rbcr              :   0.25000000000000000     
+  
+ Rayleigh friction
+  prslrd0           :    0.0000000000000000     
+  ral_ts            :    0.0000000000000000     
+  
+ mass flux deep convection
+  clam_deep         :   0.10000000000000001     
+  c0s_deep          :    2.0000000000000000E-003
+  c1_deep           :    2.0000000000000000E-003
+  betal_deep        :    5.0000000000000003E-002
+  betas_deep        :    5.0000000000000003E-002
+  evfact_deep       :   0.29999999999999999     
+  evfactl_deep      :   0.29999999999999999     
+  pgcon_deep        :   0.55000000000000004     
+  asolfac_deep      :   0.95799999999999996     
+  
+ mass flux shallow convection
+  clam_shal         :   0.29999999999999999     
+  c0s_shal          :    2.0000000000000000E-003
+  c1_shal           :    5.0000000000000001E-004
+  pgcon_shal        :   0.55000000000000004     
+  asolfac_shal      :   0.95799999999999996     
+  
+ near surface temperature model
+  nst_anl           :  T
+  nstf_name         :            0           0           1           0           5
+  lsea              :            0
+  
+ background vertical diffusion coefficients
+  xkzm_m            :    1.0000000000000000     
+  xkzm_h            :    1.0000000000000000     
+  xkzm_s            :    1.0000000000000000     
+  xkzminv           :   0.29999999999999999     
+  moninq_fac        :    1.0000000000000000     
+  
+ tracers
+  tracer_names      : sphum                           liq_wat                         rainwat                         ice_wat                         snowwat                         graupel                         o3mr                            cld_amt                         
+  ntrac             :            8
+  ntoz              :            7
+  ntcw              :            2
+  ntiw              :            4
+  ntrw              :            3
+  ntsw              :            5
+  ntgl              :            6
+  ntclamt           :            8
+  ntlnc             :          -99
+  ntinc             :          -99
+  ntrnc             :          -99
+  ntsnc             :          -99
+  ntke              :          -99
+  nto               :            0
+  nto2              :            0
+  ntwa              :          -99
+  ntia              :          -99
+  
+ derived totals for phy_f*d
+  ntot2d            :            1
+  ntot3d            :            1
+  num_p2d           :            1
+  num_p3d           :            1
+  nshoc_2d          :            0
+  nshoc_3d          :            0
+  ncnvcld3d         :            0
+  npdf3d            :            0
+  nctp              :            1
+  
+ debug flags
+  debug             :  F
+  pre_rad           :  F
+  
+ variables modified at each time step
+  ipt               :            1
+  lprnt             :  F
+  lsswr             :  F
+  lslwr             :  F
+  solhr             :   -9999.0000000000000     
+  solcon            :   -9999.0000000000000     
+  slag              :   -9999.0000000000000     
+  sdec              :   -9999.0000000000000     
+  cdec              :   -9999.0000000000000     
+  clstp             :   -9999.0000000000000     
+  phour             :    0.0000000000000000     
+  fhour             :   0.12500000000000000     
+  zhour             :    0.0000000000000000     
+  kdt               :            0
+  jdat              :         2016           8           1           0           0           0           0           0
+ in init stochdata
+  in compns_stochy
+ skeb=  -999.00000000000000       -999.00000000000000       -999.00000000000000       -999.00000000000000       -999.00000000000000     
+ stochastic physics
+  do_sppt :  F
+  do_shum :  F
+  do_skeb :  F
+ do_skeb= F
+ Reading in o3data from global_o3prdlos.f77 
+       oz_coeff =            4
+        latsozp =           35
+         levozp =           80
+         timeoz =           12
+   In rad_initialize, before calling radinit
+  si =   1.0000000000000000       0.99464797758318080       0.98859203822037534       0.98173033287635147       0.97399234943473123       0.96525882451219780       0.95544154890888477       0.94443296901021467       0.93211583395987585       0.91839256538019209       0.90313451303290226       0.88626101921244849       0.86766829484272145       0.84728821204795912       0.82506682840883083       0.80097292521614960       0.77501656115474471       0.74724763087629809       0.71774467971811351       0.68663408270329573       0.65410966625934541       0.62039275532545179       0.58573294709748014       0.55042934857496073       0.51481233079513045       0.47919558508517118       0.44390834778801219       0.40928750213816800       0.37559928158938338       0.34313056471148301       0.31209932005937185       0.28266428958907702       0.25498383564262062       0.22912383043408732       0.20514479207951380       0.18304812921942226       0.16281163166937937       0.14437412103779240       0.12767918741429862       0.11261789629393730        9.9110050465455277E-002   8.7016895677242301E-002   7.6205239951158577E-002   6.6567022170968840E-002   5.7996832296911716E-002   5.0393650835284624E-002   4.3661991630656746E-002   3.7712586138876528E-002   3.2462853796870347E-002   2.7836955844086998E-002   2.3765783866924236E-002   2.0186686148778686E-002   1.7043167553770808E-002   1.4284547242108698E-002   1.1865455316138130E-002   9.7454632793418008E-003   7.8886538598029205E-003   6.2631373084891051E-003   4.8407402224235879E-003   3.5965266819613720E-003   2.5085632140223173E-003   1.5574740985779556E-003   7.2627348524654948E-004   0.0000000000000000     
+  levr=          63  ictm=           1  isol=           2  ico2=           2  iaer=         111  ialb=           1  iems=           1  ntcw=           2
+  np3d=           1  ntoz=           7  iovr_sw=           1  iovr_lw=           1  isubc_sw=           2  isubc_lw=           2  iflip=           1   me=           0
+  crick_proof= F  ccnorm= F  norad_precip= F
+  NEW RADIATION PROGRAM STRUCTURES BECAME OPER.   May 01 2007
+ NCEP-Radiation_driver    v5.2  Jan 2013 
+  - Selected Control Flag settings: ICTMflg=           1  ISOLar =           2  ICO2flg=           2  IAERflg=         111  IALBflg=           1  IEMSflg=           1  ICLDflg=           1  IMP_PHYSICS=          11  IOZNflg=           7
+  IVFLIP=           1  IOVRSW=           1  IOVRLW=           1  ISUBCSW=           2  ISUBCLW=           2
+  LCRICK= F  LCNORM= F  LNOPREC= F
+  LTP =           0 , add extra top layer = F
+  - ISUBCLW=           2  Use McICA with random permutation seeds for LW random number generator
+  - ISUBCSW=           2  Use McICA with random permutation seeds for SW random number generator
+ NCEP-Radiation_astronomy v5.2  Jan 2013 
+  - Using NOAA annual mean TSI table in TIM scale with cycle approximation (new values)!
+ NCEP-Radiation_aerosols  v5.2  Jan 2013 
+  - Using OPAC-seasonal climatology for tropospheric aerosol effect
+    IAER=         111   LW-trop-aer= T   SW-trop-aer= T   Volc-aer= T
+  - Include stratospheric volcanic aerosol effect
+    - Compute multi-band aerosol optical properties for SW input parameters
+    - Compute multi-band aerosol optical properties for LW input parameters
+ NCEP-Radiation_gases     v5.1  Nov 2012 
+  - Using interactive ozone distribution
+  - Using observed co2 monthly 2-d data
+ NCEP-Radiation_surface   v5.1  Nov 2012 
+  - Using MODIS based land surface albedo for sw
+  - Using Varying Surface Emissivity for lw
+    Opened data file: sfc_emissivity_idx.txt    
+ SURFACE EMISSIVITY INDEX, IDM,JDM: 360 180    NOTE: DATA FROM N TO S            
+ NCEP-Radiation_clouds    v5.1  Nov 2012 
+  - Using Prognostic Cloud Method
+    --- GFDL Lin cloud microphysics
+  - Using AER Longwave Radiation, Version: NCEP LW v5.1  Nov 2012 -RRTMG-LW v4.82  
+    --- Include rare gases N2O, CH4, O2, CFCs absorptions in LW
+    --- Using MCICA sub-colum clouds approximation with provided input array of permutation seeds
+  - Using AER Shortwave Radiation, Version: NCEP SW v5.1  Nov 2012 -RRTMG-SW v3.8   
+    --- PIFM 2-stream transfer scheme
+    --- Include rare gases N2O, CH4, O2, absorptions in SW
+    --- Using MCICA sub-colum clouds approximation with provided input array of permutation seeds
+   Radiation sub-cloud initial seed =       46749  IC-idate =           0           8           1        2016
+  return from rad_initialize - after calling radinit
+ in iau_init  -1.0000000000000000     
+ nfiles =            0
+ in gfdl_diag_register, nrgst_bl=          11  nrgst_nb=          11  nrgst_vctbl=           1 isco=           1          48 jsco=           1          48
+NOTE from PE     0: reading topographic/orographic information from INPUT/oro_data.tile*.nc
+NOTE from PE     0: reading surface properties data from INPUT/sfc_data.tile*.nc
+NOTE from PE     0: gfs_driver::surface_props_input - computing sncovr
+NOTE from PE     0: No physics restarts - cold starting physical parameterizations
+ ---fdiag   1.0000000000000000        2.0000000000000000        3.0000000000000000        4.0000000000000000        5.0000000000000000        6.0000000000000000        7.0000000000000000        8.0000000000000000        9.0000000000000000        10.000000000000000        11.000000000000000        12.000000000000000        13.000000000000000        14.000000000000000        15.000000000000000        16.000000000000000        17.000000000000000        18.000000000000000        19.000000000000000        20.000000000000000        21.000000000000000        22.000000000000000        23.000000000000000        24.000000000000000        25.000000000000000        26.000000000000000        27.000000000000000        28.000000000000000        29.000000000000000        30.000000000000000        31.000000000000000        32.000000000000000        33.000000000000000        34.000000000000000        35.000000000000000        36.000000000000000        37.000000000000000        38.000000000000000        39.000000000000000        40.000000000000000     
+   Updating solar constant with cycle approx
+    Opened solar constant data file: solarconstant_noaa_an.txt 
+  CHECK: Solar constant data used for year        2016   1360.7100000000000        1360.7100000000000     
+0 FORECAST DATE           1 AUG.  2016 AT  0 HRS  0.00 MINS
+  JULIAN DAY             2457601  PLUS   0.500000
+  RADIUS VECTOR          1.0149623
+  RIGHT ASCENSION OF SUN   8.7755458 HRS, OR   8 HRS  46 MINS  32.0 SECS
+  DECLINATION OF THE SUN  17.9528299 DEGS, OR   17 DEGS  57 MINS  10.2 SECS
+  EQUATION OF TIME        -6.3600980 MINS, OR   -381.61 SECS, OR-0.027827 RADIANS
+  SOLAR CONSTANT        1320.8872136 (DISTANCE AJUSTED)
+
+
+    for cosz calculations: nswr,deltim,deltsw,dtswh =           8   450.00000000000000        3600.0000000000000        1.0000000000000000        anginc,nstp =   3.2724923474893676E-002           9
+    Opened aerosol data file: aerosol.dat               
+   --- Reading  MONTH OF AUGUST    CLIMATOLOGICAL AEROSOL GLOBAL DISTRIBUTION                  
+    Request volcanic date out of range, optical depth set to lowest value
+  CHECK: Sample Volcanic data used for month, year:           8        2016
+           1           1           1           1
+    Opened co2 data file: co2historicaldata_2016.txt
+        2016  MONTHLY CO2 (PPMV)   24  12  LON/LAT (N-S/0-360E) IN 15 DEGREE RESOLUTION,  GLB ANNUAL MEAN =   401.32999999999998        GROWTH RATE =   2.0499999999999998     
+    Global annual mean CO2 data for year        2016   4.0132999999999998E-004
+  CHECK: Sample of selected months of CO2 data used for year:        2016
+         Month =           1
+   4.1025999999999996E-004   4.1053999999999998E-004   4.0869999999999996E-004   4.0761999999999998E-004   4.0658999999999997E-004   4.0457999999999998E-004   4.0232999999999995E-004   3.9925999999999997E-004   3.9899000000000000E-004   3.9869999999999999E-004   3.9848999999999999E-004   3.9843999999999996E-004
+         Month =           4
+   4.0999000000000000E-004   4.0744999999999996E-004   4.0404999999999998E-004   4.0182999999999994E-004   3.9720999999999995E-004   3.9612999999999996E-004   3.9576999999999999E-004   3.9857000000000000E-004   3.9863999999999996E-004   3.9851999999999997E-004   3.9843999999999996E-004   3.9856000000000001E-004
+         Month =           7
+   3.9613999999999996E-004   3.9833999999999996E-004   3.9764999999999993E-004   3.9905999999999996E-004   4.0266999999999999E-004   4.0361999999999999E-004   4.0318000000000000E-004   4.0078999999999999E-004   4.0029999999999997E-004   3.9970999999999995E-004   3.9961000000000000E-004   3.9977999999999997E-004
+         Month =          10
+   4.0036000000000000E-004   4.0175999999999998E-004   4.0119999999999999E-004   4.0138999999999995E-004   4.0101999999999998E-004   4.0098999999999999E-004   4.0082999999999997E-004   4.0059999999999998E-004   4.0057000000000000E-004   4.0052999999999996E-004   4.0043000000000001E-004   4.0029999999999997E-004
+ ftsfl,falbl,faisl,fsnol,fzorl=   99999.000000000000        0.0000000000000000        99999.000000000000        99999.000000000000        0.0000000000000000     
+ fsmcl=   99999.000000000000        99999.000000000000        99999.000000000000        99999.000000000000     
+ fstcl=   99999.000000000000        99999.000000000000        99999.000000000000        99999.000000000000     
+ ftsfs,falbs,faiss,fsnos,fzors=   90.000000000000000        0.0000000000000000        99999.000000000000        99999.000000000000        99999.000000000000     
+ fsmcs=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ fstcs=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+  aislim=  0.14999999999999999       sihnew=  0.20000000000000001     
+  isot=           1  ivegsrc=           1
+  imsk=        5000  jmsk=        2500  xdata=        5000  ydata=        2500
+  file ./INPUT/seaice_newland.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7         120         235         128          81           1           0           1           1           1
+  kpds(11-20)=           0           0           4           0           1          51           1           1           1           0
+  kpds(21-  )=          21           0
+ idim,jdim=         720         360  gaus= F  blno=  0.25000000000000000       blto=   89.750000000000000     
+  
+  lugb=        9998  len=        2304  lsoil=           4
+ iy=        2016  im=           8  id=           1  ih=           0  fh=  0.12500000000000000       sig1t(1)=   0.0000000000000000       gausm= F  blnmsk=  0.25000000000000000       bltmsk=   89.750000000000000     
+  
+  in fixrdc for mon=          -1  fngrib=./INPUT/global_glacier.2x2.grb
+  file ./INPUT/global_glacier.2x2.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7          80         255         128         238           1           0           0           1           1
+  kpds(11-20)=           0           0           4           0           1          51           1           1           2           0
+  kpds(21-  )=          20           1
+  input grib file dates=           0           1           1           0
+ imax,jmax,ijmax=         180          91       16380
+  kgds( 1-12)=           0         180          91       90000           0         128      -90000       -2000        2000        2000           0           0
+  kgds(13-22)=           0           0           0           0           0           0           0         255           0           0
+ lat/lon grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+         180          91       16380   2.0000000000000000       -2.0000000000000000      T   0.0000000000000000        90.000000000000000     
+  in fixrdc for mon=          -1  fngrib=./INPUT/global_maxice.2x2.grb
+  file ./INPUT/global_maxice.2x2.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7          80         255         128          91           1           0           0           1           1
+  kpds(11-20)=           0           0           4           0           1          51           1           1           2           0
+  kpds(21-  )=          20           1
+  input grib file dates=           0           1           1           0
+ imax,jmax,ijmax=         180          91       16380
+  kgds( 1-12)=           0         180          91       90000           0         128      -90000       -2000        2000        2000           0           0
+  kgds(13-22)=           0           0           0           0           0           0           0         255           0           0
+ lat/lon grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+         180          91       16380   2.0000000000000000       -2.0000000000000000      T   0.0000000000000000        90.000000000000000     
+ qc of maximum ice extent
+ ==============
+ climatology
+ ==============
+ bosu fh gt 0
+  forecast jy,jm,jd,jh        2016           8           1           0
+ forecast jy,jm,jd,jh=        2016           8           1           0
+ rjday,mon1,mon2,wei1m,wei2m=   214.00000000000000                7           8  0.43548387096774194       0.56451612903225812     
+  in fixrdc for mon=           7  fngrib=./INPUT/RTGSST.1982.2012.monthly.clim.grb
+  file ./INPUT/RTGSST.1982.2012.monthly.clim.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7         120         173         128          11           1           0          96           1          15
+  kpds(11-20)=           0           0           1           0           0          10           0           1           1           0
+  kpds(21-  )=          20           2
+  input grib file dates=          96           7          15           0
+ imax,jmax,ijmax=        4320        2160     9331200
+  kgds( 1-12)=           0        4320        2160       89958          42         128      -89958         -42          83          83           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ lat/lon grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        4320        2160     9331200   8.3000000000000004E-002  -8.3000000000000004E-002 T   4.2000000000000003E-002   89.957999999999998     
+ i1,i2,j1,j2=         312         313        1483        1484
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         187  slmask(i)=   1.0000000000000000       outlon=   25.989150253801114       outlat=  -33.578709950944429     
+ i1,i2,j1,j2=         411         412        1232        1233
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         768  slmask(i)=   1.0000000000000000       outlon=   34.214158616772124       outlat=  -12.654091707887858     
+  unable to interpolate.  filled with nearest point value at           14  points
+  in fixrdc for mon=           8  fngrib=./INPUT/RTGSST.1982.2012.monthly.clim.grb
+  file ./INPUT/RTGSST.1982.2012.monthly.clim.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7         120         173         128          11           1           0          96           1          15
+  kpds(11-20)=           0           0           1           0           0          10           0           1           1           0
+  kpds(21-  )=          20           2
+  input grib file dates=          96           8          15           0
+ imax,jmax,ijmax=        4320        2160     9331200
+  kgds( 1-12)=           0        4320        2160       89958          42         128      -89958         -42          83          83           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ lat/lon grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        4320        2160     9331200   8.3000000000000004E-002  -8.3000000000000004E-002 T   4.2000000000000003E-002   89.957999999999998     
+ i1,i2,j1,j2=         312         313        1483        1484
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         187  slmask(i)=   1.0000000000000000       outlon=   25.989150253801114       outlat=  -33.578709950944429     
+ i1,i2,j1,j2=         411         412        1232        1233
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         768  slmask(i)=   1.0000000000000000       outlon=   34.214158616772124       outlat=  -12.654091707887858     
+  unable to interpolate.  filled with nearest point value at           14  points
+  forecast jy,jm,jd,jh,rjday=        2016           8           1           0   214.00000000000000     
+ forecast jy,jm,jd,jh=        2016           8           1           0
+ rjday,mon1,mon2,wei1m,wei2m=   214.00000000000000                7           8  0.43548387096774194       0.56451612903225812     
+ rjday,sea1,sea2,wei1s,wei2s=   214.00000000000000                7          10  0.80978260869565222       0.19021739130434784     
+ rjday,hyr1,hyr2,wei1y,wei2y=   214.00000000000000                7           1  0.90489130434782605        9.5108695652173919E-002
+ bosu first time thru
+  in fixrdc for mon=          -1  fngrib=./INPUT/global_albedo4.1x1.grb
+  file ./INPUT/global_albedo4.1x1.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7           0         255         128         214           1           0           0           0           0
+  kpds(11-20)=           0           0           4           0           1          51           0           1         131           0
+  kpds(21-  )=          20           1
+  input grib file dates=           0           0           0           0
+ imax,jmax,ijmax=         360         180       64800
+  kgds( 1-12)=           0         360         180       89500         500         128      -89500        -500        1000        1000           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ lat/lon grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+         360         180       64800   1.0000000000000000       -1.0000000000000000      T  0.50000000000000000        89.500000000000000     
+  in fixrdc for mon=          -1  fngrib=./INPUT/global_tg3clim.2.6x1.5.grb
+  file ./INPUT/global_tg3clim.2.6x1.5.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7          80         255         128          11         111         500           0           1           1
+  kpds(11-20)=           0           0           4           0           1          51           1           1           2           0
+  kpds(21-  )=          20           1
+  input grib file dates=           0           1           1           0
+ imax,jmax,ijmax=         138         116       16008
+  kgds( 1-12)=           0         138         116       90000           0         128      -88125       -1875        2609        1539           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ lat/lon grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+         138         116       16008   2.6090000000000000       -1.5389999999999999      T   0.0000000000000000        90.000000000000000     
+  in fixrdc for mon=          -1  fngrib=./INPUT/global_vegtype.igbp.t1534.3072.1536.rg.grb
+  file ./INPUT/global_vegtype.igbp.t1534.3072.1536.rg.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7          96         255         192         225           1           0         100           1           1
+  kpds(11-20)=           0           0           1           0           1           1           0           1         130           0
+  kpds(21-  )=          19           0
+  input grib file dates=         100           1           1           0
+ imax,jmax,ijmax=        3072        1536     4718592
+  kgds( 1-12)=           4        3072        1536       89910           0         128      -89910        -117         117         768           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ gaussian grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        3072        1536     4718592  0.11700000000000001       -99.000000000000000      T   0.0000000000000000        99.000000000000000     
+  nearest grid point used kpds5=         225  lmask =  T
+ climatological vegetation type read in.
+  in fixrdc for mon=          -1  fngrib=./INPUT/global_soiltype.statsgo.t1534.3072.1536.rg.grb
+  file ./INPUT/global_soiltype.statsgo.t1534.3072.1536.rg.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7          96         255         192         224           1           0         100           1           1
+  kpds(11-20)=           0           0           1           0           1           1           0           1         130           0
+  kpds(21-  )=          19           0
+  input grib file dates=         100           1           1           0
+ imax,jmax,ijmax=        3072        1536     4718592
+  kgds( 1-12)=           4        3072        1536       89910           0         128      -89910        -117         117         768           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ gaussian grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        3072        1536     4718592  0.11700000000000001       -99.000000000000000      T   0.0000000000000000        99.000000000000000     
+  nearest grid point used kpds5=         224  lmask =  T
+ climatological soil type read in.
+  in fixrdc for mon=          -1  fngrib=./INPUT/global_shdmin.0.144x0.144.grb
+  file ./INPUT/global_shdmin.0.144x0.144.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7           0         255         128         255           1           0         100           1           1
+  kpds(11-20)=           0           0           3           0          24           0           0           1           2           0
+  kpds(21-  )=          19           2
+  input grib file dates=         100           1           1           0
+ imax,jmax,ijmax=        2500        1250     3125000
+  kgds( 1-12)=           0        2500        1250      -89928     -180000         128       89927      179855         144         144          64           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ lat/lon grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        2500        1250     3125000  0.14400000000000002       0.14400000000000002      T  -180.00000000000000        89.927999999999997     
+ i1,i2,j1,j2=        1488        1489         713         714
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         768  slmask(i)=   1.0000000000000000       outlon=   34.214158616772124       outlat=  -12.654091707887858     
+ i1,i2,j1,j2=         981         982         719         720
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+  unable to interpolate.  filled with nearest point value at            6  points
+ climatological shdmin read in.
+  in fixrdc for mon=          -1  fngrib=./INPUT/global_shdmax.0.144x0.144.grb
+  file ./INPUT/global_shdmax.0.144x0.144.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7           0         255         128         255           1           0         100           1           1
+  kpds(11-20)=           0           0           3           0          24           0           0           1           2           0
+  kpds(21-  )=          19           2
+  input grib file dates=         100           1           1           0
+ imax,jmax,ijmax=        2500        1250     3125000
+  kgds( 1-12)=           0        2500        1250      -89928     -180000         128       89927      179855         144         144          64           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ lat/lon grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        2500        1250     3125000  0.14400000000000002       0.14400000000000002      T  -180.00000000000000        89.927999999999997     
+ i1,i2,j1,j2=        1488        1489         713         714
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         768  slmask(i)=   1.0000000000000000       outlon=   34.214158616772124       outlat=  -12.654091707887858     
+ i1,i2,j1,j2=         981         982         719         720
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+  unable to interpolate.  filled with nearest point value at            6  points
+ climatological shdmax read in.
+  in fixrdc for mon=          -1  fngrib=./INPUT/global_slope.1x1.grb
+  file ./INPUT/global_slope.1x1.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7           0         255         128         236           1           0         100           1           1
+  kpds(11-20)=           0           0           3           0          24           0           0           1           2           0
+  kpds(21-  )=          19           2
+  input grib file dates=         100           1           1           0
+ imax,jmax,ijmax=         360         180       64800
+  kgds( 1-12)=           0         360         180      -89500     -179500         128       89500      179500        1000        1000          64           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ lat/lon grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+         360         180       64800   1.0000000000000000        1.0000000000000000      T  -179.50000000000000        89.500000000000000     
+  nearest grid point used kpds5=         236  lmask =  T
+ climatological slope read in.
+  in fixrdc for mon=          -1  fngrib=./INPUT/global_mxsnoalb.uariz.t1534.3072.1536.rg.grb
+  file ./INPUT/global_mxsnoalb.uariz.t1534.3072.1536.rg.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7         255         255         192         159           1           0         100           2          18
+  kpds(11-20)=           0           0           4           0           1          51           1           1         130           0
+  kpds(21-  )=          20           1
+  input grib file dates=         100           2          18           0
+ imax,jmax,ijmax=        3072        1536     4718592
+  kgds( 1-12)=           4        3072        1536       89910           0         128      -89910        -117         117         768           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ gaussian grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        3072        1536     4718592  0.11700000000000001       -99.000000000000000      T   0.0000000000000000        99.000000000000000     
+ i1,i2,j1,j2=        2741        2742         884         885
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+ i1,i2,j1,j2=         292         293         851         852
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         864  slmask(i)=   1.0000000000000000       outlon=   34.213951649333097       outlat=  -9.6784090796322761     
+  unable to interpolate.  filled with nearest point value at            8  points
+ climatological snoalb read in.
+  in fixrdc for mon=           7  fngrib=./INPUT/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb
+  file ./INPUT/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7         255         255         192         189           1           0         100           1          15
+  kpds(11-20)=           0           0           3           0           1          51           1           1         130           0
+  kpds(21-  )=          20           1
+  input grib file dates=         100           7          15           0
+ imax,jmax,ijmax=        3072        1536     4718592
+  kgds( 1-12)=           4        3072        1536       89910           0         128      -89910        -117         117         768           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ gaussian grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        3072        1536     4718592  0.11700000000000001       -99.000000000000000      T   0.0000000000000000        99.000000000000000     
+ i1,i2,j1,j2=        2741        2742         884         885
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+ i1,i2,j1,j2=         292         293         851         852
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         864  slmask(i)=   1.0000000000000000       outlon=   34.213951649333097       outlat=  -9.6784090796322761     
+  unable to interpolate.  filled with nearest point value at            8  points
+  in fixrdc for mon=           7  fngrib=./INPUT/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb
+  file ./INPUT/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7         255         255         192         190           1           0         100           1          15
+  kpds(11-20)=           0           0           3           0           1          51           1           1         130           0
+  kpds(21-  )=          20           1
+  input grib file dates=         100           7          15           0
+ imax,jmax,ijmax=        3072        1536     4718592
+  kgds( 1-12)=           4        3072        1536       89910           0         128      -89910        -117         117         768           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ gaussian grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        3072        1536     4718592  0.11700000000000001       -99.000000000000000      T   0.0000000000000000        99.000000000000000     
+ i1,i2,j1,j2=        2741        2742         884         885
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+ i1,i2,j1,j2=         292         293         851         852
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         864  slmask(i)=   1.0000000000000000       outlon=   34.213951649333097       outlat=  -9.6784090796322761     
+  unable to interpolate.  filled with nearest point value at            8  points
+  in fixrdc for mon=           7  fngrib=./INPUT/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb
+  file ./INPUT/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7         255         255         192         191           1           0         100           1          15
+  kpds(11-20)=           0           0           3           0           1          51           1           1         130           0
+  kpds(21-  )=          20           1
+  input grib file dates=         100           7          15           0
+ imax,jmax,ijmax=        3072        1536     4718592
+  kgds( 1-12)=           4        3072        1536       89910           0         128      -89910        -117         117         768           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ gaussian grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        3072        1536     4718592  0.11700000000000001       -99.000000000000000      T   0.0000000000000000        99.000000000000000     
+ i1,i2,j1,j2=        2741        2742         884         885
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+ i1,i2,j1,j2=         292         293         851         852
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         864  slmask(i)=   1.0000000000000000       outlon=   34.213951649333097       outlat=  -9.6784090796322761     
+  unable to interpolate.  filled with nearest point value at            8  points
+  in fixrdc for mon=           7  fngrib=./INPUT/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb
+  file ./INPUT/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7         255         255         192         192           1           0         100           1          15
+  kpds(11-20)=           0           0           3           0           1          51           1           1         130           0
+  kpds(21-  )=          20           1
+  input grib file dates=         100           7          15           0
+ imax,jmax,ijmax=        3072        1536     4718592
+  kgds( 1-12)=           4        3072        1536       89910           0         128      -89910        -117         117         768           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ gaussian grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        3072        1536     4718592  0.11700000000000001       -99.000000000000000      T   0.0000000000000000        99.000000000000000     
+ i1,i2,j1,j2=        2741        2742         884         885
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+ i1,i2,j1,j2=         292         293         851         852
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         864  slmask(i)=   1.0000000000000000       outlon=   34.213951649333097       outlat=  -9.6784090796322761     
+  unable to interpolate.  filled with nearest point value at            8  points
+  in fixrdc for mon=           7  fngrib=./INPUT/RTGSST.1982.2012.monthly.clim.grb
+  file ./INPUT/RTGSST.1982.2012.monthly.clim.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7         120         173         128          11           1           0          96           1          15
+  kpds(11-20)=           0           0           1           0           0          10           0           1           1           0
+  kpds(21-  )=          20           2
+  input grib file dates=          96           7          15           0
+ imax,jmax,ijmax=        4320        2160     9331200
+  kgds( 1-12)=           0        4320        2160       89958          42         128      -89958         -42          83          83           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ lat/lon grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        4320        2160     9331200   8.3000000000000004E-002  -8.3000000000000004E-002 T   4.2000000000000003E-002   89.957999999999998     
+ i1,i2,j1,j2=         312         313        1483        1484
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         187  slmask(i)=   1.0000000000000000       outlon=   25.989150253801114       outlat=  -33.578709950944429     
+ i1,i2,j1,j2=         411         412        1232        1233
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         768  slmask(i)=   1.0000000000000000       outlon=   34.214158616772124       outlat=  -12.654091707887858     
+  unable to interpolate.  filled with nearest point value at           14  points
+  in fixrdc for mon=           7  fngrib=./INPUT/global_soilmgldas.t1534.3072.1536.grb
+  file ./INPUT/global_soilmgldas.t1534.3072.1536.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7          82         255         192         144         112          10          12           1           1
+  kpds(11-20)=           0           0           3           0           1           3          30           1           2           0
+  kpds(21-  )=          21           4
+  input grib file dates=          12           7           1           0
+ imax,jmax,ijmax=        3072        1536     4718592
+  kgds( 1-12)=           4        3072        1536       89910           0         128      -89910        -117         117         768           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ gaussian grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        3072        1536     4718592  0.11700000000000001       -99.000000000000000      T   0.0000000000000000        99.000000000000000     
+ i1,i2,j1,j2=        2741        2742         884         885
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+ i1,i2,j1,j2=         265         266         842         843
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         910  slmask(i)=   1.0000000000000000       outlon=   31.010845951693973       outlat=  -8.6159618722726510     
+  unable to interpolate.  filled with nearest point value at            7  points
+  in fixrdc for mon=           7  fngrib=./INPUT/global_soilmgldas.t1534.3072.1536.grb
+  file ./INPUT/global_soilmgldas.t1534.3072.1536.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7          82         255         192         144         112        2600          12           1           1
+  kpds(11-20)=           0           0           3           0           1           3          30           1           2           0
+  kpds(21-  )=          21           4
+  input grib file dates=          12           7           1           0
+ imax,jmax,ijmax=        3072        1536     4718592
+  kgds( 1-12)=           4        3072        1536       89910           0         128      -89910        -117         117         768           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ gaussian grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        3072        1536     4718592  0.11700000000000001       -99.000000000000000      T   0.0000000000000000        99.000000000000000     
+ i1,i2,j1,j2=        2741        2742         884         885
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+ i1,i2,j1,j2=         265         266         842         843
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         910  slmask(i)=   1.0000000000000000       outlon=   31.010845951693973       outlat=  -8.6159618722726510     
+  unable to interpolate.  filled with nearest point value at            7  points
+  in fixrdc for mon=           7  fngrib=./INPUT/global_soilmgldas.t1534.3072.1536.grb
+  file ./INPUT/global_soilmgldas.t1534.3072.1536.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7          82         255         192         144         112       10340          12           1           1
+  kpds(11-20)=           0           0           3           0           1           3          30           1           2           0
+  kpds(21-  )=          21           4
+  input grib file dates=          12           7           1           0
+ imax,jmax,ijmax=        3072        1536     4718592
+  kgds( 1-12)=           4        3072        1536       89910           0         128      -89910        -117         117         768           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ gaussian grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        3072        1536     4718592  0.11700000000000001       -99.000000000000000      T   0.0000000000000000        99.000000000000000     
+ i1,i2,j1,j2=        2741        2742         884         885
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+ i1,i2,j1,j2=         265         266         842         843
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         910  slmask(i)=   1.0000000000000000       outlon=   31.010845951693973       outlat=  -8.6159618722726510     
+  unable to interpolate.  filled with nearest point value at            7  points
+  in fixrdc for mon=           7  fngrib=./INPUT/global_soilmgldas.t1534.3072.1536.grb
+  file ./INPUT/global_soilmgldas.t1534.3072.1536.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7          82         255         192         144         112       25800          12           1           1
+  kpds(11-20)=           0           0           3           0           1           3          30           1           2           0
+  kpds(21-  )=          21           4
+  input grib file dates=          12           7           1           0
+ imax,jmax,ijmax=        3072        1536     4718592
+  kgds( 1-12)=           4        3072        1536       89910           0         128      -89910        -117         117         768           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ gaussian grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        3072        1536     4718592  0.11700000000000001       -99.000000000000000      T   0.0000000000000000        99.000000000000000     
+ i1,i2,j1,j2=        2741        2742         884         885
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+ i1,i2,j1,j2=         265         266         842         843
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         910  slmask(i)=   1.0000000000000000       outlon=   31.010845951693973       outlat=  -8.6159618722726510     
+  unable to interpolate.  filled with nearest point value at            7  points
+  in fixrdc for mon=           7  fngrib=./INPUT/CFSR.SEAICE.1982.2012.monthly.clim.grb
+  file ./INPUT/CFSR.SEAICE.1982.2012.monthly.clim.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7         120         235         128          91         102           0          82           1           1
+  kpds(11-20)=           0           0           1           0           0          10          31           1           2           0
+  kpds(21-  )=          20           2
+  input grib file dates=          82           7           1           0
+ imax,jmax,ijmax=         720         360      259200
+  kgds( 1-12)=           0         720         360       89750         250         128      -89750        -250         500         500           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ lat/lon grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+         720         360      259200  0.50000000000000000      -0.50000000000000000      T  0.25000000000000000        89.750000000000000     
+ i1,i2,j1,j2=          30          31         233         234
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         469  slmask(i)=   1.0000000000000000       outlon=   15.150011565367828       outlat=  -26.528467413943737     
+ i1,i2,j1,j2=          62          63         197         198
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         910  slmask(i)=   1.0000000000000000       outlon=   31.010845951693973       outlat=  -8.6159618722726510     
+  unable to interpolate.  filled with nearest point value at            5  points
+  in fixrdc for mon=           7  fngrib=./INPUT/global_snoclim.1.875.grb
+  file ./INPUT/global_snoclim.1.875.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7          80         255         128          65           1           0           0           1           1
+  kpds(11-20)=           0           0           3           0           1          51           1           1           2           0
+  kpds(21-  )=          20           1
+  input grib file dates=           0           7           1           0
+ imax,jmax,ijmax=         192          95       18240
+  kgds( 1-12)=           0         192          95       88125           0         128      -88125       -1875        1875        1875           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ lat/lon grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+         192          95       18240   1.8750000000000000       -1.8750000000000000      T   0.0000000000000000        88.125000000000000     
+ i1,i2,j1,j2=           5           6          48          49
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=        1138  slmask(i)=   1.0000000000000000       outlon=   9.3649992197745320       outlat= -0.98003925632976896     
+ roughness length to be set from igbp veg type
+  in fixrdc for mon=           7  fngrib=./INPUT/global_vegfrac.0.144.decpercent.grb
+  file ./INPUT/global_vegfrac.0.144.decpercent.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7          80         255         192          87           1           0         100           1           1
+  kpds(11-20)=           0           0           3           0           1          51           5           1           3           0
+  kpds(21-  )=          19           2
+  input grib file dates=         100           7           1           0
+ imax,jmax,ijmax=        2500        1250     3125000
+  kgds( 1-12)=           0        2500        1250      -89928     -180000         128       89928      179856         144         144          64           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ lat/lon grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        2500        1250     3125000  0.14400000000000002       0.14400000000000002      T  -180.00000000000000        89.927999999999997     
+ i1,i2,j1,j2=        1488        1489         713         714
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         768  slmask(i)=   1.0000000000000000       outlon=   34.214158616772124       outlat=  -12.654091707887858     
+ i1,i2,j1,j2=         981         982         719         720
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+  unable to interpolate.  filled with nearest point value at            6  points
+ climatological vegetation cover read in for mon=           7
+  in fixrdc for mon=           8  fngrib=./INPUT/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb
+  file ./INPUT/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7         255         255         192         189           1           0         100           1          15
+  kpds(11-20)=           0           0           3           0           1          51           1           1         130           0
+  kpds(21-  )=          20           1
+  input grib file dates=         100           8          15           0
+ imax,jmax,ijmax=        3072        1536     4718592
+  kgds( 1-12)=           4        3072        1536       89910           0         128      -89910        -117         117         768           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ gaussian grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        3072        1536     4718592  0.11700000000000001       -99.000000000000000      T   0.0000000000000000        99.000000000000000     
+ i1,i2,j1,j2=        2741        2742         884         885
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+ i1,i2,j1,j2=         292         293         851         852
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         864  slmask(i)=   1.0000000000000000       outlon=   34.213951649333097       outlat=  -9.6784090796322761     
+  unable to interpolate.  filled with nearest point value at            8  points
+  in fixrdc for mon=           8  fngrib=./INPUT/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb
+  file ./INPUT/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7         255         255         192         190           1           0         100           1          15
+  kpds(11-20)=           0           0           3           0           1          51           1           1         130           0
+  kpds(21-  )=          20           1
+  input grib file dates=         100           8          15           0
+ imax,jmax,ijmax=        3072        1536     4718592
+  kgds( 1-12)=           4        3072        1536       89910           0         128      -89910        -117         117         768           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ gaussian grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        3072        1536     4718592  0.11700000000000001       -99.000000000000000      T   0.0000000000000000        99.000000000000000     
+ i1,i2,j1,j2=        2741        2742         884         885
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+ i1,i2,j1,j2=         292         293         851         852
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         864  slmask(i)=   1.0000000000000000       outlon=   34.213951649333097       outlat=  -9.6784090796322761     
+  unable to interpolate.  filled with nearest point value at            8  points
+  in fixrdc for mon=           8  fngrib=./INPUT/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb
+  file ./INPUT/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7         255         255         192         191           1           0         100           1          15
+  kpds(11-20)=           0           0           3           0           1          51           1           1         130           0
+  kpds(21-  )=          20           1
+  input grib file dates=         100           8          15           0
+ imax,jmax,ijmax=        3072        1536     4718592
+  kgds( 1-12)=           4        3072        1536       89910           0         128      -89910        -117         117         768           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ gaussian grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        3072        1536     4718592  0.11700000000000001       -99.000000000000000      T   0.0000000000000000        99.000000000000000     
+ i1,i2,j1,j2=        2741        2742         884         885
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+ i1,i2,j1,j2=         292         293         851         852
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         864  slmask(i)=   1.0000000000000000       outlon=   34.213951649333097       outlat=  -9.6784090796322761     
+  unable to interpolate.  filled with nearest point value at            8  points
+  in fixrdc for mon=           8  fngrib=./INPUT/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb
+  file ./INPUT/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7         255         255         192         192           1           0         100           1          15
+  kpds(11-20)=           0           0           3           0           1          51           1           1         130           0
+  kpds(21-  )=          20           1
+  input grib file dates=         100           8          15           0
+ imax,jmax,ijmax=        3072        1536     4718592
+  kgds( 1-12)=           4        3072        1536       89910           0         128      -89910        -117         117         768           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ gaussian grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        3072        1536     4718592  0.11700000000000001       -99.000000000000000      T   0.0000000000000000        99.000000000000000     
+ i1,i2,j1,j2=        2741        2742         884         885
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+ i1,i2,j1,j2=         292         293         851         852
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         864  slmask(i)=   1.0000000000000000       outlon=   34.213951649333097       outlat=  -9.6784090796322761     
+  unable to interpolate.  filled with nearest point value at            8  points
+  in fixrdc for mon=           8  fngrib=./INPUT/RTGSST.1982.2012.monthly.clim.grb
+  file ./INPUT/RTGSST.1982.2012.monthly.clim.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7         120         173         128          11           1           0          96           1          15
+  kpds(11-20)=           0           0           1           0           0          10           0           1           1           0
+  kpds(21-  )=          20           2
+  input grib file dates=          96           8          15           0
+ imax,jmax,ijmax=        4320        2160     9331200
+  kgds( 1-12)=           0        4320        2160       89958          42         128      -89958         -42          83          83           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ lat/lon grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        4320        2160     9331200   8.3000000000000004E-002  -8.3000000000000004E-002 T   4.2000000000000003E-002   89.957999999999998     
+ i1,i2,j1,j2=         312         313        1483        1484
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         187  slmask(i)=   1.0000000000000000       outlon=   25.989150253801114       outlat=  -33.578709950944429     
+ i1,i2,j1,j2=         411         412        1232        1233
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         768  slmask(i)=   1.0000000000000000       outlon=   34.214158616772124       outlat=  -12.654091707887858     
+  unable to interpolate.  filled with nearest point value at           14  points
+  in fixrdc for mon=           8  fngrib=./INPUT/global_soilmgldas.t1534.3072.1536.grb
+  file ./INPUT/global_soilmgldas.t1534.3072.1536.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7          82         255         192         144         112          10          12           1           1
+  kpds(11-20)=           0           0           3           0           1           3          30           1           2           0
+  kpds(21-  )=          21           4
+  input grib file dates=          12           8           1           0
+ imax,jmax,ijmax=        3072        1536     4718592
+  kgds( 1-12)=           4        3072        1536       89910           0         128      -89910        -117         117         768           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ gaussian grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        3072        1536     4718592  0.11700000000000001       -99.000000000000000      T   0.0000000000000000        99.000000000000000     
+ i1,i2,j1,j2=        2741        2742         884         885
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+ i1,i2,j1,j2=         265         266         842         843
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         910  slmask(i)=   1.0000000000000000       outlon=   31.010845951693973       outlat=  -8.6159618722726510     
+  unable to interpolate.  filled with nearest point value at            7  points
+  in fixrdc for mon=           8  fngrib=./INPUT/global_soilmgldas.t1534.3072.1536.grb
+  file ./INPUT/global_soilmgldas.t1534.3072.1536.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7          82         255         192         144         112        2600          12           1           1
+  kpds(11-20)=           0           0           3           0           1           3          30           1           2           0
+  kpds(21-  )=          21           4
+  input grib file dates=          12           8           1           0
+ imax,jmax,ijmax=        3072        1536     4718592
+  kgds( 1-12)=           4        3072        1536       89910           0         128      -89910        -117         117         768           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ gaussian grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        3072        1536     4718592  0.11700000000000001       -99.000000000000000      T   0.0000000000000000        99.000000000000000     
+ i1,i2,j1,j2=        2741        2742         884         885
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+ i1,i2,j1,j2=         265         266         842         843
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         910  slmask(i)=   1.0000000000000000       outlon=   31.010845951693973       outlat=  -8.6159618722726510     
+  unable to interpolate.  filled with nearest point value at            7  points
+  in fixrdc for mon=           8  fngrib=./INPUT/global_soilmgldas.t1534.3072.1536.grb
+  file ./INPUT/global_soilmgldas.t1534.3072.1536.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7          82         255         192         144         112       10340          12           1           1
+  kpds(11-20)=           0           0           3           0           1           3          30           1           2           0
+  kpds(21-  )=          21           4
+  input grib file dates=          12           8           1           0
+ imax,jmax,ijmax=        3072        1536     4718592
+  kgds( 1-12)=           4        3072        1536       89910           0         128      -89910        -117         117         768           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ gaussian grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        3072        1536     4718592  0.11700000000000001       -99.000000000000000      T   0.0000000000000000        99.000000000000000     
+ i1,i2,j1,j2=        2741        2742         884         885
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+ i1,i2,j1,j2=         265         266         842         843
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         910  slmask(i)=   1.0000000000000000       outlon=   31.010845951693973       outlat=  -8.6159618722726510     
+  unable to interpolate.  filled with nearest point value at            7  points
+  in fixrdc for mon=           8  fngrib=./INPUT/global_soilmgldas.t1534.3072.1536.grb
+  file ./INPUT/global_soilmgldas.t1534.3072.1536.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7          82         255         192         144         112       25800          12           1           1
+  kpds(11-20)=           0           0           3           0           1           3          30           1           2           0
+  kpds(21-  )=          21           4
+  input grib file dates=          12           8           1           0
+ imax,jmax,ijmax=        3072        1536     4718592
+  kgds( 1-12)=           4        3072        1536       89910           0         128      -89910        -117         117         768           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ gaussian grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        3072        1536     4718592  0.11700000000000001       -99.000000000000000      T   0.0000000000000000        99.000000000000000     
+ i1,i2,j1,j2=        2741        2742         884         885
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+ i1,i2,j1,j2=         265         266         842         843
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         910  slmask(i)=   1.0000000000000000       outlon=   31.010845951693973       outlat=  -8.6159618722726510     
+  unable to interpolate.  filled with nearest point value at            7  points
+  in fixrdc for mon=           8  fngrib=./INPUT/CFSR.SEAICE.1982.2012.monthly.clim.grb
+  file ./INPUT/CFSR.SEAICE.1982.2012.monthly.clim.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7         120         235         128          91         102           0          82           1           1
+  kpds(11-20)=           0           0           1           0           0          10          31           1           2           0
+  kpds(21-  )=          20           2
+  input grib file dates=          82           8           1           0
+ imax,jmax,ijmax=         720         360      259200
+  kgds( 1-12)=           0         720         360       89750         250         128      -89750        -250         500         500           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ lat/lon grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+         720         360      259200  0.50000000000000000      -0.50000000000000000      T  0.25000000000000000        89.750000000000000     
+ i1,i2,j1,j2=          30          31         233         234
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         469  slmask(i)=   1.0000000000000000       outlon=   15.150011565367828       outlat=  -26.528467413943737     
+ i1,i2,j1,j2=          62          63         197         198
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         910  slmask(i)=   1.0000000000000000       outlon=   31.010845951693973       outlat=  -8.6159618722726510     
+  unable to interpolate.  filled with nearest point value at            5  points
+  in fixrdc for mon=           8  fngrib=./INPUT/global_snoclim.1.875.grb
+  file ./INPUT/global_snoclim.1.875.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7          80         255         128          65           1           0           0           1           1
+  kpds(11-20)=           0           0           3           0           1          51           1           1           2           0
+  kpds(21-  )=          20           1
+  input grib file dates=           0           8           1           0
+ imax,jmax,ijmax=         192          95       18240
+  kgds( 1-12)=           0         192          95       88125           0         128      -88125       -1875        1875        1875           0           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ lat/lon grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+         192          95       18240   1.8750000000000000       -1.8750000000000000      T   0.0000000000000000        88.125000000000000     
+ i1,i2,j1,j2=           5           6          48          49
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=        1138  slmask(i)=   1.0000000000000000       outlon=   9.3649992197745320       outlat= -0.98003925632976896     
+ roughness length to be set from igbp veg type
+  in fixrdc for mon=           8  fngrib=./INPUT/global_vegfrac.0.144.decpercent.grb
+  file ./INPUT/global_vegfrac.0.144.decpercent.grb opened. unit=        9998
+  first grib record.
+  kpds( 1-10)=           7          80         255         192          87           1           0         100           1           1
+  kpds(11-20)=           0           0           3           0           1          51           5           1           3           0
+  kpds(21-  )=          19           2
+  input grib file dates=         100           8           1           0
+ imax,jmax,ijmax=        2500        1250     3125000
+  kgds( 1-12)=           0        2500        1250      -89928     -180000         128       89928      179856         144         144          64           0
+  kgds(13-22)=          -1          -1          -1          -1          -1          -1           0         255          -1          -1
+ lat/lon grid
+ imax,jmax,ijmax,dlon,dlat,ijordr,wlon,rnlat=
+        2500        1250     3125000  0.14400000000000002       0.14400000000000002      T  -180.00000000000000        89.927999999999997     
+ i1,i2,j1,j2=        1488        1489         713         714
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         768  slmask(i)=   1.0000000000000000       outlon=   34.214158616772124       outlat=  -12.654091707887858     
+ i1,i2,j1,j2=         981         982         719         720
+ rslmsk=   0.0000000000000000        0.0000000000000000        0.0000000000000000        0.0000000000000000     
+ i=         778  slmask(i)=   1.0000000000000000       outlon=   321.12470272303739       outlat=  -13.557961110230368     
+  unable to interpolate.  filled with nearest point value at            6  points
+ climatological vegetation cover read in for mon=           8
+  mon1s=           7  mon2s=           8  sea1s=           7  sea2s=          10
+ monthly albedo weights are   0.43548387096774194       for k           1  0.56451612903225812       for k           2
+ qc of sea ice
+  sea ice over land mask at          882  points (   38.281250000000000      percent)
+  
+ qc of snow
+ snow set to zero over open sea at         1422  points (   61.718750000000000      percent)
+ performing qc of snow     mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to      0.0 at 32766 points   1422.1percent
+ bare land max check. modified to      0.0 at ***** points ****percent
+ open ocean min check.  modified to      0.0 at   128 points  5.6percent
+ snow covered land max check. modified to  55000.0 at ***** points ****percent
+ bare ice min check.  modified to      0.0 at 22023 points ****percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ set snow temp to tsfsmx if greater
+ performing qc of tsfc     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to    271.2 at  4096 points ****percent
+ open sea max check. modified to    313.0 at 11101 points ****percent
+ snow covered land min check. modified to    173.0 at     6 points  0.3percent
+ snow covered land max check. modified to    305.0 at     1 points  0.0percent
+ bare ice max check. modified to    271.2 at     1 points  0.0percent
+ snow covered ice min check.  modified to    173.0 at ***** points ****percent
+ performing qc of tsf2     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to    271.2 at  4096 points ****percent
+ open sea max check. modified to    313.0 at 11101 points ****percent
+ snow covered land min check. modified to    173.0 at     6 points  0.3percent
+ snow covered land max check. modified to    305.0 at     1 points  0.0percent
+ bare ice max check. modified to    271.2 at     1 points  0.0percent
+ snow covered ice min check.  modified to    173.0 at ***** points ****percent
+ performing qc of albc     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.1 at  4096 points ****percent
+ open sea max check. modified to      0.1 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.8 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of albc     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.1 at  4096 points ****percent
+ open sea max check. modified to      0.1 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.8 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of albc     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.1 at  4096 points ****percent
+ open sea max check. modified to      0.1 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.8 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of albc     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.1 at  4096 points ****percent
+ open sea max check. modified to      0.1 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.8 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of zorc     mode=           1 (0=count only, 1=replace)
+ open ocean min. check. lat=-34.9 lon= 305.8 fld= 0.0000E+00 to  0.1000E-04
+ open ocean min. check. lat=-35.6 lon= 307.4 fld= 0.0000E+00 to  0.1000E-04
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      1.0 at 11101 points ****percent
+ snow covered land min check. modified to      1.0 at     6 points  0.3percent
+ snow covered land max check. modified to    300.0 at     1 points  0.0percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      1.0 at ***** points ****percent
+ performing qc of tg3c     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to    200.0 at  4096 points ****percent
+ open sea max check. modified to    310.0 at 11101 points ****percent
+ snow covered land min check. modified to    200.0 at     6 points  0.3percent
+ snow covered land max check. modified to    310.0 at     1 points  0.0percent
+ bare ice max check. modified to    310.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to    200.0 at ***** points ****percent
+ performing qc of smc1c    mode=           1 (0=count only, 1=replace)
+ open ocean min. check. lat=-34.9 lon= 305.8 fld= 0.0000E+00 to  0.1000E+01
+ open ocean min. check. lat=-35.6 lon= 307.4 fld= 0.0000E+00 to  0.1000E+01
+ open ocean min check.  modified to      1.0 at  4096 points ****percent
+ open sea max check. modified to      1.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      0.6 at     1 points  0.0percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      1.0 at ***** points ****percent
+ performing qc of smc2c    mode=           1 (0=count only, 1=replace)
+ open ocean min. check. lat=-34.9 lon= 305.8 fld= 0.0000E+00 to  0.1000E+01
+ open ocean min. check. lat=-35.6 lon= 307.4 fld= 0.0000E+00 to  0.1000E+01
+ open ocean min check.  modified to      1.0 at  4096 points ****percent
+ open sea max check. modified to      1.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      0.6 at     1 points  0.0percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      1.0 at ***** points ****percent
+ performing qc of smc3c    mode=           1 (0=count only, 1=replace)
+ open ocean min. check. lat=-34.9 lon= 305.8 fld= 0.0000E+00 to  0.1000E+01
+ open ocean min. check. lat=-35.6 lon= 307.4 fld= 0.0000E+00 to  0.1000E+01
+ open ocean min check.  modified to      1.0 at  4096 points ****percent
+ open sea max check. modified to      1.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      0.6 at     1 points  0.0percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      1.0 at ***** points ****percent
+ performing qc of smc4c    mode=           1 (0=count only, 1=replace)
+ open ocean min. check. lat=-34.9 lon= 305.8 fld= 0.0000E+00 to  0.1000E+01
+ open ocean min. check. lat=-35.6 lon= 307.4 fld= 0.0000E+00 to  0.1000E+01
+ open ocean min check.  modified to      1.0 at  4096 points ****percent
+ open sea max check. modified to      1.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      0.6 at     1 points  0.0percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      1.0 at ***** points ****percent
+ performing qc of stc1c    mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to    200.0 at  4096 points ****percent
+ open sea max check. modified to    313.0 at 11101 points ****percent
+ snow covered land min check. modified to    200.0 at     6 points  0.3percent
+ snow covered land max check. modified to    310.0 at     1 points  0.0percent
+ bare ice max check. modified to    310.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to    200.0 at ***** points ****percent
+ performing qc of stc2c    mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to    200.0 at  4096 points ****percent
+ open sea max check. modified to    313.0 at 11101 points ****percent
+ snow covered land min check. modified to    200.0 at     6 points  0.3percent
+ snow covered land max check. modified to    310.0 at     1 points  0.0percent
+ bare ice max check. modified to    310.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to    200.0 at ***** points ****percent
+ performing qc of stc3c    mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to    200.0 at  4096 points ****percent
+ open sea max check. modified to    313.0 at 11101 points ****percent
+ snow covered land min check. modified to    200.0 at     6 points  0.3percent
+ snow covered land max check. modified to    310.0 at     1 points  0.0percent
+ bare ice max check. modified to    310.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to    200.0 at ***** points ****percent
+ performing qc of stc4c    mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to    200.0 at  4096 points ****percent
+ open sea max check. modified to    313.0 at 11101 points ****percent
+ snow covered land min check. modified to    200.0 at     6 points  0.3percent
+ snow covered land max check. modified to    310.0 at     1 points  0.0percent
+ bare ice max check. modified to    310.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to    200.0 at ***** points ****percent
+ performing qc of vegc     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of vetc     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      1.0 at     6 points  0.3percent
+ snow covered land max check. modified to     20.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of sotc     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      1.0 at     6 points  0.3percent
+ snow covered land max check. modified to     16.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of sihc     mode=           1 (0=count only, 1=replace)
+ bare land max. check. lat=-33.4 lon= 305.8 fld= 0.471000E+01 to  0.000000E+00
+ bare land max. check. lat=-31.9 lon= 305.8 fld= 0.471000E+01 to  0.000000E+00
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      5.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      5.0 at     1 points  0.0percent
+ bare ice max check. modified to      5.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of sicc     mode=           1 (0=count only, 1=replace)
+ bare land max. check. lat=-33.4 lon= 305.8 fld= 0.157000E+01 to  0.000000E+00
+ bare land max. check. lat=-31.9 lon= 305.8 fld= 0.157000E+01 to  0.000000E+00
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      1.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of vmnc     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of vmxc     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of slpc     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      1.0 at     6 points  0.3percent
+ snow covered land max check. modified to      9.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of absc     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ ==============
+    analysis
+ ==============
+ no tsf analysis available.  climatology used
+ no albedo analysis available.  climatology used
+ no vegfalbedo analysis available.  climatology used
+ no soil wetness analysis available.  climatology used
+ no snow/snocov analysis available.  climatology used
+ no sea-ice analysis available.  climatology used
+ no srfc roughness analysis available. climatology used
+ no deep soil temp analy available.  climatology used
+ no vegetation cover anly available. climatology used
+ no vegetation type anly available. climatology used
+ no soil type anly available. climatology used
+ no shdmin anly available. climatology used
+ no shdmax anly available. climatology used
+ no slope type anly available. climatology used
+ no snoalb anly available. climatology used
+ qc of sea ice
+ performing qc of siha     mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to      0.0 at 11101 points    481.8percent
+ open sea max check. modified to      5.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at 32766 points ****percent
+ snow covered land max check. modified to      5.0 at ***** points ****percent
+ bare ice min check.  modified to      0.1 at 22023 points ****percent
+ bare ice max check. modified to      5.0 at ***** points ****percent
+ snow covered ice max check. modified to      5.0 at 22023 points ****percent
+ performing qc of sica     mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to      0.0 at 11101 points    481.8percent
+ open sea max check. modified to      1.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at 32766 points ****percent
+ snow covered land max check. modified to      1.0 at ***** points ****percent
+ bare ice min check.  modified to      0.1 at 22023 points ****percent
+ bare ice max check. modified to      1.0 at ***** points ****percent
+ snow covered ice max check. modified to      1.0 at 22023 points ****percent
+  
+ qc of snow
+ snow set to zero over open sea at         1422  points (   61.718750000000000      percent)
+ performing qc of sncva    mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to      0.0 at 32766 points   1422.1percent
+ bare land max check. modified to      0.0 at ***** points ****percent
+ open ocean min check.  modified to      0.0 at   128 points  5.6percent
+ snow covered land max check. modified to      1.0 at ***** points ****percent
+ bare ice min check.  modified to      0.0 at 22023 points ****percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snodpth
+  
+ qc of snow
+ snow set to zero over open sea at         1422  points (   61.718750000000000      percent)
+ set snow temp to tsfsmx if greater
+ performing qc of snowa    mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at   128 points  5.6percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land max check. modified to  55000.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of tsfa     mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to    173.0 at ***** points ********percent
+ bare land max check. modified to    353.0 at ***** points ****percent
+ open ocean min check.  modified to    271.2 at  4096 points ****percent
+ snow covered land min check. modified to    173.0 at     6 points  0.3percent
+ snow covered land max check. modified to    305.0 at   128 points  5.6percent
+ bare ice max check. modified to    271.2 at     1 points  0.0percent
+ snow covered ice min check.  modified to    173.0 at ***** points ****percent
+ performing qc of alba     mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to      0.0 at ***** points ********percent
+ bare land max check. modified to      1.0 at ***** points ****percent
+ open ocean min check.  modified to      0.1 at  4096 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at   128 points  5.6percent
+ bare ice max check. modified to      0.8 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of alba     mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to      0.0 at ***** points ********percent
+ bare land max check. modified to      1.0 at ***** points ****percent
+ open ocean min check.  modified to      0.1 at  4096 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at   128 points  5.6percent
+ bare ice max check. modified to      0.8 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of alba     mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to      0.0 at ***** points ********percent
+ bare land max check. modified to      1.0 at ***** points ****percent
+ open ocean min check.  modified to      0.1 at  4096 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at   128 points  5.6percent
+ bare ice max check. modified to      0.8 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of alba     mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to      0.0 at ***** points ********percent
+ bare land max check. modified to      1.0 at ***** points ****percent
+ open ocean min check.  modified to      0.1 at  4096 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at   128 points  5.6percent
+ bare ice max check. modified to      0.8 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of zora     mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to      1.0 at ***** points ********percent
+ bare land max check. modified to    300.0 at ***** points ****percent
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ snow covered land min check. modified to      1.0 at     6 points  0.3percent
+ snow covered land max check. modified to    300.0 at   128 points  5.6percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      1.0 at ***** points ****percent
+ performing qc of tg3a     mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to    200.0 at ***** points ********percent
+ bare land max check. modified to    310.0 at ***** points ****percent
+ open ocean min check.  modified to    200.0 at  4096 points ****percent
+ snow covered land min check. modified to    200.0 at     6 points  0.3percent
+ snow covered land max check. modified to    310.0 at   128 points  5.6percent
+ bare ice max check. modified to    310.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to    200.0 at ***** points ****percent
+ performing qc of smc1a    mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to      0.0 at ***** points ********percent
+ bare land max check. modified to      0.6 at ***** points ****percent
+ open ocean min check.  modified to      1.0 at  4096 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      0.6 at   128 points  5.6percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      1.0 at ***** points ****percent
+ performing qc of smc2a    mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to      0.0 at ***** points ********percent
+ bare land max check. modified to      0.6 at ***** points ****percent
+ open ocean min check.  modified to      1.0 at  4096 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      0.6 at   128 points  5.6percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      1.0 at ***** points ****percent
+ performing qc of smc3a    mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to      0.0 at ***** points ********percent
+ bare land max check. modified to      0.6 at ***** points ****percent
+ open ocean min check.  modified to      1.0 at  4096 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      0.6 at   128 points  5.6percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      1.0 at ***** points ****percent
+ performing qc of smc4a    mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to      0.0 at ***** points ********percent
+ bare land max check. modified to      0.6 at ***** points ****percent
+ open ocean min check.  modified to      1.0 at  4096 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      0.6 at   128 points  5.6percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      1.0 at ***** points ****percent
+ performing qc of stc1a    mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to    173.0 at ***** points ********percent
+ bare land max check. modified to    353.0 at ***** points ****percent
+ open ocean min check.  modified to    200.0 at  4096 points ****percent
+ snow covered land min check. modified to    200.0 at     6 points  0.3percent
+ snow covered land max check. modified to    310.0 at   128 points  5.6percent
+ bare ice max check. modified to    310.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to    200.0 at ***** points ****percent
+ performing qc of stc2a    mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to    173.0 at ***** points ********percent
+ bare land max check. modified to    353.0 at ***** points ****percent
+ open ocean min check.  modified to    200.0 at  4096 points ****percent
+ snow covered land min check. modified to    200.0 at     6 points  0.3percent
+ snow covered land max check. modified to    310.0 at   128 points  5.6percent
+ bare ice max check. modified to    310.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to    200.0 at ***** points ****percent
+ performing qc of stc3a    mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to    173.0 at ***** points ********percent
+ bare land max check. modified to    353.0 at ***** points ****percent
+ open ocean min check.  modified to    200.0 at  4096 points ****percent
+ snow covered land min check. modified to    200.0 at     6 points  0.3percent
+ snow covered land max check. modified to    310.0 at   128 points  5.6percent
+ bare ice max check. modified to    310.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to    200.0 at ***** points ****percent
+ performing qc of stc4a    mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to    173.0 at ***** points ********percent
+ bare land max check. modified to    353.0 at ***** points ****percent
+ open ocean min check.  modified to    200.0 at  4096 points ****percent
+ snow covered land min check. modified to    200.0 at     6 points  0.3percent
+ snow covered land max check. modified to    310.0 at   128 points  5.6percent
+ bare ice max check. modified to    310.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to    200.0 at ***** points ****percent
+ performing qc of vega     mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to      0.0 at ***** points ********percent
+ bare land max check. modified to      1.0 at ***** points ****percent
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at   128 points  5.6percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of veta     mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to      1.0 at ***** points ********percent
+ bare land max check. modified to     20.0 at ***** points ****percent
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ snow covered land min check. modified to      1.0 at     6 points  0.3percent
+ snow covered land max check. modified to     20.0 at   128 points  5.6percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of sota     mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to      1.0 at ***** points ********percent
+ bare land max check. modified to     16.0 at ***** points ****percent
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ snow covered land min check. modified to      1.0 at     6 points  0.3percent
+ snow covered land max check. modified to     16.0 at   128 points  5.6percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of vmna     mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to      0.0 at ***** points ********percent
+ bare land max check. modified to      1.0 at ***** points ****percent
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at   128 points  5.6percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of vmxa     mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to      0.0 at ***** points ********percent
+ bare land max check. modified to      1.0 at ***** points ****percent
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at   128 points  5.6percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of slpa     mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to      1.0 at ***** points ********percent
+ bare land max check. modified to      9.0 at ***** points ****percent
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ snow covered land min check. modified to      1.0 at     6 points  0.3percent
+ snow covered land max check. modified to      9.0 at   128 points  5.6percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of absa     mode=           1 (0=count only, 1=replace)
+ bare land min check.  modified to      0.0 at ***** points ********percent
+ bare land max check. modified to      1.0 at ***** points ****percent
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at   128 points  5.6percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ ==============
+   fcst guess
+ ==============
+  
+ qcsli
+ performing qc of snof     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to  55000.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of tsff     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to    271.2 at  4096 points ****percent
+ open sea max check. modified to    313.0 at 11101 points ****percent
+ snow covered land min check. modified to    173.0 at     6 points  0.3percent
+ snow covered land max check. modified to    305.0 at     1 points  0.0percent
+ bare ice max check. modified to    271.2 at     1 points  0.0percent
+ snow covered ice min check.  modified to    173.0 at ***** points ****percent
+ performing qc of albf     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.1 at  4096 points ****percent
+ open sea max check. modified to      0.1 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.8 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of albf     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.1 at  4096 points ****percent
+ open sea max check. modified to      0.1 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.8 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of albf     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.1 at  4096 points ****percent
+ open sea max check. modified to      0.1 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.8 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of albf     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.1 at  4096 points ****percent
+ open sea max check. modified to      0.1 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.8 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of zorf     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      1.0 at 11101 points ****percent
+ snow covered land min check. modified to      1.0 at     6 points  0.3percent
+ snow covered land max check. modified to    300.0 at     1 points  0.0percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      1.0 at ***** points ****percent
+ performing qc of tg3f     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to    200.0 at  4096 points ****percent
+ open sea max check. modified to    310.0 at 11101 points ****percent
+ snow covered land min check. modified to    200.0 at     6 points  0.3percent
+ snow covered land max check. modified to    310.0 at     1 points  0.0percent
+ bare ice max check. modified to    310.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to    200.0 at ***** points ****percent
+ performing qc of sihf     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      5.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      5.0 at     1 points  0.0percent
+ bare ice max check. modified to      5.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of sicf     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      1.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of smc1f    mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      1.0 at  4096 points ****percent
+ open sea max check. modified to      1.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      0.6 at     1 points  0.0percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      1.0 at ***** points ****percent
+ performing qc of smc2f    mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      1.0 at  4096 points ****percent
+ open sea max check. modified to      1.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      0.6 at     1 points  0.0percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      1.0 at ***** points ****percent
+ performing qc of smc3f    mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      1.0 at  4096 points ****percent
+ open sea max check. modified to      1.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      0.6 at     1 points  0.0percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      1.0 at ***** points ****percent
+ performing qc of smc4f    mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      1.0 at  4096 points ****percent
+ open sea max check. modified to      1.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      0.6 at     1 points  0.0percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      1.0 at ***** points ****percent
+ performing qc of stc1f    mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to    200.0 at  4096 points ****percent
+ open sea max check. modified to    313.0 at 11101 points ****percent
+ snow covered land min check. modified to    200.0 at     6 points  0.3percent
+ snow covered land max check. modified to    310.0 at     1 points  0.0percent
+ bare ice max check. modified to    310.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to    200.0 at ***** points ****percent
+ performing qc of stc2f    mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to    200.0 at  4096 points ****percent
+ open sea max check. modified to    313.0 at 11101 points ****percent
+ snow covered land min check. modified to    200.0 at     6 points  0.3percent
+ snow covered land max check. modified to    310.0 at     1 points  0.0percent
+ bare ice max check. modified to    310.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to    200.0 at ***** points ****percent
+ performing qc of stc3f    mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to    200.0 at  4096 points ****percent
+ open sea max check. modified to    313.0 at 11101 points ****percent
+ snow covered land min check. modified to    200.0 at     6 points  0.3percent
+ snow covered land max check. modified to    310.0 at     1 points  0.0percent
+ bare ice max check. modified to    310.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to    200.0 at ***** points ****percent
+ performing qc of stc4f    mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to    200.0 at  4096 points ****percent
+ open sea max check. modified to    313.0 at 11101 points ****percent
+ snow covered land min check. modified to    200.0 at     6 points  0.3percent
+ snow covered land max check. modified to    310.0 at     1 points  0.0percent
+ bare ice max check. modified to    310.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to    200.0 at ***** points ****percent
+ performing qc of vegf     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of vetf     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      1.0 at     6 points  0.3percent
+ snow covered land max check. modified to     20.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of sotf     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      1.0 at     6 points  0.3percent
+ snow covered land max check. modified to     16.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of vmnf     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of vmxf     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of slpf     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      1.0 at     6 points  0.3percent
+ snow covered land max check. modified to      9.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of absf     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  4096 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at     6 points  0.3percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ qc of snow and sea-ice analysis
+ ==============
+    merging
+ ==============
+ use forecast land-sea-ice mask
+rtsfl,ralbl,raisl,rsnol,rsmcl,rzorl,rvegl=  1.000  0.000  1.000  1.000  1.000  1.000  1.000  1.000  0.000  0.000
+rtsfs,ralbs,raiss,rsnos,rsmcs,rzors,rvegs=  1.000  0.000  1.000  1.000  0.000  0.000  0.000  0.000  1.000  1.000
+ dbgx-- csmcl:   1.0000000000000000        1.0000000000000000        1.0000000000000000        1.0000000000000000     
+ dbgx-- rsmcl:   1.0000000000000000        1.0000000000000000        1.0000000000000000        1.0000000000000000     
+ dbgx-- csnol, csnos:   1.0000000000000000        1.0000000000000000     
+ dbgx-- rsnol, rsnos:   1.0000000000000000        1.0000000000000000     
+ newice
+ set snow temp to tsfsmx if greater
+ snow sfc.  tsf set to    305.00000000000000       at            2  points    8.6805555555555552E-002 percent
+ performing qc of snowm    mode=           0 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  5024 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at 22023 points ****percent
+ snow covered land max check. modified to  55000.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of tsfm     mode=           0 (0=count only, 1=replace)
+ open ocean min check.  modified to    271.2 at  5024 points ****percent
+ open sea max check. modified to    313.0 at 11101 points ****percent
+ snow covered land min check. modified to    173.0 at 22023 points ****percent
+ snow covered land max check. modified to    305.0 at     1 points  0.0percent
+ bare ice max check. modified to    271.2 at     1 points  0.0percent
+ snow covered ice min check.  modified to    173.0 at ***** points ****percent
+ performing qc of albm     mode=           0 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.1 at  5024 points ****percent
+ open sea max check. modified to      0.1 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at 22023 points ****percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.8 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of albm     mode=           0 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.1 at  5024 points ****percent
+ open sea max check. modified to      0.1 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at 22023 points ****percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.8 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of albm     mode=           0 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.1 at  5024 points ****percent
+ open sea max check. modified to      0.1 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at 22023 points ****percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.8 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of albm     mode=           0 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.1 at  5024 points ****percent
+ open sea max check. modified to      0.1 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at 22023 points ****percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.8 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of zorm     mode=           0 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  5024 points ****percent
+ open sea max check. modified to      1.0 at 11101 points ****percent
+ snow covered land min check. modified to      1.0 at 22023 points ****percent
+ snow covered land max check. modified to    300.0 at     1 points  0.0percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      1.0 at ***** points ****percent
+ performing qc of stc1m    mode=           0 (0=count only, 1=replace)
+ open ocean min check.  modified to    200.0 at  5024 points ****percent
+ open sea max check. modified to    313.0 at 11101 points ****percent
+ snow covered land min check. modified to    200.0 at 22023 points ****percent
+ snow covered land max check. modified to    310.0 at     1 points  0.0percent
+ bare ice max check. modified to    310.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to    200.0 at ***** points ****percent
+ performing qc of stc2m    mode=           0 (0=count only, 1=replace)
+ open ocean min check.  modified to    200.0 at  5024 points ****percent
+ open sea max check. modified to    313.0 at 11101 points ****percent
+ snow covered land min check. modified to    200.0 at 22023 points ****percent
+ snow covered land max check. modified to    310.0 at     1 points  0.0percent
+ bare ice max check. modified to    310.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to    200.0 at ***** points ****percent
+ performing qc of stc3m    mode=           0 (0=count only, 1=replace)
+ open ocean min check.  modified to    200.0 at  5024 points ****percent
+ open sea max check. modified to    313.0 at 11101 points ****percent
+ snow covered land min check. modified to    200.0 at 22023 points ****percent
+ snow covered land max check. modified to    310.0 at     1 points  0.0percent
+ bare ice max check. modified to    310.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to    200.0 at ***** points ****percent
+ performing qc of stc4m    mode=           0 (0=count only, 1=replace)
+ open ocean min check.  modified to    200.0 at  5024 points ****percent
+ open sea max check. modified to    313.0 at 11101 points ****percent
+ snow covered land min check. modified to    200.0 at 22023 points ****percent
+ snow covered land max check. modified to    310.0 at     1 points  0.0percent
+ bare ice max check. modified to    310.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to    200.0 at ***** points ****percent
+ performing qc of smc1m    mode=           0 (0=count only, 1=replace)
+ open ocean min check.  modified to      1.0 at  5024 points ****percent
+ open sea max check. modified to      1.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at 22023 points ****percent
+ snow covered land max check. modified to      0.6 at     1 points  0.0percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      1.0 at ***** points ****percent
+ performing qc of smc2m    mode=           0 (0=count only, 1=replace)
+ open ocean min check.  modified to      1.0 at  5024 points ****percent
+ open sea max check. modified to      1.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at 22023 points ****percent
+ snow covered land max check. modified to      0.6 at     1 points  0.0percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      1.0 at ***** points ****percent
+ performing qc of smc3m    mode=           0 (0=count only, 1=replace)
+ open ocean min check.  modified to      1.0 at  5024 points ****percent
+ open sea max check. modified to      1.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at 22023 points ****percent
+ snow covered land max check. modified to      0.6 at     1 points  0.0percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      1.0 at ***** points ****percent
+ performing qc of smc4m    mode=           0 (0=count only, 1=replace)
+ open ocean min check.  modified to      1.0 at  5024 points ****percent
+ open sea max check. modified to      1.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at 22023 points ****percent
+ snow covered land max check. modified to      0.6 at     1 points  0.0percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      1.0 at ***** points ****percent
+ performing qc of vegm     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  5024 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at 22023 points ****percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of vetm     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  5024 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      1.0 at 22023 points ****percent
+ snow covered land max check. modified to     20.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of sotm     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  5024 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      1.0 at 22023 points ****percent
+ snow covered land max check. modified to     16.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of sihm     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  5024 points ****percent
+ open sea max check. modified to      5.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at 22023 points ****percent
+ snow covered land max check. modified to      5.0 at     1 points  0.0percent
+ bare ice max check. modified to      5.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of sicm     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  5024 points ****percent
+ open sea max check. modified to      1.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at 22023 points ****percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      1.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.1 at ***** points ****percent
+ performing qc of vmnm     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  5024 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at 22023 points ****percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of vmxm     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  5024 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at 22023 points ****percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of slpm     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  5024 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      1.0 at 22023 points ****percent
+ snow covered land max check. modified to      9.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ performing qc of absm     mode=           1 (0=count only, 1=replace)
+ open ocean min check.  modified to      0.0 at  5024 points ****percent
+ open sea max check. modified to      0.0 at 11101 points ****percent
+ snow covered land min check. modified to      0.0 at 22023 points ****percent
+ snow covered land max check. modified to      1.0 at     1 points  0.0percent
+ bare ice max check. modified to      0.0 at     1 points  0.0percent
+ snow covered ice min check.  modified to      0.0 at ***** points ****percent
+ ==============
+ final results
+ ==============
+ dbgx --fixratio: F F F F
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+  trans_trac= T  tottracer=           1  kdt=           1  ntk=           0
+ ---isec,seconds         450         450
+  gfs diags time since last bucket empty:   0.12500000000000000      hrs
+ ---isec,seconds        3600        3600
+  gfs diags time since last bucket empty:    1.0000000000000000      hrs
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/DSWRFsfc) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/USWRFsfc) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/dqsfc) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/dtsfc) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/TCDCclm) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/TCDChcl) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/TCDClcl) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/TCDCmcl) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/totice) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/totsnw) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/totgrp) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/DSWRFsfc) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/USWRFsfc) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/dqsfc) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/dtsfc) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/TCDCclm) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/TCDChcl) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/TCDClcl) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/TCDCmcl) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/totice) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/totsnw) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/totgrp) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/tmpmax) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/ULWRFsfc) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/DLWRFsfc) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/dtsfc) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/dqsfc) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/tmpmax) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/ULWRFsfc) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/DLWRFsfc) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/dtsfc) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (gfs_phys/dqsfc) NOT registered
+
+0 FORECAST DATE           1 AUG.  2016 AT  1 HRS  0.00 MINS
+  JULIAN DAY             2457601  PLUS   0.541667
+  RADIUS VECTOR          1.0149571
+  RIGHT ASCENSION OF SUN   8.7782397 HRS, OR   8 HRS  46 MINS  41.7 SECS
+  DECLINATION OF THE SUN  17.9422931 DEGS, OR   17 DEGS  56 MINS  32.3 SECS
+  EQUATION OF TIME        -6.3574698 MINS, OR   -381.45 SECS, OR-0.027816 RADIANS
+  SOLAR CONSTANT        1320.9008662 (DISTANCE AJUSTED)
+
+
+    for cosz calculations: nswr,deltim,deltsw,dtswh =           8   450.00000000000000        3600.0000000000000        1.0000000000000000        anginc,nstp =   3.2724923474893676E-002           9
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (dynamics/w50) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (dynamics/vort700) NOT registered
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (dynamics/w50) NOT registered
+
+
+WARNING from PE     0: diag_util_mod::opening_file: module/field_name (dynamics/vort700) NOT registered
+
+ ---isec,seconds        3600        7200
+  gfs diags time since last bucket empty:    1.0000000000000000      hrs
+
+   -----------------------------------------------------
+      Block                    User time  System Time   Total Time   GID 
+   -----------------------------------------------------
+   ATMOS_INIT                   0.5884       0.0000       0.5884       0
+   TOTAL                       49.7899       0.0000      49.7899       0
+   NGGPS_IC                     0.3888       0.0000       0.3888       0
+   COMM_TOTAL                   6.9199       0.0000       6.9199       0
+   ADIABATIC_INIT               4.6140       0.0000       4.6140       0
+   FV_DYN_LOOP                 26.6834       0.0000      26.6834       0
+   DYN_CORE                    21.7317       0.0000      21.7317       0
+   COMM_TRACER                  0.0958       0.0000       0.0958       0
+   C_SW                         1.5605       0.0000       1.5605       0
+   UPDATE_DZ_C                  0.2823       0.0000       0.2823       0
+   RIEM_SOLVER                  5.4328       0.0000       5.4328       0
+   D_SW                         9.2193       0.0000       9.2193       0
+   UPDATE_DZ                    2.0083       0.0000       2.0083       0
+   PG_D                         0.9839       0.0000       0.9839       0
+   TRACER_2D                    1.6804       0.0000       1.6804       0
+   REMAPPING                    3.1885       0.0000       3.1885       0
+   SAT_ADJ2                     0.5327       0.0000       0.5327       0
+   FV_DYNAMICS                 22.6820       0.0000      22.6820       0
+   GFS_TENDENCIES               0.2064       0.0000       0.2064       0
+   FV_UPDATE_PHYS               5.0023       0.0000       5.0023       0
+    UPDATE_DWINDS               3.5276       0.0000       3.5276       0
+   FV_DIAG                      1.5210       0.0000       1.5210       0
+
+
+ fv_restart_end u    =  -7651301168065550878
+ fv_restart_end v    =   5409109466543047213
+ fv_restart_end w    =   5867197331958416947
+ fv_restart_end delp =   7592599569466280231
+ fv_restart_end phis =  -9174519327653082789
+ fv_restart_end pt   =   2307427603617246898
+ fv_restart_end q(prog) nq   =           8  5631736220801914896
+ fv_restart_end sphum =  -2299603167878041658
+ fv_restart_end liq_wat =     82722957346058474
+ fv_restart_end rainwat =  -2368538451469851511
+ fv_restart_end ice_wat =  -7871671003014477488
+ fv_restart_end snowwat =  -3940682132055702616
+ fv_restart_end graupel =  -9043098200313658340
+ fv_restart_end o3mr =  -8069253146322436747
+ fv_restart_end cld_amt =   2248371217090921550
+ ZS   5269.7612304687500       -25.890581130981445        232.90803120603272     
+ PS    1036.2472342589076        534.30537908056669        985.76931510171698     
+ PS* max =    1036.2472342589076       min =    534.30537908056669     
+ U  max =    147.69872684867411       min =   -121.00095091381162     
+ V  max =    101.79154532097257       min =   -137.42085313840690     
+ W  max =   0.24643337156155812       min =  -0.22021480787059386     
+ T  max =    313.24484656398079       min =    178.48210881698824     
+ sphum   2.1341809599037000E-002   3.6776550931083849E-008   1.0179163274004633E-002
+ liq_wat   1.2671790081257488E-003  -2.7105204615411627E-020   8.2903858020475497E-007
+ rainwat   6.6662761419324882E-004  -6.7731274011773825E-021   5.8211888812862059E-007
+ ice_wat   2.8820369658121746E-004  -6.7732928866230145E-021   4.3433357601956381E-007
+ snowwat   6.4440345860928346E-004  -6.7738483510241168E-021   1.2471409690902146E-007
+ graupel   3.2780494956596618E-004  -2.1169170806727292E-022   5.3679551317825275E-011
+ o3mr   1.8517189195703038E-005   2.8596033679312864E-008   5.5045933530537456E-008
+ cld_amt   1.0000000000000000        0.0000000000000000        4.4361827798138853E-002
+NOTE from PE     0: Potential error in diag_manager_end: HGT850 NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: HGT700 NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: HGT500 NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: HGT250 NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: HGT200 NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: Q1000 NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: Q925 NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: Q850 NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: Q700 NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: Q500 NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: Q50 NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: ucomp NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: vcomp NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: temp NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: delp NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: sphum NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: nhpres NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: w NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: delz NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: ps NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: reflectivity NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: liq_wat NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: ice_wat NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: rainwat NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: snowwat NOT available, check if output interval > runlength. Netcdf fill_values are written
+NOTE from PE     0: Potential error in diag_manager_end: graupel NOT available, check if output interval > runlength. Netcdf fill_values are written
+ MPP_DOMAINS_STACK high water mark=      296352
+
+Tabulating mpp_clock statistics across      6 PEs...
+
+                                          tmin          tmax          tavg          tstd  tfrac grain pemin pemax
+Total runtime                        51.551811     51.551896     51.551853      0.000042  1.000     0     0     5
+Initialization                        5.478507      5.480365      5.480043      0.000687  0.106     0     0     5
+FV dy-core                           23.157693     27.881916     25.289485      1.447991  0.491    11     0     5
+FV subgrid_z                          0.042859      0.047000      0.044153      0.001392  0.001    11     0     5
+FV Diag                               1.486669      1.521090      1.498906      0.011311  0.029    11     0     5
+GFS Step Setup                        8.478185      8.541520      8.501115      0.020410  0.165     1     0     5
+GFS Radiation                         2.952367      7.628271      5.528686      1.428650  0.107     1     0     5
+GFS Physics                           2.786723      2.891383      2.850286      0.041788  0.055     1     0     5
+Dynamics get state                    0.372225      0.384518      0.380038      0.004585  0.007     1     0     5
+Dynamics update state                 1.969475      6.698695      4.103080      1.446955  0.080     1     0     5
+FV3 Dycore                           24.903504     29.621171     27.035687      1.444478  0.524     1     0     5
+Main loop                            44.353984     44.354006     44.353997      0.000007  0.860     0     0     5
+Termination                           1.699602      1.699609      1.699606      0.000003  0.033     0     0     5
+ MPP_STACK high water mark=           0
+Note: The following floating-point exceptions are signalling: IEEE_UNDERFLOW_FLAG IEEE_DENORMAL
+Note: The following floating-point exceptions are signalling: IEEE_UNDERFLOW_FLAG IEEE_DENORMAL
+Note: The following floating-point exceptions are signalling: IEEE_UNDERFLOW_FLAG IEEE_DENORMAL
+Note: The following floating-point exceptions are signalling: IEEE_UNDERFLOW_FLAG IEEE_DENORMAL
+Note: The following floating-point exceptions are signalling: IEEE_UNDERFLOW_FLAG IEEE_DENORMAL
+Note: The following floating-point exceptions are signalling: IEEE_UNDERFLOW_FLAG IEEE_DENORMAL

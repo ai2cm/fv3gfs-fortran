@@ -1,0 +1,26 @@
+Instructions
+============
+
+1. Running the testsuite
+
+# get input and boundary data for testsuite simulations
+./data/get_data.sh
+
+# link (or copy) to the executable you want to test
+ln -s ../../fv3.exe .
+
+# run the testsuite
+sbatch submit.slurm
+
+2. Generating new references
+
+Note that references should be generated using a double precision executable in the
+GNU docker image, since otherwise the double precision test will fail.
+
+In order to generate new references run all test with the executable that you would
+like to use to generate new references. Some tests may FAIL but none of the tests
+should CRASH. Once all tests have run, you can rerun the full testsuite but add
+the --update-yufiles option to the testsuite.py command. This will copy the reference
+files from the work/ directory to the data/ directory. Once the new references are
+in place, you should commit them to the repository at the same time as your code
+modifications which are the cause for having to generate new references.
