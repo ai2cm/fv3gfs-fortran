@@ -14,15 +14,8 @@ RUN apt-get update && apt-get install -y \
     rsync \
     libffi-dev \
     openssl \
-    python3 \
-    python3-pip \
     libopenmpi3 \
     bats
-
-# enable python/pip (as opposed to python3/pip3)
-RUN ln -s /bin/python3 /bin/python && \
-    ln -s /bin/pip3 /bin/pip && \
-    pip install --no-cache-dir pyyaml
 
 # download and install NCEP libraries
 RUN git config --global http.sslverify false && \
@@ -35,7 +28,7 @@ RUN git config --global http.sslverify false && \
 
 ## Build FMS
 ##---------------------------------------------------------------------------------
-FROM fv3gfs-env as fv3gfs-fms
+FROM fv3gfs-env AS fv3gfs-fms
 
 ENV CC=mpicc
 ENV FC=mpifort
@@ -46,12 +39,12 @@ ENV FCFLAGS="-fcray-pointer -Waliasing -ffree-line-length-none -fno-range-check 
 
 COPY FMS /FMS
 RUN cd /FMS && autoreconf --install && ./configure 
-RUN cd /FMS && make
+RUN cd /FMS && make -j8
 RUN mv /FMS/*/*.mod /FMS/*/*.o /FMS/*/*.h FMS/
 
 ## Build ESMF
 ##---------------------------------------------------------------------------------
-FROM fv3gfs-env as fv3gfs-esmf
+FROM fv3gfs-env AS fv3gfs-esmf
 
 ENV ESMF_DIR=/esmf
 ENV ESMF_INSTALL_PREFIX=/usr/local/esmf
@@ -64,7 +57,7 @@ RUN cd $ESMF_DIR && make lib -j8 && make install && make installcheck
 
 ## Build FV3 executable in its own image
 ##---------------------------------------------------------------------------------
-FROM fv3gfs-env AS fv3gfs-compiled
+FROM fv3gfs-env AS fv3gfs-build
 
 ENV FMS_DIR=/FMS
 ENV ESMF_DIR=/usr/local/esmf
@@ -95,11 +88,24 @@ RUN cp /FV3/conf/$configure_file \
     if [ ! -z $compile_option ]; then sed -i "33i $compile_option" \
         /FV3/conf/configure.fv3; fi
 
-RUN cd /FV3 && make clean_no_dycore && make libs_no_dycore
+RUN cd /FV3 && make clean_no_dycore && make libs_no_dycore -j8
 
 COPY FV3/atmos_cubed_sphere /FV3/atmos_cubed_sphere
 
-RUN cd /FV3/atmos_cubed_sphere && make clean && cd /FV3 && make
+RUN cd /FV3/atmos_cubed_sphere && make clean && cd /FV3 && make -j8
+
+## Define final "user" image for running tests
+##---------------------------------------------------------------------------------
+FROM fv3gfs-build AS fv3gfs-compiled
+
+RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip
+
+# enable python/pip (as opposed to python3/pip3)
+RUN ln -s /bin/python3 /bin/python && \
+    ln -s /bin/pip3 /bin/pip && \
+    pip install --no-cache-dir pyyaml
 
 COPY FV3/testsuite /FV3/testsuite
 
