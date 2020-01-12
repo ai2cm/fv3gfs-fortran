@@ -9,6 +9,7 @@ jobs:
       COMPILED_IMAGE: test-image
       COMPILED_TAG_NAME: 32bit
       COMPILE_OPTION: 32BIT=Y
+      CODE_BASE: /FV3
       GCR_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-32bit:latest
     steps:
       - checkout
@@ -44,8 +45,20 @@ jobs:
     environment:
       COMPILED_IMAGE: test-image
       COMPILED_TAG_NAME: default
+      CODE_BASE: /FV3
       GCR_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-default:latest
     steps:
+      - run:
+          name: Local build handling
+          command: |
+            if [[ ${CIRCLE_SHELL_ENV} =~ "localbuild" ]]; then
+              if [ -d /workdir ]; then
+                ln -s /workdir /tmp/_circleci_local_build_repo
+              else
+                echo "Run this local build using: circleci build -v \$(pwd):/workdir"
+                exit 1
+              fi
+            fi
       - checkout
       - run:
           name: "Pull Submodules"
@@ -68,6 +81,52 @@ jobs:
       - run: bash tests/test_output_netcdfs_identical.sh
       - run: bash tests/test_regression_fails_for_900s_timestep.sh
       - run: TARGET=cpu REAL_TYPE=double bash tests/testsuite.sh
+      - gcp-gcr/gcr-auth
+      - run: |
+          if [[ "$CIRCLE_BRANCH" == "master" ]]
+          then
+              docker tag $COMPILED_IMAGE $GCR_IMAGE
+              docker push $GCR_IMAGE
+          fi
+  build_serialized:
+    machine:
+      docker_layer_caching: true
+    environment:
+      COMPILED_IMAGE: test-image-serialize
+      COMPILED_TAG_NAME: serialize
+      CODE_BASE: /Serialize/FV3
+      GCR_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-serialize:latest
+    steps:
+      - run:
+          name: Local build handling
+          command: |
+            if [[ ${CIRCLE_SHELL_ENV} =~ "localbuild" ]]; then
+              if [ -d /workdir ]; then
+                ln -s /workdir /tmp/_circleci_local_build_repo
+              else
+                echo "Run this local build using: circleci build -v \$(pwd):/workdir"
+                exit 1
+              fi
+            fi
+      - checkout
+      - run:
+          name: "Pull Submodules"
+          command: |
+            git submodule init
+            git submodule update
+      - run: make build_serialize
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "download_inputdata.sh" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+      - run: bash download_inputdata.sh
+      - save_cache:
+          paths:
+            - ./inputdata
+          key: v1-dependencies-{{ checksum "download_inputdata.sh" }}
+      # tests
+      - run: bash tests/test_output_netcdfs_identical.sh
       - gcp-gcr/gcr-auth
       - run: |
           if [[ "$CIRCLE_BRANCH" == "master" ]]

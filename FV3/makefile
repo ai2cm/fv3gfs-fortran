@@ -1,6 +1,7 @@
 SHELL = /bin/sh
 
 include conf/configure.fv3
+include conf/serialbox_configuration
 
 ifeq ($(strip $(FMS_DIR)),)
   FMS_DIR=$(realpath ../FMS)
@@ -20,6 +21,12 @@ ifeq ($(32BIT),Y)
 else
   DYN32 = N
 endif
+
+ROOT      := $(shell pwd)
+PPSER_PY=$(SERIALBOX_APP)/install/python/pp_ser/pp_ser.py
+PPSER_FLAGS = --verbose --ignore-identical -m utils_ppser_kbuff
+DESERIAL_FLAGS :=  -DSERIALIZE -I $(SERIALBOX_APP)/install/include
+SERIAL_EXE_FLAGS :=  -L $(SERIALBOX_APP)/install/lib  -lSerialboxFortranStatic -lSerialboxCStatic -lSerialboxStatic -L/lib/x86_64-linux-gnu -lnetcdff -lnetcdf -lpthread -lstdc++ -lstdc++fs
 
 FV3_EXE  = fv3.exe
 FV3CAP_LIB  = libfv3cap.a
@@ -147,6 +154,33 @@ nemsinstall: nems
 	@echo Installation into \"$(DESTDIR)/$(INSTDIR)\" complete!
 	@echo
 
+serialize:
+	@make serialize_preprocess
+	$(MAKE) -C $(SERIALBOX_PREPROCESS_DIR) clean
+	$(MAKE) -C $(SERIALBOX_PREPROCESS_DIR) build_serializer
+
+build_serializer:
+	(export DESERIAL_FLAGS='$(DESERIAL_FLAGS)' && $(MAKE) libs )
+	$(MAKE) serializing_executable
+
+ serializing_executable: FFLAGS += $(DESERIAL_FLAGS)
+ serializing_executable: LDFLAGS += $(SERIAL_EXE_FLAGS)
+ serializing_executable: $(FV3_EXE)
+
+serialize_preprocess:
+	@echo "preprocessing for serialization, fresh"
+	@mkdir -p $(SERIALBOX_PREPROCESS_DIR)/atmos_cubed_sphere/model
+	@mkdir -p $(SERIALBOX_PREPROCESS_DIR)/atmos_cubed_sphere/driver/fvGFS
+	@make pp_ser_calls
+	@cp -r -u  $(ROOT)/* $(SERIALBOX_PREPROCESS_DIR)
+
+
+pp_ser_calls:
+	@echo "preprocessing for serialization, just the pp_ser.py calls"
+	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_PREPROCESS_DIR)/ $(ROOT)/*.F90
+	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_PREPROCESS_DIR)/atmos_cubed_sphere/model $(ROOT)/atmos_cubed_sphere/model/*.F90
+	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_PREPROCESS_DIR)/atmos_cubed_sphere/driver/fvGFS $(ROOT)/atmos_cubed_sphere/driver/fvGFS/*.F90
+
 .PHONY: clean cleanall
 clean:
 	@echo "Cleaning ... "
@@ -175,6 +209,7 @@ cleanall: clean
 	$(RM) -rf nems_dir fv3.mk $(INSTDIR)
 	$(RM) -f conf/modules.fv3
 	$(RM) -f conf/configure.fv3
+	$(RM) -rf $(SERIALBOX_PREPROCESS_DIR)
 
 MKDEPENDS = ./mkDepends.pl
 include conf/make.rules

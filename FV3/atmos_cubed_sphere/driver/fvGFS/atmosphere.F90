@@ -194,6 +194,7 @@ use fv_regional_mod,    only: start_regional_restart, read_new_bc_data, &
                               a_step, p_step, current_time_in_seconds
 
 use mpp_domains_mod,    only:  mpp_get_data_domain, mpp_get_compute_domain
+!$ser verbatim use k_checkpoint, only: set_nz
 
 implicit none
 private
@@ -606,7 +607,9 @@ contains
    integer :: k, w_diff, nt_dyn, n_split_loc, seconds, days
 
    type(time_type) :: atmos_time
-
+   !$ser verbatim integer :: tile_id,ier
+   !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, tile_id,ier)
+   
 !---- Call FV dynamics -----
 
    call mpp_clock_begin (id_dynam)
@@ -636,6 +639,15 @@ contains
    endif
 
    do psc=1,abs(p_split)
+     !$ser verbatim if (psc == abs(p_split) .and. tile_id == 0) then                    
+     !$ser on
+     !$ser savepoint Grid-Info
+     !$ser data is_=Atm(n)%bd%is ie=Atm(n)%bd%ie isd=Atm(n)%bd%isd ied=Atm(n)%bd%ied js=Atm(n)%bd%js je=Atm(n)%bd%je jsd=Atm(n)%bd%jsd jed=Atm(n)%bd%jed npx=npx npy=npy npz=npz nested=Atm(n)%gridstruct%nested grid_type=Atm(n)%gridstruct%grid_type dya=Atm(n)%gridstruct%dya  dxa=Atm(n)%gridstruct%dxa dxc=Atm(n)%gridstruct%dxc dyc=Atm(n)%gridstruct%dyc rdxc=Atm(n)%gridstruct%rdxc rdyc=Atm(n)%gridstruct%rdyc  rdxa=Atm(n)%gridstruct%rdxa  rdya=Atm(n)%gridstruct%rdya rdy=Atm(n)%gridstruct%rdy cosa_u=Atm(n)%gridstruct%cosa_u cosa_v=Atm(n)%gridstruct%cosa_v  sina_v=Atm(n)%gridstruct%sina_v  sina_u=Atm(n)%gridstruct%sina_u rsin_u=Atm(n)%gridstruct%rsin_u rsin_v=Atm(n)%gridstruct%rsin_v  sin_sg=Atm(n)%gridstruct%sin_sg cos_sg=Atm(n)%gridstruct%cos_sg area=Atm(n)%gridstruct%area dy=Atm(n)%gridstruct%dy rarea=Atm(n)%gridstruct%rarea  rarea_c=Atm(n)%gridstruct%rarea_c rsina=Atm(n)%gridstruct%rsina cosa=Atm(n)%gridstruct%cosa  dx=Atm(n)%gridstruct%dx fC=Atm(n)%gridstruct%fC da_min=Atm(n)%gridstruct%da_min da_min_c=Atm(n)%gridstruct%da_min_c del6_u=Atm(n)%gridstruct%del6_u del6_v=Atm(n)%gridstruct%del6_v f0=Atm(n)%gridstruct%f0 
+      
+     !$ser verbatim call set_nz(npz)
+     !$ser verbatim else
+     !$ser off
+     !$ser verbatim endif
       p_step = psc
                     call timing_on('fv_dynamics')
 !uc/vc only need be same on coarse grid? However BCs do need to be the same
