@@ -110,4 +110,4 @@ RUN ln -s /bin/python3 /bin/python && \
 COPY FV3/testsuite /FV3/testsuite
 
 # run model
-CMD ["bash", "/FV3/rundir/submit_job.sh /FV3"]
+CMD ["bash", "/FV3/rundir/submit_job.sh"]

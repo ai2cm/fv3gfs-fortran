@@ -32,7 +32,7 @@ docker run \
     --rm \
     -v $rundir_host:$rundir_container \
     -v $fixdatadir_host:$fixdatadir_container \
-    -it $COMPILED_IMAGE bash $CODE_BASE/rundir/submit_job.sh $CODE_BASE
+    -it $COMPILED_IMAGE bash $CODE_BASE/FV3/rundir/submit_job.sh $CODE_BASE
 
 echo "Checking md5sum"
 (

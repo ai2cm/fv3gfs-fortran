@@ -9,7 +9,6 @@ jobs:
       COMPILED_IMAGE: test-image
       COMPILED_TAG_NAME: 32bit
       COMPILE_OPTION: 32BIT=Y
-      CODE_BASE: /FV3
       GCR_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-32bit:latest
     steps:
       - checkout
@@ -45,7 +44,6 @@ jobs:
     environment:
       COMPILED_IMAGE: test-image
       COMPILED_TAG_NAME: default
-      CODE_BASE: /FV3
       GCR_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-default:latest
     steps:
       - run:
@@ -94,7 +92,7 @@ jobs:
     environment:
       COMPILED_IMAGE: test-image-serialize
       COMPILED_TAG_NAME: serialize
-      CODE_BASE: /Serialize/FV3
+      CODE_BASE: /Serialize/
       GCR_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-serialize:latest
     steps:
       - run:

@@ -43,7 +43,7 @@ run_dev: compile_dev
 	docker run --rm \
 		-v $(RUNDIR_HOST):$(RUNDIR_CONTAINER) \
 		-v $(shell pwd)/inputdata/fv3gfs-data-docker/fix.v201702:/inputdata/fix.v201702 \
-		-it $(COMPILED_IMAGE) /FV3/rundir/submit_job.sh /FV3
+		-it $(COMPILED_IMAGE) /FV3/rundir/submit_job.sh
 
 build_32bit: build_environment
 	COMPILED_TAG_NAME=32bit COMPILE_OPTION=32BIT=Y $(MAKE) build
@@ -76,7 +76,7 @@ dev_serialize:
 	docker run -w=/FV3 \
 		-v $(RUNDIR_HOST):/Serialize/$(RUNDIR_CONTAINER) \
 		-v $(shell pwd)/inputdata/fv3gfs-data-docker/fix.v201702:/inputdata/fix.v201702 \
-		$(MOUNTS) -it $(GCR_URL)/fv3gfs-compiled-serialize  /bin/bash -c ' make serialize_preprocess ;cd /Serialize/FV3 ; make build_serializer;cd /Serialize/FV3/rundir ; rm -f Gen*.dat; rm -f *.json ;  /Serialize/FV3/rundir/submit_job.sh /Serialize/FV3'
+		$(MOUNTS) -it $(GCR_URL)/fv3gfs-compiled-serialize  /bin/bash -c ' make serialize_preprocess ;cd /Serialize/FV3 ; make build_serializer;cd /Serialize/FV3/rundir ; rm -f Gen*.dat; rm -f *.json ;  /Serialize/FV3/rundir/submit_job.sh /Serialize/'
 
 
 run_serialize: 
@@ -89,6 +89,11 @@ run_serialize:
 	docker run --rm \
 		-v $(RUNDIR_HOST):/Serialize$(RUNDIR_CONTAINER) \
 		-v $(shell pwd)/inputdata/fv3gfs-data-docker/fix.v201702:/inputdata/fix.v201702 \
-		-it $(GCR_URL)/fv3gfs-compiled-serialize /Serialize/FV3/rundir/submit_job.sh /Serialize/FV3
+		-it $(GCR_URL)/fv3gfs-compiled-serialize /Serialize/FV3/rundir/submit_job.sh /Serialize/
+run_ser_normal: 
+	docker run --rm \
+		-v $(RUNDIR_HOST):$(RUNDIR_CONTAINER) \
+		-v $(shell pwd)/inputdata/fv3gfs-data-docker/fix.v201702:/inputdata/fix.v201702 \
+		-it $(GCR_URL)/fv3gfs-compiled-serialize /FV3/rundir/submit_job.sh
 
 .PHONY: build build_environment build_compiled enter run
