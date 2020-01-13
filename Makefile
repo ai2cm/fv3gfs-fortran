@@ -1,5 +1,4 @@
-GCR_URL = localtest/vcm-ml
-#us.gcr.io/vcm-ml
+GCR_URL = us.gcr.io/vcm-ml
 DOCKERFILE ?= docker/Dockerfile
 COMPILED_TAG_NAME ?= default
 ENVIRONMENT_TAG_NAME ?=
