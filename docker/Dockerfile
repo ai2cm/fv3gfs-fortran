@@ -88,7 +88,8 @@ RUN cp /FV3/conf/$configure_file \
     if [ ! -z $compile_option ]; then sed -i "33i $compile_option" \
         /FV3/conf/configure.fv3; fi
 
-RUN cd /FV3 && make clean_no_dycore && make libs_no_dycore -j8
+RUN cd /FV3 && make clean_no_dycore
+RUN cd /FV3 && make libs_no_dycore -j8
 
 COPY FV3/atmos_cubed_sphere /FV3/atmos_cubed_sphere
 
