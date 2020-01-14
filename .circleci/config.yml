@@ -64,7 +64,7 @@ jobs:
       # tests
       - run: bash tests/test_output_netcdfs_identical.sh
       - run: bash tests/test_regression_fails_for_900s_timestep.sh
-      - run: TARGET=cpu REAL_TYPE=double bash tests/testsuite.sh
+      #- run: TARGET=cpu REAL_TYPE=double bash tests/testsuite.sh
       - gcp-gcr/gcr-auth
       - run: |
           if [[ "$CIRCLE_BRANCH" == "master" ]]
