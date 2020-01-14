@@ -6,10 +6,9 @@ jobs:
     machine:
       docker_layer_caching: true
     environment:
-      COMPILED_IMAGE: test-image
+      COMPILED_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-32bit:latest
       COMPILED_TAG_NAME: 32bit
       COMPILE_OPTION: 32BIT=Y
-      GCR_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-32bit:latest
     steps:
       - checkout
       - run:
@@ -35,16 +34,14 @@ jobs:
       - run: |
           if [[ "$CIRCLE_BRANCH" == "master" ]]
           then
-              docker tag $COMPILED_IMAGE $GCR_IMAGE
               docker push $GCR_IMAGE
           fi
   build_default:
     machine:
       docker_layer_caching: true
     environment:
-      COMPILED_IMAGE: test-image
+      COMPILED_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-default:latest
       COMPILED_TAG_NAME: default
-      GCR_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-default:latest
     steps:
       - checkout
       - run:
@@ -72,7 +69,6 @@ jobs:
       - run: |
           if [[ "$CIRCLE_BRANCH" == "master" ]]
           then
-              docker tag $COMPILED_IMAGE $GCR_IMAGE
               docker push $GCR_IMAGE
           fi
 workflows:
