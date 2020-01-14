@@ -3,9 +3,8 @@
 set -e
 set -x
 
-dir=2019-09-27-FV3GFS-docker-input-c48-LH-nml
-filename=fv3gfs-data-docker_2019-09-27.tar.gz
-url=http://storage.googleapis.com/vcm-ml-public/$dir/$filename
+filename=fv3gfs-data-docker_2020-01-13.tar.gz
+url=http://storage.googleapis.com/vcm-ml-public/$filename
 datadir_local=inputdata
 
 mkdir -p $datadir_local

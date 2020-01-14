@@ -11,8 +11,10 @@ ${originalExperimentName}
 }
 
 modelType=$COMPILED_TAG_NAME
+COMPILED_IMAGE=fv3gfs-compiled-$COMPILED_TAG_NAME
 
 originalCheckSum=$(pwd)/tests/original_checksum_${modelType}.txt
+originalRestartCheckSum=$(pwd)/tests/original_checksum_${modelType}_restart.txt
 experiment=new
 rundir_host=$PWD/experiments/$experiment/rundir
 rundir_container=/FV3/rundir
@@ -36,6 +38,6 @@ docker run \
 
 echo "Checking md5sum"
 (
-    cd experiments/$experiment/rundir
+    cd $RUNDIR_HOST
     md5sum -c $originalCheckSum
 )

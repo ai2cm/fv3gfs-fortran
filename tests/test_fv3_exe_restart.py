@@ -98,14 +98,14 @@ def get_base_config():
 
 
 def test_gfs_standard():
-    workdir = 'rundirs_standard'
+    workdir = 'rundirs_gfs_standard'
     config_standard = fv3config.get_default_config()
     run_full_and_split(workdir, config_standard)
     compare_restart_files(join(workdir, 'fullrun'), join(workdir, 'secondhalf'))
 
 
 def test_restart_standard():
-    workdir = 'rundirs_standard'
+    workdir = 'rundirs_restart_standard'
     config_standard = get_base_config()
     run_full_and_split(workdir, config_standard)
     compare_restart_files(join(workdir, 'fullrun'), join(workdir, 'secondhalf'))

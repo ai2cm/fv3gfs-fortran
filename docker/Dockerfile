@@ -94,6 +94,7 @@ COPY FV3/atmos_cubed_sphere /FV3/atmos_cubed_sphere
 
 RUN cd /FV3/atmos_cubed_sphere && make clean && cd /FV3 && make -j8
 
+
 ## Define final "user" image for running tests
 ##---------------------------------------------------------------------------------
 FROM fv3gfs-build AS fv3gfs-compiled
