@@ -65,6 +65,7 @@ jobs:
       - run: bash tests/test_output_netcdfs_identical.sh
       - run: bash tests/test_regression_fails_for_900s_timestep.sh
       #- run: TARGET=cpu REAL_TYPE=double bash tests/testsuite.sh
+      - run: echo $ENCODED_GCR_KEY > ${HOME}/gcloud-service-key.json
       - gcp-gcr/gcr-auth
       - run: |
           if [[ "$CIRCLE_BRANCH" == "master" ]]
@@ -75,5 +76,5 @@ workflows:
   version: 2
   build:
     jobs:
-      - build_32
+      #- build_32
       - build_default
