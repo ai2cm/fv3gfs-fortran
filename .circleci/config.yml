@@ -27,7 +27,7 @@ jobs:
       - run: bash download_inputdata.sh
       - save_cache:
           paths:
-            - ./inputdata
+            - ./fv3gfs-data-docker_2020-01-13.tar.gz
           key: v1-dependencies-{{ checksum "download_inputdata.sh" }}
       # tests
       - run: bash tests/test_output_netcdfs_identical.sh
@@ -62,7 +62,7 @@ jobs:
       - run: bash download_inputdata.sh
       - save_cache:
           paths:
-            - ./inputdata
+            - ./fv3gfs-data-docker_2020-01-13.tar.gz
           key: v1-dependencies-{{ checksum "download_inputdata.sh" }}
       # tests
       - run: bash tests/test_output_netcdfs_identical.sh

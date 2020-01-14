@@ -11,7 +11,7 @@ ${originalExperimentName}
 }
 
 modelType=$COMPILED_TAG_NAME
-COMPILED_IMAGE=fv3gfs-compiled-$COMPILED_TAG_NAME
+COMPILED_IMAGE=us.gcr.io/vcm-ml/fv3gfs-compiled-$COMPILED_TAG_NAME
 
 originalCheckSum=$(pwd)/tests/original_checksum_${modelType}.txt
 originalRestartCheckSum=$(pwd)/tests/original_checksum_${modelType}_restart.txt
