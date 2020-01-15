@@ -30,12 +30,12 @@ jobs:
           key: v1.1-inputdata-{{ checksum "download_inputdata.sh" }}
       # tests
       - run: bash tests/test_output_netcdfs_identical.sh
-      - gcp-gcr/gcr-auth
-      - run: |
-          if [[ "$CIRCLE_BRANCH" == "master" ]]
-          then
-              docker push $GCR_IMAGE
-          fi
+      #- gcp-gcr/gcr-auth
+      #- run: |
+      #    if [[ "$CIRCLE_BRANCH" == "master" ]]
+      #    then
+      #        docker push $GCR_IMAGE
+      #    fi
   build_default:
     machine:
       docker_layer_caching: true
@@ -66,12 +66,12 @@ jobs:
       - run: bash tests/test_regression_fails_for_900s_timestep.sh
       #- run: TARGET=cpu REAL_TYPE=double bash tests/testsuite.sh
       - run: echo $ENCODED_GCR_KEY > ${HOME}/gcloud-service-key.json
-      - gcp-gcr/gcr-auth
-      - run: |
-          if [[ "$CIRCLE_BRANCH" == "master" ]]
-          then
-              docker push $GCR_IMAGE
-          fi
+      #- gcp-gcr/gcr-auth
+      #- run: |
+      #    if [[ "$CIRCLE_BRANCH" == "master" ]]
+      #    then
+      #        docker push $GCR_IMAGE
+      #    fi
 workflows:
   version: 2
   build:
