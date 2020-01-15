@@ -9,7 +9,7 @@ if [ -z "${COMPILED_IMAGE}" ]; then
   COMPILED_IMAGE="fv3gfs-compiled-default"
 fi
 if [ -z "${EXE_PATH}" ]; then
-  EXE_PATH="../../fv3.exe"
+  EXE_PATH="../fv3.exe"
 fi
 if [ -z "${TARGET}" ]; then
   TARGET=cpu

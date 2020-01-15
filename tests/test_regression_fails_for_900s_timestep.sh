@@ -3,6 +3,8 @@
 set -e
 set -x
 
+modelType=$COMPILED_TAG_NAME
+COMPILED_IMAGE=us.gcr.io/vcm-ml/fv3gfs-compiled-$COMPILED_TAG_NAME
 originalCheckSum=$(pwd)/tests/original_checksum_default.txt
 experiment=different_dt
 
