@@ -45,6 +45,12 @@ run_dev: compile_dev
 		-v $(shell pwd)/inputdata/fv3gfs-data-docker/fix.v201702:/inputdata/fix.v201702 \
 		-it $(COMPILED_IMAGE) /FV3/rundir/submit_job.sh
 
+test:
+	./test_docker.sh $(COMPILED_TAG_NAME)
+
+test_32bit:
+	COMPILED_TAG_NAME=32bit $(MAKE) test
+
 build_32bit: build_environment
 	COMPILED_TAG_NAME=32bit COMPILE_OPTION=32BIT=Y $(MAKE) build
 
@@ -96,4 +102,4 @@ run_ser_normal:
 		-v $(shell pwd)/inputdata/fv3gfs-data-docker/fix.v201702:/inputdata/fix.v201702 \
 		-it $(GCR_URL)/fv3gfs-compiled-serialize /FV3/rundir/submit_job.sh
 
-.PHONY: build build_environment build_compiled enter run
+.PHONY: build build_environment build_compiled enter run test test_32bit

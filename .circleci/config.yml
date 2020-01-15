@@ -6,10 +6,9 @@ jobs:
     machine:
       docker_layer_caching: true
     environment:
-      COMPILED_IMAGE: test-image
+      COMPILED_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-32bit:latest
       COMPILED_TAG_NAME: 32bit
       COMPILE_OPTION: 32BIT=Y
-      GCR_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-32bit:latest
     steps:
       - checkout
       - run:
@@ -21,30 +20,28 @@ jobs:
       # download inputdata
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "download_inputdata.sh" }}
+            - v1.1-inputdata-{{ checksum "download_inputdata.sh" }}
             # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
+            - v1.1-inputdata-
       - run: bash download_inputdata.sh
       - save_cache:
           paths:
-            - ./inputdata
-          key: v1-dependencies-{{ checksum "download_inputdata.sh" }}
+            - ./fv3gfs-data-docker_2020-01-13.tar.gz
+          key: v1.1-inputdata-{{ checksum "download_inputdata.sh" }}
       # tests
       - run: bash tests/test_output_netcdfs_identical.sh
-      - gcp-gcr/gcr-auth
-      - run: |
-          if [[ "$CIRCLE_BRANCH" == "master" ]]
-          then
-              docker tag $COMPILED_IMAGE $GCR_IMAGE
-              docker push $GCR_IMAGE
-          fi
+      #- gcp-gcr/gcr-auth
+      #- run: |
+      #    if [[ "$CIRCLE_BRANCH" == "master" ]]
+      #    then
+      #        docker push $GCR_IMAGE
+      #    fi
   build_default:
     machine:
       docker_layer_caching: true
     environment:
-      COMPILED_IMAGE: test-image
+      COMPILED_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-default:latest
       COMPILED_TAG_NAME: default
-      GCR_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-default:latest
     steps:
       - run:
           name: Local build handling
@@ -67,25 +64,26 @@ jobs:
       # download inputdata
       - restore_cache:
           keys:
-            - v1-dependencies-{{ checksum "download_inputdata.sh" }}
+            - v1.1-inputdata-{{ checksum "download_inputdata.sh" }}
             # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
+            - v1.1-inputdata-
       - run: bash download_inputdata.sh
       - save_cache:
           paths:
-            - ./inputdata
-          key: v1-dependencies-{{ checksum "download_inputdata.sh" }}
+            - ./fv3gfs-data-docker_2020-01-13.tar.gz
+          key: v1.1-inputdata-{{ checksum "download_inputdata.sh" }}
       # tests
       - run: bash tests/test_output_netcdfs_identical.sh
       - run: bash tests/test_regression_fails_for_900s_timestep.sh
-      - run: TARGET=cpu REAL_TYPE=double bash tests/testsuite.sh
-      - gcp-gcr/gcr-auth
-      - run: |
-          if [[ "$CIRCLE_BRANCH" == "master" ]]
-          then
-              docker tag $COMPILED_IMAGE $GCR_IMAGE
-              docker push $GCR_IMAGE
-          fi
+      #- run: TARGET=cpu REAL_TYPE=double bash tests/testsuite.sh
+      - run: echo $ENCODED_GCR_KEY > ${HOME}/gcloud-service-key.json
+      #- gcp-gcr/gcr-auth
+      #- run: |
+      #    if [[ "$CIRCLE_BRANCH" == "master" ]]
+      #    then
+      #        docker tag $COMPILED_IMAGE $GCR_IMAGE
+      #        docker push $GCR_IMAGE
+      #    fi
   build_serialized:
     machine:
       docker_layer_caching: true
@@ -125,16 +123,16 @@ jobs:
           key: v1-dependencies-{{ checksum "download_inputdata.sh" }}
       # tests
       - run: bash tests/test_output_netcdfs_identical.sh
-      - gcp-gcr/gcr-auth
-      - run: |
-          if [[ "$CIRCLE_BRANCH" == "master" ]]
-          then
-              docker tag $COMPILED_IMAGE $GCR_IMAGE
-              docker push $GCR_IMAGE
-          fi
+      #- gcp-gcr/gcr-auth
+      #- run: |
+      #    if [[ "$CIRCLE_BRANCH" == "master" ]]
+      #    then
+      #        docker tag $COMPILED_IMAGE $GCR_IMAGE
+      #        docker push $GCR_IMAGE
+      #    fi
 workflows:
   version: 2
   build:
     jobs:
-      - build_32
+      #- build_32
       - build_default
