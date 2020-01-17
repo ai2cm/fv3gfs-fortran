@@ -22,6 +22,7 @@ USE_LOCAL_ARCHIVE = True
 
 config_filenames = os.listdir(CONFIG_DIR)
 
+
 @pytest.fixture
 def model_image():
     return MODEL_IMAGE
