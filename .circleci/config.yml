@@ -22,7 +22,7 @@ jobs:
       # download inputdata
       - restore_cache:
           keys:
-            - v1.1-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt" }}
+            - v1.2-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt" }}
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
       - run: bash download_inputdata.sh
@@ -39,7 +39,7 @@ jobs:
             - ./fv3gfs-data-docker_2020-01-13.tar.gz
             - ./venv
             - $FV3CONFIG_CACHE_DIR
-          key: v1.1-inputdata-{{ checksum "download_inputdata.sh" }}
+          key: v1.2-inputdata-{{ checksum "download_inputdata.sh" }}
       # tests
       - run: which python
       - run: which python3
