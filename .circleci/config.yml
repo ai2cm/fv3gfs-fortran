@@ -8,6 +8,7 @@ jobs:
     environment:
       COMPILED_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-default:latest
       COMPILED_TAG_NAME: default
+      FV3CONFIG_CACHE_DIR: ~/.fv3config
     steps:
       - checkout
       - setup_remote_docker: 
@@ -18,10 +19,6 @@ jobs:
             git submodule init
             git submodule update
       - run: make build
-      - run: 
-          name: "Setup fv3config cache dir"
-          command: |
-            echo 'export FV3CONFIG_CACHE_DIR="$(PWD)/.fv3config"' >> $BASH_ENV # Redirect MY_ENV_VAR into $BASH_ENV
       # download inputdata
       - restore_cache:
           keys:
@@ -42,7 +39,7 @@ jobs:
             - ./fv3gfs-data-docker_2020-01-13.tar.gz
             - ./venv
             - $FV3CONFIG_CACHE_DIR
-          key: v1.2-inputdata-{{ checksum "download_inputdata.sh" }}
+          key: v1.2-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt" }}
       # tests
       - run: which python
       - run: which python3
