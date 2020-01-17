@@ -28,7 +28,7 @@ jobs:
           name: "Install Python test dependencies"
           command: |
             python3 -m venv venv
-            .venv/bin/activate
+            . venv/bin/activate
             pip3 install -r requirements.txt
             pip3 install git+https://github.com/VulcanClimateModeling/fv3config.git
       - save_cache:
@@ -39,8 +39,12 @@ jobs:
       # tests
       - run: which python
       - run: which python3
-      - run: python tests/pytest/download_reference.py gs://vcm-fv3gfs-data/regression_reference
-      - run: pytest tests/pytest
+      - run: 
+          name: "Run pytest tests"
+          command: |
+            . venv/bin/activate
+            python tests/pytest/download_reference.py gs://vcm-fv3gfs-data/regression_reference
+            pytest tests/pytest
       - run: make build
   build_32:
     machine:
