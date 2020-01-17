@@ -49,6 +49,8 @@ jobs:
             . venv/bin/activate
             python tests/pytest/download_reference.py gs://vcm-fv3gfs-data/regression_reference
             pytest tests/pytest
+      - store_artifacts:
+        path: ./tests/pytest/output
   build_32:
     machine:
       docker_layer_caching: true

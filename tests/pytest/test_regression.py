@@ -63,8 +63,8 @@ def run_model(rundir, model_image):
     docker_run = ['docker', 'run', '--rm']
     rundir_abs = os.path.abspath(rundir)
     rundir_mount = ['-v', f'{rundir_abs}:/rundir']
-    fv3out_filename = join(rundir, 'fv3out')
-    fv3err_filename = join(rundir, 'fv3err')
+    fv3out_filename = join(rundir, 'stdout.log')
+    fv3err_filename = join(rundir, 'stderr.log')
     with open(fv3out_filename, 'w') as fv3out_f, open(fv3err_filename, 'w') as fv3err_f:
         subprocess.check_call(
             docker_run + rundir_mount + archive_mount + [model_image] + ["bash", "/rundir/submit_job.sh"],
