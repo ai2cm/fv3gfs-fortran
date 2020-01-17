@@ -3,13 +3,15 @@ orbs:
   gcp-gcr: circleci/gcp-gcr@0.6.1
 jobs:
   build_default:
-    machine:
-      docker_layer_caching: true
+    docker:
+    - image: circleci/python:3.7
     environment:
       COMPILED_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-default:latest
       COMPILED_TAG_NAME: default
     steps:
       - checkout
+      - setup_remote_docker: 
+          docker_layer_caching: true
       - run:
           name: "Pull Submodules"
           command: |
@@ -19,11 +21,8 @@ jobs:
       - run: 
           name: "Install Python test dependencies"
           command: |
-            pyenv versions
-            pyenv global 3.5.2
-            pip install --upgrade setuptools
-            pip install -r requirements.txt
-            pip install git+https://github.com/VulcanClimateModeling/fv3config.git
+            pip3 install -r requirements.txt
+            pip3 install git+https://github.com/VulcanClimateModeling/fv3config.git
       # download inputdata
       - restore_cache:
           keys:
