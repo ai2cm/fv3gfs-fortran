@@ -40,7 +40,7 @@ def test_regression(config, model_image):
     run_dir = os.path.join(OUTPUT_DIR, run_name)
     if os.path.isdir(run_dir):
         shutil.rmtree(run_dir)
-    os.mkdir(run_dir)
+    os.makedirs(run_dir)
     create_run_directory(config, run_dir)
     run_model(run_dir, MODEL_IMAGE)
     reference_dir = os.path.join(REFERENCE_DIR, run_name)
