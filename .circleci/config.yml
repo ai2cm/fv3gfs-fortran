@@ -8,7 +8,7 @@ jobs:
     environment:
       COMPILED_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-default:latest
       COMPILED_TAG_NAME: default
-      FV3CONFIG_CACHE_DIR: $CIRCLE_WORKING_DIRECTORY/.fv3config
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
     steps:
       - checkout
       - setup_remote_docker: 
@@ -50,8 +50,12 @@ jobs:
             python tests/pytest/download_reference.py gs://vcm-fv3gfs-data/regression_reference
             pytest tests/pytest
       - run:
-          name: "Copy fail logs"
-          command: cp ./tests/pytest/output/*/*.log
+          name: "Delete data files"
+          command: |
+            rm ./tests/pytest/output/*/*.nc
+            rm ./tests/pytest/output/*/*/*.nc
+            rm ./tests/pytest/output/*/*/*.grb
+          when: on_fail
       - store_artifacts:
           path: ./tests/pytest/output
   build_32:
