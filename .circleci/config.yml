@@ -18,21 +18,24 @@ jobs:
             git submodule init
             git submodule update
       - run: make build
-      - run: 
-          name: "Install Python test dependencies"
-          command: |
-            pip3 install -r requirements.txt
-            pip3 install git+https://github.com/VulcanClimateModeling/fv3config.git
       # download inputdata
       - restore_cache:
           keys:
-            - v1.1-inputdata-{{ checksum "download_inputdata.sh" }}
+            - v1.1-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt" }}
             # fallback to using the latest cache if no exact match is found
-            - v1.1-inputdata-
+            - v1-dependencies-
       - run: bash download_inputdata.sh
+      - run: 
+          name: "Install Python test dependencies"
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip3 install -r requirements.txt
+            pip3 install git+https://github.com/VulcanClimateModeling/fv3config.git
       - save_cache:
           paths:
             - ./fv3gfs-data-docker_2020-01-13.tar.gz
+            - ./venv
           key: v1.1-inputdata-{{ checksum "download_inputdata.sh" }}
       # tests
       - run: python3 tests/pytest/download_reference.py gs://vcm-fv3gfs-data/regression_reference
