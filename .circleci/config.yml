@@ -21,9 +21,11 @@ jobs:
           command: |
             sudo apt-get update
             sudo apt-get install python3 python3-pip
-            pip3 install --upgrade setuptools
-            pip3 install -r requirements.txt
-            pip3 install git+https://github.com/VulcanClimateModeling/fv3config.git
+            pyenv versions
+            pyenv global 3
+            pip install --upgrade setuptools
+            pip install -r requirements.txt
+            pip install git+https://github.com/VulcanClimateModeling/fv3config.git
       # download inputdata
       - restore_cache:
           keys:
