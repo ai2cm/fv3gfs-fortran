@@ -20,7 +20,7 @@ jobs:
       # download inputdata
       - restore_cache:
           keys:
-            - v1.1-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt" }}
+            - v1.2-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt" }}
             # fallback to using the latest cache if no exact match is found
             - v1-dependencies-
       - run: bash download_inputdata.sh
