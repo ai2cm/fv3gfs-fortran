@@ -17,7 +17,6 @@ jobs:
           command: |
             git submodule init
             git submodule update
-      - run: make build
       # download inputdata
       - restore_cache:
           keys:
@@ -38,8 +37,11 @@ jobs:
             - ./venv
           key: v1.1-inputdata-{{ checksum "download_inputdata.sh" }}
       # tests
-      - run: python3 tests/pytest/download_reference.py gs://vcm-fv3gfs-data/regression_reference
+      - run: which python
+      - run: which python3
+      - run: python tests/pytest/download_reference.py gs://vcm-fv3gfs-data/regression_reference
       - run: pytest tests/pytest
+      - run: make build
   build_32:
     machine:
       docker_layer_caching: true
