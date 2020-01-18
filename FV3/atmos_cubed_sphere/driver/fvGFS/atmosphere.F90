@@ -138,7 +138,7 @@ module atmosphere_mod
 ! </table>
 
 #include <fms_platform.h>
-
+!$ser verbatim use mpi
 !-----------------
 ! FMS modules:
 !-----------------
