@@ -6,7 +6,7 @@ jobs:
     machine:
       docker_layer_caching: true
     environment:
-      COMPILED_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-32bit:latest
+      COMPILED_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled:32bit
       COMPILED_TAG_NAME: 32bit
       COMPILE_OPTION: 32BIT=Y
     steps:
@@ -40,7 +40,7 @@ jobs:
     machine:
       docker_layer_caching: true
     environment:
-      COMPILED_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-default:latest
+      COMPILED_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled:default
       COMPILED_TAG_NAME: default
     steps:
       - run:
@@ -91,7 +91,7 @@ jobs:
       COMPILED_IMAGE: test-image-serialize
       COMPILED_TAG_NAME: serialize
       CODE_BASE: /Serialize/
-      GCR_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-serialize:latest
+      GCR_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled:serialize
     steps:
       - run:
           name: Local build handling

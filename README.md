@@ -46,8 +46,8 @@ Output data specified in `diag_table` and log files (including stdout and stderr
 By default Circle CI builds two configurations and pushes them to Google
 Container Repository:
 
-- `us.gcr.io/vcm-ml/fv3gfs-compiled-32bit`. A 32bit version of the model.
-- `us.gcr.io/vcm-ml/fv3gfs-compiled-default`. A default version compiled with
+- `us.gcr.io/vcm-ml/fv3gfs-compiled:32bit`. A 32bit version of the model.
+- `us.gcr.io/vcm-ml/fv3gfs-compiled:default`. A default version compiled with
   64 bit reals.
 
 # Developing the model

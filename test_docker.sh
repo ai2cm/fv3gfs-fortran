@@ -6,7 +6,7 @@ if [ "$#" -lt 1 ]; then
 fi
 
 export COMPILED_TAG_NAME=$1
-export COMPILED_IMAGE=us.gcr.io/vcm-ml/fv3gfs-compiled-$COMPILED_TAG_NAME
+export COMPILED_IMAGE=us.gcr.io/vcm-ml/fv3gfs-compiled:$COMPILED_TAG_NAME
 
 [[ -d inputdata ]] || ./download_inputdata.sh
 bash tests/test_output_netcdfs_identical.sh

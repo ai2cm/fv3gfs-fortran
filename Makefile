@@ -1,13 +1,13 @@
 GCR_URL = us.gcr.io/vcm-ml
 DOCKERFILE ?= docker/Dockerfile
 COMPILED_TAG_NAME ?= default
-ENVIRONMENT_TAG_NAME ?=
+ENVIRONMENT_TAG_NAME ?= latest
 COMPILE_OPTION ?=
-
-COMPILED_IMAGE ?= $(GCR_URL)/fv3gfs-compiled-$(COMPILED_TAG_NAME)
 COMPILE_TARGET ?= fv3gfs-compiled
-ENVIRONMENT_TARGET ?= fv3gfs-env
-ENVIRONMENT_IMAGE=$(GCR_URL)/fv3gfs-environment$(ENVIRONMENT_TAG_NAME)
+ENVIRONMENT_TARGET ?= fv3gfs-environment
+COMPILED_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)
+
+ENVIRONMENT_IMAGE=$(GCR_URL)/$(ENVIRONMENT_TARGET):$(ENVIRONMENT_TAG_NAME)
 IMAGE ?= $(ENVIRONMENT_IMAGE)
 
 MOUNTS= -v $(shell pwd)/FV3:/FV3 \
@@ -62,7 +62,7 @@ build_environment_serialize: build_environment
 	if [ ! -d "$(SERIALBOX_PATH)" ];then \
 		git clone $(SERIALBOX_REPO) $(SERIALBOX_PATH);\
 	fi
-	ENVIRONMENT_TAG_NAME=:serialize ENVIRONMENT_TARGET=fv3gfs-env-serialize \
+	ENVIRONMENT_TAG_NAME=:serialize \
 	DOCKERFILE=docker/Dockerfile.serialize \
 	$(MAKE) build_environment
 
@@ -70,14 +70,14 @@ build_serialize: build_compiled
 	if [ ! -d "$(SERIALBOX_PATH)" ];then \
 		git clone $(SERIALBOX_REPO) $(SERIALBOX_PATH);\
 	fi
-	COMPILED_TAG_NAME=serialize COMPILE_TARGET=fv3gfs-compiled-serialize  \
-	ENVIRONMENT_TAG_NAME=:serialize ENVIRONMENT_TARGET=fv3gfs-env-serialize \
+	COMPILED_TAG_NAME=serialize  \
+	ENVIRONMENT_TAG_NAME=serialize \
 	DOCKERFILE=docker/Dockerfile.serialize \
 	$(MAKE) build
 
 dev_serialize: 
-	COMPILED_TAG_NAME=serialize COMPILE_TARGET=fv3gfs-compiled-serialize  \
-	ENVIRONMENT_TAG_NAME=:serialize ENVIRONMENT_TARGET=fv3gfs-env-serialize \
+	COMPILED_TAG_NAME=serialize  \
+	ENVIRONMENT_TAG_NAME=serialize  \
 	DOCKERFILE=docker/Dockerfile.serialize \
 	docker run -w=/FV3 \
 		-v $(RUNDIR_HOST):/Serialize/$(RUNDIR_CONTAINER) \
@@ -95,11 +95,11 @@ run_serialize:
 	docker run --rm \
 		-v $(RUNDIR_HOST):/Serialize$(RUNDIR_CONTAINER) \
 		-v $(shell pwd)/inputdata/fv3gfs-data-docker/fix.v201702:/inputdata/fix.v201702 \
-		-it $(GCR_URL)/fv3gfs-compiled-serialize /Serialize/FV3/rundir/submit_job.sh /Serialize/
+		-it $(GCR_URL)/$(COMPILE_TARGET):serialize /Serialize/FV3/rundir/submit_job.sh /Serialize/
 run_ser_normal: 
 	docker run --rm \
 		-v $(RUNDIR_HOST):$(RUNDIR_CONTAINER) \
 		-v $(shell pwd)/inputdata/fv3gfs-data-docker/fix.v201702:/inputdata/fix.v201702 \
-		-it $(GCR_URL)/fv3gfs-compiled-serialize /FV3/rundir/submit_job.sh
+		-it $(GCR_URL)/$(COMPILE_TARGET):serialize /FV3/rundir/submit_job.sh
 
 .PHONY: build build_environment build_compiled enter run test test_32bit

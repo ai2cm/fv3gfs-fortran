@@ -1,7 +1,6 @@
 SHELL = /bin/sh
 
 include conf/configure.fv3
-include conf/serialbox_configuration
 
 ifeq ($(strip $(FMS_DIR)),)
   FMS_DIR=$(realpath ../FMS)
@@ -23,10 +22,13 @@ else
 endif
 
 ROOT      := $(shell pwd)
+SERIALBOX_PREPROCESS_DIR=/Serialize/FV3
+SERIALBOX_APP=/serialbox2
 PPSER_PY=$(SERIALBOX_APP)/install/python/pp_ser/pp_ser.py
 PPSER_FLAGS = --verbose --ignore-identical -m utils_ppser_kbuff
-DESERIAL_FLAGS :=  -DSERIALIZE -I $(SERIALBOX_APP)/install/include
-SERIAL_EXE_FLAGS :=  -L $(SERIALBOX_APP)/install/lib  -lSerialboxFortranStatic -lSerialboxCStatic -lSerialboxStatic -L/lib/x86_64-linux-gnu -lnetcdff -lnetcdf -lpthread -lstdc++ -lstdc++fs
+SERIALBOX_FLAGS :=  -DSERIALIZE -I $(SERIALBOX_APP)/install/include
+SERIAL_LDFLAGS :=  -L $(SERIALBOX_APP)/install/lib  -lSerialboxFortranStatic -lSerialboxCStatic -lSerialboxStatic -L/lib/x86_64-linux-gnu -lnetcdff -lnetcdf -lpthread -lstdc++ -lstdc++fs
+
 
 FV3_EXE  = fv3.exe
 FV3CAP_LIB  = libfv3cap.a
@@ -160,11 +162,11 @@ serialize:
 	$(MAKE) -C $(SERIALBOX_PREPROCESS_DIR) build_serializer
 
 build_serializer:
-	(export DESERIAL_FLAGS='$(DESERIAL_FLAGS)' && $(MAKE) libs )
+	(export SERIALBOX_FLAGS='$(SERIALBOX_FLAGS)' && $(MAKE) libs )
 	$(MAKE) serializing_executable
 
- serializing_executable: FFLAGS += $(DESERIAL_FLAGS)
- serializing_executable: LDFLAGS += $(SERIAL_EXE_FLAGS)
+ serializing_executable: FFLAGS += $(SERIALBOX_FLAGS)
+ serializing_executable: LDFLAGS += $(SERIAL_LDFLAGS)
  serializing_executable: $(FV3_EXE)
 
 serialize_preprocess:
@@ -173,6 +175,7 @@ serialize_preprocess:
 	@mkdir -p $(SERIALBOX_PREPROCESS_DIR)/atmos_cubed_sphere/driver/fvGFS
 	@make pp_ser_calls
 	@cp -r -u  $(ROOT)/* $(SERIALBOX_PREPROCESS_DIR)
+	@ln -s /stochastic_physics $(SERIALBOX_PREPROCESS_DIR)/../stochastic_physics
 
 
 pp_ser_calls:

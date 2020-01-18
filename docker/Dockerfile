@@ -1,4 +1,4 @@
-FROM ubuntu:19.10 AS fv3gfs-env
+FROM ubuntu:19.10 AS fv3gfs-environment
 
 RUN apt-get update && apt-get install -y \
     curl \
@@ -28,7 +28,7 @@ RUN git config --global http.sslverify false && \
 
 ## Build FMS
 ##---------------------------------------------------------------------------------
-FROM fv3gfs-env AS fv3gfs-fms
+FROM fv3gfs-environment AS fv3gfs-fms
 
 ENV CC=mpicc
 ENV FC=mpifort
@@ -44,7 +44,7 @@ RUN mv /FMS/*/*.mod /FMS/*/*.o /FMS/*/*.h FMS/
 
 ## Build ESMF
 ##---------------------------------------------------------------------------------
-FROM fv3gfs-env AS fv3gfs-esmf
+FROM fv3gfs-environment AS fv3gfs-esmf
 
 ENV ESMF_DIR=/esmf
 ENV ESMF_INSTALL_PREFIX=/usr/local/esmf
@@ -57,7 +57,7 @@ RUN cd $ESMF_DIR && make lib -j8 && make install && make installcheck
 
 ## Build FV3 executable in its own image
 ##---------------------------------------------------------------------------------
-FROM fv3gfs-env AS fv3gfs-build
+FROM fv3gfs-environment AS fv3gfs-build
 
 ENV FMS_DIR=/FMS
 ENV ESMF_DIR=/usr/local/esmf
