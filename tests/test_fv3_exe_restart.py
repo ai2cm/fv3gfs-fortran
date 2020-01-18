@@ -46,11 +46,11 @@ def setup_final_run(workdir, firsthalf_config, remove_phy_data=False):
 def run_model(rundir, model_image, mounts):
     docker_run = ['docker', 'run', '--rm']
     rundir_abs = os.path.abspath(rundir)
-    rundir_mount = ['-v', f'{rundir_abs}:/FV3/rundir']
+    rundir_mount = ['-v', f'{rundir_abs}:/rundir']
     fv3out_filename = join(rundir, 'fv3out')
     fv3err_filename = join(rundir, 'fv3err')
     with open(fv3out_filename, 'w') as fv3out_f, open(fv3err_filename, 'w') as fv3err_f:
-        subprocess.call(docker_run + rundir_mount + mounts + [model_image],
+        subprocess.call(docker_run + rundir_mount + mounts + [model_image] + ["bash", "/rundir/submit_job.sh"],
                         stdout=fv3out_f,
                         stderr=fv3err_f)
         
