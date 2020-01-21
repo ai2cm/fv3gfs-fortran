@@ -44,7 +44,6 @@ jobs:
       - run: 
           name: "Run pytest tests"
           command: |
-            . venv/bin/activate
             python tests/pytest/download_reference.py gs://vcm-fv3gfs-data/regression_reference
             pytest tests/pytest
       - run:
