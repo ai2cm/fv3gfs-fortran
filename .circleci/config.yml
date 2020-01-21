@@ -3,43 +3,39 @@ orbs:
   gcp-gcr: circleci/gcp-gcr@0.6.1
 jobs:
   build_default:
-    docker:
-    - image: circleci/python:3.7
+    machine:
+      docker_layer_caching: true
     environment:
       COMPILED_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-default:latest
       COMPILED_TAG_NAME: default
       FV3CONFIG_CACHE_DIR: /tmp/.fv3config
     steps:
       - checkout
-      - setup_remote_docker: 
-          docker_layer_caching: true
       - run:
           name: "Pull Submodules"
           command: |
             git submodule init
             git submodule update
       - run: make build
-      # download inputdata
-      - restore_cache:
-          keys:
-            - v1.2-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
-      - run: bash download_inputdata.sh
       - run: 
           name: "Install Python test dependencies"
           command: |
-            python3 -m venv venv
-            . venv/bin/activate
-            pip3 install -r requirements.txt
-            pip3 install git+https://github.com/VulcanClimateModeling/fv3config.git
-            python3 -m fv3config.download_data
+            pyenv global 3.6.2
+            pip install -r requirements.txt
+            pip install git+https://github.com/VulcanClimateModeling/fv3config.git
+      # download inputdata
+      - restore_cache:
+          keys:
+            - v1.2-inputdata-{{ checksum "download_inputdata.sh" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+      - run: bash download_inputdata.sh
+      - run: python3 -m fv3config.download_data
       - save_cache:
           paths:
             - ./fv3gfs-data-docker_2020-01-13.tar.gz
-            - ./venv
             - $FV3CONFIG_CACHE_DIR
-          key: v1.2-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt" }}
+          key: v1.2-inputdata-{{ checksum "download_inputdata.sh" }}
       # tests
       - run: which python
       - run: which python3
