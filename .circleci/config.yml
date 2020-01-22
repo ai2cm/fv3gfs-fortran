@@ -12,10 +12,9 @@ jobs:
     steps:
       - checkout
       - run:
-          name: "Decode GCR key"
+          name: "gcloud auth"
           command: |
-            echo "export GCLOUD_SERVICE_KEY=$(echo $ENCODED_GCR_KEY | base64 -D)" >> $BASH_ENV
-            source $BASH_ENV
+            echo $ENCODED_GCR_KEY | base64 -D | gcloud auth activate-service-account --key-file=-
       - run:
           name: "Pull Submodules"
           command: |
