@@ -12,6 +12,10 @@ jobs:
     steps:
       - checkout
       - run:
+          name: "Decode GCR key"
+          command: |
+          echo "export GCLOUD_SERVICE_KEY=$(echo $ENCODED_GCR_KEY | base64 -D)"
+      - run:
           name: "Pull Submodules"
           command: |
             git submodule init
@@ -27,7 +31,7 @@ jobs:
             [ -d /opt/circleci/.pyenv/versions/3.6.2 ] || pyenv install 3.6.2
             pyenv global 3.6.2
             pip install -r requirements.txt
-            pip install --upgrade git+https://github.com/VulcanClimateModeling/fv3config.git@fix/gcsfs_auth
+            pip install --upgrade git+https://github.com/VulcanClimateModeling/fv3config.git
       - run: bash download_inputdata.sh
       - run: python3 -m fv3config.download_data
       - save_cache:
