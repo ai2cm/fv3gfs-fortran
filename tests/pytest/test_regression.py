@@ -28,6 +28,11 @@ def model_image():
     return MODEL_IMAGE
 
 
+@pytest.fixture
+def reference_dir(request):
+    return request.config.getoption("--refdir")
+
+
 @pytest.fixture(params=config_filenames)
 def config(request):
     config_filename = os.path.join(CONFIG_DIR, request.param)
@@ -35,20 +40,21 @@ def config(request):
         return yaml.safe_load(config_file)
 
 
-def test_regression(config, model_image):
+def test_regression(config, model_image, reference_dir):
     run_name = config['experiment_name']
+    run_reference_dir = os.path.join(reference_dir, run_name)
     run_dir = os.path.join(OUTPUT_DIR, run_name)
     if os.path.isdir(run_dir):
         shutil.rmtree(run_dir)
     os.makedirs(run_dir)
     create_run_directory(config, run_dir)
     run_model(run_dir, MODEL_IMAGE)
-    reference_dir = os.path.join(REFERENCE_DIR, run_name)
-    os.makedirs(reference_dir, exist_ok=True)
-    md5sum_filename = os.path.join(reference_dir, MD5SUM_FILENAME)
+    md5sum_filename = os.path.join(run_reference_dir, MD5SUM_FILENAME)
     if not os.path.isfile(md5sum_filename):
-        generate_md5sum(run_dir, md5sum_filename)
-        assert False, "reference md5sum did not exist, created one"
+        assert False, (f"reference md5sum does not exist, "
+                       f"you can create it with `bash set_reference.sh {reference_dir}`"
+                       " after running the model and generating the output directories."
+                       )
     else:
         check_md5sum(run_dir, md5sum_filename)
     shutil.rmtree(run_dir)
@@ -75,15 +81,6 @@ def run_model(rundir, model_image):
 
 def check_md5sum(run_dir, md5sum_filename):
     subprocess.check_call(["md5sum", "-c", md5sum_filename], cwd=run_dir)
-
-
-def generate_md5sum(run_dir, md5sum_filename):
-    with open(md5sum_filename, 'w') as output_file:
-        subprocess.check_call(
-            ["md5sum"] + glob("*.nc") + glob("RESTART/*"),
-            cwd=run_dir,
-            stdout=output_file
-        )
 
 
 def create_run_directory(config, dirname):

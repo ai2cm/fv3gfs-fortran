@@ -9,10 +9,8 @@ jobs:
       COMPILED_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-default:latest
       COMPILED_TAG_NAME: default
       FV3CONFIG_CACHE_DIR: /tmp/.fv3config
-      GCLOUD_SERVICE_KEY: $ENCODED_GCR_KEY
     steps:
       - checkout
-      - gcp-gcr/gcr-auth
       - run:
           name: "Pull Submodules"
           command: |
@@ -45,9 +43,8 @@ jobs:
       - run: which python3
       - run: 
           name: "Run pytest tests"
-          command: |
-            python tests/pytest/download_reference.py gs://vcm-fv3gfs-data/regression_reference
-            pytest tests/pytest
+          # -s to avoid capturing stdout/stderr of md5sum call
+          command: pytest tests/pytest -s --refdir $(pwd)/tests/pytest/reference/circleci
       - run:
           name: "Delete data files"
           command: |
