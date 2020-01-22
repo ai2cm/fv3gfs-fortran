@@ -11,6 +11,7 @@ jobs:
       FV3CONFIG_CACHE_DIR: /tmp/.fv3config
     steps:
       - checkout
+      - gcp-gcr/gcr-auth
       - run:
           name: "Pull Submodules"
           command: |
