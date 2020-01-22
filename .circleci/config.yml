@@ -17,6 +17,9 @@ jobs:
             git submodule init
             git submodule update
       - run: make build
+      - restore_cache:
+          keys:
+            - v1.3-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt"}}
       - run: 
           name: "Install Python test dependencies"
           command: |
@@ -25,10 +28,6 @@ jobs:
             pyenv global 3.6.2
             pip install -r requirements.txt
             pip install --upgrade git+https://github.com/VulcanClimateModeling/fv3config.git@fix/gcsfs_auth
-      # download inputdata
-      - restore_cache:
-          keys:
-            - v1.3-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt"}}
       - run: bash download_inputdata.sh
       - run: python3 -m fv3config.download_data
       - save_cache:
