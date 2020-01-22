@@ -9,7 +9,7 @@ jobs:
       COMPILED_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-default:latest
       COMPILED_TAG_NAME: default
       FV3CONFIG_CACHE_DIR: /tmp/.fv3config
-      GCLOUD_SERVICE_KEY: $ENCODED_GOOGLE_CREDENTIALS
+      GCLOUD_SERVICE_KEY: $ENCODED_GCR_KEY
     steps:
       - checkout
       - gcp-gcr/gcr-auth
