@@ -24,20 +24,19 @@ jobs:
             pyenv install 3.6.2
             pyenv global 3.6.2
             pip install -r requirements.txt
-            pip install git+https://github.com/VulcanClimateModeling/fv3config.git@fix/gcsfs_auth
+            pip install --upgrade git+https://github.com/VulcanClimateModeling/fv3config.git@fix/gcsfs_auth
       # download inputdata
       - restore_cache:
           keys:
-            - v1.2-inputdata-{{ checksum "download_inputdata.sh" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1-dependencies-
+            - v1.3-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt"}}
       - run: bash download_inputdata.sh
       - run: python3 -m fv3config.download_data
       - save_cache:
           paths:
             - ./fv3gfs-data-docker_2020-01-13.tar.gz
             - $FV3CONFIG_CACHE_DIR
-          key: v1.2-inputdata-{{ checksum "download_inputdata.sh" }}
+            - /opt/circleci/.pyenv/versions/3.6.2
+          key: v1.3-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt"}}
       # tests
       - run: which python
       - run: which python3
@@ -53,34 +52,6 @@ jobs:
           when: on_fail
       - store_artifacts:
           path: ./tests/pytest/output
-  build_32:
-    machine:
-      docker_layer_caching: true
-    environment:
-      COMPILED_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-32bit:latest
-      COMPILED_TAG_NAME: 32bit
-      COMPILE_OPTION: 32BIT=Y
-    steps:
-      - checkout
-      - run:
-          name: "Pull Submodules"
-          command: |
-            git submodule init
-            git submodule update
-      - run: make build
-      # download inputdata
-      - restore_cache:
-          keys:
-            - v1.1-inputdata-{{ checksum "download_inputdata.sh" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1.1-inputdata-
-      - run: bash download_inputdata.sh
-      - save_cache:
-          paths:
-            - ./fv3gfs-data-docker_2020-01-13.tar.gz
-          key: v1.1-inputdata-{{ checksum "download_inputdata.sh" }}
-      # tests
-      - run: bash tests/test_output_netcdfs_identical.sh
 workflows:
   version: 2
   build:
