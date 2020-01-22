@@ -24,7 +24,7 @@ jobs:
             pyenv install 3.6.2
             pyenv global 3.6.2
             pip install -r requirements.txt
-            pip install git+https://github.com/VulcanClimateModeling/fv3config.git
+            pip install git+https://github.com/VulcanClimateModeling/fv3config.git@fix/gcsfs_auth
       # download inputdata
       - restore_cache:
           keys:
