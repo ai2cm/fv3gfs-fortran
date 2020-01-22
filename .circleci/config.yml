@@ -14,7 +14,7 @@ jobs:
       - run:
           name: "gcloud auth"
           command: |
-            echo $ENCODED_GCR_KEY | base64 -D | gcloud auth activate-service-account --key-file=-
+            echo $ENCODED_GCR_KEY | base64 -d | gcloud auth activate-service-account --key-file=-
       - run:
           name: "Pull Submodules"
           command: |
