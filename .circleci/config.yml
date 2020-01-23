@@ -6,17 +6,15 @@ jobs:
     machine:
       docker_layer_caching: true
     environment:
-      COMPILED_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-default:latest
-      COMPILED_TAG_NAME: default
       FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
     steps:
       - checkout
       - run:
           name: "gcloud auth"
           command: |
-            echo 'export GCLOUD_SERVICE_KEY=$(echo $ENCODED_GCR_KEY | base64 -d)' >> $BASH_ENV
+            echo $ENCODED_GCR_KEY | base64 -d > $GOOGLE_APPLICATION_CREDENTIALS
             source $BASH_ENV
-            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
       - run:
           name: "Pull Submodules"
           command: |
@@ -49,9 +47,6 @@ jobs:
           name: "Run pytest tests"
           # -s to avoid capturing stdout/stderr of md5sum call
           command: |
-            pyenv global 2.7.12
-            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
-            pyenv global 3.6.2
             pytest tests/pytest -s --refdir $(pwd)/tests/pytest/reference/circleci
       - run:
           name: "Delete data files"
