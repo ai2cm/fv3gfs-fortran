@@ -49,7 +49,9 @@ jobs:
           name: "Run pytest tests"
           # -s to avoid capturing stdout/stderr of md5sum call
           command: |
+            pyenv global 2.7.12
             echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+            pyenv global 3.6.2
             pytest tests/pytest -s --refdir $(pwd)/tests/pytest/reference/circleci
       - run:
           name: "Delete data files"
