@@ -48,7 +48,9 @@ jobs:
       - run: 
           name: "Run pytest tests"
           # -s to avoid capturing stdout/stderr of md5sum call
-          command: pytest tests/pytest -s --refdir $(pwd)/tests/pytest/reference/circleci
+          command: |
+            echo $GCLOUD_SERVICE_KEY | gcloud auth activate-service-account --key-file=-
+            pytest tests/pytest -s --refdir $(pwd)/tests/pytest/reference/circleci
       - run:
           name: "Delete data files"
           command: |
