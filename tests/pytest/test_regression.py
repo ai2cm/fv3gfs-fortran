@@ -47,7 +47,7 @@ def test_regression(config, model_image, reference_dir):
     if os.path.isdir(run_dir):
         shutil.rmtree(run_dir)
     os.makedirs(run_dir)
-    create_run_directory(config, run_dir)
+    write_run_directory(config, run_dir)
     run_model(run_dir, MODEL_IMAGE)
     md5sum_filename = os.path.join(run_reference_dir, MD5SUM_FILENAME)
     if not os.path.isfile(md5sum_filename):
@@ -83,7 +83,7 @@ def check_md5sum(run_dir, md5sum_filename):
     subprocess.check_call(["md5sum", "-c", md5sum_filename], cwd=run_dir)
 
 
-def create_run_directory(config, dirname):
+def write_run_directory(config, dirname):
     fv3config.write_run_directory(config, dirname)
     shutil.copy(SUBMIT_JOB_FILENAME, os.path.join(dirname, 'submit_job.sh'))
 
