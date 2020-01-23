@@ -40,8 +40,6 @@ jobs:
             - /opt/circleci/.pyenv/versions/3.6.2
           key: v1.3-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt"}}
       # tests
-      - run: which python
-      - run: which python3
       - run: 
           name: "Run pytest tests"
           # -s to avoid capturing stdout/stderr of md5sum call
