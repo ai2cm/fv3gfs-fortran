@@ -46,13 +46,14 @@ Create or download an fv3config yaml configuration. Edit the configuration as ne
 Examples of such configurations are included in the tests under `tests/pytest/config`.
 
 Once you have a configuration file, you can write a run directory in python using:
-
 ```python
 import fv3config
 import yaml
 config = yaml.safe_load(open('fv3config.yml', 'r'))
 fv3config.write_run_directory(config, 'rundir')
 ```
+This example is included in `examples/create_rundir.py`.
+
 You also must put a `submit_job.sh` script in the run directory. You can copy the one
 included in this repository.
 ```
