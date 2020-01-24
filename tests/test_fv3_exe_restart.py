@@ -7,6 +7,10 @@ import xarray as xr
 import hashlib
 import subprocess
 
+RUN_SCRIPT_FILENAME = 'submit_job.sh'
+
+RUN_IN_DOCKER_COMMAND = ["bash", os.path.join("/rundir/", RUN_SCRIPT_FILENAME)]
+
 
 def setup_initial_runs(workdir, config_template):
     """Set up two run-directories, one for a four-hour run, one for
@@ -22,7 +26,7 @@ def setup_initial_runs(workdir, config_template):
     fv3config.write_run_directory(fullrun_config, join(workdir, 'fullrun'))
     fv3config.write_run_directory(firsthalf_config, join(workdir, 'firsthalf'))
     for run in ['fullrun', 'firsthalf']:
-        shutil.copy('submit_job.sh', join(workdir, run, 'submit_job.sh'))
+        shutil.copy(RUN_SCRIPT_FILENAME, join(workdir, run, RUN_SCRIPT_FILENAME))
     return fullrun_config, firsthalf_config
 
 
@@ -39,20 +43,22 @@ def setup_final_run(workdir, firsthalf_config, remove_phy_data=False):
     if remove_phy_data:
         for tile in range(1, 7):
             os.remove(join(workdir, 'secondhalf', 'INPUT', f'phy_data.tile{tile}.nc'))
-    shutil.copy('submit_job.sh', join(workdir, 'secondhalf', 'submit_job.sh'))
+    shutil.copy(RUN_SCRIPT_FILENAME, join(workdir, 'secondhalf', RUN_SCRIPT_FILENAME))
     return secondhalf_config
 
 
 def run_model(rundir, model_image, mounts):
     docker_run = ['docker', 'run', '--rm']
     rundir_abs = os.path.abspath(rundir)
-    rundir_mount = ['-v', f'{rundir_abs}:/FV3/rundir']
+    rundir_mount = ['-v', f'{rundir_abs}:/rundir']
     fv3out_filename = join(rundir, 'fv3out')
     fv3err_filename = join(rundir, 'fv3err')
     with open(fv3out_filename, 'w') as fv3out_f, open(fv3err_filename, 'w') as fv3err_f:
-        subprocess.call(docker_run + rundir_mount + mounts + [model_image],
-                        stdout=fv3out_f,
-                        stderr=fv3err_f)
+        subprocess.call(
+            docker_run + rundir_mount + mounts + [model_image] + RUN_IN_DOCKER_COMMAND,
+            stdout=fv3out_f,
+            stderr=fv3err_f
+        )
         
         
 def run_full_and_split(workdir, config_template, remove_phy_data=False):

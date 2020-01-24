@@ -16,51 +16,75 @@ This will make a `fv3gfs-environment:latest` image with the current version of
 the environment and a `fv3gfs-compiled:default` image with the default compile options.
 Other tag names and compile options can be set. For example:
 ```
-COMPILED_TAG_NAME=32bit COMPILE_OPTION=32BIT=Y make build
+make build_debug
 ```
-Rules are provided for certain compile options. For example `make build_32bit` is equivalent
-to the above.
+Rules are provided for certain compile options. Check the Makefile for a list.
 
-### Step 2: Download input data
+### Step 2: Install fv3config
 ```
-bash download_inputdata.sh
+pip install -r requirements.txt
 ```
-will download required input data and files using wget from the vcm-ml-public Google storage bucket.
+will download required dependencies for running tests and using fv3config. You can
+also manually install the fv3config package.
 
-### Step 3: Create experiment case and configure
+In order to use `run_docker.sh` below, you will also need to set the fv3config
+cache directory using
 ```
-bash create_case.sh <experiment-name>
+export $FV3CONFIG_CACHE_DIR=<location>
 ```
-where `<experiment-name>` is whatever you would like to call your experiment.
+This should be added to your bashrc.
 
-Optionally edit `experiments/<experiment-name>/rundir/input.nml` and `experiments/<experiment-name>/rundir/diag_table` to modify the namelist used for your run and the set of diagnostics the model will output.
+While fv3config still uses "options" for data, you will also need to download the
+data cache using
+```
+python3 -m fv3config.download_data
+```
+This should be done after the cache directory is set.
+
+### Step 3: Create run directory
+Create or download an fv3config yaml configuration. Edit the configuration as needed.
+Examples of such configurations are included in the tests under `tests/pytest/config`.
+
+Once you have a configuration file, you can write a run directory in python using:
+```python
+import fv3config
+import yaml
+config = yaml.safe_load(open('fv3config.yml', 'r'))
+fv3config.write_run_directory(config, 'rundir')
+```
+This example is included in `examples/create_rundir.py`.
+
+You also must put a `submit_job.sh` script in the run directory. You can copy the one
+included in this repository.
+```
+cp submit_job.sh rundir/
+```
+
+Optionally edit `rundir/input.nml` and `rundir/diag_table` to modify the namelist used
+for your run and the set of diagnostics the model will output. Ideally this should be
+done instead by editing the `fv3config.yml` we used earlier.
 
 ### Step 4: Run the model
 ```
-bash run_docker.sh fv3gfs-compiled:default <experiment-name>
+bash run_docker.sh us.gcr.io/vcm-ml/fv3gfs-compiled-default <rundir> $FV3CONFIG_CACHE_DIR
 ```
-Output data specified in `diag_table` and log files (including stdout and stderr) will be saved in `experiments/<experiment-name>/rundir`. By default the container will run in the background.
-
-## Google Container Repository
-
-By default Circle CI builds two configurations and pushes them to Google
-Container Repository:
-
-- `us.gcr.io/vcm-ml/fv3gfs-compiled-32bit`. A 32bit version of the model.
-- `us.gcr.io/vcm-ml/fv3gfs-compiled-default`. A default version compiled with
-  64 bit reals.
 
 # Developing the model
 
 The `fv3gfs-environment` docker image is useful for development purposes where the model code will be recompiled repeatedly in an interactive fashion. To start a bash shell in a docker container with the FV3 source tree mounted at `/FV3`, run the command:
 
     make enter
-If necessary, this will build the image, but it will not compile the source code.
 
-# fv3gfs
-The public home of NOAA EMC's FV3GFS Modeling System.
+If necessary, this will build the image, but it will overwrite the compiled sources
+with a bind mount to your host filesystem. You will need to compile the model with
+the filesystem bind-mounted in this way. This can be done automatically with:
 
-This repository is a scientific product and is not official communication of the National Oceanic and Atmospheric Administration, or the United States Department of Commerce. All NOAA GitHub project code is provided on an ‘as is’ basis and the user assumes responsibility for its use. Any claims against the Department of Commerce or Department of Commerce bureaus stemming from the use of this GitHub project will be governed by all applicable Federal law. Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation or
-favoring by the Department of Commerce. The Department of Commerce seal and logo, or the seal and logo of a DOC bureau, shall not be used in any manner to imply endorsement of any commercial product or activity by DOC or the United States Government.
+    make compile_dev
 
-The code is supported on NOAA research and development machines THEIA, GAEA and Jet, where prebuilt libraries and test cases are available. Best efforts will be provided to support users to run this public release code on those machines.
+# Testing the model
+
+Tests are included in the `tests` subdirectory. You can see which ones run in
+continuous integration by inspecting `.circleci/config.yml`. Regression tests are
+performed for a set of reference configurations included in `tests/pytest/config`.
+Please read the README in `tests/pytest` for more information about these regression
+tests and how to update the reference checksums.

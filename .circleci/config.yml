@@ -2,79 +2,58 @@ version: 2.1
 orbs:
   gcp-gcr: circleci/gcp-gcr@0.6.1
 jobs:
-  build_32:
-    machine:
-      docker_layer_caching: true
-    environment:
-      COMPILED_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-32bit:latest
-      COMPILED_TAG_NAME: 32bit
-      COMPILE_OPTION: 32BIT=Y
-    steps:
-      - checkout
-      - run:
-          name: "Pull Submodules"
-          command: |
-            git submodule init
-            git submodule update
-      - run: make build
-      # download inputdata
-      - restore_cache:
-          keys:
-            - v1.1-inputdata-{{ checksum "download_inputdata.sh" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1.1-inputdata-
-      - run: bash download_inputdata.sh
-      - save_cache:
-          paths:
-            - ./fv3gfs-data-docker_2020-01-13.tar.gz
-          key: v1.1-inputdata-{{ checksum "download_inputdata.sh" }}
-      # tests
-      - run: bash tests/test_output_netcdfs_identical.sh
-      #- gcp-gcr/gcr-auth
-      #- run: |
-      #    if [[ "$CIRCLE_BRANCH" == "master" ]]
-      #    then
-      #        docker push $GCR_IMAGE
-      #    fi
   build_default:
     machine:
       docker_layer_caching: true
     environment:
-      COMPILED_IMAGE: us.gcr.io/vcm-ml/fv3gfs-compiled-default:latest
-      COMPILED_TAG_NAME: default
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
     steps:
       - checkout
+      - run:
+          name: "gcloud auth"
+          command: |
+            echo $ENCODED_GCR_KEY | base64 -d > $GOOGLE_APPLICATION_CREDENTIALS 
       - run:
           name: "Pull Submodules"
           command: |
             git submodule init
             git submodule update
       - run: make build
-      # download inputdata
       - restore_cache:
           keys:
-            - v1.1-inputdata-{{ checksum "download_inputdata.sh" }}
-            # fallback to using the latest cache if no exact match is found
-            - v1.1-inputdata-
+            - v1.3-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt"}}
+      - run: 
+          name: "Install Python test dependencies"
+          command: |
+            pyenv versions
+            [ -d /opt/circleci/.pyenv/versions/3.6.2 ] || pyenv install 3.6.2
+            pyenv global 3.6.2
+            pip install -r requirements.txt
       - run: bash download_inputdata.sh
+      - run: python3 -m fv3config.download_data
       - save_cache:
           paths:
             - ./fv3gfs-data-docker_2020-01-13.tar.gz
-          key: v1.1-inputdata-{{ checksum "download_inputdata.sh" }}
+            - $FV3CONFIG_CACHE_DIR
+            - /opt/circleci/.pyenv/versions/3.6.2
+          key: v1.3-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt"}}
       # tests
-      - run: bash tests/test_output_netcdfs_identical.sh
-      - run: bash tests/test_regression_fails_for_900s_timestep.sh
-      #- run: TARGET=cpu REAL_TYPE=double bash tests/testsuite.sh
-      - run: echo $ENCODED_GCR_KEY > ${HOME}/gcloud-service-key.json
-      #- gcp-gcr/gcr-auth
-      #- run: |
-      #    if [[ "$CIRCLE_BRANCH" == "master" ]]
-      #    then
-      #        docker push $GCR_IMAGE
-      #    fi
+      - run: 
+          name: "Run pytest tests"
+          # -s to avoid capturing stdout/stderr of md5sum call
+          command: |
+            pytest tests/pytest -s --refdir $(pwd)/tests/pytest/reference/circleci
+      - run:
+          name: "Delete data files"
+          command: |
+            rm ./tests/pytest/output/*/INPUT/*.nc
+            rm ./tests/pytest/output/*/*/*.grb
+          when: on_fail
+      - store_artifacts:
+          path: ./tests/pytest/output
 workflows:
   version: 2
   build:
     jobs:
-      #- build_32
       - build_default

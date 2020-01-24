@@ -4,14 +4,9 @@ COMPILE_OPTION ?=
 
 COMPILED_IMAGE ?= $(GCR_URL)/fv3gfs-compiled-$(COMPILED_TAG_NAME)
 ENVIRONMENT_IMAGE=$(GCR_URL)/fv3gfs-environment
-IMAGE ?= $(ENVIRONMENT_IMAGE)
 
-MOUNTS= -v $(shell pwd)/sorc/fv3gfs.fd/FV3:/FV3 \
-	-v $(shell pwd)/sorc/fv3gfs.fd/FV3/conf/configure.fv3.gnu_docker:/FV3/conf/configure.fv3
-
-EXPERIMENT ?= new
-RUNDIR_CONTAINER=/FV3/rundir
-RUNDIR_HOST=$(shell pwd)/experiments/$(EXPERIMENT)/rundir
+MOUNTS= -v $(shell pwd)/FV3:/FV3 \
+	-v $(shell pwd)/FV3/conf/configure.fv3.gnu_docker:/FV3/conf/configure.fv3
 
 build: build_compiled
 
@@ -25,26 +20,24 @@ build_compiled: build_environment
 		-t $(COMPILED_IMAGE) \
 		--target fv3gfs-compiled .
 
-enter: build_environment
-	docker run --rm $(MOUNTS) -w /FV3 -it $(IMAGE) bash
+enter: build_compiled
+	docker run --rm $(MOUNTS) -w /FV3 -it $(COMPILED_IMAGE) bash
 
-compile_dev: build_environment
-	docker run --rm $(MOUNTS) -w /FV3 -it $(IMAGE) bash compile $(COMPILE_OPTION)
-
-run_dev: compile_dev
-	docker run --rm \
-		-v $(RUNDIR_HOST):$(RUNDIR_CONTAINER) \
-		-v $(shell pwd)/inputdata/fv3gfs-data-docker/fix.v201702:/inputdata/fix.v201702 \
-		-it $(IMAGE) /FV3/rundir/submit_job.sh
+compile_dev: build_compiled
+	docker run --rm $(MOUNTS) -w /FV3 -it $(COMPILED_IMAGE) bash -c "make libs && make fv3.exe"
 
 test:
-	./test_docker.sh $(COMPILED_TAG_NAME)
+	pytest tests/pytest -s --refdir $(pwd)/tests/pytest/reference/circleci
 
-test_32bit:
-	COMPILED_TAG_NAME=32bit $(MAKE) test
+update_circleci_reference: test
+	cd tests/pytest && bash tests/pytest/set_reference.sh circleci
 
-build_32bit: build_environment
-	COMPILED_TAG_NAME=32bit COMPILE_OPTION=32BIT=Y $(MAKE) build
+# 32bit options don't currently build, fix these when issue #4 is fixed.
+#test_32bit:
+#	COMPILED_TAG_NAME=32bit $(MAKE) test
+#
+#build_32bit: build_environment
+#	COMPILED_TAG_NAME=32bit COMPILE_OPTION=32BIT=Y $(MAKE) build
 
 build_debug: build_environment
 	COMPILED_TAG_NAME=debug COMPILE_OPTION="REPRO=\\\nDEBUG=Y" $(MAKE) build
