@@ -50,15 +50,22 @@ Once you have a configuration file, you can write a run directory in python usin
 ```python
 import fv3config
 import yaml
-config = yaml.safe_load('fv3config.yml')
+config = yaml.safe_load(open('fv3config.yml', 'r'))
 fv3config.write_run_directory(config, 'rundir')
 ```
+You also must put a `submit_job.sh` script in the run directory. You can copy the one
+included in this repository.
+```
+cp submit_job.sh rundir/
+```
 
-Optionally edit `experiments/<experiment-name>/rundir/input.nml` and `experiments/<experiment-name>/rundir/diag_table` to modify the namelist used for your run and the set of diagnostics the model will output.
+Optionally edit `rundir/input.nml` and `rundir/diag_table` to modify the namelist used
+for your run and the set of diagnostics the model will output. Ideally this should be
+done instead by editing the `fv3config.yml` we used earlier.
 
 ### Step 4: Run the model
 ```
-bash run_docker.sh fv3gfs-compiled:default <rundir> $FV3CONFIG_CACHE_DIR
+bash run_docker.sh us.gcr.io/vcm-ml/fv3gfs-compiled-default <rundir> $FV3CONFIG_CACHE_DIR
 ```
 
 # Developing the model
