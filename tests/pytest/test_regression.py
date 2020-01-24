@@ -88,17 +88,5 @@ def write_run_directory(config, dirname):
     shutil.copy(SUBMIT_JOB_FILENAME, os.path.join(dirname, 'submit_job.sh'))
 
 
-def get_base_config():
-    config = fv3config.get_default_config()
-    config['initial_conditions'] = 'restart_example'
-    config['namelist']['fv_core_nml']['external_ic'] = False
-    config['namelist']['fv_core_nml']['nggps_ic'] = False
-    config['namelist']['fv_core_nml']['make_nh'] = False
-    config['namelist']['fv_core_nml']['mountain'] = True
-    config['namelist']['fv_core_nml']['warm_start'] = True
-    config['namelist']['fv_core_nml']['na_init'] = 0
-    return config
-
-
 if __name__ == '__main__':
     pytest.main()
