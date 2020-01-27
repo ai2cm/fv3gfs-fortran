@@ -43,7 +43,7 @@ jobs:
           name: "Run pytest tests"
           # -s to avoid capturing stdout/stderr of md5sum call
           command: |
-            pytest tests/pytest -s --refdir $(pwd)/tests/pytest/reference/circleci
+            pytest tests/pytest -s --refdir $(pwd)/tests/pytest/reference/docker
       - run:
           name: "Delete data files"
           command: |
