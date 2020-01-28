@@ -8,7 +8,7 @@ import hashlib
 import subprocess
 
 RUN_SCRIPT_FILENAME = 'submit_job.sh'
-
+MODEL_IMAGE = "us.gcr.io/vcm-ml/fv3gfs-compiled-default"
 RUN_IN_DOCKER_COMMAND = ["bash", os.path.join("/rundir/", RUN_SCRIPT_FILENAME)]
 
 
@@ -39,6 +39,7 @@ def setup_final_run(workdir, firsthalf_config, remove_phy_data=False):
         join(workdir, 'firsthalf', 'RESTART')
     )
     secondhalf_config = fv3config.enable_restart(secondhalf_config)
+    secondhalf_config['namelist']['gfs_physics_nml']['nstf_name'] = [2, 0, 1, 0, 5]
     fv3config.write_run_directory(secondhalf_config, join(workdir, 'secondhalf'))
     if remove_phy_data:
         for tile in range(1, 7):
@@ -54,17 +55,19 @@ def run_model(rundir, model_image, mounts):
     fv3out_filename = join(rundir, 'fv3out')
     fv3err_filename = join(rundir, 'fv3err')
     with open(fv3out_filename, 'w') as fv3out_f, open(fv3err_filename, 'w') as fv3err_f:
+        args = docker_run + rundir_mount + mounts + [model_image] + RUN_IN_DOCKER_COMMAND
+        print(f'Running model using `{" ".join(args)}`')
         subprocess.call(
-            docker_run + rundir_mount + mounts + [model_image] + RUN_IN_DOCKER_COMMAND,
+            args,
             stdout=fv3out_f,
             stderr=fv3err_f
         )
-        
-        
+
+
 def run_full_and_split(workdir, config_template, remove_phy_data=False):
     archive = fv3config.get_cache_dir()
     archive_mount = ['-v', f'{archive}:{archive}']
-    model_image = 'fv3gfs-compiled-default'
+    model_image = MODEL_IMAGE
     _, firsthalf_config = setup_initial_runs(workdir, config_template)
     run_model(join(workdir, 'fullrun'), model_image, archive_mount)
     run_model(join(workdir, 'firsthalf'), model_image, archive_mount)
@@ -85,7 +88,7 @@ def compare_restart_files(dir1, dir2, verbose=False):
         with open(join(dir2, 'RESTART', file), 'rb') as f:
             secondhalf_hash = hashlib.md5(f.read()).hexdigest()
         if fullrun_hash != secondhalf_hash:
-            file_difference_count +=1
+            file_difference_count += 1
             if verbose:
                 print(f'{file} differs')
     print(f'A total of {file_difference_count} restart files differ.')
@@ -100,12 +103,14 @@ def get_base_config():
     config['namelist']['fv_core_nml']['mountain'] = True
     config['namelist']['fv_core_nml']['warm_start'] = True
     config['namelist']['fv_core_nml']['na_init'] = 0
+    config['namelist']['gfs_physics_nml']['nstf_name'] = [2, 0, 1, 0, 5]
     return config
 
 
 def test_gfs_standard():
     workdir = 'rundirs_gfs_standard'
     config_standard = fv3config.get_default_config()
+    config_standard['namelist']['gfs_physics_nml']['nstf_name'] = [2, 1, 1, 0, 5]
     run_full_and_split(workdir, config_standard)
     compare_restart_files(join(workdir, 'fullrun'), join(workdir, 'secondhalf'))
 
@@ -135,7 +140,7 @@ def test_dycore_only():
 
 
 if __name__ == '__main__':
-    test_dycore_only()
     test_gfs_standard()
     test_restart_standard()
+    test_dycore_only()
     test_isubc_sw_lw_zero()
