@@ -3,11 +3,13 @@ import os
 from os.path import join
 import shutil
 from copy import deepcopy
+import yaml
 import xarray as xr
 import hashlib
 import subprocess
 
 RUN_SCRIPT_FILENAME = 'submit_job.sh'
+TEST_DIR = os.path.dirname(os.path.realpath(__file__))
 
 RUN_IN_DOCKER_COMMAND = ["bash", os.path.join("/rundir/", RUN_SCRIPT_FILENAME)]
 
@@ -91,8 +93,14 @@ def compare_restart_files(dir1, dir2, verbose=False):
     print(f'A total of {file_difference_count} restart files differ.')
 
 
-def get_base_config():
-    config = fv3config.get_default_config()
+def get_default_config():
+    with open(os.path.join(TEST_DIR, 'pytest/config/default.yml'), 'r') as f:
+        config = yaml.safe_load(f)
+    return config
+
+
+def get_restart_config():
+    config = get_default_config()
     config['initial_conditions'] = 'restart_example'
     config['namelist']['fv_core_nml']['external_ic'] = False
     config['namelist']['fv_core_nml']['nggps_ic'] = False
@@ -105,21 +113,21 @@ def get_base_config():
 
 def test_gfs_standard():
     workdir = 'rundirs_gfs_standard'
-    config_standard = fv3config.get_default_config()
+    config_standard = get_default_config()
     run_full_and_split(workdir, config_standard)
     compare_restart_files(join(workdir, 'fullrun'), join(workdir, 'secondhalf'))
 
 
 def test_restart_standard():
     workdir = 'rundirs_restart_standard'
-    config_standard = get_base_config()
+    config_standard = get_restart_config()
     run_full_and_split(workdir, config_standard)
     compare_restart_files(join(workdir, 'fullrun'), join(workdir, 'secondhalf'))
 
 
 def test_isubc_sw_lw_zero():
     workdir = 'rundirs_isubc0'
-    config_isubc0 = get_base_config()
+    config_isubc0 = get_restart_config()
     config_isubc0['namelist']['gfs_physics_nml']['isubc_sw'] = 0
     config_isubc0['namelist']['gfs_physics_nml']['isubc_lw'] = 0
     run_full_and_split(workdir, config_isubc0)
@@ -128,7 +136,7 @@ def test_isubc_sw_lw_zero():
 
 def test_dycore_only():
     workdir = 'rundirs_dycore_only'
-    config_dycore_only = get_base_config()
+    config_dycore_only = get_restart_config()
     config_dycore_only['namelist']['atmos_model_nml']['dycore_only'] = True
     run_full_and_split(workdir, config_dycore_only)
     compare_restart_files(join(workdir, 'fullrun'), join(workdir, 'secondhalf'))
