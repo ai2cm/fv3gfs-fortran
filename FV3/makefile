@@ -27,7 +27,7 @@ SERIALBOX_APP=/serialbox2
 PPSER_PY=$(SERIALBOX_APP)/install/python/pp_ser/pp_ser.py
 PPSER_FLAGS = --verbose --ignore-identical -m utils_ppser_kbuff
 SERIALBOX_FLAGS :=  -DSERIALIZE -I $(SERIALBOX_APP)/install/include
-SERIAL_LDFLAGS :=  -L $(SERIALBOX_APP)/install/lib  -lSerialboxFortranStatic -lSerialboxCStatic -lSerialboxStatic -L/lib/x86_64-linux-gnu -lnetcdff -lnetcdf -lpthread -lstdc++ -lstdc++fs
+SERIAL_LDFLAGS :=  -L $(SERIALBOX_APP)/install/lib  -lSerialboxFortran -lSerialboxC -lSerialboxCore -L/lib/x86_64-linux-gnu -lnetcdff -lnetcdf -lpthread -lstdc++ -lstdc++fs
 
 
 FV3_EXE  = fv3.exe

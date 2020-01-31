@@ -42,7 +42,7 @@ FROM fv3gfs-environment AS fv3gfs-compiled
 ENV FMS_DIR=/FMS
 ENV ESMF_DIR=/usr/local/esmf
 ENV ESMF_INC="-I/usr/local/esmf/include -I${ESMF_DIR}/mod/modO3/Linux.gfortran.64.mpiuni.default/"
-ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ESMF_DIR}/lib/libO3/Linux.gfortran.64.mpiuni.default/:${FMS_DIR}/libFMS/.libs/
+ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ESMF_DIR}/lib/libO3/Linux.gfortran.64.mpiuni.default/:${FMS_DIR}/libFMS/.libs/:/serialbox2/install/lib
 
 COPY --from=us.gcr.io/vcm-ml/fv3gfs-compiled:default /FV3/ /FV3
 COPY --from=us.gcr.io/vcm-ml/fv3gfs-compiled:default /FMS/ $FMS_DIR
