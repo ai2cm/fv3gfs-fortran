@@ -2,8 +2,7 @@
 
 
 HEAD=$1
-
-RUNDIR=$HEAD/rundir
+RUNDIR=/rundir
 
 ulimit -s unlimited
 cp $HEAD/FV3/fv3.exe $RUNDIR/fv3.exe
