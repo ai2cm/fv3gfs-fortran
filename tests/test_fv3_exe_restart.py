@@ -64,7 +64,7 @@ def run_model(rundir, model_image, mounts):
 def run_full_and_split(workdir, config_template, remove_phy_data=False):
     archive = fv3config.get_cache_dir()
     archive_mount = ['-v', f'{archive}:{archive}']
-    model_image = 'fv3gfs-compiled-default'
+    model_image = 'fv3gfs-compiled:default'
     _, firsthalf_config = setup_initial_runs(workdir, config_template)
     run_model(join(workdir, 'fullrun'), model_image, archive_mount)
     run_model(join(workdir, 'firsthalf'), model_image, archive_mount)

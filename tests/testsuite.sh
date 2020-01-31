@@ -6,7 +6,7 @@ set -x
 
 # setup some defaults and check sanity of environment
 if [ -z "${COMPILED_IMAGE}" ]; then
-  COMPILED_IMAGE="fv3gfs-compiled-default"
+  COMPILED_IMAGE="fv3gfs-compiled:default"
 fi
 if [ -z "${EXE_PATH}" ]; then
   EXE_PATH="../fv3.exe"
