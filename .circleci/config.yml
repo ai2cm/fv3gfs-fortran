@@ -52,58 +52,6 @@ jobs:
           when: on_fail
       - store_artifacts:
           path: ./tests/pytest/output
-  build_serialized: # TODO: this duplicates most of above, consolidate please
-    machine:
-      docker_layer_caching: true
-    environment:
-      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
-      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
-    steps:
-      - checkout
-      - run:
-          name: "gcloud auth"
-          command: |
-            echo $ENCODED_GCR_KEY | base64 -d > $GOOGLE_APPLICATION_CREDENTIALS 
-      - run:
-          name: "Pull Submodules"
-          command: |
-            git submodule init
-            git submodule update
-      - run: make build
-      - restore_cache:
-          keys:
-            - v1.3-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt"}}
-      - run: 
-          name: "Install Python test dependencies"
-          command: |
-            pyenv versions
-            [ -d /opt/circleci/.pyenv/versions/3.6.2 ] || pyenv install 3.6.2
-            pyenv global 3.6.2
-            pip install -r requirements.txt
-      - run: bash download_inputdata.sh
-      - run: python3 -m fv3config.download_data
-      - save_cache:
-          paths:
-            - ./fv3gfs-data-docker_2020-01-13.tar.gz
-            - $FV3CONFIG_CACHE_DIR
-            - /opt/circleci/.pyenv/versions/3.6.2
-          key: v1.3-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt"}}
-      # tests
-      - run: 
-          name: "Run pytest tests"
-          # -s to avoid capturing stdout/stderr of md5sum call
-          command: |
-            pytest tests/pytest -s --image_tag serialize --code_root /Serialize --refdir $(pwd)/tests/pytest/reference/circleci_serialize
-            pytest tests/pytest -s --image_tag serialize --refdir $(pwd)/tests/pytest/reference/circleci
-      - run:
-          name: "Delete data files"
-          command: |
-            rm ./tests/pytest/output/*/INPUT/*.nc
-            rm ./tests/pytest/output/*/*/*.grb
-          when: on_fail
-      - store_artifacts:
-          path: ./tests/pytest/output
-
 workflows:
   version: 2
   build:
