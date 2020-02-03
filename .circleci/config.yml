@@ -109,7 +109,3 @@ workflows:
   build:
     jobs:
       - build_default
-      - build_serialized:
-        filters:
-          branches:
-            only: master

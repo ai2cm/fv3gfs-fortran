@@ -87,7 +87,7 @@ test_serialize:
 # This tests the serialized image can run the non-serialized code and match the regression
 test_serialize_image:
 	pytest tests/pytest -s --image_tag serialize  --refdir $(shell pwd)/tests/pytest/reference/circleci
-	$(MAKE) test_serialized
+	$(MAKE) test_serialize
 
 run_serialize:
 	if [ ! -d "$(RUNDIR_HOST)" ];then \
