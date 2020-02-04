@@ -7,5 +7,6 @@ do
     echo $dir
     run_name=$(basename ${dir})
     mkdir -p $REF_DIR/$run_name
-    cd $dir && md5sum *.nc RESTART/*.nc > $REF_DIR/$run_name/md5.txt
+    echo $REF_DIR/$run_name
+    cd $dir && md5sum *.nc RESTART/*.nc Gen*.dat *.json > $REF_DIR/$run_name/md5.txt
 done

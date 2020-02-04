@@ -22,7 +22,7 @@ Rules are provided for certain compile options. Check the Makefile for a list.
 
 ### Step 2: Install fv3config
 ```
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 will download required dependencies for running tests and using fv3config. You can
 also manually install the fv3config package.
@@ -30,7 +30,7 @@ also manually install the fv3config package.
 In order to use `run_docker.sh` below, you will also need to set the fv3config
 cache directory using
 ```
-export $FV3CONFIG_CACHE_DIR=<location>
+export FV3CONFIG_CACHE_DIR=<location>
 ```
 This should be added to your bashrc.
 
@@ -46,7 +46,7 @@ Create or download an fv3config yaml configuration. Edit the configuration as ne
 Examples of such configurations are included in the tests under `tests/pytest/config`.
 
 Once you have a configuration file, you can write a run directory in python using:
-```python
+```python3
 import fv3config
 import yaml
 config = yaml.safe_load(open('fv3config.yml', 'r'))
@@ -64,10 +64,12 @@ Optionally edit `rundir/input.nml` and `rundir/diag_table` to modify the namelis
 for your run and the set of diagnostics the model will output. Ideally this should be
 done instead by editing the `fv3config.yml` we used earlier.
 
+
 ### Step 4: Run the model
 ```
-bash run_docker.sh us.gcr.io/vcm-ml/fv3gfs-compiled-default <rundir> $FV3CONFIG_CACHE_DIR
+bash run_docker.sh us.gcr.io/vcm-ml/fv3gfs-compiled:default <rundir> $FV3CONFIG_CACHE_DIR
 ```
+where <rundir> is a full path to the run directory.
 
 # Developing the model
 
