@@ -184,7 +184,7 @@ pp_ser_calls:
 	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_PREPROCESS_DIR)/atmos_cubed_sphere/model $(ROOT)/atmos_cubed_sphere/model/*.F90
 	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_PREPROCESS_DIR)/atmos_cubed_sphere/driver/fvGFS $(ROOT)/atmos_cubed_sphere/driver/fvGFS/*.F90
 
-.PHONY: clean cleanall
+.PHONY: clean cleanall serialize build_serializer serialize_preprocess
 clean:
 	@echo "Cleaning ... "
 	@echo
