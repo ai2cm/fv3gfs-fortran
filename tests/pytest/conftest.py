@@ -7,5 +7,5 @@ def pytest_addoption(parser):
         "--image_tag", action="store", default="default", help="The docker image tag to run"
     )
     parser.addoption(
-        "--code_root", action="store", default="/", help="The docker image tag to run"
+        "--code_root", action="store", default="/", help="The path to the codebase to test"
     )

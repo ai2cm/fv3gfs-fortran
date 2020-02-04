@@ -69,17 +69,8 @@ def test_regression(config, model_image, model_image_tag, code_root, reference_d
     else:
         print('Checking',  run_dir, 'and',  md5sum_filename)
         check_md5sum(run_dir, md5sum_filename)
-        if model_image_tag == 'serialize':
-            nonserialized_comparison(run_dir, run_reference_dir)
     shutil.rmtree(run_dir)
 
-def nonserialized_comparison(run_dir, run_reference_dir):
-    non_serialized_refdir = run_reference_dir.replace('_serialize', '')
-    md5sum_filename = os.path.join(non_serialized_refdir, MD5SUM_FILENAME)
-    if not os.path.isfile(md5sum_filename):
-        assert False, (f"equivalent non-serialized reference md5sum does not exist at " + md5sum_filename)
-    print('Checking netcdf files match non-serialized equivalent', md5sum_filename)
-    check_md5sum(run_dir, md5sum_filename)
 
 def run_model(rundir, model_image, model_image_tag, code_root):
     if USE_LOCAL_ARCHIVE:

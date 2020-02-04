@@ -19,7 +19,6 @@ fi
 
 rundir_container=/rundir
 
-echo $remaining_args
 if [ "$#" -gt 2 ]; then # mount fv3config cache directory
     remaining_args=("${all_args[@]:3}");\
     docker run \
