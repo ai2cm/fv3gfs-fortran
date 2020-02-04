@@ -25,6 +25,10 @@ LIBRARY  = libfv3core.a
 
 FFLAGS   += -I$(FMS_DIR) -I../gfsphysics -I../ipd -I../io -I../namphysics
 
+ifdef SERIALBOX_FLAGS
+    FFLAGS += $(SERIALBOX_FLAGS)
+endif
+
 SRCS_f   =
 
 SRCS_f90 =
@@ -48,6 +52,7 @@ SRCS_F90 = \
 		   ./model/fv_sg.F90                              \
 		   ./model/fv_tracer2d.F90                        \
 		   ./model/fv_update_phys.F90                     \
+		   ./model/k_checkpoint.F90                       \
 		   ./model/sw_core.F90                            \
 		   ./model/tp_core.F90                            \
 		   ./model/nh_core.F90                            \

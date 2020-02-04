@@ -26,7 +26,7 @@ program coupler_main
 !   ocean (amip), land, and sea-ice using the exchange module
 !
 !-----------------------------------------------------------------------
-
+!$ser verbatim use mpi
 use time_manager_mod,  only: time_type, set_calendar_type, set_time,    &
                              set_date, days_in_month, month_name,       &
                              operator(+), operator (<), operator (>),   &
@@ -67,7 +67,7 @@ use  diag_manager_mod, only: diag_manager_init, diag_manager_end, &
 
 use data_override_mod, only: data_override_init
 
-
+!$ser verbatim use,intrinsic :: ISO_Fortran_env
 implicit none
 
 !-----------------------------------------------------------------------
@@ -122,7 +122,8 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
 ! ----- local variables -----
    character(len=32) :: timestamp
    logical :: intrm_rst
-
+   !$ser verbatim integer :: tile_id,ier
+   
 !#######################################################################
 
  call fms_init()
@@ -133,7 +134,10 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
  call fms_init
  call constants_init
  call sat_vapor_pres_init
-
+ !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, tile_id,ier)
+ !$ser init directory='.' prefix='Generator' mpi_rank=tile_id unique_id=.true.
+ !$ser mode write
+ !$ser off
  call coupler_init
  call print_memuse_stats('after coupler init')
 
@@ -166,7 +170,7 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
     call print_memuse_stats('after full step')
 
  enddo
-
+ !$ser cleanup
 !-----------------------------------------------------------------------
 
 #ifdef AVEC_TIMERS
