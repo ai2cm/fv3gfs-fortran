@@ -99,5 +99,12 @@ run_serialize:
 	./run_docker.sh  $(GCR_URL)/$(COMPILE_TARGET):serialize $(RUNDIR_HOST) $(FV3CONFIG_CACHE_DIR) $(RUNDIR_CONTAINER)/submit_job.sh /Serialize/
 
 
+clean:
+	(cd FV3            && make clean)
+	$(RM) -f inputdata
+	$(RM) -rf tests/pytest/output/*
 
-.PHONY: build build_environment build_compiled enter run test test_32bit
+
+.PHONY: build build_environment build_compiled enter run test test_32bit clean \
+	run_serialize test_serialize test_serialize_image dev_serialize build_serialize \
+	build_environment_serialize
