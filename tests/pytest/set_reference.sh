@@ -1,12 +1,18 @@
+set -xe
 
-REF_DIR=$1
+IMG_TAG=$1
+REF_DIR=$2
 CWD=$(pwd)
 
-for dir in $CWD/output/*/
+for dir in $CWD/output/$IMG_TAG/*/
 do
     echo $dir
     run_name=$(basename ${dir})
     mkdir -p $REF_DIR/$run_name
     echo $REF_DIR/$run_name
-    cd $dir && md5sum *.nc RESTART/*.nc Gen*.dat *.json > $REF_DIR/$run_name/md5.txt
+    cd $dir 
+    md5sum *.nc RESTART/*.nc > $REF_DIR/$run_name/md5.txt
+    if ls Gen*.dat *.json >/dev/null 2>&1; then
+        md5sum Gen*.dat *.json > $REF_DIR/$run_name/md5_serialize.txt
+    fi
 done
