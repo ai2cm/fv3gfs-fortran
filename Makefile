@@ -53,7 +53,7 @@ test:
 	pytest tests/pytest --capture=no --verbose --refdir $(shell pwd)/tests/pytest/reference/circleci --image_version $(COMPILED_TAG_NAME)
 
 update_circleci_reference: test
-	cd tests/pytest && bash tests/pytest/set_reference.sh circleci
+	cd tests/pytest && bash set_reference.sh $(COMPILED_TAG_NAME)-serialize $(shell pwd)/reference/circleci
 
 # 32bit options don't currently build, fix these when issue #4 is fixed.
 #test_32bit:
