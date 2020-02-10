@@ -18,7 +18,7 @@ endif
 CWD      := $(shell pwd)
 SERIALBOX_OUTDIR?=
 SERIALBOX_APP?=/serialbox2
-PPSER_PY=$(SERIALBOX_APP)/install/python/pp_ser/pp_ser.py
+PPSER_PY?=$(SERIALBOX_APP)/install/python/pp_ser/pp_ser.py
 PPSER_FLAGS = --verbose --ignore-identical -m utils_ppser_kbuff
 
 FV3_EXE  = fv3.exe
@@ -168,7 +168,6 @@ serialize_preprocess: serialize_outdir_check
 	@mkdir -p $(SERIALBOX_OUTDIR)/atmos_cubed_sphere/driver/fvGFS
 	@make pp_ser_calls
 	@cp -r -u  $(CWD)/* $(SERIALBOX_OUTDIR)
-	@ln -s /stochastic_physics $(SERIALBOX_OUTDIR)/../stochastic_physics
 
 
 pp_ser_calls: serialize_outdir_check

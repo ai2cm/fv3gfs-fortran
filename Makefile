@@ -10,14 +10,14 @@ SERIALIZE_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)-serialize
 ENVIRONMENT_IMAGE=$(GCR_URL)/$(ENVIRONMENT_TARGET):$(ENVIRONMENT_TAG_NAME)
 IMAGE ?= $(ENVIRONMENT_IMAGE)
 
-MOUNTS= -v $(shell pwd)/FV3:/FV3 \
+MOUNTS?=-v $(shell pwd)/FV3:/FV3 \
 	-v $(shell pwd)/FV3/conf/configure.fv3.gnu_docker:/FV3/conf/configure.fv3
+
+MOUNTS_SERIALIZE?=-v $(shell pwd)/FV3:/FV3/original
 
 EXPERIMENT ?= new
 RUNDIR_CONTAINER=/rundir
 RUNDIR_HOST=$(shell pwd)/rundir
-
-SERIALBOX_PATH=$(shell pwd)/serialbox2
 
 build: build_compiled
 
@@ -43,8 +43,11 @@ build_serialize:
 build_debug: build_environment
 	COMPILED_TAG_NAME=debug COMPILE_OPTION="REPRO=\\\nDEBUG=Y" $(MAKE) build
 
-enter: build_compiled
+enter:
 	docker run --rm $(MOUNTS) -w /FV3 -it $(COMPILED_IMAGE) bash
+
+enter_serialize:
+	MOUNTS="$(MOUNTS_SERIALIZE)" COMPILED_IMAGE="$(SERIALIZE_IMAGE)" $(MAKE) enter
 
 compile_dev: build_compiled
 	docker run --rm $(MOUNTS) -w /FV3 -it $(COMPILED_IMAGE) bash -c "make libs && make fv3.exe"
@@ -68,22 +71,12 @@ dev_serialize: # TODO: use run_docker -- string form of command is not translati
 		-v $(FV3CONFIG_CACHE_DIR):$(FV3CONFIG_CACHE_DIR) \
 		-it $(GCR_URL)/$(COMPILE_TARGET):serialize /bin/bash -c 'cd /FV3;make serialize_preprocess && cd /Serialize/FV3 && make build_serializer && cd /rundir && rm -f Gen*.dat && rm -f *.json &&  /rundir/submit_job.sh /Serialize/'
 
-run_serialize:
-	if [ ! -d "$(RUNDIR_HOST)" ];then \
-		echo 'Follow the README.md to setup a run directory';\
-	fi
-	rm -f $(RUNDIR_HOST)/Gen*.dat
-	rm -f $(RUNDIR_HOST)/Archive*.json
-	rm -f $(RUNDIR_HOST)/Meta*.json
-	./run_docker.sh  $(GCR_URL)/$(COMPILE_TARGET):serialize $(RUNDIR_HOST) $(FV3CONFIG_CACHE_DIR) $(RUNDIR_CONTAINER)/submit_job.sh /Serialize/
-
-
 clean:
 	(cd FV3            && make clean)
 	$(RM) -f inputdata
 	$(RM) -rf tests/pytest/output/*
 
 
-.PHONY: build build_environment build_compiled enter run test test_32bit clean \
+.PHONY: build build_environment build_compiled enter enter_serialize run test test_32bit clean \
 	run_serialize test_serialize test_serialize_image dev_serialize build_serialize \
 	build_environment_serialize

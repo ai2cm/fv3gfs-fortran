@@ -46,7 +46,7 @@ RUN apt-get update && apt-get install -y \
     clang-tidy \
     python3-numpy \
     python3-nose \
-    python3-sphinx 
+    python3-sphinx
 
 # install serialbox2 from source
 COPY serialbox2 serialbox2
@@ -144,6 +144,8 @@ FROM fv3gfs-sources-$serialize AS fv3gfs-sources
 FROM fv3gfs-environment AS fv3gfs-build
 
 ENV SERIALBOX_DIR=/serialbox2
+ENV SERIALBOX_OUTDIR=/FV3
+ENV PPSER_PY=$(SERIALBOX_DIR)/python/pp_ser/pp_ser.py
 ENV FMS_DIR=/FMS
 ENV ESMF_DIR=/usr/local/esmf
 ENV ESMF_INC="-I/usr/local/esmf/include -I${ESMF_DIR}/mod/modO3/Linux.gfortran.64.mpiuni.default/"
