@@ -52,7 +52,8 @@ module tp_core_mod
  use fv_mp_mod,         only: ng 
  use fv_grid_utils_mod, only: big_number
  use fv_arrays_mod,     only: fv_grid_type, fv_grid_bounds_type
-
+ !$ser verbatim use k_checkpoint, only: get_k,get_nz
+ 
  implicit none
 
  private
@@ -143,7 +144,14 @@ contains
    integer i, j
 
    integer:: is, ie, js, je, isd, ied, jsd, jed
-
+   !$ser verbatim integer :: k,nz, dir
+   !$ser verbatim real, dimension(1,1) :: damp_c_dup, nord_dup
+   !$ser verbatim if (present(damp_c)) then
+   !$ser verbatim damp_c_dup(1,1)=damp_c
+   !$ser verbatim nord_dup(1,1)=nord
+   !$ser verbatim endif
+   !$ser verbatim call get_k(k)
+   !$ser verbatim call get_nz(nz)
    is  = bd%is
    ie  = bd%ie
    js  = bd%js
@@ -159,12 +167,25 @@ contains
         ord_in = hord
    endif
    ord_ou = hord
-
+   !$ser savepoint CopyCorners-In
+   !$ser verbatim dir=2
+   !$ser data_kbuff k=k k_size=nz q=q
+   !$ser verbatim if (k == nz) then 
+   !$ser data dir=dir
+   !$ser verbatim endif
    if (.not. (regional)) call copy_corners(q, npx, npy, 2, gridstruct%nested, bd, &
                                 gridstruct%sw_corner, gridstruct%se_corner, gridstruct%nw_corner, gridstruct%ne_corner)
+   !$ser savepoint CopyCorners-Out
+   !$ser data_kbuff k=k k_size=nz q=q
 
+   !$ser savepoint YPPM-In
+   !$ser data_kbuff k=k k_size=nz q=q c=cry
+   !$ser verbatim if (k == nz) then 
+   !$ser data jord=ord_in ifirst=isd ilast=ied
+   !$ser verbatim endif
    call yppm(fy2, q, cry, ord_in, isd,ied,isd,ied, js,je,jsd,jed, npx,npy, gridstruct%dya, gridstruct%nested, gridstruct%grid_type, lim_fac,regional)
-
+   !$ser savepoint YPPM-Out
+   !$ser data_kbuff k=k k_size=nz flux=fy2
    do j=js,je+1
       do i=isd,ied
          fyy(i,j) = yfx(i,j) * fy2(i,j) 
@@ -175,14 +196,34 @@ contains
          q_i(i,j) = (q(i,j)*gridstruct%area(i,j) + fyy(i,j)-fyy(i,j+1))/ra_y(i,j)
       enddo
    enddo
-
+   !$ser savepoint XPPM-In
+   !$ser data_kbuff k=k k_size=nz qx=q_i cx=crx
+   !$ser verbatim if (k == nz) then 
+   !$ser data iord=ord_ou jfirst=js jlast=je
+   !$ser verbatim endif
    call xppm(fx, q_i, crx(is,js), ord_ou, is,ie,isd,ied, js,je,jsd,jed, npx,npy, gridstruct%dxa, gridstruct%nested, gridstruct%grid_type, lim_fac,regional)
-
+   !$ser savepoint XPPM-Out
+   !$ser data_kbuff k=k k_size=nz xflux=fx
+   
+   !$ser savepoint CopyCorners-In
+   !$ser verbatim dir=1
+   !$ser data_kbuff k=k k_size=nz q=q
+   !$ser verbatim if (k == nz) then 
+   !$ser data dir=dir
+   !$ser verbatim endif
    if (.not. (regional)) call copy_corners(q, npx, npy, 1, gridstruct%nested, bd, &
                                gridstruct%sw_corner, gridstruct%se_corner, gridstruct%nw_corner, gridstruct%ne_corner)
+   !$ser savepoint CopyCorners-Out
+   !$ser data_kbuff k=k k_size=nz q=q
 
+   !$ser savepoint XPPM-2-In
+   !$ser data_kbuff k=k k_size=nz q=q cx=crx
+   !$ser verbatim if (k == nz) then 
+   !$ser data iord=ord_in jfirst=jsd jlast=jed
+   !$ser verbatim endif
   call xppm(fx2, q, crx, ord_in, is,ie,isd,ied, jsd,jed,jsd,jed, npx,npy, gridstruct%dxa, gridstruct%nested, gridstruct%grid_type, lim_fac,regional)
-
+   !$ser savepoint XPPM-2-Out
+   !$ser data_kbuff k=k k_size=nz xflux_2=fx2
   do j=jsd,jed
      do i=is,ie+1
         fx1(i) =  xfx(i,j) * fx2(i,j)
@@ -191,9 +232,14 @@ contains
         q_j(i,j) = (q(i,j)*gridstruct%area(i,j) + fx1(i)-fx1(i+1))/ra_x(i,j)
      enddo
   enddo
-
+  !$ser savepoint YPPM-2-In
+  !$ser data_kbuff k=k k_size=nz q_2=q_j c=cry
+  !$ser verbatim if (k == nz) then 
+  !$ser data jord=ord_ou ifirst=is ilast=ie
+  !$ser verbatim endif
   call yppm(fy, q_j, cry, ord_ou, is,ie,isd,ied, js,je,jsd,jed, npx, npy, gridstruct%dya, gridstruct%nested, gridstruct%grid_type, lim_fac,regional)
-
+  !$ser savepoint YPPM-2-Out
+  !$ser data_kbuff k=k k_size=nz flux_2=fy
 !----------------
 ! Flux averaging:
 !----------------
@@ -213,10 +259,15 @@ contains
          enddo
       enddo
       if ( present(nord) .and. present(damp_c) .and. present(mass) ) then
+         !$ser savepoint DelnFlux-In
+         !$ser data_kbuff k=k k_size=nz q=q fx=fx fy=fy mass=mass damp_c=damp_c_dup nord_column=nord_dup
+       
         if ( damp_c > 1.e-4 ) then
            damp = (damp_c * gridstruct%da_min)**(nord+1)
            call deln_flux(nord, is,ie,js,je, npx, npy, damp, q, fx, fy, gridstruct,regional, bd, mass)
         endif
+        !$ser savepoint DelnFlux-Out
+        !$ser data_kbuff k=k k_size=nz fx=fx fy=fy
       endif
    else
 !---------------------------------
@@ -233,10 +284,14 @@ contains
          enddo
       enddo
       if ( present(nord) .and. present(damp_c) ) then
+         !$ser savepoint DelnFlux-2-In
+         !$ser data_kbuff k=k k_size=nz q=q fx=fx fy=fy damp_c=damp_c_dup nord_column=nord_dup
            if ( damp_c > 1.E-4 ) then
                 damp = (damp_c * gridstruct%da_min)**(nord+1)
                 call deln_flux(nord, is,ie,js,je, npx, npy, damp, q, fx, fy, gridstruct, regional, bd)
-           endif
+             endif
+         !$ser savepoint DelnFlux-2-Out
+         !$ser data_kbuff k=k k_size=nz fx=fx fy=fy
       endif
    endif
  end subroutine fv_tp_2d
