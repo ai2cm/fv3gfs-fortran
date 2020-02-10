@@ -103,7 +103,7 @@ module dyn_core_mod
 !     <td>copy_corners</td>
 !   </tr>
 ! </table>
-
+ !$ser verbatim use mpi
   use constants_mod,      only: rdgas, radius, cp_air, pi
   use mpp_mod,            only: mpp_pe 
   use mpp_domains_mod,    only: CGRID_NE, DGRID_NE, mpp_get_boundary, mpp_update_domains,  &
@@ -142,6 +142,7 @@ module dyn_core_mod
 #endif
   use fv_regional_mod,     only: dump_field, exch_uv, H_STAGGER, U_STAGGER, V_STAGGER
   use fv_regional_mod,     only: a_step, p_step, k_step, n_step
+  !$ser verbatim use k_checkpoint, only: set_k
 
 implicit none
 private
@@ -286,6 +287,8 @@ contains
 
     integer :: is,  ie,  js,  je
     integer :: isd, ied, jsd, jed
+    !$ser verbatim integer :: tile_id,ier, nz
+    !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, tile_id,ier)
 
       is  = bd%is
       ie  = bd%ie
@@ -519,6 +522,7 @@ contains
 !$OMP                                  omga,ut,vt,divgd,flagstruct,dt2,hydrostatic,bd,  &
 !$OMP                                  gridstruct)
       do k=1,npz
+         !$ser verbatim call set_k(k)
          call c_sw(delpc(isd,jsd,k), delp(isd,jsd,k),  ptc(isd,jsd,k),    &
                       pt(isd,jsd,k),    u(isd,jsd,k),    v(isd,jsd,k),    &
                        w(isd:,jsd:,k),   uc(isd,jsd,k),   vc(isd,jsd,k),    &
@@ -597,9 +601,13 @@ contains
            enddo
         endif
                                             call timing_on('UPDATE_DZ_C')
-         call update_dz_c(is, ie, js, je, npz, ng, dt2, dp_ref, zs, gridstruct%area, ut, vt, gz, ws3, &
+        !$ser savepoint UpdateDzC-In
+        !$ser data dp0=dp_ref utc=ut vtc=vt gz=gz zs=zs ws=ws3 dt2=dt2
+        call update_dz_c(is, ie, js, je, npz, ng, dt2, dp_ref, zs, gridstruct%area, ut, vt, gz, ws3, &
              npx, npy, gridstruct%sw_corner, gridstruct%se_corner, &
              gridstruct%ne_corner, gridstruct%nw_corner, bd, gridstruct%grid_type)
+        !$ser savepoint UpdateDzC-Out
+        !$ser data ws=ws3 gz=gz
                                             call timing_off('UPDATE_DZ_C')
 
                                                call timing_on('Riem_Solver')
@@ -650,7 +658,11 @@ contains
 
       endif   ! end hydro check
 
+      !$ser savepoint PGradC-In
+      !$ser data dt2=dt2 delpc=delpc pkc=pkc gz=gz uc=uc vc=vc
       call p_grad_c(dt2, npz, delpc, pkc, gz, uc, vc, bd, gridstruct%rdxc, gridstruct%rdyc, hydrostatic)
+      !$ser savepoint PGradC-Out
+      !$ser data uc=uc vc=vc
 
                                                                    call timing_on('COMM_TOTAL')
       call start_group_halo_update(i_pack(9), uc, vc, domain, gridtype=CGRID_NE)
@@ -741,7 +753,9 @@ contains
 
     if (flagstruct%regional) call exch_uv(domain, bd, npz, vc, uc)
     if (first_call .and. is_master() .and. last_step) write(6,*) 'Sponge layer divergence damping coefficent:'
-
+    !$ser savepoint D_SW-In
+    !$ser data delpcd=vt delpd=delp ptcd=ptc ptd=pt ud=u vd=v wd=w ucd=uc vcd=vc uad=ua vad=va divgdd=divgd mfxd=mfx mfyd=mfy cxd=cx cyd=cy crxd=crx cryd=cry xfxd=xfx yfxd=yfx q_cond=q_con zhd=zh heat_sourced=heat_source diss_estd=diss_est zvir=zvir nq=nq dt=dt nord_v=nord_v damp_vt=damp_vt
+     
                                                      call timing_on('d_sw')
 !$OMP parallel do default(none) shared(npz,flagstruct,nord_v,pfull,damp_vt,hydrostatic,last_step, &
 !$OMP                                  is,ie,js,je,isd,ied,jsd,jed,omga,delp,gridstruct,npx,npy,  &
@@ -751,6 +765,7 @@ contains
 !$OMP                          private(nord_k, nord_w, nord_t, damp_w, damp_t, d2_divg,   &
 !$OMP                          d_con_k,kgb, hord_m, hord_v, hord_t, hord_p, wk, heat_s,diss_e, z_rat)
     do k=1,npz
+       !$ser verbatim call set_k(k)
        hord_m = flagstruct%hord_mt
        hord_t = flagstruct%hord_tm
        hord_v = flagstruct%hord_vt
@@ -898,7 +913,9 @@ contains
             enddo
        endif
     enddo           ! end openMP k-loop
-
+    !$ser savepoint D_SW-Out
+    !$ser data delpcd=vt delpd=delp ptcd=ptc ptd=pt ud=u vd=v wd=w ucd=uc vcd=vc uad=ua vad=va divgdd=divgd mfxd=mfx mfyd=mfy cxd=cx cyd=cy crxd=crx cryd=cry xfxd=xfx yfxd=yfx q_cond=q_con heat_sourced=heat_source diss_estd=diss_est nord_vd=nord_v damp_vtd=damp_vt
+    
     if (flagstruct%regional) then
        call exch_uv(domain, bd, npz, vc, uc)
        call exch_uv(domain, bd, npz, u,  v )
@@ -906,14 +923,21 @@ contains
                                                      call timing_off('d_sw')
 
     if( flagstruct%fill_dp ) call mix_dp(hydrostatic, w, delp, pt, npz, ak, bk, .false., flagstruct%fv_debug, bd)
-
+    !$ser savepoint HaloUpdate-In
+    !$ser data delp=delp pt=pt q_con=q_con
                                                              call timing_on('COMM_TOTAL')
     call start_group_halo_update(i_pack(1), delp, domain, complete=.false.)
     call start_group_halo_update(i_pack(1), pt,   domain, complete=.true.)
 #ifdef USE_COND
     call start_group_halo_update(i_pack(11), q_con, domain)
 #endif
-                                                             call timing_off('COMM_TOTAL')
+    !$ser savepoint HaloUpdate-Out
+    !$ser data delp=delp pt=pt q_con=q_con
+    !$ser verbatim if (tile_id == 0) then 
+    !$ser verbatim call finalize_kbuff()
+    !$ser off
+    !$ser verbatim endif
+                                                    call timing_off('COMM_TOTAL')
 
     if ( flagstruct%d_ext > 0. ) then
           d2_divg = flagstruct%d_ext * gridstruct%da_min_c
@@ -1241,6 +1265,8 @@ contains
 !------------------------------
          call adv_pe(ua, va, pem, omga, gridstruct, bd, npx, npy,  npz, ng)
       else
+         !$ser savepoint OmegaLayer-In
+         !$ser data omga=omga
 !$OMP parallel do default(none) shared(is,ie,js,je,npz,omga) private(om2d)
          do j=js,je
             do k=1,npz
@@ -1259,6 +1285,8 @@ contains
                enddo
             enddo
          enddo
+         !$ser savepoint OmegaLayer-Out
+         !$ser data omga=omga
       endif
       if (idiag%id_ws>0 .and. hydrostatic) then
 !$OMP parallel do default(none) shared(is,ie,js,je,npz,ws,delz,delp,omga)
@@ -1362,6 +1390,8 @@ contains
           enddo
        enddo
     else
+       !$ser savepoint PressureAdjustedTemperature_NonHydrostatic-In
+       !$ser data cappa=cappa bdt=bdt n_con=n_con delp=delp delz=delz pt=pt cv_air=cv_air heat_source_dyn=heat_source rdg=rdg k1k=k1k pkz
 !$OMP parallel do default(none) shared(flagstruct,is,ie,js,je,n_con,pkz,cappa,rdg,delp,delz,pt, &
 !$OMP                                  heat_source,k1k,cv_air,bdt) &
 !$OMP                          private(dtmp, delt)
@@ -1386,6 +1416,7 @@ contains
              enddo
           enddo
        enddo
+        !$ser savepoint PressureAdjustedTemperature_NonHydrostatic-Out
     endif
 
   endif
@@ -1413,7 +1444,10 @@ contains
 
   endif
   if( allocated(pem) )   deallocate ( pem )
-
+  !$ser verbatim if (tile_id == 0) then 
+  !$ser verbatim call finalize_kbuff()  
+  !$ser off
+  !$ser verbatim endif
 end subroutine dyn_core
 
 subroutine pk3_halo(is, ie, js, je, isd, ied, jsd, jed, npz, ptop, akap, pk3, delp)
