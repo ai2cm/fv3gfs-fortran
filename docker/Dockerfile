@@ -90,7 +90,7 @@ RUN cd $ESMF_DIR && make lib -j8 && make install && make installcheck
 
 ## Copy FV3GFS sources for non-serialize image
 ##---------------------------------------------------------------------------------
-FROM ubuntu:19.10 AS fv3gfs-sources-false
+FROM ubuntu:19.10 AS fv3gfs-src-serialize-false
 
 COPY stochastic_physics /stochastic_physics
 COPY FV3/conf /FV3/conf
@@ -117,7 +117,7 @@ COPY FV3/atmos_cubed_sphere /FV3/atmos_cubed_sphere
 
 ## Convert FV3GFS sources for serialize image
 ##---------------------------------------------------------------------------------
-FROM fv3gfs-environment-serialbox AS fv3gfs-sources-true
+FROM fv3gfs-environment-serialbox AS fv3gfs-src-serialize-true
 
 ENV FV3_BASE=/FV3/original
 COPY --from=fv3gfs-sources-false /FV3 $FV3_BASE
@@ -137,7 +137,7 @@ ENV SERIALBOX_OUTDIR=/FV3
 # build model with serialization
 RUN cd $FV3_BASE && make serialize_preprocess
 
-FROM fv3gfs-sources-$serialize AS fv3gfs-sources
+FROM fv3gfs-src-serialize-$serialize AS fv3gfs-sources
 
 ## Build FV3 executable in its own image
 ##---------------------------------------------------------------------------------
