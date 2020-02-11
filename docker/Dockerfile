@@ -120,8 +120,8 @@ COPY FV3/atmos_cubed_sphere /FV3/atmos_cubed_sphere
 FROM fv3gfs-environment-serialbox AS fv3gfs-src-serialize-true
 
 ENV FV3_BASE=/FV3/original
-COPY --from=fv3gfs-sources-false /FV3 $FV3_BASE
-COPY --from=fv3gfs-sources-false /stochastic_physics $(FV3_BASE)/../stochastic_physics 
+COPY --from=fv3gfs-src-serialize-false /FV3 $FV3_BASE
+COPY --from=fv3gfs-src-serialize-false /stochastic_physics $(FV3_BASE)/../stochastic_physics 
 
 ARG compile_option
 ARG configure_file=configure.fv3.gnu_docker_serialize
