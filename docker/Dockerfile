@@ -1,3 +1,5 @@
+ARG serialize=false
+
 FROM ubuntu:19.10 AS fv3gfs-environment
 
 RUN apt-get update && apt-get install -y \
@@ -25,6 +27,37 @@ RUN git config --global http.sslverify false && \
     git checkout 3da51e139d5cd731c9fc27f39d88cb4e1328212b && \
     echo "y" | ./make_ncep_libs.sh -s linux -c gnu -d /opt/NCEPlibs -o 1
 
+##
+## Setup environment for Serialbox
+##---------------------------------------------------------------------------------
+FROM fv3gfs-environment as fv3gfs-environment-serialbox
+# install dependencies for serialbox
+ENV DEBIAN_FRONTEND=noninteractive
+# set TZ
+ENV TZ=US/Pacific
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN apt-get update && apt-get install -y \
+    cmake \
+    libssl-dev \
+    libboost-all-dev \ 
+    clang \
+    clang-format \
+    clang-tidy \
+    python3-numpy \
+    python3-nose \
+    python3-sphinx
+
+# install serialbox2 from source
+COPY serialbox2 serialbox2
+RUN cd serialbox2 && \
+    mkdir build && \
+    cd build && \
+    cmake -DSERIALBOX_USE_NETCDF=ON -DSERIALBOX_ENABLE_FORTRAN=ON \
+      -DSERIALBOX_TESTING=ON  ../ && \
+    make -j8 && \
+    make test && \
+    make install
 
 ## Build FMS
 ##---------------------------------------------------------------------------------
@@ -55,17 +88,9 @@ ENV ESMF_BOPT=O3
 RUN git clone -b ESMF_8_0_0 --depth 1 https://git.code.sf.net/p/esmf/esmf $ESMF_DIR
 RUN cd $ESMF_DIR && make lib -j8 && make install && make installcheck
 
-## Build FV3 executable in its own image
+## Copy FV3GFS sources for non-serialize image
 ##---------------------------------------------------------------------------------
-FROM fv3gfs-environment AS fv3gfs-build
-
-ENV FMS_DIR=/FMS
-ENV ESMF_DIR=/usr/local/esmf
-ENV ESMF_INC="-I/usr/local/esmf/include -I${ESMF_DIR}/mod/modO3/Linux.gfortran.64.mpiuni.default/"
-ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ESMF_DIR}/lib/libO3/Linux.gfortran.64.mpiuni.default/:${FMS_DIR}/libFMS/.libs/
-
-COPY --from=fv3gfs-fms /FMS $FMS_DIR
-COPY --from=fv3gfs-esmf /usr/local/esmf ${ESMF_DIR}
+FROM ubuntu:19.10 AS fv3gfs-src-serialize-false
 
 COPY stochastic_physics /stochastic_physics
 COPY FV3/conf /FV3/conf
@@ -88,12 +113,56 @@ RUN cp /FV3/conf/$configure_file \
     if [ ! -z $compile_option ]; then sed -i "33i $compile_option" \
         /FV3/conf/configure.fv3; fi
 
-RUN cd /FV3 && make clean_no_dycore && make libs_no_dycore -j8
-
 COPY FV3/atmos_cubed_sphere /FV3/atmos_cubed_sphere
 
-RUN cd /FV3/atmos_cubed_sphere && make clean && cd /FV3 && make -j8
+## Convert FV3GFS sources for serialize image
+##---------------------------------------------------------------------------------
+FROM fv3gfs-environment-serialbox AS fv3gfs-src-serialize-true
 
+ENV FV3_BASE=/FV3/original
+COPY --from=fv3gfs-src-serialize-false /FV3 $FV3_BASE
+COPY --from=fv3gfs-src-serialize-false /stochastic_physics $(FV3_BASE)/../stochastic_physics 
+
+ARG compile_option
+ARG configure_file=configure.fv3.gnu_docker_serialize
+
+# copy appropriate configuration file to configure.fv3
+RUN cp $FV3_BASE/conf/$configure_file \
+        $FV3_BASE/conf/configure.fv3 && \
+    if [ ! -z $compile_option ]; then sed -i "33i $compile_option" \
+        $FV3_BASE/conf/configure.fv3; fi
+
+ENV SERIALBOX_OUTDIR=/FV3
+
+# build model with serialization
+RUN cd $FV3_BASE && make serialize_preprocess
+
+FROM fv3gfs-src-serialize-$serialize AS fv3gfs-sources
+
+## Build FV3 executable in its own image
+##---------------------------------------------------------------------------------
+FROM fv3gfs-environment AS fv3gfs-build
+
+ENV SERIALBOX_DIR=/serialbox2
+ENV SERIALBOX_OUTDIR=/FV3
+ENV PPSER_PY=$(SERIALBOX_DIR)/python/pp_ser/pp_ser.py
+ENV FMS_DIR=/FMS
+ENV ESMF_DIR=/usr/local/esmf
+ENV ESMF_INC="-I/usr/local/esmf/include -I${ESMF_DIR}/mod/modO3/Linux.gfortran.64.mpiuni.default/"
+ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ESMF_DIR}/lib/libO3/Linux.gfortran.64.mpiuni.default/:${FMS_DIR}/libFMS/.libs/:${SERIALBOX_DIR}/lib
+
+COPY --from=fv3gfs-environment-serialbox /serialbox2/install $SERIALBOX_DIR
+COPY --from=fv3gfs-fms /FMS $FMS_DIR
+COPY --from=fv3gfs-esmf /usr/local/esmf ${ESMF_DIR}
+
+COPY --from=fv3gfs-sources /FV3 /FV3
+COPY --from=fv3gfs-sources /stochastic_physics /stochastic_physics
+
+RUN cd /FV3 && make clean_no_dycore && make libs_no_dycore -j8
+
+COPY --from=fv3gfs-sources FV3/atmos_cubed_sphere /FV3/atmos_cubed_sphere
+
+RUN cd /FV3/atmos_cubed_sphere && make clean && cd /FV3 && make -j8
 
 ## Define final "user" image for running tests
 ##---------------------------------------------------------------------------------

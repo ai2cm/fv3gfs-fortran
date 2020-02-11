@@ -19,7 +19,7 @@ jobs:
           command: |
             git submodule init
             git submodule update
-      - run: make build
+      - run: make build build_serialize
       - restore_cache:
           keys:
             - v1.3-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt"}}
@@ -43,7 +43,7 @@ jobs:
           name: "Run pytest tests"
           # -s to avoid capturing stdout/stderr of md5sum call
           command: |
-            pytest tests/pytest -s --refdir $(pwd)/tests/pytest/reference/circleci
+            make test
       - run:
           name: "Delete data files"
           command: |
