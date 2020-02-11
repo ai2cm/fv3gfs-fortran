@@ -115,3 +115,10 @@ on the host filesystem, because `/FV3` has a bind-mounted subdirectory `original
 it is not possible to contain a bind-mounted subdirectory in a separately bind-mounted
 directory. You could see these sources by setting `SERIALBOX_OUTDIR` to a different
 directory (it is `/FV3` by default) that you have bind-mounted in to the container.
+
+# Docker buildkit
+
+If you are using a version of docker that supports it, you can enable buildkit by
+setting `DOCKER_BUILDKIT=1` as an environment variable. This can be useful when building
+docker targets in this repo, because it will avoid building mulit-stage targets that
+are not required for the final image.
