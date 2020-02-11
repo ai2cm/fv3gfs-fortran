@@ -25,10 +25,6 @@ LIBRARY  = libfv3core.a
 
 FFLAGS   += -I$(FMS_DIR) -I../gfsphysics -I../ipd -I../io -I../namphysics
 
-ifdef SERIALBOX_FLAGS
-    FFLAGS += $(SERIALBOX_FLAGS)
-endif
-
 SRCS_f   =
 
 SRCS_f90 =
