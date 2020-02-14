@@ -73,7 +73,7 @@ ENV FCFLAGS="-fcray-pointer -Waliasing -ffree-line-length-none -fno-range-check 
 COPY FMS /FMS
 RUN cd /FMS && autoreconf --install && ./configure && \
     cd /FMS && make -j8 && \
-    mv /FMS/*/*.mod /FMS/*/*.o /FMS/*/*.h FMS/
+    mv /FMS/*/*.mod /FMS/*/*.o /FMS/*/*.h /FMS/
 
 ## Build ESMF
 ##---------------------------------------------------------------------------------
