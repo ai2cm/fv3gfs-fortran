@@ -342,7 +342,9 @@
 !!!   and for cubed-sphere
       !$ser savepoint KE_C_SW-In
       !$ser data_kbuff k=k k_size=nz uc=uc vc=vc u=u v=v ua=ua va=va
- 
+      !$ser verbatim if (k == nz) then 
+      !$ser data dt2=dt2
+      !$ser verbatim endif
       if (nested .or. regional .or. flagstruct%grid_type >=3 ) then
          do j=js-1,jep1
          do i=is-1,iep1
