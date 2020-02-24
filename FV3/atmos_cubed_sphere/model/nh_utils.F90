@@ -246,7 +246,12 @@ CONTAINS
 !--------------------------------------------------------------------
   integer  i, j, k, isd, ied, jsd, jed
   logical:: uniform_grid
-
+  !$ser verbatim logical :: ser_on
+  !$ser verbatim if (fs_is_serialization_on()) then
+  !$ser verbatim ser_on = .true.
+  !$ser verbatim else
+  !$ser verbatim ser_on = .false.
+  !$ser verbatim endif
   uniform_grid = .false.
 
   damp(km+1) = damp(km)
@@ -264,7 +269,7 @@ CONTAINS
      call edge_profile(cry, yfx, cry_adv, yfx_adv, isd, ied,  js, je+1, j, km, &
                             dp0, uniform_grid, 0)
   enddo
-
+!$ser off
 !$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,km,area,xfx_adv,yfx_adv, &
 !$OMP                                  damp,zh,crx_adv,cry_adv,npx,npy,hord,gridstruct,bd,  &
 !$OMP                                  ndif,rarea,lim_fac,regional) &
@@ -311,7 +316,9 @@ CONTAINS
    endif
 
   enddo
-
+!$ser verbatim if (ser_on) then
+!$ser on
+!$ser verbatim endif
 !$OMP parallel do default(none) shared(is,ie,js,je,km,ws,zs,zh,rdt)
   do j=js, je
      do i=is,ie
