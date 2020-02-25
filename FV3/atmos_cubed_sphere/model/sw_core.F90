@@ -665,7 +665,7 @@
       integer :: isd, ied, jsd, jed
       integer :: npx, npy
       logical :: nested,regional
-      !$ser verbatim integer :: tile_id,ier
+      !$ser verbatim integer :: mpi_rank,ier
       !$ser verbatim integer :: nz, dir
       !$ser verbatim real, dimension(1,1) :: damp_v_dup, nord_v_dup, nord_dup, nord_w_dup, damp4_dup, d2_bg_dup
       !$ser verbatim damp_v_dup(1,1)=damp_v
@@ -673,7 +673,7 @@
       !$ser verbatim nord_dup(1,1)=nord
       !$ser verbatim nord_w_dup(1,1)=nord_w
       !$ser verbatim d2_bg_dup(1,1)=d2_bg
-      !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, tile_id,ier)
+      !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, mpi_rank,ier)
       !$ser verbatim call get_nz(nz)
       is  = bd%is
       ie  = bd%ie

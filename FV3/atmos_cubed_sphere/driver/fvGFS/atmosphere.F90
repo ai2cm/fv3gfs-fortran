@@ -607,8 +607,8 @@ contains
    integer :: k, w_diff, nt_dyn, n_split_loc, seconds, days
 
    type(time_type) :: atmos_time
-   !$ser verbatim integer :: tile_id,ier
-   !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, tile_id,ier)
+   !$ser verbatim integer :: mpi_rank,ier
+   !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, mpi_rank,ier)
    
 !---- Call FV dynamics -----
 
