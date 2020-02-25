@@ -111,6 +111,9 @@ module fv_arrays_mod
      real :: efx(max_step), efx_sum, efx_nest(max_step), efx_sum_nest, mtq(max_step), mtq_sum
      integer :: steps
 
+     integer :: id_t_dt_nudge, id_ps_dt_nudge, id_delp_dt_nudge
+     integer :: id_u_dt_nudge, id_v_dt_nudge, id_q_dt_nudge
+
   end type fv_diag_type
 
 
@@ -1119,6 +1122,17 @@ module fv_arrays_mod
 
   end type fv_nest_type
 
+  type nudge_diag_type
+
+      real, allocatable :: nudge_t_dt(:,:,:)
+      real, allocatable :: nudge_ps_dt(:,:)
+      real, allocatable :: nudge_delp_dt(:,:,:)
+      real, allocatable :: nudge_u_dt(:,:,:)
+      real, allocatable :: nudge_v_dt(:,:,:)
+      real, allocatable :: nudge_q_dt(:,:,:)
+
+   end type nudge_diag_type
+
 !>@brief 'allocate_fv_nest_BC_type' is an interface to subroutines
 !! that allocate the 'fv_nest_BC_type' structure that holds the nested-grid BCs.
 !>@details The subroutines can pass the array bounds explicitly or not.
@@ -1311,6 +1325,8 @@ module fv_arrays_mod
      real(kind=R_GRID), allocatable, dimension(:,:,:,:) :: grid_global
  
   integer :: atmos_axes(4)
+
+  type(nudge_diag_type) :: nudge_diag
 
   end type fv_atmos_type
 

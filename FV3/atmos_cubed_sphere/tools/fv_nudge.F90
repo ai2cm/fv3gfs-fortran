@@ -300,7 +300,7 @@ module fv_nwp_nudge_mod
  
 !>@brief Ths subroutine 'fv_nwp_nudge' computes and returns time tendencies for nudging to analysis.
 !>@details This nudging is typically applied to fv_update_phys.
-  subroutine fv_nwp_nudge ( Time, dt, npx, npy, npz, ps_dt, u_dt, v_dt, t_dt, q_dt, zvir, ptop, &
+  subroutine fv_nwp_nudge ( Time, dt, npx, npy, npz, ps_dt, u_dt, v_dt, t_dt, zvir, ptop, &
                             ak, bk, ts, ps, delp, ua, va, pt, nwat, q, phis, gridstruct, &
                             bd, domain )
 
@@ -324,7 +324,7 @@ module fv_nwp_nudge_mod
   real, intent(inout), dimension(isd:ied,jsd:jed):: ps
 ! Accumulated tendencies
   real, intent(inout), dimension(isd:ied,jsd:jed,npz):: u_dt, v_dt
-  real, intent(out), dimension(is:ie,js:je,npz):: t_dt, q_dt
+  real, intent(out), dimension(is:ie,js:je,npz):: t_dt
   real, intent(out), dimension(is:ie,js:je):: ps_dt, ts
 
   type(fv_grid_type), intent(INOUT), target :: gridstruct
@@ -341,6 +341,7 @@ module fv_nwp_nudge_mod
   real, allocatable :: ps_obs(:,:)
   real, allocatable, dimension(:,:,:):: u_obs, v_obs, t_obs, q_obs
   real, allocatable, dimension(:,:,:):: du_obs, dv_obs
+  real, allocatable, dimension(:,:,:):: q_dt
   real:: ps_fac(is:ie,js:je)
   integer :: seconds, days
   integer :: i,j,k, iq, kht, n
@@ -471,11 +472,8 @@ module fv_nwp_nudge_mod
   allocate (ps_obs(is:ie,js:je) )
   allocate ( t_obs(is:ie,js:je,npz) )
   allocate ( q_obs(is:ie,js:je,npz) )
-
-  if ( nudge_winds ) then
-       allocate (u_obs(is:ie,js:je,npz) )
-       allocate (v_obs(is:ie,js:je,npz) )
-  endif
+  allocate (u_obs(is:ie,js:je,npz) )
+  allocate (v_obs(is:ie,js:je,npz) )
 
 
   call get_obs(Time, dt, zvir, ak, bk, ps, ts, ps_obs, delp, pt, nwat, q, u_obs, v_obs, t_obs, q_obs,   &
@@ -486,10 +484,8 @@ module fv_nwp_nudge_mod
        deallocate (ps_obs)
        deallocate (t_obs)
        deallocate (q_obs)
-       if ( nudge_winds ) then
-            deallocate (u_obs)
-            deallocate (v_obs)
-       endif
+       deallocate (u_obs)
+       deallocate (v_obs)
 #ifndef DYCORE_SOLO
        forecast_mode = .true.
 #endif
@@ -710,8 +706,9 @@ module fv_nwp_nudge_mod
        enddo
   endif
 
-  q_dt(:,:,:) = 0.
   if ( nudge_q ) then
+       allocate (q_dt(is:ie,js:je,npz) )
+       q_dt(:,:,:) = 0.
        rdt = 1./(tau_q/factor + dt)
 !$OMP parallel do default(none) shared(kstart,npz,kbot_q,is,ie,js,je,press,p_wvp,nwat, &
 !$OMP                                  q,delp,q_dt,prof_q,q_min,q_obs,rdt,mask,dt)
@@ -742,6 +739,7 @@ module fv_nwp_nudge_mod
             enddo
         endif
      enddo
+     deallocate ( q_dt )
   endif
 
   ps_dt(:,:) = 0.
@@ -749,6 +747,8 @@ module fv_nwp_nudge_mod
   deallocate ( t_obs )
   deallocate ( q_obs )
   deallocate ( ps_obs )
+  deallocate ( u_obs )
+  deallocate ( v_obs )
 
   if ( breed_srf_w .and. nudge_winds )   &
   call breed_srf_winds(Time, dt, npz, u_obs, v_obs, ak, bk, ps, phis, delp, ua, va, u_dt, v_dt, pt, q, nwat, zvir, gridstruct)
@@ -760,8 +760,6 @@ module fv_nwp_nudge_mod
   endif
 
   if ( nudge_winds ) then
-     deallocate ( u_obs )
-     deallocate ( v_obs )
      deallocate (du_obs)
      deallocate (dv_obs)
   endif
@@ -1504,7 +1502,7 @@ module fv_nwp_nudge_mod
 
 
   if( .not. file_exist(fname) ) then
-     call mpp_error(FATAL,'==> Error from get_ncep_analysis: file not found')
+     call mpp_error(FATAL,'==> Error from get_ncep_analysis: file not found: '//fname)
   else
      call open_ncfile( fname, ncid )        ! open the file
      if(master) write(*,*) 'Reading NCEP anlysis file:', fname 
