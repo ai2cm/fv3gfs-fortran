@@ -454,7 +454,7 @@
 !------------------------------
 ! To consider using true co-variant winds at face edges?
       !$ser savepoint Circulation_Cgrid-In
-      !$ser data_kbuff k=k k_size=nz uc=uc vc=vc 
+      !$ser data_kbuff k=k k_size=nz uc=uc vc=vc vort_c=vort
       do j=js-1,je+1
          do i=is,ie+1
             fx(i,j) = uc(i,j) * dxc(i,j)
