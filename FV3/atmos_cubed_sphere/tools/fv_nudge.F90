@@ -754,9 +754,13 @@ module fv_nwp_nudge_mod
   call breed_srf_winds(Time, dt, npz, u_obs, v_obs, ak, bk, ps, phis, delp, ua, va, u_dt, v_dt, pt, q, nwat, zvir, gridstruct)
 
   if ( nudge_debug) then
-       call prt_maxmin('T increment=', t_dt,   is, ie, js, je, 0, npz, dt)
-       call prt_maxmin('U increment=', du_obs, is, ie, js, je, 0, npz, dt)
-       call prt_maxmin('V increment=', dv_obs, is, ie, js, je, 0, npz, dt)
+     if ( nudge_virt ) then
+        call prt_maxmin('T increment=', t_dt,   is, ie, js, je, 0, npz, dt)
+     endif
+     if ( nudge_winds ) then
+        call prt_maxmin('U increment=', du_obs, is, ie, js, je, 0, npz, dt)
+        call prt_maxmin('V increment=', dv_obs, is, ie, js, je, 0, npz, dt)
+     endif
   endif
 
   if ( nudge_winds ) then
