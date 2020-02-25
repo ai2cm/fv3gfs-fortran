@@ -49,7 +49,7 @@ module nh_utils_mod
 !     <td>fv_tp_2d</td>
 !   </tr>
 ! </table>
-
+   !$ser verb USE m_serializer, ONLY: fs_is_serializion_on
    use constants_mod,     only: rdgas, cp_air, grav
    use tp_core_mod,       only: fv_tp_2d
    use sw_core_mod,       only: fill_4corners, del6_vt_flux

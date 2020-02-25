@@ -103,7 +103,8 @@ module dyn_core_mod
 !     <td>copy_corners</td>
 !   </tr>
 ! </table>
- !$ser verbatim use mpi
+  !$ser verbatim use mpi
+  !$ser verb USE m_serializer, ONLY: fs_is_serializion_on
   use constants_mod,      only: rdgas, radius, cp_air, pi
   use mpp_mod,            only: mpp_pe 
   use mpp_domains_mod,    only: CGRID_NE, DGRID_NE, mpp_get_boundary, mpp_update_domains,  &
