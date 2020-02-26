@@ -289,10 +289,11 @@ contains
     integer :: is,  ie,  js,  je
     integer :: isd, ied, jsd, jed
     !$ser verbatim integer :: mpi_rank,ier, nz
-    !$ser verbatim logical :: ser_on, complete_halo_false, complete_halo_true
-    !$ser verbatim complete_halo_false = .false.
-    !$ser verbatim complete_halo_true = .true.
-    !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, mpi_rank,ier)
+    !$ser verbatim logical :: ser_on, boolean_false
+    , boolean_true
+    !$ser verbatim boolean_false = .false.
+    !$ser verbatim boolean_true = .true.
+    !$ser verbatim call mpi_comm_rank(MPI_COMM_WORLD, mpi_rank,ier)
 
       is  = bd%is
       ie  = bd%ie
@@ -687,7 +688,7 @@ contains
                                                                   call timing_on('COMM_TOTAL')
                                                    
       !$ser savepoint HaloVectorUpdate-In 
-      !$ser data complete=complete_halo_true array_u=uc array_v=vc rank=mpi_rank
+      !$ser data complete=boolean_true array_u=uc array_v=vc rank=mpi_rank
       call start_group_halo_update(i_pack(9), uc, vc, domain, gridtype=CGRID_NE)
                                                      call timing_off('COMM_TOTAL')
 #ifdef SW_DYNAMICS
@@ -949,9 +950,9 @@ contains
     if( flagstruct%fill_dp ) call mix_dp(hydrostatic, w, delp, pt, npz, ak, bk, .false., flagstruct%fv_debug, bd)
   
     !$ser savepoint HaloUpdate-In 
-    !$ser data complete=complete_halo_false  array=delp rank=mpi_rank
+    !$ser data complete=boolean_false  array=delp rank=mpi_rank
     !$ser savepoint HaloUpdate-In
-    !$ser data complete=complete_halo_true array=pt rank=mpi_rank 
+    !$ser data complete=boolean_true array=pt rank=mpi_rank 
 
                                                              call timing_on('COMM_TOTAL')
     call start_group_halo_update(i_pack(1), delp, domain, complete=.false.)
@@ -1098,7 +1099,7 @@ contains
     !$ser data w=w delz=delz zh=zh pe=pe ppe=pkc pk3=pk3 pk=pk peln=peln wsd=ws
                                                          call timing_on('COMM_TOTAL')
         !$ser savepoint HaloUpdate-2-In
-        !$ser data complete=complete_halo_true array2=zh rank=mpi_rank 
+        !$ser data complete=boolean_true array2=zh rank=mpi_rank 
         if ( gridstruct%square_domain ) then                                             
           call start_group_halo_update(i_pack(4), zh ,  domain)
           call start_group_halo_update(i_pack(5), pkc,  domain, whalo=2, ehalo=2, shalo=2, nhalo=2)
