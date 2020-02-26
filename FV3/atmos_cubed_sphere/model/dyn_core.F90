@@ -289,8 +289,7 @@ contains
     integer :: is,  ie,  js,  je
     integer :: isd, ied, jsd, jed
     !$ser verbatim integer :: mpi_rank,ier, nz
-    !$ser verbatim logical :: ser_on, boolean_false
-    , boolean_true
+    !$ser verbatim logical :: ser_on, boolean_false, boolean_true
     !$ser verbatim boolean_false = .false.
     !$ser verbatim boolean_true = .true.
     !$ser verbatim call mpi_comm_rank(MPI_COMM_WORLD, mpi_rank,ier)
