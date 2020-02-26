@@ -187,6 +187,7 @@ use fv_mp_mod,          only: switch_current_Atm
 use fv_sg_mod,          only: fv_subgrid_z
 use fv_update_phys_mod, only: fv_update_phys
 use fv_nwp_nudge_mod,   only: fv_nwp_nudge_init, fv_nwp_nudge_end, do_adiabatic_init
+use fv_io_mod,          only: fv_io_register_nudge_restart
 #ifdef MULTI_GASES
 use multi_gases_mod,  only: virq, virq_max, num_gas, ri, cpi
 #endif
@@ -439,6 +440,13 @@ contains
    id_fv_diag   = mpp_clock_id ('FV Diag',     flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
 
                     call timing_off('ATMOS_INIT')
+
+   if ( Atm(mytile)%flagstruct%nudge ) then
+      call fv_nwp_nudge_init( Time, Atm(mytile)%atmos_axes, npz, zvir, Atm(mytile)%ak, Atm(mytile)%bk, Atm(mytile)%ts, &
+           Atm(mytile)%phis, Atm(mytile)%gridstruct, Atm(mytile)%ks, Atm(mytile)%npx, Atm(mytile)%neststruct, Atm(mytile)%bd)
+      call mpp_error(NOTE, 'NWP nudging is active')
+      call fv_io_register_nudge_restart ( Atm )
+   endif
 
 #ifdef CCPP
    ! Do CCPP fast physics initialization before call to adiabatic_init (since this calls fv_dynamics)
@@ -756,6 +764,7 @@ contains
    end if
 #endif
 
+   if ( Atm(mytile)%flagstruct%nudge ) call fv_nwp_nudge_end
    call nullify_domain ( )
    if (first_diag) then
       call timing_on('FV_DIAG')
@@ -1581,7 +1590,8 @@ contains
                          .true., Time_next, Atm(n)%flagstruct%nudge, Atm(n)%gridstruct,    &
                          Atm(n)%gridstruct%agrid(:,:,1), Atm(n)%gridstruct%agrid(:,:,2),   &
                          Atm(n)%npx, Atm(n)%npy, Atm(n)%npz, Atm(n)%flagstruct,            &
-                         Atm(n)%neststruct, Atm(n)%bd, Atm(n)%domain, Atm(n)%ptop)
+                         Atm(n)%neststruct, Atm(n)%bd, Atm(n)%domain, Atm(n)%ptop,         &
+                         Atm(n)%nudge_diag)
        call timing_off('FV_UPDATE_PHYS')
    call mpp_clock_end (id_dynam)
 
