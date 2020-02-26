@@ -972,9 +972,13 @@ contains
 
    if (Atm(mytile)%flagstruct%hydrostatic) then
      !--- generate dz using hydrostatic assumption
-     dz(isc:iec,jsc:jec,1:npz) = (rdgas/grav)*Atm(mytile)%pt(isc:iec,jsc:jec,1:npz)  &
-                                 * (Atm(mytile)%peln(isc:iec,1:npz,jsc:jec)          &
-                                 -  Atm(mytile)%peln(isc:iec,2:npz+1,jsc:jec))
+     do j=jsc,jec
+       do k=1,npz
+         dz(isc:iec,j,k) = (rdgas/grav)*Atm(mytile)%pt(isc:iec,j,k)  &
+                           * (Atm(mytile)%peln(isc:iec,k,j)          &
+                           -  Atm(mytile)%peln(isc:iec,k+1,j))
+       enddo
+     enddo
    else
      !--- use non-hydrostatic delz directly
      dz(isc:iec,jsc:jec,1:npz) = Atm(mytile)%delz(isc:iec,jsc:jec,1:npz)
