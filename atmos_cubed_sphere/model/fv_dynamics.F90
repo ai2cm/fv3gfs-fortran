@@ -681,6 +681,8 @@ contains
 #endif
 
                                            call timing_on('DYN_CORE')
+      !$ser savepoint DynCore-In
+      !$ser data nq=nq mdt=mdt n_split=n_split zvir=zvir cp_air=cp_air akap=akap cappa=cappa u=u v=v w=w delz=delz pt=pt q4d=q delp=delp pe=pe pk=pk phis=phis wsd=ws omga=omga ptop=ptop pfull=pfull ua=ua va=va uc=uc vc=vc mfxd=mfx mfyd=mfy cxd=cx cyd=cy pkz=pkz peln=peln q_con=q_con
       call dyn_core(npx, npy, npz, ng, sphum, nq, mdt, n_split, zvir, cp_air, akap, cappa, &
 #ifdef MULTI_GASES
                     kapad, &
@@ -690,8 +692,10 @@ contains
                     uc, vc, mfx, mfy, cx, cy, pkz, peln, q_con, ak, bk, ks, &
                     gridstruct, flagstruct, neststruct, idiag, bd, &
                     domain, n_map==1, i_pack, last_step, diss_est,time_total)
-                                           call timing_off('DYN_CORE')
-
+                                         call timing_off('DYN_CORE')
+      !$ser savepoint DynCore-Out
+      !$ser data cappa=cappa u=u v=v w=w delz=delz pt=pt q4d=q delp=delp pe=pe pk=pk phis=phis wsd=ws omga=omga ptop=ptop pfull=pfull ua=ua va=va uc=uc vc=vc mfxd=mfx mfyd=mfy cxd=cx cyd=cy pkz=pkz peln=peln q_con=q_con
+     !$ser off
 #ifdef SW_DYNAMICS
 !!$OMP parallel do default(none) shared(is,ie,js,je,ps,delp,agrav)
       do j=js,je
