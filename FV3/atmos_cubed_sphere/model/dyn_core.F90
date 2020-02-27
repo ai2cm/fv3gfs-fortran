@@ -416,6 +416,9 @@ contains
 !-----------------------------------------------------
   do it=1,n_split
 !-----------------------------------------------------
+     !$ser verbatim if (it > 1) then
+     !$ser off
+     !$ser verbatim endif
      n_step = it
 #ifdef ROT3
      call start_group_halo_update(i_pack(8), u, v, domain, gridtype=DGRID_NE)
