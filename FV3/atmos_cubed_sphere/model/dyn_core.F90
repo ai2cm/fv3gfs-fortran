@@ -951,8 +951,6 @@ contains
 
     if( flagstruct%fill_dp ) call mix_dp(hydrostatic, w, delp, pt, npz, ak, bk, .false., flagstruct%fv_debug, bd)
   
-    !$ser savepoint HaloUpdate-In 
-    !$ser data complete=boolean_false  array=delp rank=mpi_rank
     !$ser savepoint HaloUpdate-In
     !$ser data complete=boolean_true array=pt rank=mpi_rank 
 
@@ -997,9 +995,6 @@ contains
         
     !$ser savepoint HaloUpdate-Out
     !$ser data array=pt
-     
-    !$ser savepoint HaloUpdate-Out
-    !$ser data array=delp
     
    
                                        call timing_off('COMM_TOTAL')
