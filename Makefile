@@ -58,9 +58,9 @@ push_deps:
 	docker push $(SERIALBOX_IMAGE)
 
 pull_deps:
-	docker push $(FMS_IMAGE)
-	docker push $(ESMF_IMAGE)
-	docker push $(SERIALBOX_IMAGE)
+	docker pull $(FMS_IMAGE)
+	docker pull $(ESMF_IMAGE)
+	docker pull $(SERIALBOX_IMAGE)
 
 build_debug: build_environment
 	COMPILED_TAG_NAME=debug COMPILE_OPTION="REPRO=\\\nDEBUG=Y" $(MAKE) build
