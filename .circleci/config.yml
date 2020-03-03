@@ -7,7 +7,7 @@ jobs:
       docker_layer_caching: true
     environment:
       FV3CONFIG_CACHE_DIR: /tmp/.fv3config
-      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      GOOGLE_APPLICATION_CREDENTIALS: ${HOME}/gcloud-service-key.json
     steps:
       - checkout
       - run:
