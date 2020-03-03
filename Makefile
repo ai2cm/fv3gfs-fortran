@@ -45,7 +45,7 @@ build_compiled:
 		--target $(COMPILE_TARGET) .
 
 build_serialize:
-	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" COMPILED_IMAGE=SERIALIZE_IMAGE $(MAKE) build_compiled
+	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" COMPILED_IMAGE=$(SERIALIZE_IMAGE) $(MAKE) build_compiled
 
 build_deps:
 	docker build -f $(DOCKERFILE) -t $(FMS_IMAGE) --target fv3gfs-fms .
