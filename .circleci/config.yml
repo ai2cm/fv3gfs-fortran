@@ -14,6 +14,8 @@ jobs:
           name: "gcloud auth"
           command: |
             echo $ENCODED_GCR_KEY | base64 -d > $GOOGLE_APPLICATION_CREDENTIALS
+            echo "export GCLOUD_SERVICE_KEY=\$(echo \$ENCODED_GCR_KEY | base64 --decode)" >> $BASH_ENV
+      - gcp-gcr/gcr-auth
       - run: 
           name: "Pull dependency images"
           command: |
