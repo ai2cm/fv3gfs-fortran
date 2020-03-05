@@ -190,7 +190,7 @@
             !$ser savepoint DivergenceCorner-In
             !$ser data_kbuff k=k k_size=nz u=u v=v ua=ua va=va divg_d=divg_d
             call divergence_corner(u, v, ua, va, divg_d, gridstruct, flagstruct, bd)
-            !$ser savepoint DivergenceCorner-In
+            !$ser savepoint DivergenceCorner-Out
             !$ser data_kbuff k=k k_size=nz divg_d=divg_d
          endif
       endif
