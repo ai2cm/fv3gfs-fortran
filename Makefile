@@ -4,11 +4,17 @@ COMPILED_TAG_NAME ?= latest
 ENVIRONMENT_TAG_NAME ?= latest
 COMPILE_OPTION ?=
 COMPILE_TARGET ?= fv3gfs-compiled
+BUILD_ARGS ?=
+BUILD_FROM_INTERMEDIATE ?= n
 ENVIRONMENT_TARGET ?= fv3gfs-environment
 COMPILED_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)
 SERIALIZE_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)-serialize
 ENVIRONMENT_IMAGE=$(GCR_URL)/$(ENVIRONMENT_TARGET):$(ENVIRONMENT_TAG_NAME)
 IMAGE ?= $(ENVIRONMENT_IMAGE)
+
+FMS_IMAGE = $(GCR_URL)/fms-build
+ESMF_IMAGE = $(GCR_URL)/esmf-build
+SERIALBOX_IMAGE = $(GCR_URL)/serialbox-build
 
 MOUNTS?=-v $(shell pwd)/FV3:/FV3 \
 	-v $(shell pwd)/FV3/conf/configure.fv3.gnu_docker:/FV3/conf/configure.fv3
@@ -19,6 +25,11 @@ EXPERIMENT ?= new
 RUNDIR_CONTAINER=/rundir
 RUNDIR_HOST=$(shell pwd)/rundir
 
+
+ifeq ($(BUILD_FROM_INTERMEDIATE),y)
+	BUILD_ARGS += --build-arg FMS_IMAGE=$(FMS_IMAGE) --build-arg ESMF_IMAGE=$(ESMF_IMAGE) --build-arg SERIALBOX_IMAGE=$(SERIALBOX_IMAGE)
+endif
+
 build: build_compiled
 
 build_environment:
@@ -28,17 +39,28 @@ build_environment:
 build_compiled:
 	docker build \
 		--build-arg compile_option=$(COMPILE_OPTION) \
+		$(BUILD_ARGS) \
 		-f $(DOCKERFILE) \
 		-t $(COMPILED_IMAGE) \
 		--target $(COMPILE_TARGET) .
 
 build_serialize:
-	docker build \
-		--build-arg compile_option=$(COMPILE_OPTION) \
-		--build-arg serialize=true \
-		-f $(DOCKERFILE) \
-		-t $(SERIALIZE_IMAGE) \
-		--target $(COMPILE_TARGET) .
+	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" COMPILED_IMAGE=$(SERIALIZE_IMAGE) $(MAKE) build_compiled
+
+build_deps:
+	docker build -f $(DOCKERFILE) -t $(FMS_IMAGE) --target fv3gfs-fms .
+	docker build -f $(DOCKERFILE) -t $(ESMF_IMAGE) --target fv3gfs-esmf .
+	docker build -f $(DOCKERFILE) -t $(SERIALBOX_IMAGE) --target fv3gfs-environment-serialbox .
+
+push_deps:
+	docker push $(FMS_IMAGE)
+	docker push $(ESMF_IMAGE)
+	docker push $(SERIALBOX_IMAGE)
+
+pull_deps:
+	docker pull $(FMS_IMAGE)
+	docker pull $(ESMF_IMAGE)
+	docker pull $(SERIALBOX_IMAGE)
 
 build_debug: build_environment
 	COMPILED_TAG_NAME=debug COMPILE_OPTION="REPRO=\\\nDEBUG=Y" $(MAKE) build
