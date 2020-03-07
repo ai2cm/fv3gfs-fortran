@@ -124,9 +124,7 @@ module fv_update_phys_mod
   implicit none
 
   public :: fv_update_phys, del2_phys
-#ifdef ROT3
   public :: update_dwinds_phys
-#endif
 
   real,parameter:: con_cp  = cp_air
 
