@@ -184,7 +184,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: smc (:,:)   => null()  !< soil moisture content
     real (kind=kind_phys), pointer :: stc (:,:)   => null()  !< soil temperature content
     real (kind=kind_phys), pointer :: slc (:,:)   => null()  !< soil liquid water content
-    real (kind=kind_phys), pointer :: atm_ts (:,:) => null() !< surface temperature from dynamical core
+    real (kind=kind_phys), pointer :: atm_ts (:)  => null() !< surface temperature from dynamical core
  
     contains
       procedure :: create  => statein_create  !<   allocate array data
