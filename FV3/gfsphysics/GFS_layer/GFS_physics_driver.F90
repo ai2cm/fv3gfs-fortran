@@ -2046,8 +2046,9 @@ module module_physics_driver
 
 !     if (lprnt) write(0,*) 'tisfc=',Sfcprop%tisfc(ipr),'tice=',tice(ipr),' kdt=',kdt
 
-! force SST to be equal to dynamical core surface temperature
-      if (Model%use_atm_ts_as_sst) then
+! force SST to be equal to dynamical core surface temperature, which will be the same as
+! analysis SST when nudging is active
+      if (Model%use_analysis_sst) then
         do i = 1, im
           if (islmsk(i) == 0 ) then
             Sfcprop%tsfc(i) = Statein%atm_ts(i)

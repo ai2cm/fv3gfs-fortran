@@ -748,8 +748,8 @@ module GFS_typedefs
     integer              :: iopt_stc  !snow/soil temperature time scheme (only layer 1)
 
     logical              :: use_ufo         !< flag for gcycle surface option
-    logical              :: use_atm_ts_as_sst ! whether to set physics SST to dynamical core ts
-
+    logical              :: use_analysis_sst ! whether to set physics SST to dynamical core ts, which is
+                                             ! equal to analysis SST when nudging is active
 !--- tuning parameters for physical parameterizations
     logical              :: ras             !< flag for ras convection scheme
     logical              :: flipv           !< flag for vertical direction flip (ras)
@@ -2807,7 +2807,8 @@ module GFS_typedefs
     integer              :: iopt_stc       =  1  !snow/soil temperature time scheme (only layer 1)
 
     logical              :: use_ufo        = .false.         !< flag for gcycle surface option
-    logical              :: use_atm_ts_as_sst = .false.      ! whether to set physics SST equal to Atm(n)%ts
+    logical              :: use_analysis_sst = .false. ! whether to set physics SST to dynamical core ts
+                                                       ! which is equal to analysis SST when nudging is active
 
 !--- tuning parameters for physical parameterizations
     logical              :: ras            = .false.                  !< flag for ras convection scheme
@@ -3070,7 +3071,7 @@ module GFS_typedefs
 #else
                                lsm, lsoil, nmtvr, ivegsrc, use_ufo,                         &
 #endif
-                               use_atm_ts_as_sst,                                           &
+                               use_analysis_sst,                                           &
                           !    Noah MP options
                                iopt_dveg,iopt_crs,iopt_btr,iopt_run,iopt_sfc, iopt_frz,     &
                                iopt_inf, iopt_rad,iopt_alb,iopt_snf,iopt_tbot,iopt_stc,     &
@@ -3380,7 +3381,7 @@ module GFS_typedefs
     Model%isot             = isot
     Model%use_ufo          = use_ufo
 
-    Model%use_atm_ts_as_sst = use_atm_ts_as_sst
+    Model%use_analysis_sst = use_analysis_sst
 
 ! Noah MP options from namelist
 !
@@ -3897,7 +3898,7 @@ module GFS_typedefs
       endif
 
       print *,' nst_anl=',Model%nst_anl,' use_ufo=',Model%use_ufo,' frac_grid=',Model%frac_grid
-      print *,' use_atm_ts_as_sst=',Model%use_atm_ts_as_sst
+      print *,' use_analysis_sst=',Model%use_analysis_sst
       print *,' min_lakeice=',Model%min_lakeice,' min_seaice=',Model%min_seaice
       if (Model%nstf_name(1) > 0 ) then
         print *,' NSSTM is active '
@@ -4403,7 +4404,7 @@ module GFS_typedefs
      endif
 
       print *, ' use_ufo           : ', Model%use_ufo
-      print *, ' use_atm_ts_as_sst : ', Model%use_atm_ts_as_sst
+      print *, ' use_analysis_sst : ', Model%use_analysis_sst
       print *, ' '
       print *, 'tuning parameters for physical parameterizations'
       print *, ' ras               : ', Model%ras
