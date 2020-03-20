@@ -1969,7 +1969,7 @@ contains
      do ix = 1, blen
        i = Atm_block%index(nb)%ii(ix)
        j = Atm_block%index(nb)%jj(ix)
-       IPD_Data(nb)%Statein%atm_ts(ix) = _DBL_(_RL_(Atm(mytile)%atm_ts(i,j)))
+       IPD_Data(nb)%Statein%atm_ts(ix) = _DBL_(_RL_(Atm(mytile)%ts(i,j)))
      enddo
 
      do k = 1, npz
