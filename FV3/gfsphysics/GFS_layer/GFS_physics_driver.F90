@@ -2046,6 +2046,17 @@ module module_physics_driver
 
 !     if (lprnt) write(0,*) 'tisfc=',Sfcprop%tisfc(ipr),'tice=',tice(ipr),' kdt=',kdt
 
+! force SST to be equal to dynamical core surface temperature
+      if (Model%use_atm_ts_as_sst) then
+        do i = 1, im
+          if (islmsk(i) == 0 ) then
+            Sfcprop%tsfc(i) = Statein%atm_ts(i)
+            Sfcprop%tsfco(i) = Statein%atm_ts(i)
+            tsfc3(i,3) = Statein%atm_ts(i)
+          endif
+        enddo
+      endif
+
       do i=1,im
         Diag%epi(i)     = ep1d(i)
         Diag%dlwsfci(i) = adjsfcdlw(i)
