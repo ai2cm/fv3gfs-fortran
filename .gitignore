@@ -1,3 +1,4 @@
+FV3/conf/configure.fv3
 *.o
 __pycache__
 *.pyc
