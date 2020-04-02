@@ -616,6 +616,7 @@ contains
 
    type(time_type) :: atmos_time
    !$ser verbatim integer :: mpi_rank,ier
+   !$ser verbatim real :: bdt
    !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, mpi_rank,ier)
    
 !---- Call FV dynamics -----
@@ -658,6 +659,9 @@ contains
       p_step = psc
                     call timing_on('fv_dynamics')
 !uc/vc only need be same on coarse grid? However BCs do need to be the same
+     !$ser savepoint FVDynamics-In
+     !$ser verbatim bdt=dt_atmos/real(abs(p_split))
+     !$ser data  bdt=bdt nq_tot=nq zvir=zvir ptop=Atm(n)%ptop ks=Atm(n)%ks ncnst=nq n_split=n_split_loc u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp q4d=Atm(n)%q ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc ak=Atm(n)%ak bk=Atm(n)%bk mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
       call fv_dynamics(npx, npy, npz, nq, Atm(n)%ng, dt_atmos/real(abs(p_split)),&
                        Atm(n)%flagstruct%consv_te, Atm(n)%flagstruct%fill,       &
                        Atm(n)%flagstruct%reproduce_sum, kappa, cp_air, zvir,     &
@@ -676,7 +680,8 @@ contains
                        Atm(n)%gridstruct,  Atm(n)%flagstruct,                    &
                        Atm(n)%neststruct,  Atm(n)%idiag, Atm(n)%bd,              &
                        Atm(n)%parent_grid, Atm(n)%domain,Atm(n)%diss_est)
-
+     !$ser savepoint FVDynamics-Out
+     !$ser data  u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp q4d=Atm(n)%q ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
       call timing_off('fv_dynamics')
 
       if (ngrids > 1 .and. (psc < p_split .or. p_split < 0)) then
@@ -703,6 +708,8 @@ contains
       if ( w_diff /= NO_TRACER ) then
         nt_dyn = nq - 1
       endif
+     !$ser savepoint FVSubgridZ-In
+     !$ser data nt_dyn=nt_dyn dt_atmos=dt_atmos delp=Atm(n)%delp pe=Atm(n)%pe peln=Atm(n)%peln pkz=Atm(n)%pkz pt=Atm(n)%pt q4d=Atm(n)%q ua=Atm(n)%ua va=Atm(n)%va w=Atm(n)%w delz=Atm(n)%delz u_dt=u_dt d_dt=v_dt t_dt=t_dt 
       call fv_subgrid_z(isd, ied, jsd, jed, isc, iec, jsc, jec, Atm(n)%npz, &
                         nt_dyn, dt_atmos, Atm(n)%flagstruct%fv_sg_adj,      &
                         Atm(n)%flagstruct%nwat, Atm(n)%delp, Atm(n)%pe,     &
@@ -710,6 +717,8 @@ contains
                         Atm(n)%ua, Atm(n)%va, Atm(n)%flagstruct%hydrostatic,&
                         Atm(n)%w, Atm(n)%delz, u_dt, v_dt, t_dt,            &
                         Atm(n)%flagstruct%n_sponge)
+      !$ser savepoint FVSubgridZ-Out
+      !$ser data  pt=Atm(n)%pt q4d=Atm(n)%q ua=Atm(n)%ua va=Atm(n)%va w=Atm(n)%w u_dt=u_dt d_dt=v_dt t_dt=t_dt 
     endif
 
 #ifdef USE_Q_DT
