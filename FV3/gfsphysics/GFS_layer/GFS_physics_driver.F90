@@ -4791,16 +4791,18 @@ module module_physics_driver
             enddo
           enddo
 
+          if ( Model%do_gfdl_mp_in_physics ) then
+            call gfdl_cloud_microphys_driver(qv1, ql1, qr1, qi1, qs1, qg1, qa1, &
+                                             qn1, qv_dt, ql_dt, qr_dt, qi_dt,   &
+                                             qs_dt, qg_dt, qa_dt, pt_dt, pt, w, &
+                                             uin, vin, udt, vdt, dz, delp,      &
+                                             area, dtp, land, rain0, snow0,     &
+                                             ice0, graupel0, .false., .true.,   &
+                                             1, im, 1, 1, 1, levs, 1, levs,     &
+                                             seconds,p123,Model%lradar,refl,    &
+                                             reset)
+          endif
 
-          call gfdl_cloud_microphys_driver(qv1, ql1, qr1, qi1, qs1, qg1, qa1, &
-                                           qn1, qv_dt, ql_dt, qr_dt, qi_dt,   &
-                                           qs_dt, qg_dt, qa_dt, pt_dt, pt, w, &
-                                           uin, vin, udt, vdt, dz, delp,      &
-                                           area, dtp, land, rain0, snow0,     &
-                                           ice0, graupel0, .false., .true.,   &
-                                           1, im, 1, 1, 1, levs, 1, levs,     &
-                                           seconds,p123,Model%lradar,refl,    &
-                                           reset)
           tem = dtp * con_p001 / con_day
           do i = 1, im
 !            rain0(i,1) = max(con_d00, rain0(i,1))
