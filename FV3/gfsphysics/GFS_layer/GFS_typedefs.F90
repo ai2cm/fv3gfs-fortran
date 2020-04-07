@@ -716,6 +716,7 @@ module GFS_typedefs
 
     !--- GFDL microphysical paramters
     logical              :: lgfdlmprad      !< flag for GFDL mp scheme and radiation consistency 
+    logical        :: do_gfdl_mp_in_physics !< flag for whether to call gfdl_cloud_microphys_driver
 
     !--- land/surface model parameters
     integer              :: lsm             !< flag for land surface model lsm=1 for noah lsm
@@ -2778,6 +2779,7 @@ module GFS_typedefs
 
     !--- GFDL microphysical parameters
     logical              :: lgfdlmprad     = .false.            !< flag for GFDLMP radiation interaction 
+    logical       :: do_gfdl_mp_in_physics = .true.             !< flag for whether to call gfdl_cloud_microphys_driver
 
     !--- land/surface model parameters
     integer              :: lsm            =  1              !< flag for land surface model to use =0  for osu lsm; =1  for noah lsm; =2  for noah mp lsm; =3  for RUC lsm
@@ -3066,6 +3068,7 @@ module GFS_typedefs
                                mg_ncnst, mg_ninst, mg_ngnst, sed_supersat, do_sb_physics,   &
                                mg_alf,   mg_qcmin, mg_do_ice_gmao, mg_do_liq_liu,           &
                                ltaerosol, lradar, ttendlim, lgfdlmprad,                     &
+                               do_gfdl_mp_in_physics,                                       &
                           !--- max hourly
                                avg_max_length,                                              &
                           !--- land/surface model control
@@ -3356,6 +3359,7 @@ module GFS_typedefs
     Model%ttendlim         = ttendlim
 !--- gfdl  MP parameters
     Model%lgfdlmprad       = lgfdlmprad
+    Model%do_gfdl_mp_in_physics = do_gfdl_mp_in_physics
 
 !--- land/surface model parameters
     Model%lsm              = lsm
@@ -4378,6 +4382,7 @@ module GFS_typedefs
       if (Model%imp_physics == Model%imp_physics_gfdl) then
         print *, ' GFDL microphysical parameters'
         print *, ' GFDL MP radiation inter: ', Model%lgfdlmprad
+        print *, ' GFDL MP do microphysics in physics switch: ', Model%do_gfdl_mp_in_physics
         print *, ' '
       endif
 
