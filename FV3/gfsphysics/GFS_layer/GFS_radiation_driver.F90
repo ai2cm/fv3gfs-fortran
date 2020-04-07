@@ -1845,7 +1845,7 @@
 ! mg, sfc-perts
 
 
-      if (Model%do_clearsky_rad) then
+      if (Model%do_only_clearsky_rad) then
         clouds(:,:,1) = 0.0  ! layer total cloud fraction
         clouds(:,:,2) = 0.0  ! layer cloud liq water path
         clouds(:,:,4) = 0.0  ! layer cloud ice water path
