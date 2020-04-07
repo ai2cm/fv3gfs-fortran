@@ -649,6 +649,7 @@ module GFS_typedefs
     logical              :: norad_precip    !< radiation precip flag for Ferrier/Moorthi
     logical              :: lwhtr           !< flag to output lw heating rate (Radtend%lwhc)
     logical              :: swhtr           !< flag to output sw heating rate (Radtend%swhc)
+    logical              :: do_only_clearsky_rad !< flag for whether to do only clear-sky radiation
 
 !--- microphysical switch
     integer              :: ncld            !< choice of cloud scheme
@@ -2722,6 +2723,7 @@ module GFS_typedefs
     logical              :: norad_precip      = .false.      !< radiation precip flag for Ferrier/Moorthi
     logical              :: lwhtr             = .true.       !< flag to output lw heating rate (Radtend%lwhc)
     logical              :: swhtr             = .true.       !< flag to output sw heating rate (Radtend%swhc)
+    logical              :: do_only_clearsky_rad = .false.   !< flag for whether to do only clear-sky radiation
 
 !--- Z-C microphysical parameters
     integer              :: ncld              =  1                 !< choice of cloud scheme
@@ -3050,6 +3052,7 @@ module GFS_typedefs
                                fhswr, fhlwr, levr, nfxr, aero_in, iflip, isol, ico2, ialb,  &
                                isot, iems, iaer, icliq_sw, iovr_sw, iovr_lw, ictm, isubc_sw,&
                                isubc_lw, crick_proof, ccnorm, lwhtr, swhtr,                 &
+                               do_only_clearsky_rad,                                        &
                           ! IN CCN forcing
                                iccn,                                                        &
                           !--- microphysical parameterizations
@@ -3291,6 +3294,7 @@ module GFS_typedefs
     Model%ccnorm           = ccnorm
     Model%lwhtr            = lwhtr
     Model%swhtr            = swhtr
+    Model%do_only_clearsky_rad = do_only_clearsky_rad
 #ifdef CCPP
     ! The CCPP versions of the RRTMG lw/sw schemes are configured
     ! such that lw and sw heating rate are output, i.e. they rely
@@ -4342,6 +4346,7 @@ module GFS_typedefs
       print *, ' norad_precip      : ', Model%norad_precip
       print *, ' lwhtr             : ', Model%lwhtr
       print *, ' swhtr             : ', Model%swhtr
+      print *, ' do_only_clearsky_rad: ', Model%do_only_clearsky_rad
       print *, ' '
       print *, 'microphysical switch'
       print *, ' ncld              : ', Model%ncld
