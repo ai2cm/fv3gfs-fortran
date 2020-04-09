@@ -116,6 +116,11 @@ module fv_arrays_mod
 
   end type fv_diag_type
 
+  type fv_coarse_diag_type
+
+     integer :: id_omega_coarse
+
+  end type fv_coarse_diag_type
 
 !>@brief The type 'fv_grid_type' is made up of grid-dependent information from fv_grid_tools and fv_grid_utils.
 !>@details It should not contain any user options (that goes in a different structure) nor data which
@@ -1158,6 +1163,12 @@ module fv_arrays_mod
 
   end type fv_grid_bounds_type
 
+  type fv_coarse_grid_bounds_type
+
+     integer :: is_coarse, ie_coarse, js_coarse, je_coarse
+
+  end type fv_coarse_grid_bounds_type
+
   type fv_regional_bc_bounds_type
 
      integer :: is_north ,ie_north ,js_north ,je_north &
@@ -1274,9 +1285,15 @@ module fv_arrays_mod
 
     type(fv_grid_bounds_type) :: bd
 
+    type(fv_coarse_grid_bounds_type) :: coarse_bd
+
     type(fv_regional_bc_bounds_type) :: regional_bc_bounds
 
     type(domain2D) :: domain
+
+    type(domain2D) :: coarse_domain
+
+    integer :: target_coarse_resolution
 #if defined(SPMD)
 
     type(domain2D) :: domain_for_coupler !< domain used in coupled model with halo = 1.
@@ -1312,6 +1329,7 @@ module fv_arrays_mod
 !!!!!!!!!!!!!!!!
 
      type(fv_diag_type) :: idiag
+     type(fv_coarse_diag_type) :: idiag_coarse
 
 !!!!!!!!!!!!!!
 ! From fv_io !
@@ -1325,6 +1343,7 @@ module fv_arrays_mod
      real(kind=R_GRID), allocatable, dimension(:,:,:,:) :: grid_global
  
   integer :: atmos_axes(4)
+  integer :: coarse_atmos_axes(4)
 
   type(nudge_diag_type) :: nudge_diag
 

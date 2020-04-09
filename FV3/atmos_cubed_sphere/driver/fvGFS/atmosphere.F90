@@ -195,6 +195,8 @@ use fv_regional_mod,    only: start_regional_restart, read_new_bc_data, &
                               a_step, p_step, current_time_in_seconds
 
 use mpp_domains_mod,    only:  mpp_get_data_domain, mpp_get_compute_domain
+use online_coarse_graining_mod, only: online_coarse_graining_init
+use coarse_grained_diagnostics_mod, only: fv_coarse_diag_init, fv_coarse_diag
 !$ser verbatim use k_checkpoint, only: set_nz
 
 implicit none
@@ -335,6 +337,8 @@ contains
       if (grids_on_this_pe(n)) mytile = n
    enddo
 
+   call online_coarse_graining_init(Atm(mytile))
+
    Atm(mytile)%Time_init = Time_init
 
    a_step = 0
@@ -425,6 +429,7 @@ contains
 !----- initialize atmos_axes and fv_dynamics diagnostics
        !I've had trouble getting this to work with multiple grids at a time; worth revisiting?
    call fv_diag_init(Atm(mytile:mytile), Atm(mytile)%atmos_axes, Time, npx, npy, npz, Atm(mytile)%flagstruct%p_ref)
+   call fv_coarse_diag_init(Atm(mytile:mytile), Atm(mytile)%coarse_atmos_axes, Time)
 
 !---------- reference profile -----------
     ps1 = 101325.
@@ -779,6 +784,7 @@ contains
       call timing_on('FV_DIAG')
       call fv_diag(Atm(mytile:mytile), zvir, fv_time, Atm(mytile)%flagstruct%print_freq)
       call fv_nggps_diag(Atm(mytile:mytile), zvir, fv_time)
+      call fv_coarse_diag(Atm(mytile:mytile), fv_time)
       first_diag = .false.
       call timing_off('FV_DIAG')
    endif
@@ -1627,6 +1633,7 @@ contains
      call nullify_domain()
      call timing_on('FV_DIAG')
      call fv_diag(Atm(mytile:mytile), zvir, fv_time, Atm(mytile)%flagstruct%print_freq)
+     call fv_coarse_diag(Atm(mytile:mytile), fv_time)
      first_diag = .false.
      call timing_off('FV_DIAG')
 
