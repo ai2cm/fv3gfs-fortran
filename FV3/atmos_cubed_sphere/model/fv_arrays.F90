@@ -1178,8 +1178,7 @@ module fv_arrays_mod
      integer :: target_coarse_resolution
      integer :: coarse_diagnostic_axes(4)
      character(len=64) :: coarse_graining_strategy
-     logical :: write_coarse_grained_restart_files
-     logical :: write_coarse_grained_diagnostics
+     logical :: enable_coarse_graining
 
   end type fv_coarse_graining_type
   

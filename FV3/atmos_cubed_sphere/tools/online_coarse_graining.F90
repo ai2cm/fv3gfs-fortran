@@ -30,12 +30,10 @@ module online_coarse_graining_mod
   integer :: coarsening_factor = 8
   integer :: coarse_io_layout(2) = (/1, 1/)
   character(len=64) :: coarse_graining_strategy = 'model_level'
-  logical :: write_coarse_grained_restart_files = .false.
-  logical :: write_coarse_grained_diagnostics = .false.
+  logical :: enable_coarse_graining = .false.
   
   namelist /online_coarse_graining_nml/ coarsening_factor, coarse_io_layout, &
-       coarse_graining_strategy, write_coarse_grained_restart_files, &
-       write_coarse_grained_diagnostics
+       coarse_graining_strategy, enable_coarse_graining
 
 contains
 
@@ -56,10 +54,9 @@ contains
     call close_file(namelist_file)
 #endif
 
-    Atm%coarse_graining_attributes%write_coarse_grained_restart_files = write_coarse_grained_restart_files
-    Atm%coarse_graining_attributes%write_coarse_grained_diagnostics = write_coarse_grained_diagnostics
+    Atm%coarse_graining_attributes%enable_coarse_graining = enable_coarse_graining
 
-    if (write_coarse_grained_restart_files .or. write_coarse_grained_diagnostics) then
+    if (enable_coarse_graining) then
        call compute_target_resolution(Atm, coarsening_factor, target_resolution)
        call assert_valid_domain_layout(target_resolution, Atm%layout)
        call define_cubic_mosaic(coarse_domain, target_resolution, target_resolution, Atm%layout)
