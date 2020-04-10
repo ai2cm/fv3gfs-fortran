@@ -4,7 +4,7 @@ module coarse_grained_diagnostics_mod
   use fv_arrays_mod, only: fv_atmos_type, fv_coarse_diag_type
   use mpp_domains_mod, only: domain2d
   use mpp_mod, only: FATAL, mpp_error
-  use online_coarse_graining_mod, only: MODEL_LEVEL, weighted_block_average
+  use online_coarse_graining_mod, only: block_sum, get_fine_array_bounds, get_coarse_array_bounds, MODEL_LEVEL, weighted_block_average
   use time_manager_mod, only: time_type
   
   implicit none
@@ -48,7 +48,7 @@ contains
 
     call register_coarse_static_diagnostics(Atm, Time, coarse_axes_t, coarse_axes)
     call register_coarse_diagnostics(Atm, Time, coarse_axes_t)
-    call compute_static_diagnostics(Atm, Time)
+    call compute_coarse_static_diagnostics(Atm, Time)
   end subroutine fv_coarse_diag_init
 
   subroutine initialize_coarse_diagnostic_axes(coarse_domain, &
@@ -200,24 +200,4 @@ contains
     diagnostic_ids_3d = (/ Atm(tile_count)%idiag_coarse%id_omega_coarse /)
   end subroutine 
   
-  subroutine get_fine_array_bounds(Atm, is, ie, js, je)
-    type(fv_atmos_type), intent(in) :: Atm
-    integer, intent(out) :: is, ie, js, je
-
-    is = Atm%bd%is
-    ie = Atm%bd%ie
-    js = Atm%bd%js
-    je = Atm%bd%je
-  end subroutine get_fine_array_bounds
-  
-  subroutine get_coarse_array_bounds(Atm, is_coarse, ie_coarse, js_coarse, je_coarse)
-    type(fv_atmos_type), intent(in) :: Atm
-    integer, intent(out) :: is_coarse, ie_coarse, js_coarse, je_coarse
-
-    is_coarse = Atm%coarse_graining_attributes%coarse_bd%is_coarse
-    ie_coarse = Atm%coarse_graining_attributes%coarse_bd%ie_coarse
-    js_coarse = Atm%coarse_graining_attributes%coarse_bd%js_coarse
-    je_coarse = Atm%coarse_graining_attributes%coarse_bd%je_coarse
-  end subroutine get_coarse_array_bounds
-
 end module coarse_grained_diagnostics_mod

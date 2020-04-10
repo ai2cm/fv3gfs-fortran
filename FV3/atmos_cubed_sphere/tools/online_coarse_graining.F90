@@ -8,7 +8,7 @@ module online_coarse_graining_mod
   implicit none
   private
 
-  public :: block_sum, online_coarse_graining_init, weighted_block_average, MODEL_LEVEL
+  public :: block_sum, get_fine_array_bounds, get_coarse_array_bounds, online_coarse_graining_init, weighted_block_average, MODEL_LEVEL
 
   interface block_sum
      module procedure block_sum_2d
@@ -66,8 +66,9 @@ contains
        call define_cubic_mosaic(coarse_domain, target_resolution, target_resolution, Atm%layout)
        call mpp_define_io_domain(coarse_domain, coarse_io_layout)
        call mpp_get_compute_domain(coarse_domain, is_coarse, ie_coarse, js_coarse, je_coarse)
+       call get_fine_array_bounds(Atm, is, ie, js, je)
        npz = Atm%npz
-    
+       
        Atm%coarse_graining_attributes%coarse_bd%is_coarse = is_coarse
        Atm%coarse_graining_attributes%coarse_bd%ie_coarse = ie_coarse
        Atm%coarse_graining_attributes%coarse_bd%js_coarse = js_coarse
@@ -75,8 +76,7 @@ contains
        Atm%coarse_graining_attributes%target_coarse_resolution = target_resolution
        Atm%coarse_graining_attributes%coarse_domain = coarse_domain
        Atm%coarse_graining_attributes%coarse_graining_strategy = coarse_graining_strategy
-    endif
-    
+    endif    
   end subroutine online_coarse_graining_init
 
   subroutine compute_target_resolution(Atm, coarsening_factor, target_resolution)
@@ -212,6 +212,7 @@ contains
     real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse)
 
     integer :: i, j, i_coarse, j_coarse, offset
+
     offset = coarsening_factor - 1
     do i = is, ie, coarsening_factor
        i_coarse = (i - 1) / coarsening_factor + 1
@@ -237,15 +238,15 @@ contains
     real, intent(in) :: weights(is:ie,js:je), fine(is:ie,js:je)
     real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse)
 
-    real, allocatable :: weighted_block_sum(:,:), block_sum_weights(:,:)
-    integer :: i, j, i_coarse, j_coarse, offset
+    real, allocatable :: weighted_fine(:,:), weighted_block_sum(:,:), block_sum_weights(:,:)
 
+    allocate(weighted_fine(is:ie,js:je))
     allocate(weighted_block_sum(is_coarse:ie_coarse,js_coarse:je_coarse))
     allocate(block_sum_weights(is_coarse:ie_coarse,js_coarse:je_coarse))
 
-    call block_sum_2d(weights * fine, weighted_block_sum)
+    weighted_fine = weights * fine
+    call block_sum_2d(weighted_fine, weighted_block_sum)
     call block_sum_2d(weights, block_sum_weights)
-
     coarse = weighted_block_sum / block_sum_weights
   end subroutine weighted_block_average_2d
 
@@ -259,5 +260,25 @@ contains
        call weighted_block_average_2d(weights, fine(is:ie,js:je,k), coarse(is_coarse:ie_coarse,js_coarse:je_coarse,k))
     enddo
   end subroutine weighted_block_average_3d_field_2d_weights
+
+  subroutine get_fine_array_bounds(Atm, is, ie, js, je)
+    type(fv_atmos_type), intent(in) :: Atm
+    integer, intent(out) :: is, ie, js, je
+
+    is = Atm%bd%is
+    ie = Atm%bd%ie
+    js = Atm%bd%js
+    je = Atm%bd%je
+  end subroutine get_fine_array_bounds
+  
+  subroutine get_coarse_array_bounds(Atm, is_coarse, ie_coarse, js_coarse, je_coarse)
+    type(fv_atmos_type), intent(in) :: Atm
+    integer, intent(out) :: is_coarse, ie_coarse, js_coarse, je_coarse
+
+    is_coarse = Atm%coarse_graining_attributes%coarse_bd%is_coarse
+    ie_coarse = Atm%coarse_graining_attributes%coarse_bd%ie_coarse
+    js_coarse = Atm%coarse_graining_attributes%coarse_bd%js_coarse
+    je_coarse = Atm%coarse_graining_attributes%coarse_bd%je_coarse
+  end subroutine get_coarse_array_bounds
   
 end module online_coarse_graining_mod
