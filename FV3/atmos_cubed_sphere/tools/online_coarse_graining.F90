@@ -145,17 +145,6 @@ contains
        enddo
     enddo
   end subroutine
-
-  subroutine block_sum_3d(fine, coarse)
-    real, intent(in) :: fine(is:ie,js:je,1:npz)
-    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz)
-
-    integer :: k
-
-    do k = 1, npz
-       call block_sum_2d(fine(is:ie,js:je,k), coarse(is_coarse:ie_coarse,js_coarse:je_coarse,k))
-    enddo
-  end subroutine block_sum_3d
   
   subroutine weighted_block_average_2d(weights, fine, coarse)
     real, intent(in) :: weights(is:ie,js:je), fine(is:ie,js:je)
