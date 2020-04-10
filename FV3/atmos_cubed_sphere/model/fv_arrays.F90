@@ -1301,7 +1301,6 @@ module fv_arrays_mod
     type(fv_regional_bc_bounds_type) :: regional_bc_bounds
 
     type(domain2D) :: domain
-
 #if defined(SPMD)
 
     type(domain2D) :: domain_for_coupler !< domain used in coupled model with halo = 1.

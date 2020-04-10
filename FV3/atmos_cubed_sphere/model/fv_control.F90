@@ -335,6 +335,7 @@ module fv_control_mod
   real, pointer :: s_weight, update_blend
 
   integer, pointer :: layout(:), io_layout(:)
+
    integer :: ntilesMe                ! Number of tiles on this process =1 for now
 
 #ifdef OVERLOAD_R4

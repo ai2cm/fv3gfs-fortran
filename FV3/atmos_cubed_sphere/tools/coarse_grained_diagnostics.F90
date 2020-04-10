@@ -12,6 +12,8 @@ module coarse_grained_diagnostics_mod
   
   public :: fv_coarse_diag_init, fv_coarse_diag
 
+  integer :: tile_count = 1  ! Following fv_diagnostics.F90
+
 contains
   
   subroutine fv_coarse_diag_init(Atm, coarse_axes_t, Time)
@@ -24,13 +26,11 @@ contains
     integer :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse
     integer :: npz
     integer :: id_coarse_x, id_coarse_y, id_coarse_xt, id_coarse_yt
-    integer :: tile_count
     integer :: coarse_axes(4)
     integer :: id_pfull, id_phalf
     real :: missing_value
 
     missing_value = -1.0e10  ! Following fv_diagnostics.F90
-    tile_count = 1  ! Following fv_diagnostics.F90
 
     target_resolution = Atm(tile_count)%coarse_graining_attributes%target_coarse_resolution
     coarse_domain = Atm(tile_count)%coarse_graining_attributes%coarse_domain
@@ -39,8 +39,7 @@ contains
     npz = Atm(tile_count)%npz
     
     call initialize_coarse_diagnostic_axes(coarse_domain, &
-         target_resolution, tile_count, &
-         id_coarse_x, id_coarse_y, id_coarse_xt, id_coarse_yt)
+         target_resolution, id_coarse_x, id_coarse_y, id_coarse_xt, id_coarse_yt)
 
     id_pfull = Atm(tile_count)%atmos_axes(3)
     id_phalf = Atm(tile_count)%atmos_axes(4)
@@ -62,10 +61,9 @@ contains
   end subroutine fv_coarse_diag_init
 
   subroutine initialize_coarse_diagnostic_axes(coarse_domain, &
-    target_resolution, tile_count, &
-    id_coarse_x, id_coarse_y, id_coarse_xt, id_coarse_yt)
+    target_resolution, id_coarse_x, id_coarse_y, id_coarse_xt, id_coarse_yt)
     type(domain2d), intent(in) :: coarse_domain
-    integer, intent(in) :: target_resolution, tile_count
+    integer, intent(in) :: target_resolution
     integer, intent(out) :: id_coarse_x, id_coarse_y, id_coarse_xt, id_coarse_yt
 
     integer :: i, j
@@ -102,9 +100,7 @@ contains
     type(time_type), intent(in) :: Time
  
     character(len=256) :: error_message
-    integer :: tile_count
 
-    tile_count = 1  ! Following fv_diag
     if (trim(Atm(tile_count)%coarse_graining_attributes%coarse_graining_strategy) .eq. MODEL_LEVEL) then
        call fv_coarse_diag_model_levels(Atm, Time)
     else
@@ -119,10 +115,8 @@ contains
     
     real, allocatable :: work_3d_coarse(:,:,:)
     integer :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz
-    integer :: tile_count
     logical :: used
 
-    tile_count = 1  ! Following fv_diag
     call get_fine_array_bounds(Atm(tile_count), is, ie, js, je)
     call get_coarse_array_bounds(Atm(tile_count), is_coarse, ie_coarse, js_coarse, je_coarse)
     npz = Atm(tile_count)%npz
