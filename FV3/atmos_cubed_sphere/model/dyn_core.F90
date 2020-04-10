@@ -1284,8 +1284,14 @@ contains
                                                      call timing_on('COMM_TOTAL')
     if( it==n_split .and. gridstruct%grid_type<4 .and. .not. (gridstruct%nested .or. gridstruct%regional)) then
 ! Prevent accumulation of rounding errors at overlapped domain edges:
+       !$ser savepoint MPPBoundaryAdjust-In
+       !$ser data u=u v=v ebuffer=ebuffer nbuffer=nbuffer
+       !$ser savepoint MPPGetBoundary-In
+       !$ser data u=u v=v ebuffer=ebuffer nbuffer=nbuffer
        call mpp_get_boundary(u, v, domain, ebuffery=ebuffer,  &
                              nbufferx=nbuffer, gridtype=DGRID_NE )
+       !$ser savepoint MPPGetBoundary-Out
+       !$ser data ebuffer=ebuffer nbuffer=nbuffer
 !$OMP parallel do default(none) shared(is,ie,js,je,npz,u,nbuffer,v,ebuffer)
           do k=1,npz
              do i=is,ie
@@ -1295,7 +1301,8 @@ contains
                 v(ie+1,j,k) = ebuffer(j-js+1,k)
              enddo
           enddo
-
+       !$ser savepoint MPPBoundaryAdjust-Out
+       !$ser data u=u v=v ebuffer=ebuffer nbuffer=nbuffer
     endif
 
 #ifndef ROT3
@@ -1328,8 +1335,6 @@ contains
 !------------------------------
          call adv_pe(ua, va, pem, omga, gridstruct, bd, npx, npy,  npz, ng)
       else
-         !$ser savepoint OmegaLayer-In
-         !$ser data omga=omga
 !$OMP parallel do default(none) shared(is,ie,js,je,npz,omga) private(om2d)
          do j=js,je
             do k=1,npz
@@ -1348,8 +1353,7 @@ contains
                enddo
             enddo
          enddo
-         !$ser savepoint OmegaLayer-Out
-         !$ser data omga=omga
+        
       endif
       if (idiag%id_ws>0 .and. hydrostatic) then
 !$OMP parallel do default(none) shared(is,ie,js,je,npz,ws,delz,delp,omga)
