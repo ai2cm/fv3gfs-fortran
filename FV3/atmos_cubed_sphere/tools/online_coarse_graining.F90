@@ -89,7 +89,7 @@ contains
     
     native_resolution = Atm%flagstruct%npx - 1
     if (mod(native_resolution, coarsening_factor) > 0) then
-       write(error_message, *) 'online_coarse_graining_init: coarsening_factor does not evenly divide the native resolution'
+       write(error_message, *) 'online_coarse_graining_init: coarsening_factor does not evenly divide the native resolution.'
        call mpp_error(FATAL, error_message)
     endif
     target_resolution = native_resolution / coarsening_factor
@@ -109,7 +109,81 @@ contains
        call mpp_error(FATAL, error_message)
     endif
   end subroutine assert_valid_domain_layout
+
+  subroutine get_fine_array_bounds(Atm, is, ie, js, je)
+    type(fv_atmos_type), intent(in) :: Atm
+    integer, intent(out) :: is, ie, js, je
+
+    is = Atm%bd%is
+    ie = Atm%bd%ie
+    js = Atm%bd%js
+    je = Atm%bd%je
+  end subroutine get_fine_array_bounds
   
+  subroutine get_coarse_array_bounds(Atm, is_coarse, ie_coarse, js_coarse, je_coarse)
+    type(fv_atmos_type), intent(in) :: Atm
+    integer, intent(out) :: is_coarse, ie_coarse, js_coarse, je_coarse
+
+    is_coarse = Atm%coarse_graining_attributes%coarse_bd%is_coarse
+    ie_coarse = Atm%coarse_graining_attributes%coarse_bd%ie_coarse
+    js_coarse = Atm%coarse_graining_attributes%coarse_bd%js_coarse
+    je_coarse = Atm%coarse_graining_attributes%coarse_bd%je_coarse
+  end subroutine get_coarse_array_bounds
+  
+  subroutine block_sum_2d(fine, coarse)
+    real, intent(in) :: fine(is:ie,js:je)
+    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse)
+
+    integer :: i, j, i_coarse, j_coarse, offset
+
+    offset = coarsening_factor - 1
+    do i = is, ie, coarsening_factor
+       i_coarse = (i - 1) / coarsening_factor + 1
+       do j = js, je, coarsening_factor
+          j_coarse = (j - 1) / coarsening_factor + 1
+          coarse(i_coarse,j_coarse) = sum(fine(i:i+offset,j:j+offset))
+       enddo
+    enddo
+  end subroutine
+
+  subroutine block_sum_3d(fine, coarse)
+    real, intent(in) :: fine(is:ie,js:je,1:npz)
+    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz)
+
+    integer :: k
+
+    do k = 1, npz
+       call block_sum_2d(fine(is:ie,js:je,k), coarse(is_coarse:ie_coarse,js_coarse:je_coarse,k))
+    enddo
+  end subroutine block_sum_3d
+  
+  subroutine weighted_block_average_2d(weights, fine, coarse)
+    real, intent(in) :: weights(is:ie,js:je), fine(is:ie,js:je)
+    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse)
+
+    real, allocatable :: weighted_fine(:,:), weighted_block_sum(:,:), block_sum_weights(:,:)
+
+    allocate(weighted_fine(is:ie,js:je))
+    allocate(weighted_block_sum(is_coarse:ie_coarse,js_coarse:je_coarse))
+    allocate(block_sum_weights(is_coarse:ie_coarse,js_coarse:je_coarse))
+
+    weighted_fine = weights * fine
+    call block_sum_2d(weighted_fine, weighted_block_sum)
+    call block_sum_2d(weights, block_sum_weights)
+    coarse = weighted_block_sum / block_sum_weights
+  end subroutine weighted_block_average_2d
+
+  subroutine weighted_block_average_3d_field_2d_weights(weights, fine, coarse)
+    real, intent(in) :: weights(is:ie,js:je), fine(is:ie,js:je,1:npz)
+    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz)
+
+    integer :: k
+
+    do k = 1, npz
+       call weighted_block_average_2d(weights, fine(is:ie,js:je,k), coarse(is_coarse:ie_coarse,js_coarse:je_coarse,k))
+    enddo
+  end subroutine weighted_block_average_3d_field_2d_weights
+
   ! This subroutine is copied from FMS/test_fms/horiz_interp/test2_horiz_interp.F90.
   ! domain_decomp in fv_mp_mod.F90 does something similar, but it does a
   ! few other unnecessary things (and requires more arguments).
@@ -203,82 +277,6 @@ contains
          num_contact, tile1, tile2, istart1, iend1, jstart1, jend1, &
          istart2, iend2, jstart2, jend2, pe_start, pe_end, &
          symmetry=.true., name='coarse cubic mosaic')
-
-    return    
   end subroutine define_cubic_mosaic
-
-  subroutine block_sum_2d(fine, coarse)
-    real, intent(in) :: fine(is:ie,js:je)
-    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse)
-
-    integer :: i, j, i_coarse, j_coarse, offset
-
-    offset = coarsening_factor - 1
-    do i = is, ie, coarsening_factor
-       i_coarse = (i - 1) / coarsening_factor + 1
-       do j = js, je, coarsening_factor
-          j_coarse = (j - 1) / coarsening_factor + 1
-          coarse(i_coarse,j_coarse) = sum(fine(i:i+offset,j:j+offset))
-       enddo
-    enddo
-  end subroutine
-
-  subroutine block_sum_3d(fine, coarse)
-    real, intent(in) :: fine(is:ie,js:je,1:npz)
-    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz)
-
-    integer :: k
-
-    do k = 1, npz
-       call block_sum_2d(fine(is:ie,js:je,k), coarse(is_coarse:ie_coarse,js_coarse:je_coarse,k))
-    enddo
-  end subroutine block_sum_3d
-  
-  subroutine weighted_block_average_2d(weights, fine, coarse)
-    real, intent(in) :: weights(is:ie,js:je), fine(is:ie,js:je)
-    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse)
-
-    real, allocatable :: weighted_fine(:,:), weighted_block_sum(:,:), block_sum_weights(:,:)
-
-    allocate(weighted_fine(is:ie,js:je))
-    allocate(weighted_block_sum(is_coarse:ie_coarse,js_coarse:je_coarse))
-    allocate(block_sum_weights(is_coarse:ie_coarse,js_coarse:je_coarse))
-
-    weighted_fine = weights * fine
-    call block_sum_2d(weighted_fine, weighted_block_sum)
-    call block_sum_2d(weights, block_sum_weights)
-    coarse = weighted_block_sum / block_sum_weights
-  end subroutine weighted_block_average_2d
-
-  subroutine weighted_block_average_3d_field_2d_weights(weights, fine, coarse)
-    real, intent(in) :: weights(is:ie,js:je), fine(is:ie,js:je,1:npz)
-    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz)
-
-    integer :: k
-
-    do k = 1, npz
-       call weighted_block_average_2d(weights, fine(is:ie,js:je,k), coarse(is_coarse:ie_coarse,js_coarse:je_coarse,k))
-    enddo
-  end subroutine weighted_block_average_3d_field_2d_weights
-
-  subroutine get_fine_array_bounds(Atm, is, ie, js, je)
-    type(fv_atmos_type), intent(in) :: Atm
-    integer, intent(out) :: is, ie, js, je
-
-    is = Atm%bd%is
-    ie = Atm%bd%ie
-    js = Atm%bd%js
-    je = Atm%bd%je
-  end subroutine get_fine_array_bounds
-  
-  subroutine get_coarse_array_bounds(Atm, is_coarse, ie_coarse, js_coarse, je_coarse)
-    type(fv_atmos_type), intent(in) :: Atm
-    integer, intent(out) :: is_coarse, ie_coarse, js_coarse, je_coarse
-
-    is_coarse = Atm%coarse_graining_attributes%coarse_bd%is_coarse
-    ie_coarse = Atm%coarse_graining_attributes%coarse_bd%ie_coarse
-    js_coarse = Atm%coarse_graining_attributes%coarse_bd%js_coarse
-    je_coarse = Atm%coarse_graining_attributes%coarse_bd%je_coarse
-  end subroutine get_coarse_array_bounds
   
 end module online_coarse_graining_mod
