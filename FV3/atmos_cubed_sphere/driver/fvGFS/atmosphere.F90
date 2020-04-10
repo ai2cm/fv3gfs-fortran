@@ -430,8 +430,8 @@ contains
        !I've had trouble getting this to work with multiple grids at a time; worth revisiting?
    call fv_diag_init(Atm(mytile:mytile), Atm(mytile)%atmos_axes, Time, npx, npy, npz, Atm(mytile)%flagstruct%p_ref)
 
-   if (Atm(mytile)%coarse_graining_attributes%enable_coarse_graining) then
-      call fv_coarse_diag_init(Atm(mytile:mytile), Atm(mytile)%coarse_graining_attributes%coarse_diagnostic_axes, Time)
+   if (Atm(mytile)%coarse_graining_attrs%do_coarse_graining) then
+      call fv_coarse_diag_init(Atm(mytile:mytile), Atm(mytile)%coarse_graining_attrs%diagnostic_axes, Time)
    endif
 !---------- reference profile -----------
     ps1 = 101325.
@@ -786,7 +786,7 @@ contains
       call timing_on('FV_DIAG')
       call fv_diag(Atm(mytile:mytile), zvir, fv_time, Atm(mytile)%flagstruct%print_freq)
       call fv_nggps_diag(Atm(mytile:mytile), zvir, fv_time)
-      if (Atm(mytile)%coarse_graining_attributes%enable_coarse_graining) then
+      if (Atm(mytile)%coarse_graining_attrs%do_coarse_graining) then
          call fv_coarse_diag(Atm(mytile:mytile), fv_time)
       endif
       first_diag = .false.
@@ -1637,7 +1637,7 @@ contains
      call nullify_domain()
      call timing_on('FV_DIAG')
      call fv_diag(Atm(mytile:mytile), zvir, fv_time, Atm(mytile)%flagstruct%print_freq)
-     if (Atm(mytile)%coarse_graining_attributes%enable_coarse_graining) then
+     if (Atm(mytile)%coarse_graining_attrs%do_coarse_graining) then
         call fv_coarse_diag(Atm(mytile:mytile), fv_time)
      endif
      first_diag = .false.

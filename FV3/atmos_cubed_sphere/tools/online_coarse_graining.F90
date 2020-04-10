@@ -30,10 +30,10 @@ module online_coarse_graining_mod
   integer :: coarsening_factor = 8
   integer :: coarse_io_layout(2) = (/1, 1/)
   character(len=64) :: coarse_graining_strategy = 'model_level'
-  logical :: enable_coarse_graining = .false.
+  logical :: do_coarse_graining = .false.
   
   namelist /online_coarse_graining_nml/ coarsening_factor, coarse_io_layout, &
-       coarse_graining_strategy, enable_coarse_graining
+       coarse_graining_strategy, do_coarse_graining
 
 contains
 
@@ -54,9 +54,9 @@ contains
     call close_file(namelist_file)
 #endif
 
-    Atm%coarse_graining_attributes%enable_coarse_graining = enable_coarse_graining
+    Atm%coarse_graining_attrs%do_coarse_graining = do_coarse_graining
 
-    if (enable_coarse_graining) then
+    if (do_coarse_graining) then
        call compute_target_resolution(Atm, coarsening_factor, target_resolution)
        call assert_valid_domain_layout(target_resolution, Atm%layout)
        call define_cubic_mosaic(coarse_domain, target_resolution, target_resolution, Atm%layout)
@@ -65,13 +65,13 @@ contains
        call get_fine_array_bounds(Atm, is, ie, js, je)
        npz = Atm%npz
        
-       Atm%coarse_graining_attributes%coarse_bd%is_coarse = is_coarse
-       Atm%coarse_graining_attributes%coarse_bd%ie_coarse = ie_coarse
-       Atm%coarse_graining_attributes%coarse_bd%js_coarse = js_coarse
-       Atm%coarse_graining_attributes%coarse_bd%je_coarse = je_coarse
-       Atm%coarse_graining_attributes%target_coarse_resolution = target_resolution
-       Atm%coarse_graining_attributes%coarse_domain = coarse_domain
-       Atm%coarse_graining_attributes%coarse_graining_strategy = coarse_graining_strategy
+       Atm%coarse_graining_attrs%bd%is_coarse = is_coarse
+       Atm%coarse_graining_attrs%bd%ie_coarse = ie_coarse
+       Atm%coarse_graining_attrs%bd%js_coarse = js_coarse
+       Atm%coarse_graining_attrs%bd%je_coarse = je_coarse
+       Atm%coarse_graining_attrs%target_resolution = target_resolution
+       Atm%coarse_graining_attrs%domain = coarse_domain
+       Atm%coarse_graining_attrs%strategy = coarse_graining_strategy
     endif    
   end subroutine online_coarse_graining_init
 
@@ -120,10 +120,10 @@ contains
     type(fv_atmos_type), intent(in) :: Atm
     integer, intent(out) :: is_coarse, ie_coarse, js_coarse, je_coarse
 
-    is_coarse = Atm%coarse_graining_attributes%coarse_bd%is_coarse
-    ie_coarse = Atm%coarse_graining_attributes%coarse_bd%ie_coarse
-    js_coarse = Atm%coarse_graining_attributes%coarse_bd%js_coarse
-    je_coarse = Atm%coarse_graining_attributes%coarse_bd%je_coarse
+    is_coarse = Atm%coarse_graining_attrs%bd%is_coarse
+    ie_coarse = Atm%coarse_graining_attrs%bd%ie_coarse
+    js_coarse = Atm%coarse_graining_attrs%bd%js_coarse
+    je_coarse = Atm%coarse_graining_attrs%bd%je_coarse
   end subroutine get_coarse_array_bounds
   
   subroutine block_sum_2d(fine, coarse)

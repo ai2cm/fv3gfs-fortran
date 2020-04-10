@@ -29,8 +29,8 @@ contains
     call get_fine_array_bounds(Atm(tile_count), is, ie, js, je)
     call get_coarse_array_bounds(Atm(tile_count), is_coarse, ie_coarse, js_coarse, je_coarse)    
     call initialize_coarse_diagnostic_axes( &
-         Atm(tile_count)%coarse_graining_attributes%coarse_domain, &
-         Atm(tile_count)%coarse_graining_attributes%target_coarse_resolution, &         
+         Atm(tile_count)%coarse_graining_attrs%domain, &
+         Atm(tile_count)%coarse_graining_attrs%target_resolution, &         
          id_x_coarse, id_y_coarse, id_xt_coarse, id_yt_coarse)
 
     id_pfull = Atm(tile_count)%atmos_axes(3)
@@ -105,7 +105,7 @@ contains
  
     character(len=256) :: error_message
 
-    if (trim(Atm(tile_count)%coarse_graining_attributes%coarse_graining_strategy) .eq. MODEL_LEVEL) then
+    if (trim(Atm(tile_count)%coarse_graining_attrs%strategy) .eq. MODEL_LEVEL) then
        call fv_coarse_diag_model_levels(Atm, Time)
     else
        write(error_message, *) 'Invalid coarse_graining_strategy provided.'

@@ -1172,13 +1172,13 @@ module fv_arrays_mod
 
   type fv_coarse_graining_type
 
-     type(fv_coarse_grid_bounds_type) :: coarse_bd
-     type(domain2d) :: coarse_domain
-     integer :: coarsening_factor
-     integer :: target_coarse_resolution
-     integer :: coarse_diagnostic_axes(4)
-     character(len=64) :: coarse_graining_strategy
-     logical :: enable_coarse_graining
+     type(fv_coarse_grid_bounds_type) :: bd
+     type(domain2d) :: domain
+     integer :: factor
+     integer :: target_resolution
+     integer :: diagnostic_axes(4)
+     character(len=64) :: strategy
+     logical :: do_coarse_graining
 
   end type fv_coarse_graining_type
   
@@ -1353,7 +1353,7 @@ module fv_arrays_mod
 
   type(nudge_diag_type) :: nudge_diag
 
-  type(fv_coarse_graining_type) :: coarse_graining_attributes
+  type(fv_coarse_graining_type) :: coarse_graining_attrs
   
   end type fv_atmos_type
 
