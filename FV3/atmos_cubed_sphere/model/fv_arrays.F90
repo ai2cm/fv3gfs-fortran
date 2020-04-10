@@ -119,7 +119,10 @@ module fv_arrays_mod
   type fv_coarse_diag_type
 
      integer :: id_omega_coarse
-
+     integer :: id_grid_lont_coarse, id_grid_lon_coarse, id_grid_latt_coarse, id_grid_lat_coarse
+     integer :: id_area_coarse, id_dx_coarse, id_dy_coarse
+     integer :: n_3d_diagnostics = 1
+     
   end type fv_coarse_diag_type
 
 !>@brief The type 'fv_grid_type' is made up of grid-dependent information from fv_grid_tools and fv_grid_utils.
