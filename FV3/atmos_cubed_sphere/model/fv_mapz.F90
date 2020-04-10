@@ -1473,14 +1473,35 @@ endif        ! end last_step check
       do i=i1,i2
          dp1(i,k) = pe1(i,k+1) - pe1(i,k)
          q4(1,i,k) = q1(i,j,k)
+         !$ser verbatim q4(2, i, k) = 0.0
+         !$ser verbatim q4(3, i, k) = 0.0
+         !$ser verbatim q4(4, i, k) = 0.0
       enddo
    enddo
 
 ! Compute vertical subgrid distribution
    if ( kord >7 ) then
-        call  cs_profile( qs, q4, dp1, km, i1, i2, iv, kord )
+      !$ser verbatim if(j == jbeg + 3 .and. mod(i2-i1+1, 2)==1) then 
+      !$ser savepoint CS_Profile_2d-In
+      !$ser data qs_column=qs q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:) dp1_2d=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord
+      !$ser verbatim endif
+      
+      call  cs_profile( qs, q4, dp1, km, i1, i2, iv, kord )
+      
+      !$ser verbatim if(j == jbeg + 3  .and. mod(i2-i1+1, 2)==1) then 
+      !$ser savepoint CS_Profile_2d-Out
+      !$ser data  q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:)
+      !$ser verbatim endif
    else
-        call ppm_profile( q4, dp1, km, i1, i2, iv, kord )
+      !$ser verbatim if(j == jbeg + 3 .and. mod(i2-i1+1, 2)==1) then 
+      !$ser savepoint PPM_Profile_2d-In
+      !$ser data qs_column=qs q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:) dp1_2d=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord
+      !$ser verbatim endif
+      call ppm_profile( q4, dp1, km, i1, i2, iv, kord )
+      !$ser verbatim if(j == jbeg + 3 .and. mod(i2-i1+1, 2)==1) then 
+      !$ser savepoint PPM_Profile_2d-Out
+      !$ser data  q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:)
+      !$ser verbatim endif
    endif
 
   do i=i1,i2
