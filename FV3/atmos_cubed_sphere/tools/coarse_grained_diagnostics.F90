@@ -124,14 +124,19 @@ contains
     type(time_type), intent(in) :: Time
     
     real, allocatable :: work_2d_coarse(:,:)
+    integer :: static_ids_2d_cell_centered(Atm(tile_count)%idiag_coarse%n_2d_cell_centered_static_diagnostics)
     integer :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz
     logical :: used
 
     call get_fine_array_bounds(Atm(tile_count), is, ie, js, je)
     call get_coarse_array_bounds(Atm(tile_count), is_coarse, ie_coarse, js_coarse, je_coarse)
+    call get_static_ids_2d_cell_centered(Atm, static_ids_2d_cell_centered)
     
-    if (Atm(tile_count)%idiag_coarse%id_area_coarse > 0) then
+    if (any(static_ids_2d_cell_centered > 0)) then
        allocate(work_2d_coarse(is_coarse:ie_coarse,js_coarse:je_coarse))
+    endif
+ 
+    if (Atm(tile_count)%idiag_coarse%id_area_coarse > 0) then
        call block_sum(Atm(tile_count)%gridstruct%area(is:ie,js:je), work_2d_coarse)
        used = send_data(Atm(tile_count)%idiag_coarse%id_area_coarse, work_2d_coarse, Time)
     endif
@@ -193,6 +198,17 @@ contains
     endif    
   end subroutine fv_coarse_diag_model_levels
 
+  subroutine get_static_ids_2d_cell_centered(Atm, static_ids_2d_cell_centered)
+    type(fv_atmos_type), intent(in) :: Atm(:)
+    integer, intent(out) :: static_ids_2d_cell_centered(Atm(tile_count)%idiag_coarse%n_2d_cell_centered_static_diagnostics)
+
+    static_ids_2d_cell_centered = (/ &
+         Atm(tile_count)%idiag_coarse%id_grid_latt_coarse, &
+         Atm(tile_count)%idiag_coarse%id_grid_lont_coarse, &
+         Atm(tile_count)%idiag_coarse%id_area_coarse &
+         /)
+  end subroutine get_static_ids_2d_cell_centered
+  
   subroutine get_diagnostic_ids_3d(Atm, diagnostic_ids_3d)
     type(fv_atmos_type), intent(in) :: Atm(:)
     integer, intent(out) :: diagnostic_ids_3d(Atm(tile_count)%idiag_coarse%n_3d_diagnostics)
