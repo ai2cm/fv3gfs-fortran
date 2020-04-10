@@ -12,7 +12,6 @@ module online_coarse_graining_mod
 
   interface block_sum
      module procedure block_sum_2d
-     module procedure block_sum_3d
   end interface block_sum
   
   interface weighted_block_average

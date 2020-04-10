@@ -35,20 +35,21 @@ contains
 
     id_pfull = Atm(tile_count)%atmos_axes(3)
     id_phalf = Atm(tile_count)%atmos_axes(4)
-    
+
+    ! We don't use these in this minimal example, but they will be needed
+    ! later.  These are the axes for variables that live on grid cell edges.
     coarse_axes(1) = id_x_coarse
     coarse_axes(2) = id_y_coarse
     coarse_axes(3) = id_pfull
     coarse_axes(4) = id_phalf
 
+    ! These are the axes for values that live on grid cell centers.
     coarse_axes_t(1) = id_xt_coarse
     coarse_axes_t(2) = id_yt_coarse
     coarse_axes_t(3) = id_pfull
     coarse_axes_t(4) = id_phalf
 
-    call register_coarse_static_diagnostics(Atm, Time, coarse_axes_t, coarse_axes)
     call register_coarse_diagnostics(Atm, Time, coarse_axes_t)
-    call compute_coarse_static_diagnostics(Atm, Time)
   end subroutine fv_coarse_diag_init
 
   subroutine initialize_coarse_diagnostic_axes(coarse_domain, &
@@ -84,65 +85,6 @@ contains
          'degrees_N', 'y', 'T-cell latitude', set_name='coarse_grid', &
          Domain2=coarse_domain, tile_count=tile_count)    
   end subroutine initialize_coarse_diagnostic_axes
-
-  subroutine register_coarse_static_diagnostics(Atm, Time, coarse_axes_t, coarse_axes)
-    type(fv_atmos_type), intent(inout) :: Atm(:)
-    type(time_type), intent(in) :: Time
-    integer, intent(in) :: coarse_axes_t(4), coarse_axes(4)
-    integer :: id_x_coarse, id_xt_coarse, id_y_coarse, id_yt_coarse
-
-    id_x_coarse = coarse_axes(1)
-    id_y_coarse = coarse_axes(2)
-    id_xt_coarse = coarse_axes_t(1)
-    id_yt_coarse = coarse_axes_t(2)
-
-    Atm(tile_count)%idiag_coarse%id_grid_lont_coarse = register_static_field( &
-         'dynamics', 'grid_lont_coarse', coarse_axes_t(1:2), &
-         'longitude', 'degrees_E')    
-    Atm(tile_count)%idiag_coarse%id_grid_lon_coarse = register_static_field( &
-         'dynamics', 'grid_lon_coarse', coarse_axes(1:2), &
-         'longitude', 'degrees_E')
-    Atm(tile_count)%idiag_coarse%id_grid_latt_coarse = register_static_field( &
-         'dynamics', 'grid_latt_coarse', coarse_axes_t(1:2), &
-         'latitude', 'degrees_N')    
-    Atm(tile_count)%idiag_coarse%id_grid_lat_coarse = register_static_field( &
-         'dynamics', 'grid_lat_coarse', coarse_axes(1:2), &
-         'latitude', 'degrees_N')
-    Atm(tile_count)%idiag_coarse%id_area_coarse = register_static_field( &
-         'dynamics', 'area_coarse', coarse_axes_t(1:2), &
-         'cell area', 'm**2')
-    Atm(tile_count)%idiag_coarse%id_dx_coarse = register_static_field( &
-         'dynamics', 'dx_coarse', (/ id_xt_coarse, id_y_coarse /), &
-         'dx', 'm')
-    Atm(tile_count)%idiag_coarse%id_dy_coarse = register_static_field( &
-         'dynamics', 'dy_coarse', (/ id_x_coarse, id_yt_coarse /), &
-         'dy', 'm')
-  end subroutine register_coarse_static_diagnostics
-
-  subroutine compute_coarse_static_diagnostics(Atm, Time)
-    type(fv_atmos_type), intent(inout) :: Atm(:)
-    type(time_type), intent(in) :: Time
-    
-    real, allocatable :: work_2d_coarse(:,:)
-    integer :: static_ids_2d_cell_centered(Atm(tile_count)%idiag_coarse%n_2d_cell_centered_static_diagnostics)
-    integer :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz
-    logical :: used
-
-    call get_fine_array_bounds(Atm(tile_count), is, ie, js, je)
-    call get_coarse_array_bounds(Atm(tile_count), is_coarse, ie_coarse, js_coarse, je_coarse)
-    call get_static_ids_2d_cell_centered(Atm, static_ids_2d_cell_centered)
-    
-    if (any(static_ids_2d_cell_centered > 0)) then
-       allocate(work_2d_coarse(is_coarse:ie_coarse,js_coarse:je_coarse))
-    endif
- 
-    if (Atm(tile_count)%idiag_coarse%id_area_coarse > 0) then
-       call block_sum(Atm(tile_count)%gridstruct%area(is:ie,js:je), work_2d_coarse)
-       used = send_data(Atm(tile_count)%idiag_coarse%id_area_coarse, work_2d_coarse, Time)
-    endif
-
-    ! TODO implement the other static diagnostics.
-  end subroutine compute_coarse_static_diagnostics
   
   subroutine register_coarse_diagnostics(Atm, Time, coarse_axes_t)
     type(fv_atmos_type), intent(inout) :: Atm(:)
@@ -197,17 +139,6 @@ contains
        used = send_data(Atm(tile_count)%idiag_coarse%id_omega_coarse, work_3d_coarse, Time)
     endif    
   end subroutine fv_coarse_diag_model_levels
-
-  subroutine get_static_ids_2d_cell_centered(Atm, static_ids_2d_cell_centered)
-    type(fv_atmos_type), intent(in) :: Atm(:)
-    integer, intent(out) :: static_ids_2d_cell_centered(Atm(tile_count)%idiag_coarse%n_2d_cell_centered_static_diagnostics)
-
-    static_ids_2d_cell_centered = (/ &
-         Atm(tile_count)%idiag_coarse%id_grid_latt_coarse, &
-         Atm(tile_count)%idiag_coarse%id_grid_lont_coarse, &
-         Atm(tile_count)%idiag_coarse%id_area_coarse &
-         /)
-  end subroutine get_static_ids_2d_cell_centered
   
   subroutine get_diagnostic_ids_3d(Atm, diagnostic_ids_3d)
     type(fv_atmos_type), intent(in) :: Atm(:)
