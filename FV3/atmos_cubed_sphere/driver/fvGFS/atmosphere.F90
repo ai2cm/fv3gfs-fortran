@@ -429,8 +429,10 @@ contains
 !----- initialize atmos_axes and fv_dynamics diagnostics
        !I've had trouble getting this to work with multiple grids at a time; worth revisiting?
    call fv_diag_init(Atm(mytile:mytile), Atm(mytile)%atmos_axes, Time, npx, npy, npz, Atm(mytile)%flagstruct%p_ref)
-   call fv_coarse_diag_init(Atm(mytile:mytile), Atm(mytile)%coarse_atmos_axes, Time)
 
+   if (Atm(mytile)%coarse_graining_attributes%write_coarse_grained_diagnostics) then
+      call fv_coarse_diag_init(Atm(mytile:mytile), Atm(mytile)%coarse_graining_attributes%coarse_diagnostic_axes, Time)
+   endif
 !---------- reference profile -----------
     ps1 = 101325.
     ps2 =  81060.
@@ -784,7 +786,9 @@ contains
       call timing_on('FV_DIAG')
       call fv_diag(Atm(mytile:mytile), zvir, fv_time, Atm(mytile)%flagstruct%print_freq)
       call fv_nggps_diag(Atm(mytile:mytile), zvir, fv_time)
-      call fv_coarse_diag(Atm(mytile:mytile), fv_time)
+      if (Atm(mytile)%coarse_graining_attributes%write_coarse_grained_diagnostics) then
+         call fv_coarse_diag(Atm(mytile:mytile), fv_time)
+      endif
       first_diag = .false.
       call timing_off('FV_DIAG')
    endif
@@ -1633,7 +1637,9 @@ contains
      call nullify_domain()
      call timing_on('FV_DIAG')
      call fv_diag(Atm(mytile:mytile), zvir, fv_time, Atm(mytile)%flagstruct%print_freq)
-     call fv_coarse_diag(Atm(mytile:mytile), fv_time)
+     if (Atm(mytile)%coarse_graining_attributes%write_coarse_grained_diagnostics) then
+        call fv_coarse_diag(Atm(mytile:mytile), fv_time)
+     endif
      first_diag = .false.
      call timing_off('FV_DIAG')
 

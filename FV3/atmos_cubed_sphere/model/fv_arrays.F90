@@ -1169,6 +1169,19 @@ module fv_arrays_mod
 
   end type fv_coarse_grid_bounds_type
 
+  type fv_coarse_graining_type
+
+     type(fv_coarse_grid_bounds_type) :: coarse_bd
+     type(domain2d) :: coarse_domain
+     integer :: coarsening_factor
+     integer :: target_coarse_resolution
+     integer :: coarse_diagnostic_axes(4)
+     character(len=64) :: coarse_graining_strategy
+     logical :: write_coarse_grained_restart_files
+     logical :: write_coarse_grained_diagnostics
+
+  end type fv_coarse_graining_type
+  
   type fv_regional_bc_bounds_type
 
      integer :: is_north ,ie_north ,js_north ,je_north &
@@ -1285,15 +1298,10 @@ module fv_arrays_mod
 
     type(fv_grid_bounds_type) :: bd
 
-    type(fv_coarse_grid_bounds_type) :: coarse_bd
-
     type(fv_regional_bc_bounds_type) :: regional_bc_bounds
 
     type(domain2D) :: domain
 
-    type(domain2D) :: coarse_domain
-
-    integer :: target_coarse_resolution
 #if defined(SPMD)
 
     type(domain2D) :: domain_for_coupler !< domain used in coupled model with halo = 1.
@@ -1343,10 +1351,11 @@ module fv_arrays_mod
      real(kind=R_GRID), allocatable, dimension(:,:,:,:) :: grid_global
  
   integer :: atmos_axes(4)
-  integer :: coarse_atmos_axes(4)
 
   type(nudge_diag_type) :: nudge_diag
 
+  type(fv_coarse_graining_type) :: coarse_graining_attributes
+  
   end type fv_atmos_type
 
 contains

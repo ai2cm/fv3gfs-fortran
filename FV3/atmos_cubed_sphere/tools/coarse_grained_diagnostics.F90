@@ -3,7 +3,8 @@ module coarse_grained_diagnostics_mod
   use diag_manager_mod, only: diag_axis_init, register_diag_field, send_data
   use fv_arrays_mod, only: fv_atmos_type, fv_coarse_diag_type
   use mpp_domains_mod, only: domain2d
-  use online_coarse_graining_mod, only: weighted_block_average
+  use mpp_mod, only: FATAL, mpp_error
+  use online_coarse_graining_mod, only: MODEL_LEVEL, weighted_block_average
   use time_manager_mod, only: time_type
   
   implicit none
@@ -12,58 +13,16 @@ module coarse_grained_diagnostics_mod
   public :: fv_coarse_diag_init, fv_coarse_diag
 
 contains
-
-  subroutine fv_coarse_diag_init(Atm, coarse_axes_t, Time)
-    type(fv_atmos_type), intent(inout) :: Atm(:)
-    integer, intent(inout) :: coarse_axes_t(4)
-    type(time_type), intent(in) :: Time
-    type(domain2d) :: coarse_domain
-    integer :: tile_count
-    integer :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse
-    integer :: npz, target_resolution
-    
-    tile_count = 1
-    target_resolution = Atm(tile_count)%target_coarse_resolution
-    coarse_domain = Atm(tile_count)%coarse_domain
-
-    call get_fine_array_bounds(Atm(tile_count), is, ie, js, je)
-    call get_coarse_array_bounds(Atm(tile_count), is_coarse, ie_coarse, js_coarse, je_coarse)
-    npz = Atm(tile_count)%npz
-    
-    call register_coarse_grained_diagnostics(Atm, coarse_axes_t, Time, &
-         coarse_domain, target_resolution, is, ie, js, je, is_coarse, &
-         ie_coarse, js_coarse, je_coarse, npz)
-  end subroutine fv_coarse_diag_init
-
-  subroutine fv_coarse_diag(Atm, Time)
-    type(fv_atmos_type), intent(inout) :: Atm(:)
-    type(time_type), intent(in) :: Time
-    integer :: tile_count
-    integer :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse
-    integer :: npz
- 
-    tile_count = 1
-
-    call get_fine_array_bounds(Atm(tile_count), is, ie, js, je)
-    call get_coarse_array_bounds(Atm(tile_count), is_coarse, ie_coarse, js_coarse, je_coarse)
-    npz = Atm(tile_count)%npz
-    
-    call compute_coarse_grained_diagnostics(Atm, Time, is, ie, js, je, &
-         is_coarse, ie_coarse, js_coarse, je_coarse, npz)
-  end subroutine fv_coarse_diag
   
-  subroutine register_coarse_grained_diagnostics(Atm, coarse_axes_t, Time, &
-         coarse_domain, target_resolution, is, ie, js, je, is_coarse, &
-         ie_coarse, js_coarse, je_coarse, npz)
+  subroutine fv_coarse_diag_init(Atm, coarse_axes_t, Time)
     type(fv_atmos_type), intent(inout) :: Atm(:)
     integer, intent(out) :: coarse_axes_t(4)
     type(time_type), intent(in) :: Time
-    type(domain2d), intent(in) :: coarse_domain
-    integer, intent(in) :: target_resolution
-    integer, intent(in) :: is, ie, js, je
-    integer, intent(in) :: is_coarse, ie_coarse, js_coarse, je_coarse
-    integer, intent(in) :: npz
 
+    type(domain2d) :: coarse_domain
+    integer :: target_resolution
+    integer :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse
+    integer :: npz
     integer :: id_coarse_x, id_coarse_y, id_coarse_xt, id_coarse_yt
     integer :: tile_count
     integer :: coarse_axes(4)
@@ -72,6 +31,12 @@ contains
 
     missing_value = -1.0e10  ! Following fv_diagnostics.F90
     tile_count = 1  ! Following fv_diagnostics.F90
+
+    target_resolution = Atm(tile_count)%coarse_graining_attributes%target_coarse_resolution
+    coarse_domain = Atm(tile_count)%coarse_graining_attributes%coarse_domain
+    call get_fine_array_bounds(Atm(tile_count), is, ie, js, je)
+    call get_coarse_array_bounds(Atm(tile_count), is_coarse, ie_coarse, js_coarse, je_coarse)
+    npz = Atm(tile_count)%npz
     
     call initialize_coarse_diagnostic_axes(coarse_domain, &
          target_resolution, tile_count, &
@@ -94,7 +59,7 @@ contains
          'omega_coarse', coarse_axes_t(1:3), Time, &
          'coarse-grained omega', &
          'Pa/s', missing_value=missing_value)
-  end subroutine register_coarse_grained_diagnostics
+  end subroutine fv_coarse_diag_init
 
   subroutine initialize_coarse_diagnostic_axes(coarse_domain, &
     target_resolution, tile_count, &
@@ -132,18 +97,36 @@ contains
     
   end subroutine initialize_coarse_diagnostic_axes
 
-  subroutine compute_coarse_grained_diagnostics(Atm, Time, is, ie, js, je,&
-       & is_coarse, ie_coarse, js_coarse, je_coarse, npz)
+  subroutine fv_coarse_diag(Atm, Time)
     type(fv_atmos_type), intent(in), target :: Atm(:)
     type(time_type), intent(in) :: Time
-    integer, intent(in) :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse
-    integer, intent(in) :: npz
-    
-    real, allocatable :: work_3d_coarse(:,:,:)
-    logical :: used
+ 
+    character(len=256) :: error_message
     integer :: tile_count
 
     tile_count = 1  ! Following fv_diag
+    if (trim(Atm(tile_count)%coarse_graining_attributes%coarse_graining_strategy) .eq. MODEL_LEVEL) then
+       call fv_coarse_diag_model_levels(Atm, Time)
+    else
+       write(error_message, *) 'Invalid coarse_graining_strategy provided.'
+       call mpp_error(FATAL, error_message)
+    endif    
+  end subroutine fv_coarse_diag
+  
+  subroutine fv_coarse_diag_model_levels(Atm, Time)
+    type(fv_atmos_type), intent(in), target :: Atm(:)
+    type(time_type), intent(in) :: Time
+    
+    real, allocatable :: work_3d_coarse(:,:,:)
+    integer :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz
+    integer :: tile_count
+    logical :: used
+
+    tile_count = 1  ! Following fv_diag
+    call get_fine_array_bounds(Atm(tile_count), is, ie, js, je)
+    call get_coarse_array_bounds(Atm(tile_count), is_coarse, ie_coarse, js_coarse, je_coarse)
+    npz = Atm(tile_count)%npz
+
     allocate(work_3d_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz))
 
     if (Atm(tile_count)%idiag_coarse%id_omega_coarse > 0) then
@@ -153,7 +136,7 @@ contains
             work_3d_coarse)
        used = send_data(Atm(tile_count)%idiag_coarse%id_omega_coarse, work_3d_coarse, Time)
     endif    
-  end subroutine compute_coarse_grained_diagnostics
+  end subroutine fv_coarse_diag_model_levels
 
   subroutine get_fine_array_bounds(Atm, is, ie, js, je)
     type(fv_atmos_type), intent(in) :: Atm
@@ -169,10 +152,10 @@ contains
     type(fv_atmos_type), intent(in) :: Atm
     integer, intent(out) :: is_coarse, ie_coarse, js_coarse, je_coarse
 
-    is_coarse = Atm%coarse_bd%is_coarse
-    ie_coarse = Atm%coarse_bd%ie_coarse
-    js_coarse = Atm%coarse_bd%js_coarse
-    je_coarse = Atm%coarse_bd%je_coarse
+    is_coarse = Atm%coarse_graining_attributes%coarse_bd%is_coarse
+    ie_coarse = Atm%coarse_graining_attributes%coarse_bd%ie_coarse
+    js_coarse = Atm%coarse_graining_attributes%coarse_bd%js_coarse
+    je_coarse = Atm%coarse_graining_attributes%coarse_bd%je_coarse
   end subroutine get_coarse_array_bounds
 
 end module coarse_grained_diagnostics_mod

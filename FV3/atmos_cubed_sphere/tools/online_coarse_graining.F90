@@ -3,12 +3,12 @@ module online_coarse_graining_mod
   use fv_arrays_mod, only: fv_atmos_type
   use fms_mod, only: check_nml_error, close_file, open_namelist_file
   use mpp_domains_mod, only: domain2d, mpp_define_io_domain, mpp_define_mosaic, mpp_get_compute_domain
-  use mpp_mod, only: input_nml_file, mpp_npes
+  use mpp_mod, only: FATAL, input_nml_file, mpp_error, mpp_npes
   
   implicit none
   private
 
-  public :: online_coarse_graining_init, weighted_block_average
+  public :: online_coarse_graining_init, weighted_block_average, MODEL_LEVEL
 
   interface weighted_block_average
      module procedure weighted_block_average_2d
@@ -20,6 +20,7 @@ module online_coarse_graining_mod
   integer :: is, ie, js, je, npz
   integer :: is_coarse, ie_coarse, js_coarse, je_coarse
   integer :: target_resolution
+  character(len=11) :: MODEL_LEVEL = 'model_level'
   
   ! Namelist parameters initialized with default values
   integer :: coarsening_factor = 8
@@ -51,36 +52,65 @@ contains
     call close_file(namelist_file)
 #endif
 
-    npz = Atm%npz
-    call compute_target_resolution(Atm, coarsening_factor, target_resolution)
-    call define_cubic_mosaic(coarse_domain, target_resolution, target_resolution, Atm%layout)
-    call mpp_define_io_domain(coarse_domain, coarse_io_layout)
-    call mpp_get_compute_domain(coarse_domain, is_coarse, ie_coarse, js_coarse, je_coarse)
+    Atm%coarse_graining_attributes%write_coarse_grained_restart_files = write_coarse_grained_restart_files
+    Atm%coarse_graining_attributes%write_coarse_grained_diagnostics = write_coarse_grained_diagnostics
 
-    Atm%coarse_bd%is_coarse = is_coarse
-    Atm%coarse_bd%ie_coarse = ie_coarse
-    Atm%coarse_bd%js_coarse = js_coarse
-    Atm%coarse_bd%je_coarse = je_coarse
-
-    Atm%target_coarse_resolution = target_resolution
-    Atm%coarse_domain = coarse_domain
+    if (write_coarse_grained_restart_files .or. write_coarse_grained_diagnostics) then
+       call compute_target_resolution(Atm, coarsening_factor, target_resolution)
+       call assert_valid_domain_layout(target_resolution, Atm%layout)
+       call define_cubic_mosaic(coarse_domain, target_resolution, target_resolution, Atm%layout)
+       call mpp_define_io_domain(coarse_domain, coarse_io_layout)
+       call mpp_get_compute_domain(coarse_domain, is_coarse, ie_coarse, js_coarse, je_coarse)
+       npz = Atm%npz
+    
+       Atm%coarse_graining_attributes%coarse_bd%is_coarse = is_coarse
+       Atm%coarse_graining_attributes%coarse_bd%ie_coarse = ie_coarse
+       Atm%coarse_graining_attributes%coarse_bd%js_coarse = js_coarse
+       Atm%coarse_graining_attributes%coarse_bd%je_coarse = je_coarse
+       Atm%coarse_graining_attributes%target_coarse_resolution = target_resolution
+       Atm%coarse_graining_attributes%coarse_domain = coarse_domain
+       Atm%coarse_graining_attributes%coarse_graining_strategy = coarse_graining_strategy
+    endif
+    
   end subroutine online_coarse_graining_init
 
   subroutine compute_target_resolution(Atm, coarsening_factor, target_resolution)
     type(fv_atmos_type), intent(in) :: Atm
     integer, intent(in) :: coarsening_factor
     integer, intent(out) :: target_resolution
+
+    character(len=256) :: error_message
     integer :: native_resolution
+    
     native_resolution = Atm%flagstruct%npx - 1
+    if (mod(native_resolution, coarsening_factor) > 0) then
+       write(error_message, *) 'online_coarse_graining_init: coarsening_factor does not evenly divide the native resolution'
+       call mpp_error(FATAL, error_message)
+    endif
     target_resolution = native_resolution / coarsening_factor
   end subroutine compute_target_resolution
+
+  subroutine assert_valid_domain_layout(target_resolution, layout)
+    integer, intent(in) :: target_resolution
+    integer, intent(in) :: layout(2)
+
+    character(len=256) :: error_message
+    integer :: layout_x, layout_y
+    layout_x = layout(1)
+    layout_y = layout(2)
+
+    if (mod(target_resolution, layout_x) > 0 .or. mod(target_resolution, layout_y) > 0) then 
+       write(error_message, *) 'online_coarse_graining_init: domain decomposition layout does not evenly divide the coarse grid.'
+       call mpp_error(FATAL, error_message)
+    endif
+  end subroutine assert_valid_domain_layout
   
-  ! This subroutine is copied from fms/horiz_interp/horiz_interp_test.F90;
+  ! This subroutine is copied from FMS/test_fms/horiz_interp/test2_horiz_interp.F90.
   ! domain_decomp in fv_mp_mod.F90 does something similar, but it does a
   ! few other unnecessary things (and requires more arguments).
   subroutine define_cubic_mosaic(domain, ni, nj, layout)
     type(domain2d), intent(inout) :: domain
-    integer,        intent(in)    :: layout(:)
+    integer,        intent(in)    :: layout(2)
     integer,        intent(in)    :: ni, nj
     integer   :: pe_start(6), pe_end(6)
     integer   :: global_indices(4,6), layout2d(2,6)
