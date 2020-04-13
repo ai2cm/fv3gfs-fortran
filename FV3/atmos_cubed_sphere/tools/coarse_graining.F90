@@ -1,6 +1,6 @@
-module online_coarse_graining_mod
+module coarse_graining_mod
 
-  use fv_arrays_mod, only: fv_atmos_type
+  use fv_arrays_mod, only: fv_coarse_grid_bounds_type, fv_grid_bounds_type, fv_coarse_graining_type
   use fms_mod, only: check_nml_error, close_file, open_namelist_file
   use mpp_domains_mod, only: domain2d, mpp_define_io_domain, mpp_define_mosaic, mpp_get_compute_domain
   use mpp_mod, only: FATAL, input_nml_file, mpp_error, mpp_npes
@@ -8,7 +8,7 @@ module online_coarse_graining_mod
   implicit none
   private
 
-  public :: block_sum, get_fine_array_bounds, get_coarse_array_bounds, online_coarse_graining_init, weighted_block_average, MODEL_LEVEL
+  public :: block_sum, get_fine_array_bounds, get_coarse_array_bounds, coarse_graining_init, weighted_block_average, MODEL_LEVEL
 
   interface block_sum
      module procedure block_sum_2d
@@ -19,80 +19,75 @@ module online_coarse_graining_mod
      module procedure weighted_block_average_3d_field_2d_weights
   end interface weighted_block_average
   
-  ! Global variables for the module, initialized in online_coarse_graining_init
+  ! Global variables for the module, initialized in coarse_graining_init
   type(domain2d) :: coarse_domain
   integer :: is, ie, js, je, npz
   integer :: is_coarse, ie_coarse, js_coarse, je_coarse
-  integer :: target_resolution
+  integer :: nx_coarse
   character(len=11) :: MODEL_LEVEL = 'model_level'
   
   ! Namelist parameters initialized with default values
   integer :: coarsening_factor = 8
   integer :: coarse_io_layout(2) = (/1, 1/)
-  character(len=64) :: coarse_graining_strategy = 'model_level'
+  character(len=64) :: strategy = 'model_level'
   logical :: do_coarse_graining = .false.
   
-  namelist /online_coarse_graining_nml/ coarsening_factor, coarse_io_layout, &
-       coarse_graining_strategy, do_coarse_graining
+  namelist /coarse_graining_nml/ coarsening_factor, coarse_io_layout, strategy, do_coarse_graining
 
 contains
 
-  subroutine online_coarse_graining_init(Atm)
-    type(fv_atmos_type), intent(inout) :: Atm
+  subroutine coarse_graining_init(npx, atm_npz, layout, bd, coarse_graining)
+    integer, intent(in) :: npx
+    integer, intent(in) :: atm_npz
+    integer, intent(in) :: layout(2)
+    type(fv_grid_bounds_type), intent(in) :: bd
+    type(fv_coarse_graining_type), intent(inout) :: coarse_graining
 
     character(len=256) :: error_message
     logical :: exists
     integer :: namelist_file, error_code, iostat
 
-#ifdef INTERNAL_FILE_NML
-    read(input_nml_file, online_coarse_graining_nml, iostat=iostat)
-    error_code = check_nml_error(iostat, 'online_coarse_graining_nml')
-#else
-    namelist_file = open_namelist_file(Atm%nml_filename)
-    read(namelist_file, online_coarse_graining_nml, iostat=iostat)
-    error_code = check_nml_error(iostat, 'online_coarse_graining_nml')
-    call close_file(namelist_file)
-#endif
-
-    Atm%coarse_graining_attrs%do_coarse_graining = do_coarse_graining
+    read(input_nml_file, coarse_graining_nml, iostat=iostat)
+    error_code = check_nml_error(iostat, 'coarse_graining_nml')
+    coarse_graining%do_coarse_graining = do_coarse_graining
 
     if (do_coarse_graining) then
-       call compute_target_resolution(Atm, coarsening_factor, target_resolution)
-       call assert_valid_domain_layout(target_resolution, Atm%layout)
-       call define_cubic_mosaic(coarse_domain, target_resolution, target_resolution, Atm%layout)
+       call compute_nx_coarse(npx, coarsening_factor, nx_coarse)
+       call assert_valid_domain_layout(nx_coarse, layout)
+       call define_cubic_mosaic(coarse_domain, nx_coarse, nx_coarse, layout)
        call mpp_define_io_domain(coarse_domain, coarse_io_layout)
        call mpp_get_compute_domain(coarse_domain, is_coarse, ie_coarse, js_coarse, je_coarse)
-       call get_fine_array_bounds(Atm, is, ie, js, je)
-       npz = Atm%npz
+       call get_fine_array_bounds(bd, is, ie, js, je)
+       npz = atm_npz
        
-       Atm%coarse_graining_attrs%bd%is_coarse = is_coarse
-       Atm%coarse_graining_attrs%bd%ie_coarse = ie_coarse
-       Atm%coarse_graining_attrs%bd%js_coarse = js_coarse
-       Atm%coarse_graining_attrs%bd%je_coarse = je_coarse
-       Atm%coarse_graining_attrs%target_resolution = target_resolution
-       Atm%coarse_graining_attrs%domain = coarse_domain
-       Atm%coarse_graining_attrs%strategy = coarse_graining_strategy
+       coarse_graining%bd%is_coarse = is_coarse
+       coarse_graining%bd%ie_coarse = ie_coarse
+       coarse_graining%bd%js_coarse = js_coarse
+       coarse_graining%bd%je_coarse = je_coarse
+       coarse_graining%nx_coarse = nx_coarse
+       coarse_graining%domain = coarse_domain
+       coarse_graining%strategy = strategy
     endif    
-  end subroutine online_coarse_graining_init
+  end subroutine coarse_graining_init
 
-  subroutine compute_target_resolution(Atm, coarsening_factor, target_resolution)
-    type(fv_atmos_type), intent(in) :: Atm
+  subroutine compute_nx_coarse(npx, coarsening_factor, nx_coarse)
+    integer, intent(in) :: npx
     integer, intent(in) :: coarsening_factor
-    integer, intent(out) :: target_resolution
+    integer, intent(out) :: nx_coarse
 
     character(len=256) :: error_message
-    integer :: native_resolution
+    integer :: nx
     
-    native_resolution = Atm%flagstruct%npx - 1
-    if (mod(native_resolution, coarsening_factor) > 0) then
-       write(error_message, *) 'online_coarse_graining_init: coarsening_factor does not evenly divide the native resolution.'
+    nx = npx - 1
+    if (mod(nx, coarsening_factor) > 0) then
+       write(error_message, *) 'coarse_graining_init: coarsening_factor does not evenly divide the native resolution.'
        call mpp_error(FATAL, error_message)
     endif
-    target_resolution = native_resolution / coarsening_factor
-  end subroutine compute_target_resolution
+    nx_coarse = nx / coarsening_factor
+  end subroutine compute_nx_coarse
 
-  subroutine assert_valid_domain_layout(target_resolution, layout)
-    integer, intent(in) :: target_resolution
+  subroutine assert_valid_domain_layout(nx_coarse, layout)
+    integer, intent(in) :: nx_coarse
     integer, intent(in) :: layout(2)
 
     character(len=256) :: error_message
@@ -100,30 +95,30 @@ contains
     layout_x = layout(1)
     layout_y = layout(2)
 
-    if (mod(target_resolution, layout_x) > 0 .or. mod(target_resolution, layout_y) > 0) then 
-       write(error_message, *) 'online_coarse_graining_init: domain decomposition layout does not evenly divide the coarse grid.'
+    if (mod(nx_coarse, layout_x) > 0 .or. mod(nx_coarse, layout_y) > 0) then 
+       write(error_message, *) 'coarse_graining_init: domain decomposition layout does not evenly divide the coarse grid.'
        call mpp_error(FATAL, error_message)
     endif
   end subroutine assert_valid_domain_layout
 
-  subroutine get_fine_array_bounds(Atm, is, ie, js, je)
-    type(fv_atmos_type), intent(in) :: Atm
+  subroutine get_fine_array_bounds(bd, is, ie, js, je)
+    type(fv_grid_bounds_type), intent(in) :: bd
     integer, intent(out) :: is, ie, js, je
 
-    is = Atm%bd%is
-    ie = Atm%bd%ie
-    js = Atm%bd%js
-    je = Atm%bd%je
+    is = bd%is
+    ie = bd%ie
+    js = bd%js
+    je = bd%je
   end subroutine get_fine_array_bounds
   
-  subroutine get_coarse_array_bounds(Atm, is_coarse, ie_coarse, js_coarse, je_coarse)
-    type(fv_atmos_type), intent(in) :: Atm
+  subroutine get_coarse_array_bounds(coarse_bd, is_coarse, ie_coarse, js_coarse, je_coarse)
+    type(fv_coarse_grid_bounds_type), intent(in) :: coarse_bd
     integer, intent(out) :: is_coarse, ie_coarse, js_coarse, je_coarse
 
-    is_coarse = Atm%coarse_graining_attrs%bd%is_coarse
-    ie_coarse = Atm%coarse_graining_attrs%bd%ie_coarse
-    js_coarse = Atm%coarse_graining_attrs%bd%js_coarse
-    je_coarse = Atm%coarse_graining_attrs%bd%je_coarse
+    is_coarse = coarse_bd%is_coarse
+    ie_coarse = coarse_bd%ie_coarse
+    js_coarse = coarse_bd%js_coarse
+    je_coarse = coarse_bd%je_coarse
   end subroutine get_coarse_array_bounds
   
   subroutine block_sum_2d(fine, coarse)
@@ -264,4 +259,4 @@ contains
          symmetry=.true., name='coarse cubic mosaic')
   end subroutine define_cubic_mosaic
   
-end module online_coarse_graining_mod
+end module coarse_graining_mod

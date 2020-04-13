@@ -195,7 +195,7 @@ use fv_regional_mod,    only: start_regional_restart, read_new_bc_data, &
                               a_step, p_step, current_time_in_seconds
 
 use mpp_domains_mod,    only:  mpp_get_data_domain, mpp_get_compute_domain
-use online_coarse_graining_mod, only: online_coarse_graining_init
+use coarse_graining_mod, only: coarse_graining_init
 use coarse_grained_diagnostics_mod, only: fv_coarse_diag_init, fv_coarse_diag
 !$ser verbatim use k_checkpoint, only: set_nz
 
@@ -337,7 +337,8 @@ contains
       if (grids_on_this_pe(n)) mytile = n
    enddo
 
-   call online_coarse_graining_init(Atm(mytile))
+   call coarse_graining_init(Atm(mytile)%flagstruct%npx, Atm(mytile)%npz, &
+        Atm(mytile)%layout, Atm(mytile)%bd, Atm(mytile)%coarse_graining)
 
    Atm(mytile)%Time_init = Time_init
 
@@ -430,8 +431,9 @@ contains
        !I've had trouble getting this to work with multiple grids at a time; worth revisiting?
    call fv_diag_init(Atm(mytile:mytile), Atm(mytile)%atmos_axes, Time, npx, npy, npz, Atm(mytile)%flagstruct%p_ref)
 
-   if (Atm(mytile)%coarse_graining_attrs%do_coarse_graining) then
-      call fv_coarse_diag_init(Atm(mytile:mytile), Atm(mytile)%coarse_graining_attrs%diagnostic_axes, Time)
+   if (Atm(mytile)%coarse_graining%do_coarse_graining) then
+      call fv_coarse_diag_init(Atm(mytile)%bd, Time, Atm(mytile)%atmos_axes(3), &
+           Atm(mytile)%atmos_axes(4), Atm(mytile)%coarse_graining)
    endif
 !---------- reference profile -----------
     ps1 = 101325.
@@ -786,7 +788,7 @@ contains
       call timing_on('FV_DIAG')
       call fv_diag(Atm(mytile:mytile), zvir, fv_time, Atm(mytile)%flagstruct%print_freq)
       call fv_nggps_diag(Atm(mytile:mytile), zvir, fv_time)
-      if (Atm(mytile)%coarse_graining_attrs%do_coarse_graining) then
+      if (Atm(mytile)%coarse_graining%do_coarse_graining) then
          call fv_coarse_diag(Atm(mytile:mytile), fv_time)
       endif
       first_diag = .false.
@@ -1637,7 +1639,7 @@ contains
      call nullify_domain()
      call timing_on('FV_DIAG')
      call fv_diag(Atm(mytile:mytile), zvir, fv_time, Atm(mytile)%flagstruct%print_freq)
-     if (Atm(mytile)%coarse_graining_attrs%do_coarse_graining) then
+     if (Atm(mytile)%coarse_graining%do_coarse_graining) then
         call fv_coarse_diag(Atm(mytile:mytile), fv_time)
      endif
      first_diag = .false.

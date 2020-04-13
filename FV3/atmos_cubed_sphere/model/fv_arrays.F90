@@ -1175,10 +1175,16 @@ module fv_arrays_mod
      type(fv_coarse_grid_bounds_type) :: bd
      type(domain2d) :: domain
      integer :: factor
-     integer :: target_resolution
-     integer :: diagnostic_axes(4)
+     integer :: nx_coarse
+     integer :: id_x_coarse  ! diagnostic x-axis id for data on x-edges
+     integer :: id_y_coarse  ! diagnostic y-axis id for data on y-edges
+     integer :: id_xt_coarse  ! diagnostic x-axis id for data on x-centers
+     integer :: id_yt_coarse  ! diagnostic y-axis id for data on y-centers
+     integer :: id_pfull  ! diagnostic vertical axis id for data on z-centers
+     integer :: id_phalf  ! diagnostic vertical axis id for data on z-edges
      character(len=64) :: strategy
      logical :: do_coarse_graining
+     type(fv_coarse_diag_type) :: idiag  ! container for coarse diagnostic ids
 
   end type fv_coarse_graining_type
   
@@ -1336,7 +1342,6 @@ module fv_arrays_mod
 !!!!!!!!!!!!!!!!
 
      type(fv_diag_type) :: idiag
-     type(fv_coarse_diag_type) :: idiag_coarse
 
 !!!!!!!!!!!!!!
 ! From fv_io !
@@ -1353,7 +1358,7 @@ module fv_arrays_mod
 
   type(nudge_diag_type) :: nudge_diag
 
-  type(fv_coarse_graining_type) :: coarse_graining_attrs
+  type(fv_coarse_graining_type) :: coarse_graining
   
   end type fv_atmos_type
 
