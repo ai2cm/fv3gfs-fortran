@@ -1182,7 +1182,7 @@ module fv_arrays_mod
      integer :: id_yt_coarse  ! diagnostic y-axis id for data on y-centers
      integer :: id_pfull  ! diagnostic vertical axis id for data on z-centers
      integer :: id_phalf  ! diagnostic vertical axis id for data on z-edges
-     character(len=64) :: strategy
+     character(len=64) :: strategy  ! Current valid values are: 'model_level'
      logical :: do_coarse_graining
      type(fv_coarse_diag_type) :: idiag  ! container for coarse diagnostic ids
 
