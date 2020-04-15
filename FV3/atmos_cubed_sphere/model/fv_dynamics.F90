@@ -289,7 +289,7 @@ contains
 #ifdef CCPP
       integer :: ierr
 #endif
-      !$ser verbatim integer:: id_mdt, mode
+      !$ser verbatim integer:: id_mdt, mode, n_map_step
       !$ser verbatim id_mdt=idiag%id_mdt
 #ifdef CCPP
       ccpp_associate: associate( cappa     => CCPP_interstitial%cappa,     &
@@ -657,7 +657,10 @@ contains
 
                                                   call timing_on('FV_DYN_LOOP')
   do n_map=1, k_split   ! first level of time-split
-      k_step = n_map
+     k_step = n_map
+     !$ser verbatim n_map_step=n_map
+      !$ser savepoint DynCore-In
+      !$ser data nq=nq mdt=mdt n_split=n_split zvir=zvir  akap=akap cappa=cappa u=u v=v w=w delz=delz pt=pt q4d=q delp=delp pe=pe pk=pk phis=phis wsd=ws omga=omga ptop=ptop pfull=pfull ua=ua va=va uc=uc vc=vc mfxd=mfx mfyd=mfy cxd=cx cyd=cy pkz=pkz peln=peln q_con=q_con ak=ak bk=bk ks=ks diss_estd=diss_est n_map_step=n_map_step
                                            call timing_on('COMM_TOTAL')
 #ifdef USE_COND
       call start_group_halo_update(i_pack(11), q_con, domain)
@@ -702,8 +705,7 @@ contains
 #endif
 
                                            call timing_on('DYN_CORE')
-      !$ser savepoint DynCore-In
-      !$ser data nq=nq mdt=mdt n_split=n_split zvir=zvir  akap=akap cappa=cappa u=u v=v w=w delz=delz pt=pt q4d=q delp=delp pe=pe pk=pk phis=phis wsd=ws omga=omga ptop=ptop pfull=pfull ua=ua va=va uc=uc vc=vc mfxd=mfx mfyd=mfy cxd=cx cyd=cy pkz=pkz peln=peln q_con=q_con ak=ak bk=bk ks=ks last_step=last_step diss_estd=diss_est 
+     
       call dyn_core(npx, npy, npz, ng, sphum, nq, mdt, n_split, zvir, cp_air, akap, cappa, &
 #ifdef MULTI_GASES
                     kapad, &

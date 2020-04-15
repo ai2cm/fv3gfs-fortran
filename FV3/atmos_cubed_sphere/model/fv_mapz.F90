@@ -202,6 +202,7 @@ contains
   real, intent(out)::    pkz(is:ie,js:je,km)       !< layer-mean pk for converting t to pt
   real, intent(out)::     te(isd:ied,jsd:jed,km)
   !$ser verbatim integer:: mode
+  !$ser verbatim real::abskord
 ! !DESCRIPTION:
 !
 ! !REVISION HISTORY:
@@ -484,7 +485,7 @@ contains
       !$ser verbatim if(j == js) then 
       !$ser savepoint Map1_PPM_2d-In
       !$ser verbatim mode=-2
-      !$ser data j_2d=js pe1=pe1 pe2=pe2 var_in=w ws_1d=ws(:,j) var_inout=w mode=mode
+      !$ser data j_2d=js pe1=pe1 pe2=pe2 var_in=w ws_1d=ws(:,j) var_inout=w mode=mode kord=kord_wz
       !$ser verbatim endif
         call map1_ppm (km,   pe1,  w,  ws(is,j),   &
                        km,   pe2,  w,              &
@@ -496,8 +497,9 @@ contains
 ! Remap delz for hybrid sigma-p coordinate
       !$ser verbatim if(j == js) then 
       !$ser savepoint Map1_PPM_2d-In
-      !$ser verbatim mode=1
-      !$ser data j_2d=js pe1=pe1 pe2=pe2 var_in=delz ws_1d=gz var_inout=delz mode=mode
+        !$ser verbatim mode=1
+        !$ser verbatim abskord = abs(kord_tm)
+      !$ser data j_2d=js pe1=pe1 pe2=pe2 var_in=delz ws_1d=gz var_inout=delz mode=mode kord=abskord
       !$ser verbatim endif
         call map1_ppm (km,   pe1, delz,  gz,   &
                        km,   pe2, delz,              &
@@ -658,7 +660,7 @@ contains
       !$ser verbatim if(j == js) then 
       !$ser savepoint Map1_PPM_2d-2-In
       !$ser verbatim mode=-1
-      !$ser data j_2d=js pe1_2=pe0 pe2_2=pe3 var_in_2=u ws_1d=gz var_inout_2=u mode=mode
+      !$ser data j_2d=js pe1_2=pe0 pe2_2=pe3 var_in_2=u ws_1d=gz var_inout_2=u mode=mode kord=kord_mt
       !$ser verbatim endif
       call map1_ppm( km, pe0(is:ie,:),   u,   gz,   &
                      km, pe3(is:ie,:),   u,               &
@@ -685,7 +687,7 @@ contains
       !$ser verbatim if(j == js) then 
       !$ser savepoint Map1_PPM_2d-3-In
       !$ser verbatim mode=-1
-      !$ser data j_2d=js pe1_2=pe0 pe2_2=pe3 var_in_3=v ws_1d=gz var_inout_3=v mode=mode
+      !$ser data j_2d=js pe1_2=pe0 pe2_2=pe3 var_in_3=v ws_1d=gz var_inout_3=v mode=mode kord=kord_mt
       !$ser verbatim endif
        call map1_ppm (km, pe0,  v, gz,    &
                       km, pe3,  v, is, ie+1,    &
