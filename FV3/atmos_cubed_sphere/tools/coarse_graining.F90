@@ -29,7 +29,7 @@ module coarse_graining_mod
   ! Namelist parameters initialized with default values
   integer :: coarsening_factor = 8
   integer :: coarse_io_layout(2) = (/1, 1/)
-  character(len=64) :: strategy = 'model_level'
+  character(len=64) :: strategy = 'model_level'  ! Valid values are 'model_level'
   logical :: do_coarse_graining = .false.
   
   namelist /coarse_graining_nml/ coarsening_factor, coarse_io_layout, strategy, do_coarse_graining
@@ -45,13 +45,14 @@ contains
 
     character(len=256) :: error_message
     logical :: exists
-    integer :: namelist_file, error_code, iostat
+    integer :: error_code, iostat
 
     read(input_nml_file, coarse_graining_nml, iostat=iostat)
     error_code = check_nml_error(iostat, 'coarse_graining_nml')
     coarse_graining%do_coarse_graining = do_coarse_graining
 
     if (do_coarse_graining) then
+       call assert_valid_strategy(strategy)
        call compute_nx_coarse(npx, coarsening_factor, nx_coarse)
        call assert_valid_domain_layout(nx_coarse, layout)
        call define_cubic_mosaic(coarse_domain, nx_coarse, nx_coarse, layout)
@@ -100,6 +101,17 @@ contains
        call mpp_error(FATAL, error_message)
     endif
   end subroutine assert_valid_domain_layout
+
+  subroutine assert_valid_strategy(strategy)
+    character(len=64), intent(in) :: strategy
+
+    character(len=256) :: error_message
+
+    if (trim(strategy) .ne. MODEL_LEVEL) then
+       write(error_message, *) 'Invalid coarse graining strategy provided.'
+       call mpp_error(FATAL, error_message)
+    endif
+  end subroutine assert_valid_strategy
 
   subroutine get_fine_array_bounds(bd, is, ie, js, je)
     type(fv_grid_bounds_type), intent(in) :: bd

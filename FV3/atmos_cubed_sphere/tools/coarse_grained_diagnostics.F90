@@ -57,17 +57,17 @@ contains
     grid_yt_coarse = (/ (j, j=1, nx_coarse) /)
     
     id_x_coarse = diag_axis_init('grid_x_coarse', grid_x_coarse, &
-         'degrees_E', 'x', 'Corner longitude', set_name='coarse_grid', &
+         'index', 'x', 'x-index of cell corner points', set_name='coarse_grid', &
          Domain2=coarse_domain, tile_count=tile_count)
     id_y_coarse = diag_axis_init('grid_y_coarse', grid_y_coarse, &
-         'degrees_N', 'y', 'Corner latitude', set_name='coarse_grid', &
+         'index', 'y', 'y-index of cell corner points', set_name='coarse_grid', &
          Domain2=coarse_domain, tile_count=tile_count)
 
     id_xt_coarse = diag_axis_init('grid_xt_coarse', grid_xt_coarse, &
-         'degrees_E', 'x', 'T-cell longitude', set_name='coarse_grid', &
+         'index', 'x', 'x-index of cell center points', set_name='coarse_grid', &
          Domain2=coarse_domain, tile_count=tile_count)
     id_yt_coarse = diag_axis_init('grid_yt_coarse', grid_yt_coarse, &
-         'degrees_N', 'y', 'T-cell latitude', set_name='coarse_grid', &
+         'index', 'y', 'y-index of cell center points', set_name='coarse_grid', &
          Domain2=coarse_domain, tile_count=tile_count)    
   end subroutine initialize_coarse_diagnostic_axes
   
@@ -95,10 +95,7 @@ contains
 
     if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. MODEL_LEVEL) then
        call fv_coarse_diag_model_levels(Atm, Time)
-    else
-       write(error_message, *) 'Invalid coarse_graining_strategy provided.'
-       call mpp_error(FATAL, error_message)
-    endif    
+    endif
   end subroutine fv_coarse_diag
   
   subroutine fv_coarse_diag_model_levels(Atm, Time)
