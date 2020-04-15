@@ -201,8 +201,7 @@ contains
   real, intent(inout)::   dtdt(is:ie,js:je,km)
   real, intent(out)::    pkz(is:ie,js:je,km)       !< layer-mean pk for converting t to pt
   real, intent(out)::     te(isd:ied,jsd:jed,km)
-  !$ser verbatim integer:: mode
-  !$ser verbatim real::abskord
+  !$ser verbatim integer:: mode, abskord
 ! !DESCRIPTION:
 !
 ! !REVISION HISTORY:
@@ -266,7 +265,7 @@ contains
 !$OMP parallel do default(none) shared(is,ie,js,je,km,pe,ptop,kord_tm,hydrostatic, &
 !$OMP                                  pt,pk,rg,peln,q,nwat,liq_wat,rainwat,ice_wat,snowwat,    &
 #ifdef SERIALIZE
-!$OMP  ppser_savepoint, ppser_serializer, ppser_serializer_ref, ppser_zrperturb, cld_amt, mode,qmin, &
+!$OMP  ppser_savepoint, ppser_serializer, ppser_serializer_ref, ppser_zrperturb, cld_amt, mode,qmin, abskord, &
 #endif
 !$OMP                                  graupel,q_con,sphum,cappa,r_vir,rcp,k1k,delp, &
 !$OMP                                  delz,akap,pkz,te,u,v,ps, gridstruct, last_step, &
