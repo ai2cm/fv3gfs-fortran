@@ -116,6 +116,12 @@ module fv_arrays_mod
 
   end type fv_diag_type
 
+  type fv_coarse_diag_type
+
+     integer :: id_omega_coarse
+     integer :: n_3d_diagnostics = 1
+     
+  end type fv_coarse_diag_type
 
 !>@brief The type 'fv_grid_type' is made up of grid-dependent information from fv_grid_tools and fv_grid_utils.
 !>@details It should not contain any user options (that goes in a different structure) nor data which
@@ -1015,10 +1021,10 @@ module fv_arrays_mod
    !f1p
    logical  :: adj_mass_vmr = .false. !TER: This is to reproduce answers for verona patch.  This default can be changed
                                      !     to .true. in the next city release if desired
-  
+
+   logical :: do_coarse_graining = .false.  ! Whether to enable online coarse-graining of restart files and diagnostics
   !integer, pointer :: test_case
   !real,    pointer :: alpha
-
   end type fv_flags_type
 
   type fv_nest_BC_type_3D
@@ -1158,6 +1164,30 @@ module fv_arrays_mod
 
   end type fv_grid_bounds_type
 
+  type fv_coarse_grid_bounds_type
+
+     integer :: is_coarse, ie_coarse, js_coarse, je_coarse
+
+  end type fv_coarse_grid_bounds_type
+
+  type fv_coarse_graining_type
+
+     type(fv_coarse_grid_bounds_type) :: bd
+     type(domain2d) :: domain
+     integer :: factor
+     integer :: nx_coarse
+     integer :: id_x_coarse  ! diagnostic x-axis id for data on x-edges
+     integer :: id_y_coarse  ! diagnostic y-axis id for data on y-edges
+     integer :: id_xt_coarse  ! diagnostic x-axis id for data on x-centers
+     integer :: id_yt_coarse  ! diagnostic y-axis id for data on y-centers
+     integer :: id_pfull  ! diagnostic vertical axis id for data on z-centers
+     integer :: id_phalf  ! diagnostic vertical axis id for data on z-edges
+     character(len=64) :: strategy  ! Current valid values are: 'model_level'
+     logical :: do_coarse_graining = .false.
+     type(fv_coarse_diag_type) :: idiag  ! container for coarse diagnostic ids
+
+  end type fv_coarse_graining_type
+  
   type fv_regional_bc_bounds_type
 
      integer :: is_north ,ie_north ,js_north ,je_north &
@@ -1327,6 +1357,8 @@ module fv_arrays_mod
   integer :: atmos_axes(4)
 
   type(nudge_diag_type) :: nudge_diag
+
+  type(fv_coarse_graining_type) :: coarse_graining
 
   end type fv_atmos_type
 
