@@ -335,6 +335,7 @@ module fv_control_mod
   real, pointer :: s_weight, update_blend
 
   integer, pointer :: layout(:), io_layout(:)
+  logical, pointer :: do_coarse_graining
 
    integer :: ntilesMe                ! Number of tiles on this process =1 for now
 
@@ -669,7 +670,7 @@ module fv_control_mod
                          nested, twowaynest, parent_grid_num, parent_tile, nudge_qv, &
                          refinement, nestbctype, nestupdate, nsponge, s_weight, &
                          ioffset, joffset, check_negative, nudge_ic, halo_update_type, gfs_phil, agrid_vel_rst,     &
-                         do_uni_zfull, adj_mass_vmr, fac_n_spl, fhouri, regional, bc_update_interval
+                         do_uni_zfull, adj_mass_vmr, fac_n_spl, fhouri, regional, bc_update_interval, do_coarse_graining
 
    namelist /test_case_nml/test_case, bubble_do, alpha, nsolitons, soliton_Umax, soliton_size
 #ifdef MULTI_GASES
@@ -1340,6 +1341,7 @@ module fv_control_mod
 
      layout                        => Atm%layout
      io_layout                     => Atm%io_layout
+     do_coarse_graining            => Atm%flagstruct%do_coarse_graining
   end subroutine setup_pointers
 
        
