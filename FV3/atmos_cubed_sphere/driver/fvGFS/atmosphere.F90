@@ -337,8 +337,10 @@ contains
       if (grids_on_this_pe(n)) mytile = n
    enddo
 
-   call coarse_graining_init(Atm(mytile)%flagstruct%npx, Atm(mytile)%npz, &
-        Atm(mytile)%layout, Atm(mytile)%bd, Atm(mytile)%coarse_graining)
+   if (Atm(mytile)%flagstruct%do_coarse_graining) then
+      call coarse_graining_init(Atm(mytile)%flagstruct%npx, Atm(mytile)%npz, &
+           Atm(mytile)%layout, Atm(mytile)%bd, Atm(mytile)%coarse_graining)
+   endif
 
    Atm(mytile)%Time_init = Time_init
 

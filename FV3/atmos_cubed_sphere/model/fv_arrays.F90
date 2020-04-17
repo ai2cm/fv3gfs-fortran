@@ -1021,10 +1021,10 @@ module fv_arrays_mod
    !f1p
    logical  :: adj_mass_vmr = .false. !TER: This is to reproduce answers for verona patch.  This default can be changed
                                      !     to .true. in the next city release if desired
-  
+
+   logical :: do_coarse_graining = .false.  ! Whether to enable online coarse-graining of restart files and diagnostics
   !integer, pointer :: test_case
   !real,    pointer :: alpha
-
   end type fv_flags_type
 
   type fv_nest_BC_type_3D
@@ -1183,7 +1183,7 @@ module fv_arrays_mod
      integer :: id_pfull  ! diagnostic vertical axis id for data on z-centers
      integer :: id_phalf  ! diagnostic vertical axis id for data on z-edges
      character(len=64) :: strategy  ! Current valid values are: 'model_level'
-     logical :: do_coarse_graining
+     logical :: do_coarse_graining = .false.
      type(fv_coarse_diag_type) :: idiag  ! container for coarse diagnostic ids
 
   end type fv_coarse_graining_type
@@ -1359,7 +1359,7 @@ module fv_arrays_mod
   type(nudge_diag_type) :: nudge_diag
 
   type(fv_coarse_graining_type) :: coarse_graining
-  
+
   end type fv_atmos_type
 
 contains

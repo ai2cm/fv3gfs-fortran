@@ -30,9 +30,8 @@ module coarse_graining_mod
   integer :: coarsening_factor = 8
   integer :: coarse_io_layout(2) = (/1, 1/)
   character(len=64) :: strategy = 'model_level'  ! Valid values are 'model_level'
-  logical :: do_coarse_graining = .false.
   
-  namelist /coarse_graining_nml/ coarsening_factor, coarse_io_layout, strategy, do_coarse_graining
+  namelist /coarse_graining_nml/ coarsening_factor, coarse_io_layout, strategy
 
 contains
 
@@ -49,26 +48,24 @@ contains
 
     read(input_nml_file, coarse_graining_nml, iostat=iostat)
     error_code = check_nml_error(iostat, 'coarse_graining_nml')
-    coarse_graining%do_coarse_graining = do_coarse_graining
+    coarse_graining%do_coarse_graining = .true.
 
-    if (do_coarse_graining) then
-       call assert_valid_strategy(strategy)
-       call compute_nx_coarse(npx, coarsening_factor, nx_coarse)
-       call assert_valid_domain_layout(nx_coarse, layout)
-       call define_cubic_mosaic(coarse_domain, nx_coarse, nx_coarse, layout)
-       call mpp_define_io_domain(coarse_domain, coarse_io_layout)
-       call mpp_get_compute_domain(coarse_domain, is_coarse, ie_coarse, js_coarse, je_coarse)
-       call get_fine_array_bounds(bd, is, ie, js, je)
-       npz = atm_npz
+    call assert_valid_strategy(strategy)
+    call compute_nx_coarse(npx, coarsening_factor, nx_coarse)
+    call assert_valid_domain_layout(nx_coarse, layout)
+    call define_cubic_mosaic(coarse_domain, nx_coarse, nx_coarse, layout)
+    call mpp_define_io_domain(coarse_domain, coarse_io_layout)
+    call mpp_get_compute_domain(coarse_domain, is_coarse, ie_coarse, js_coarse, je_coarse)
+    call get_fine_array_bounds(bd, is, ie, js, je)
+    npz = atm_npz
        
-       coarse_graining%bd%is_coarse = is_coarse
-       coarse_graining%bd%ie_coarse = ie_coarse
-       coarse_graining%bd%js_coarse = js_coarse
-       coarse_graining%bd%je_coarse = je_coarse
-       coarse_graining%nx_coarse = nx_coarse
-       coarse_graining%domain = coarse_domain
-       coarse_graining%strategy = strategy
-    endif    
+    coarse_graining%bd%is_coarse = is_coarse
+    coarse_graining%bd%ie_coarse = ie_coarse
+    coarse_graining%bd%js_coarse = js_coarse
+    coarse_graining%bd%je_coarse = je_coarse
+    coarse_graining%nx_coarse = nx_coarse
+    coarse_graining%domain = coarse_domain
+    coarse_graining%strategy = strategy
   end subroutine coarse_graining_init
 
   subroutine compute_nx_coarse(npx, coarsening_factor, nx_coarse)
