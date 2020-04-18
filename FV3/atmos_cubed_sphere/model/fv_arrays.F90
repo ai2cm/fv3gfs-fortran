@@ -1185,8 +1185,31 @@ module fv_arrays_mod
      character(len=64) :: strategy  ! Current valid values are: 'model_level'
      logical :: do_coarse_graining = .false.
      type(fv_coarse_diag_type) :: idiag  ! container for coarse diagnostic ids
+     type(coarse_restart_type) :: restart  ! container for coarse restart data
 
   end type fv_coarse_graining_type
+
+  type coarse_restart_type
+
+     real, _ALLOCATABLE :: u(:,:,:)
+     real, _ALLOCATABLE :: v(:,:,:)
+     real, _ALLOCATABLE :: w(:,:,:)
+     real, _ALLOCATABLE :: pt(:,:,:)
+     real, _ALLOCATABLE :: q(:,:,:,:)
+     real, _ALLOCATABLE :: qdiag(:,:,:,:)
+     real, _ALLOCATABLE :: delz(:,:,:)
+     real, _ALLOCATABLE :: phis(:,:)
+     real, _ALLOCATABLE :: delp(:,:,:)
+     real, _ALLOCATABLE :: ua(:,:,:)
+     real, _ALLOCATABLE :: va(:,:,:)
+     real, _ALLOCATABLE :: u_srf(:,:)
+     real, _ALLOCATABLE :: v_srf(:,:)
+     real, _ALLOCATABLE :: sgh(:,:)
+     real, _ALLOCATABLE :: oro(:,:)
+     real, _ALLOCATABLE :: ze0(:,:,:)
+     logical :: allocated = .false.
+
+  end type coarse_restart_type
   
   type fv_regional_bc_bounds_type
 
