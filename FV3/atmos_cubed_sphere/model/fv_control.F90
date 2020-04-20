@@ -151,6 +151,7 @@ module fv_control_mod
    use mpp_domains_mod,     only: CENTER, CORNER, NORTH, EAST, WEST, SOUTH
    use mpp_mod,             only: mpp_send, mpp_sync, mpp_transmit, mpp_set_current_pelist, mpp_declare_pelist, mpp_root_pe, mpp_recv, mpp_sync_self, mpp_broadcast, read_input_nml
    use fv_diagnostics_mod,  only: fv_diag_init_gn
+   use coarse_grained_restart_files_mod, only: deallocate_coarse_restart_type
 
 #ifdef MULTI_GASES
    use constants_mod,       only: rvgas, cp_air
@@ -614,6 +615,7 @@ module fv_control_mod
 
     do n = 1, ntilesMe
        call deallocate_fv_atmos_type(Atm(n))
+       call deallocate_coarse_restart_type(Atm(n)%coarse_graining%restart)
     end do
 
 
@@ -1345,7 +1347,7 @@ module fv_control_mod
      io_layout                     => Atm%io_layout
      do_coarse_graining            => Atm%flagstruct%do_coarse_graining
      write_only_coarse_intermediate_restarts => Atm%flagstruct%write_only_coarse_intermediate_restarts
-   end subroutine setup_pointers
+  end subroutine setup_pointers
 
        
 end module fv_control_mod

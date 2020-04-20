@@ -215,6 +215,7 @@ contains
 
     integer :: i, j, i_coarse, j_coarse, offset
 
+    offset = coarsening_factor - 1
     do i = is, ie, coarsening_factor
        i_coarse = (i - 1) / coarsening_factor + 1
        do j = js, je + 1, coarsening_factor
@@ -260,6 +261,7 @@ contains
 
     integer :: i, j, i_coarse, j_coarse, offset
 
+    offset = coarsening_factor - 1
     do i = is, ie + 1, coarsening_factor
        i_coarse = (i - 1) / coarsening_factor + 1
        do j = js, je, coarsening_factor

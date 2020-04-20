@@ -12,7 +12,7 @@ module coarse_grained_restart_files_mod
   implicit none
   private
 
-  public :: fv_coarse_restart_init, fv_io_write_restart_coarse
+  public :: deallocate_coarse_restart_type, fv_coarse_restart_init, fv_io_write_restart_coarse
 
 contains
 
@@ -28,7 +28,8 @@ contains
     integer :: n_tracers
 
     n_tracers = n_prognostic_tracers + n_diagnostic_tracers
-    call allocate_coarse_restart_type(npz, n_prognostic_tracers, n_tracers, coarse_bd, restart)
+    call allocate_coarse_restart_type(npz, n_prognostic_tracers, n_tracers, &
+         coarse_bd, hydrostatic, hybrid_z, agrid_vel_rst, fv_land, restart)
     call register_coarse_restart_files(tile_count, n_prognostic_tracers, &
          n_tracers, hydrostatic, hybrid_z, agrid_vel_rst, fv_land, &
          coarse_domain, restart)
@@ -56,9 +57,11 @@ contains
     enddo
   end subroutine fv_io_write_restart_coarse
 
-  subroutine allocate_coarse_restart_type(npz, n_prognostic_tracers, n_tracers, coarse_bd, restart)
+  subroutine allocate_coarse_restart_type(npz, n_prognostic_tracers, n_tracers, &
+       coarse_bd, hydrostatic, hybrid_z, agrid_vel_rst, fv_land, restart)
     integer, intent(in) :: npz, n_prognostic_tracers, n_tracers
     type(fv_coarse_grid_bounds_type), intent(in) :: coarse_bd
+    logical, intent(in) :: hydrostatic, hybrid_z, agrid_vel_rst, fv_land
     type(coarse_restart_type), intent(inout) :: restart
 
     integer :: is_coarse, ie_coarse, js_coarse, je_coarse
@@ -67,21 +70,51 @@ contains
 
     allocate(restart%u(is_coarse:ie_coarse,js_coarse:je_coarse+1,npz))
     allocate(restart%v(is_coarse:ie_coarse+1,js_coarse:je_coarse,npz))
-    allocate(restart%ua(is_coarse:ie_coarse,js_coarse:je_coarse,npz))
-    allocate(restart%va(is_coarse:ie_coarse,js_coarse:je_coarse,npz))
     allocate(restart%u_srf(is_coarse:ie_coarse,js_coarse:je_coarse))
     allocate(restart%v_srf(is_coarse:ie_coarse,js_coarse:je_coarse))
-    allocate(restart%w(is_coarse:ie_coarse,js_coarse:je_coarse,npz))
     allocate(restart%delp(is_coarse:ie_coarse,js_coarse:je_coarse,npz))
-    allocate(restart%delz(is_coarse:ie_coarse,js_coarse:je_coarse,npz))
     allocate(restart%pt(is_coarse:ie_coarse,js_coarse:je_coarse,npz))
     allocate(restart%q(is_coarse:ie_coarse,js_coarse:je_coarse,npz,n_prognostic_tracers))
     allocate(restart%qdiag(is_coarse:ie_coarse,js_coarse:je_coarse,npz,n_prognostic_tracers+1:n_tracers))
-    allocate(restart%sgh(is_coarse:ie_coarse,js_coarse:je_coarse))
-    allocate(restart%oro(is_coarse:ie_coarse,js_coarse:je_coarse))
     allocate(restart%phis(is_coarse:ie_coarse,js_coarse:je_coarse))
-    allocate(restart%ze0(is_coarse:ie_coarse,js_coarse:je_coarse,npz))
+
+    if (agrid_vel_rst) then
+       allocate(restart%ua(is_coarse:ie_coarse,js_coarse:je_coarse,npz))
+       allocate(restart%va(is_coarse:ie_coarse,js_coarse:je_coarse,npz))
+    endif
+
+    if (.not. hydrostatic) then
+       allocate(restart%w(is_coarse:ie_coarse,js_coarse:je_coarse,npz))
+       allocate(restart%delz(is_coarse:ie_coarse,js_coarse:je_coarse,npz))
+       if (hybrid_z) allocate(restart%ze0(is_coarse:ie_coarse,js_coarse:je_coarse,npz))
+    endif
+
+    if (fv_land) then
+       allocate(restart%sgh(is_coarse:ie_coarse,js_coarse:je_coarse))
+       allocate(restart%oro(is_coarse:ie_coarse,js_coarse:je_coarse))
+    endif
   end subroutine allocate_coarse_restart_type
+
+  subroutine deallocate_coarse_restart_type(restart)
+    type(coarse_restart_type), intent(inout) :: restart
+
+    if (allocated(restart%u)) deallocate(restart%u)
+    if (allocated(restart%v)) deallocate(restart%v)
+    if (allocated(restart%w)) deallocate(restart%w)
+    if (allocated(restart%pt)) deallocate(restart%pt)
+    if (allocated(restart%delp)) deallocate(restart%delp)
+    if (allocated(restart%delz)) deallocate(restart%delz)
+    if (allocated(restart%ua)) deallocate(restart%ua)
+    if (allocated(restart%va)) deallocate(restart%va)
+    if (allocated(restart%phis)) deallocate(restart%phis)
+    if (allocated(restart%q)) deallocate(restart%q)
+    if (allocated(restart%qdiag)) deallocate(restart%qdiag)
+    if (allocated(restart%u_srf)) deallocate(restart%u_srf)
+    if (allocated(restart%v_srf)) deallocate(restart%v_srf)
+    if (allocated(restart%sgh)) deallocate(restart%sgh)
+    if (allocated(restart%oro)) deallocate(restart%oro)
+    if (allocated(restart%ze0)) deallocate(restart%ze0)
+  end subroutine deallocate_coarse_restart_type
 
   subroutine register_coarse_restart_files(tile_count, n_prognostic_tracers, &
        n_tracers, hydrostatic, &

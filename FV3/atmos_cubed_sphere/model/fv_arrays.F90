@@ -1189,7 +1189,6 @@ module fv_arrays_mod
      real, _ALLOCATABLE :: sgh(:,:)
      real, _ALLOCATABLE :: oro(:,:)
      real, _ALLOCATABLE :: ze0(:,:,:)
-     logical :: allocated = .false.
      type(restart_file_type) :: fv_core_coarse
      type(restart_file_type) :: fv_tracer_coarse
      type(restart_file_type) :: fv_srf_wnd_coarse
@@ -2051,7 +2050,7 @@ contains
     if (Atm%flagstruct%grid_type < 4) then
        if(allocated(Atm%grid_global)) deallocate(Atm%grid_global)
     end if
-    
+
     Atm%allocated = .false.
 
   end subroutine deallocate_fv_atmos_type
