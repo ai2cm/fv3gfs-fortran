@@ -1046,7 +1046,8 @@ subroutine qs_init (kmp)
     allocate (tablew (length))
     allocate (des2 (length))
     allocate (desw (length))
-    
+    !$ser savepoint QCInit-In
+    !$ser data table=table table2=table2 tablew=tablew des2=des2 desw=desw
     call qs_table (length)
     call qs_table2 (length)
     call qs_tablew (length)
@@ -1057,7 +1058,8 @@ subroutine qs_init (kmp)
     enddo
     des2 (length) = des2 (length - 1)
     desw (length) = desw (length - 1)
-    
+    !$ser savepoint QCInit-Out
+    !$ser data table=table table2=table2 tablew=tablew des2=des2 desw=desw 
     mp_initialized = .true.
     
 end subroutine qs_init
