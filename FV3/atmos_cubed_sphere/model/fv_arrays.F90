@@ -1023,7 +1023,8 @@ module fv_arrays_mod
                                      !     to .true. in the next city release if desired
 
    logical :: do_coarse_graining = .false.  ! Whether to enable online coarse-graining of restart files and diagnostics
-  !integer, pointer :: test_case
+   logical :: write_only_coarse_intermediate_restarts = .false.  ! Whether to write only coarse intermediate restart files (if do_coarse_graining is .true.)
+   !integer, pointer :: test_case
   !real,    pointer :: alpha
   end type fv_flags_type
 
@@ -1170,25 +1171,6 @@ module fv_arrays_mod
 
   end type fv_coarse_grid_bounds_type
 
-  type fv_coarse_graining_type
-
-     type(fv_coarse_grid_bounds_type) :: bd
-     type(domain2d) :: domain
-     integer :: factor
-     integer :: nx_coarse
-     integer :: id_x_coarse  ! diagnostic x-axis id for data on x-edges
-     integer :: id_y_coarse  ! diagnostic y-axis id for data on y-edges
-     integer :: id_xt_coarse  ! diagnostic x-axis id for data on x-centers
-     integer :: id_yt_coarse  ! diagnostic y-axis id for data on y-centers
-     integer :: id_pfull  ! diagnostic vertical axis id for data on z-centers
-     integer :: id_phalf  ! diagnostic vertical axis id for data on z-edges
-     character(len=64) :: strategy  ! Current valid values are: 'model_level'
-     logical :: do_coarse_graining = .false.
-     type(fv_coarse_diag_type) :: idiag  ! container for coarse diagnostic ids
-     type(coarse_restart_type) :: restart  ! container for coarse restart data
-
-  end type fv_coarse_graining_type
-
   type coarse_restart_type
 
      real, _ALLOCATABLE :: u(:,:,:)
@@ -1208,9 +1190,33 @@ module fv_arrays_mod
      real, _ALLOCATABLE :: oro(:,:)
      real, _ALLOCATABLE :: ze0(:,:,:)
      logical :: allocated = .false.
+     type(restart_file_type) :: fv_core_coarse
+     type(restart_file_type) :: fv_tracer_coarse
+     type(restart_file_type) :: fv_srf_wnd_coarse
+     type(restart_file_type) :: mg_drag_coarse
+     type(restart_file_type) :: fv_land_coarse
 
   end type coarse_restart_type
   
+  type fv_coarse_graining_type
+
+     type(fv_coarse_grid_bounds_type) :: bd
+     type(domain2d) :: domain
+     integer :: factor
+     integer :: nx_coarse
+     integer :: id_x_coarse  ! diagnostic x-axis id for data on x-edges
+     integer :: id_y_coarse  ! diagnostic y-axis id for data on y-edges
+     integer :: id_xt_coarse  ! diagnostic x-axis id for data on x-centers
+     integer :: id_yt_coarse  ! diagnostic y-axis id for data on y-centers
+     integer :: id_pfull  ! diagnostic vertical axis id for data on z-centers
+     integer :: id_phalf  ! diagnostic vertical axis id for data on z-edges
+     character(len=64) :: strategy  ! Current valid values are: 'model_level'
+     logical :: do_coarse_graining = .false.
+     type(fv_coarse_diag_type) :: idiag  ! container for coarse diagnostic ids
+     type(coarse_restart_type) :: restart  ! container for coarse restart data
+
+  end type fv_coarse_graining_type
+
   type fv_regional_bc_bounds_type
 
      integer :: is_north ,ie_north ,js_north ,je_north &

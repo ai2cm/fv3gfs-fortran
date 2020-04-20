@@ -56,6 +56,7 @@ SRCS_F90 = \
 		   ./tools/external_ic.F90                        \
 		   ./tools/external_sst.F90                       \
                    ./tools/coarse_grained_diagnostics.F90         \
+                   ./tools/coarse_grained_restart_files.F90       \
 		   ./tools/fv_diagnostics.F90                     \
 		   ./tools/fv_eta.F90                             \
 		   ./tools/fv_grid_tools.F90                      \
@@ -68,7 +69,7 @@ SRCS_F90 = \
 		   ./tools/fv_surf_map.F90                        \
 		   ./tools/fv_timing.F90                          \
 		   ./tools/init_hydro.F90                         \
-                   ./tools/coarse_graining.F90             \
+                   ./tools/coarse_graining.F90                    \
 		   ./tools/sim_nc_mod.F90                         \
 		   ./tools/sorted_index.F90                       \
 		   ./tools/test_cases.F90                         \

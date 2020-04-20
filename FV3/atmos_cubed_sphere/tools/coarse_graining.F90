@@ -8,7 +8,9 @@ module coarse_graining_mod
   implicit none
   private
 
-  public :: block_sum, get_fine_array_bounds, get_coarse_array_bounds, coarse_graining_init, weighted_block_average, MODEL_LEVEL
+  public :: block_sum, compute_mass_weights, get_fine_array_bounds, &
+       get_coarse_array_bounds, coarse_graining_init, weighted_block_average, &
+       weighted_block_edge_average_x, weighted_block_edge_average_y, MODEL_LEVEL
 
   interface block_sum
      module procedure block_sum_2d
@@ -17,7 +19,18 @@ module coarse_graining_mod
   interface weighted_block_average
      module procedure weighted_block_average_2d
      module procedure weighted_block_average_3d_field_2d_weights
+     module procedure weighted_block_average_3d_field_3d_weights
   end interface weighted_block_average
+
+  interface weighted_block_edge_average_x
+     module procedure weighted_block_edge_average_x_2d
+     module procedure weighted_block_edge_average_x_3d_field_2d_weights
+  end interface weighted_block_edge_average_x
+
+  interface weighted_block_edge_average_y
+     module procedure weighted_block_edge_average_y_2d
+     module procedure weighted_block_edge_average_y_3d_field_2d_weights
+  end interface weighted_block_edge_average_y
   
   ! Global variables for the module, initialized in coarse_graining_init
   type(domain2d) :: coarse_domain
@@ -129,6 +142,18 @@ contains
     js_coarse = coarse_bd%js_coarse
     je_coarse = coarse_bd%je_coarse
   end subroutine get_coarse_array_bounds
+
+  subroutine compute_mass_weights(area, delp, mass)
+    real, intent(in) :: area(is:ie,js:je)
+    real, intent(in) :: delp(is:ie,js:je,1:npz)
+    real, intent(out) :: mass(is:ie,js:je,1:npz)
+
+    integer :: k
+
+    do k = 1, npz
+       mass(:,:,k) = area * delp(:,:,k)
+    enddo
+  end subroutine compute_mass_weights
   
   subroutine block_sum_2d(fine, coarse)
     real, intent(in) :: fine(is:ie,js:je)
@@ -172,6 +197,107 @@ contains
        call weighted_block_average_2d(weights, fine(is:ie,js:je,k), coarse(is_coarse:ie_coarse,js_coarse:je_coarse,k))
     enddo
   end subroutine weighted_block_average_3d_field_2d_weights
+
+  subroutine weighted_block_average_3d_field_3d_weights(weights, fine, coarse)
+    real, intent(in) :: weights(is:ie,js:je,1:npz), fine(is:ie,js:je,1:npz)
+    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz)
+
+    integer :: k
+
+    do k = 1, npz
+       call weighted_block_average_2d(weights(is:ie,js:je,k), fine(is:ie,js:je,k), coarse(is_coarse:ie_coarse,js_coarse:je_coarse,k))
+    enddo
+  end subroutine weighted_block_average_3d_field_3d_weights
+
+  subroutine block_edge_sum_x_2d(fine, coarse)
+    real, intent(in) :: fine(is:ie,js:je+1)
+    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse+1)
+
+    integer :: i, j, i_coarse, j_coarse, offset
+
+    do i = is, ie, coarsening_factor
+       i_coarse = (i - 1) / coarsening_factor + 1
+       do j = js, je + 1, coarsening_factor
+          j_coarse = (j - 1) / coarsening_factor + 1
+          coarse(i_coarse,j_coarse) = sum(fine(i:i+offset,j))
+       enddo
+    enddo
+  end subroutine block_edge_sum_x_2d
+
+  subroutine weighted_block_edge_average_x_2d(weights, fine, coarse)
+    real, intent(in) :: weights(is:ie,js:je+1)
+    real, intent(in) :: fine(is:ie,js:je+1)
+    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse+1)
+
+    real, allocatable :: weighted_fine(:,:), weighted_block_sum(:,:), block_sum_weights(:,:)
+
+    allocate(weighted_fine(is:ie,js:je+1))
+    allocate(weighted_block_sum(is_coarse:ie_coarse,js_coarse:je_coarse+1))
+    allocate(block_sum_weights(is_coarse:ie_coarse,js_coarse:je_coarse+1))
+
+    weighted_fine = weights * fine
+    call block_edge_sum_x_2d(weighted_fine, weighted_block_sum)
+    call block_edge_sum_x_2d(weights, block_sum_weights)
+    coarse = weighted_block_sum / block_sum_weights
+  end subroutine weighted_block_edge_average_x_2d
+
+  subroutine weighted_block_edge_average_x_3d_field_2d_weights(weights, fine, coarse)
+    real, intent(in) :: weights(is:ie,js:je+1)
+    real, intent(in) :: fine(is:ie,js:je+1,1:npz)
+    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse+1,1:npz)
+
+    integer :: k
+
+    do k = 1, npz
+       call weighted_block_edge_average_x_2d(weights, fine(is:ie,js:je+1,k), &
+            coarse(is_coarse:ie_coarse,js_coarse:je_coarse+1,k))
+    enddo
+  end subroutine weighted_block_edge_average_x_3d_field_2d_weights
+
+  subroutine block_edge_sum_y_2d(fine, coarse)
+    real, intent(in) :: fine(is:ie+1,js:je)
+    real, intent(out) :: coarse(is_coarse:ie_coarse+1,js_coarse:je_coarse)
+
+    integer :: i, j, i_coarse, j_coarse, offset
+
+    do i = is, ie + 1, coarsening_factor
+       i_coarse = (i - 1) / coarsening_factor + 1
+       do j = js, je, coarsening_factor
+          j_coarse = (j - 1) / coarsening_factor + 1
+          coarse(i_coarse,j_coarse) = sum(fine(i,j:j+offset))
+       enddo
+    enddo
+  end subroutine block_edge_sum_y_2d
+
+  subroutine weighted_block_edge_average_y_2d(weights, fine, coarse)
+    real, intent(in) :: weights(is:ie+1,js:je)
+    real, intent(in) :: fine(is:ie+1,js:je)
+    real, intent(out) :: coarse(is_coarse:ie_coarse+1,js_coarse:je_coarse)
+
+    real, allocatable :: weighted_fine(:,:), weighted_block_sum(:,:), block_sum_weights(:,:)
+
+    allocate(weighted_fine(is:ie+1,js:je))
+    allocate(weighted_block_sum(is_coarse:ie_coarse+1,js_coarse:je_coarse))
+    allocate(block_sum_weights(is_coarse:ie_coarse+1,js_coarse:je_coarse))
+
+    weighted_fine = weights * fine
+    call block_edge_sum_y_2d(weighted_fine, weighted_block_sum)
+    call block_edge_sum_y_2d(weights, block_sum_weights)
+    coarse = weighted_block_sum / block_sum_weights
+  end subroutine weighted_block_edge_average_y_2d
+
+  subroutine weighted_block_edge_average_y_3d_field_2d_weights(weights, fine, coarse)
+    real, intent(in) :: weights(is:ie+1,js:je)
+    real, intent(in) :: fine(is:ie+1,js:je,1:npz)
+    real, intent(out) :: coarse(is_coarse:ie_coarse+1,js_coarse:je_coarse,1:npz)
+
+    integer :: k
+
+    do k = 1, npz
+       call weighted_block_edge_average_y_2d(weights, fine(is:ie+1,js:je,k), &
+            coarse(is_coarse:ie_coarse+1,js_coarse:je_coarse,k))
+    enddo
+  end subroutine weighted_block_edge_average_y_3d_field_2d_weights
 
   ! This subroutine is copied from FMS/test_fms/horiz_interp/test2_horiz_interp.F90.
   ! domain_decomp in fv_mp_mod.F90 does something similar, but it does a

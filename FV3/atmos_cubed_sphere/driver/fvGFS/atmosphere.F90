@@ -197,6 +197,7 @@ use fv_regional_mod,    only: start_regional_restart, read_new_bc_data, &
 use mpp_domains_mod,    only:  mpp_get_data_domain, mpp_get_compute_domain
 use coarse_graining_mod, only: coarse_graining_init
 use coarse_grained_diagnostics_mod, only: fv_coarse_diag_init, fv_coarse_diag
+use coarse_grained_restart_files_mod, only: fv_coarse_restart_init
 !$ser verbatim use k_checkpoint, only: set_nz
 
 implicit none
@@ -436,6 +437,11 @@ contains
    if (Atm(mytile)%coarse_graining%do_coarse_graining) then
       call fv_coarse_diag_init(Atm(mytile)%bd, Time, Atm(mytile)%atmos_axes(3), &
            Atm(mytile)%atmos_axes(4), Atm(mytile)%coarse_graining)
+      call fv_coarse_restart_init(mytile, Atm(mytile)%npz, Atm(mytile)%flagstruct%nt_prog, &
+           Atm(mytile)%flagstruct%nt_phys, Atm(mytile)%flagstruct%hydrostatic, &
+           Atm(mytile)%flagstruct%hybrid_z, Atm(mytile)%flagstruct%agrid_vel_rst, &
+           Atm(mytile)%flagstruct%fv_land, Atm(mytile)%coarse_graining%domain, &
+           Atm(mytile)%coarse_graining%bd, Atm(mytile)%coarse_graining%restart)
    endif
 !---------- reference profile -----------
     ps1 = 101325.
