@@ -441,7 +441,8 @@ contains
            Atm(mytile)%flagstruct%nt_phys, Atm(mytile)%flagstruct%hydrostatic, &
            Atm(mytile)%flagstruct%hybrid_z, Atm(mytile)%flagstruct%agrid_vel_rst, &
            Atm(mytile)%flagstruct%fv_land, Atm(mytile)%coarse_graining%domain, &
-           Atm(mytile)%coarse_graining%bd, Atm(mytile)%coarse_graining%restart)
+           Atm(mytile)%bd, Atm(mytile)%coarse_graining%bd, &
+           Atm(mytile)%coarse_graining%restart)
    endif
 !---------- reference profile -----------
     ps1 = 101325.

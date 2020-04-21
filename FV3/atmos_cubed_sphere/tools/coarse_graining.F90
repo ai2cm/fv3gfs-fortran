@@ -210,17 +210,16 @@ contains
   end subroutine weighted_block_average_3d_field_3d_weights
 
   subroutine block_edge_sum_x_2d(fine, coarse)
-    real, intent(in) :: fine(is:ie,js:je+1)
+    real, intent(in) :: fine(is:ie,js_coarse:je_coarse+1)
     real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse+1)
 
-    integer :: i, j, i_coarse, j_coarse, offset
+    integer :: i, i_coarse, j_coarse, offset
 
     offset = coarsening_factor - 1
     do i = is, ie, coarsening_factor
        i_coarse = (i - 1) / coarsening_factor + 1
-       do j = js, je + 1, coarsening_factor
-          j_coarse = (j - 1) / coarsening_factor + 1
-          coarse(i_coarse,j_coarse) = sum(fine(i:i+offset,j))
+       do j_coarse = js_coarse, je_coarse + 1
+          coarse(i_coarse,j_coarse) = sum(fine(i:i+offset,j_coarse))
        enddo
     enddo
   end subroutine block_edge_sum_x_2d
@@ -232,13 +231,13 @@ contains
 
     real, allocatable :: weighted_fine(:,:), weighted_block_sum(:,:), block_sum_weights(:,:)
 
-    allocate(weighted_fine(is:ie,js:je+1))
+    allocate(weighted_fine(is:ie,js_coarse:je_coarse+1))
     allocate(weighted_block_sum(is_coarse:ie_coarse,js_coarse:je_coarse+1))
     allocate(block_sum_weights(is_coarse:ie_coarse,js_coarse:je_coarse+1))
 
-    weighted_fine = weights * fine
+    weighted_fine = weights(is:ie,js:je+1:coarsening_factor) * fine(is:ie,js:je+1:coarsening_factor)
     call block_edge_sum_x_2d(weighted_fine, weighted_block_sum)
-    call block_edge_sum_x_2d(weights, block_sum_weights)
+    call block_edge_sum_x_2d(weights(is:ie,js:je+1:coarsening_factor), block_sum_weights)
     coarse = weighted_block_sum / block_sum_weights
   end subroutine weighted_block_edge_average_x_2d
 
@@ -256,17 +255,16 @@ contains
   end subroutine weighted_block_edge_average_x_3d_field_2d_weights
 
   subroutine block_edge_sum_y_2d(fine, coarse)
-    real, intent(in) :: fine(is:ie+1,js:je)
+    real, intent(in) :: fine(is_coarse:ie_coarse+1,js:je)
     real, intent(out) :: coarse(is_coarse:ie_coarse+1,js_coarse:je_coarse)
 
-    integer :: i, j, i_coarse, j_coarse, offset
+    integer :: j, i_coarse, j_coarse, offset
 
     offset = coarsening_factor - 1
-    do i = is, ie + 1, coarsening_factor
-       i_coarse = (i - 1) / coarsening_factor + 1
+    do i_coarse = is_coarse, ie_coarse + 1
        do j = js, je, coarsening_factor
           j_coarse = (j - 1) / coarsening_factor + 1
-          coarse(i_coarse,j_coarse) = sum(fine(i,j:j+offset))
+          coarse(i_coarse,j_coarse) = sum(fine(i_coarse,j:j+offset))
        enddo
     enddo
   end subroutine block_edge_sum_y_2d
@@ -278,13 +276,13 @@ contains
 
     real, allocatable :: weighted_fine(:,:), weighted_block_sum(:,:), block_sum_weights(:,:)
 
-    allocate(weighted_fine(is:ie+1,js:je))
+    allocate(weighted_fine(is_coarse:ie_coarse+1,js:je))
     allocate(weighted_block_sum(is_coarse:ie_coarse+1,js_coarse:je_coarse))
     allocate(block_sum_weights(is_coarse:ie_coarse+1,js_coarse:je_coarse))
 
-    weighted_fine = weights * fine
+    weighted_fine = weights(is:ie+1:coarsening_factor,js:je) * fine(is:ie+1:coarsening_factor,js:je)
     call block_edge_sum_y_2d(weighted_fine, weighted_block_sum)
-    call block_edge_sum_y_2d(weights, block_sum_weights)
+    call block_edge_sum_y_2d(weights(is:ie+1:coarsening_factor,js:je), block_sum_weights)
     coarse = weighted_block_sum / block_sum_weights
   end subroutine weighted_block_edge_average_y_2d
 

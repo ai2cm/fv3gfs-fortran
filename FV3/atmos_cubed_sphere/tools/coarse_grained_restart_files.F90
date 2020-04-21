@@ -5,7 +5,7 @@ module coarse_grained_restart_files_mod
        weighted_block_edge_average_x, weighted_block_edge_average_y
   use field_manager_mod, only: MODEL_ATMOS
   use fms_io_mod,      only: register_restart_field, save_restart
-  use fv_arrays_mod, only: coarse_restart_type, fv_atmos_type, fv_coarse_grid_bounds_type
+  use fv_arrays_mod, only: coarse_restart_type, fv_atmos_type, fv_coarse_grid_bounds_type, fv_grid_bounds_type
   use mpp_domains_mod, only: domain2d, EAST, NORTH
   use tracer_manager_mod, only: get_tracer_names, set_tracer_profile
 
@@ -14,24 +14,34 @@ module coarse_grained_restart_files_mod
 
   public :: deallocate_coarse_restart_type, fv_coarse_restart_init, fv_io_write_restart_coarse
 
+  ! Global variables for this module, initialized in fv_coarse_restart_init
+  integer :: is, ie, js, je, npz
+  integer :: is_coarse, ie_coarse, js_coarse, je_coarse
+  integer :: n_prognostic_tracers, n_diagnostic_tracers, n_tracers
+
 contains
 
-  subroutine fv_coarse_restart_init(tile_count, npz, n_prognostic_tracers, &
-       n_diagnostic_tracers, hydrostatic, hybrid_z, agrid_vel_rst, fv_land, &
-       coarse_domain, coarse_bd, restart)
-    integer, intent(in) :: tile_count, npz, n_prognostic_tracers, n_diagnostic_tracers
+  subroutine fv_coarse_restart_init(tile_count, nz, nt_prog, &
+       nt_phys, hydrostatic, hybrid_z, agrid_vel_rst, fv_land, &
+       coarse_domain, fine_bd, coarse_bd, restart)
+    integer, intent(in) :: tile_count, nz, nt_prog, nt_phys
     logical, intent(in) :: hydrostatic, hybrid_z, agrid_vel_rst, fv_land
     type(domain2d), intent(inout) :: coarse_domain
+    type(fv_grid_bounds_type), intent(in) :: fine_bd
     type(fv_coarse_grid_bounds_type), intent(in) :: coarse_bd
     type(coarse_restart_type), intent(inout) :: restart
 
-    integer :: n_tracers
+    call get_fine_array_bounds(fine_bd, is, ie, js, je)
+    call get_coarse_array_bounds(coarse_bd, is_coarse, ie_coarse, js_coarse, je_coarse)
+    n_prognostic_tracers = nt_prog
+    n_diagnostic_tracers = nt_phys
+    n_tracers = nt_prog + nt_phys
+    npz = nz
 
-    n_tracers = n_prognostic_tracers + n_diagnostic_tracers
-    call allocate_coarse_restart_type(npz, n_prognostic_tracers, n_tracers, &
-         coarse_bd, hydrostatic, hybrid_z, agrid_vel_rst, fv_land, restart)
-    call register_coarse_restart_files(tile_count, n_prognostic_tracers, &
-         n_tracers, hydrostatic, hybrid_z, agrid_vel_rst, fv_land, &
+    call allocate_coarse_restart_type(hydrostatic, hybrid_z, &
+         agrid_vel_rst, fv_land, restart)
+    call register_coarse_restart_files(tile_count, hydrostatic, &
+         hybrid_z, agrid_vel_rst, fv_land, &
          coarse_domain, restart)
   end subroutine fv_coarse_restart_init
 
@@ -57,16 +67,9 @@ contains
     enddo
   end subroutine fv_io_write_restart_coarse
 
-  subroutine allocate_coarse_restart_type(npz, n_prognostic_tracers, n_tracers, &
-       coarse_bd, hydrostatic, hybrid_z, agrid_vel_rst, fv_land, restart)
-    integer, intent(in) :: npz, n_prognostic_tracers, n_tracers
-    type(fv_coarse_grid_bounds_type), intent(in) :: coarse_bd
+  subroutine allocate_coarse_restart_type(hydrostatic, hybrid_z, agrid_vel_rst, fv_land, restart)
     logical, intent(in) :: hydrostatic, hybrid_z, agrid_vel_rst, fv_land
     type(coarse_restart_type), intent(inout) :: restart
-
-    integer :: is_coarse, ie_coarse, js_coarse, je_coarse
-
-    call get_coarse_array_bounds(coarse_bd, is_coarse, ie_coarse, js_coarse, je_coarse)
 
     allocate(restart%u(is_coarse:ie_coarse,js_coarse:je_coarse+1,npz))
     allocate(restart%v(is_coarse:ie_coarse+1,js_coarse:je_coarse,npz))
@@ -116,16 +119,15 @@ contains
     if (allocated(restart%ze0)) deallocate(restart%ze0)
   end subroutine deallocate_coarse_restart_type
 
-  subroutine register_coarse_restart_files(tile_count, n_prognostic_tracers, &
-       n_tracers, hydrostatic, &
+  subroutine register_coarse_restart_files(tile_count, hydrostatic, &
        hybrid_z, agrid_vel_rst, fv_land, coarse_domain, restart)
-    integer, intent(in) :: tile_count, n_prognostic_tracers, n_tracers
+    integer, intent(in) :: tile_count
     logical, intent(in) :: hydrostatic, hybrid_z, agrid_vel_rst, fv_land
     type(domain2d), intent(in) :: coarse_domain
     type(coarse_restart_type), intent(inout) :: restart
 
     call register_fv_core_coarse(tile_count, hydrostatic, hybrid_z, agrid_vel_rst, coarse_domain, restart)
-    call register_fv_tracer_coarse(tile_count, n_prognostic_tracers, n_tracers, coarse_domain, restart)
+    call register_fv_tracer_coarse(tile_count, coarse_domain, restart)
     call register_fv_srf_wnd_coarse(tile_count, coarse_domain, restart)
     if (fv_land) then
        call register_mg_drag_coarse(tile_count, coarse_domain, restart)
@@ -176,9 +178,8 @@ contains
     endif
   end subroutine register_fv_core_coarse
 
-  subroutine register_fv_tracer_coarse(tile_count, n_prognostic_tracers, n_tracers, &
-         coarse_domain, restart)
-    integer, intent(in) :: tile_count, n_prognostic_tracers, n_tracers
+  subroutine register_fv_tracer_coarse(tile_count, coarse_domain, restart)
+    integer, intent(in) :: tile_count
     type(domain2d), intent(in) :: coarse_domain
     type(coarse_restart_type), intent(inout) :: restart
 
@@ -263,11 +264,8 @@ contains
   subroutine coarse_grain_restart_data_on_model_levels(Atm)
     type(fv_atmos_type), intent(inout) :: Atm
 
-    integer :: is, ie, js, je, npz
     real, allocatable :: mass(:,:,:)
 
-    call get_fine_array_bounds(Atm%bd, is, ie, js, je)
-    npz = Atm%npz
     allocate(mass(is:ie,js:je,1:npz))
     call compute_mass_weights(Atm%gridstruct%area(is:ie,js:je), Atm%delp(is:ie,js:je,1:npz), mass)
 
@@ -282,12 +280,7 @@ contains
 
   subroutine coarse_grain_fv_core_restart_data_on_model_levels(Atm, mass)
     type(fv_atmos_type), intent(inout) :: Atm
-    real, intent(in) :: mass(Atm%bd%is:Atm%bd%ie,Atm%bd%js:Atm%bd%je,1:Atm%npz)
-
-    integer :: is, ie, js, je, npz
-
-    call get_fine_array_bounds(Atm%bd, is, ie, js, je)
-    npz = Atm%npz
+    real, intent(in) :: mass(is:ie,js:je,1:npz)
 
     call weighted_block_edge_average_x(Atm%gridstruct%dx(is:ie,js:je+1), &
          Atm%u(is:ie,js:je+1,1:npz), Atm%coarse_graining%restart%u)
@@ -322,19 +315,10 @@ contains
 
   subroutine coarse_grain_fv_tracer_restart_data_on_model_levels(Atm, mass)
     type(fv_atmos_type), intent(inout) :: Atm
-    real, intent(in) :: mass(Atm%bd%is:Atm%bd%ie,Atm%bd%js:Atm%bd%je,1:Atm%npz)
+    real, intent(in) :: mass(is:ie,js:je,1:npz)
 
     character(len=64) :: tracer_name
-    integer :: is, ie, js, je, npz, n_prognostic_tracers, n_diagnostic_tracers, n_tracers
-    integer :: is_coarse, ie_coarse, js_coarse, je_coarse
     integer :: n_tracer
-
-    call get_fine_array_bounds(Atm%bd, is, ie, js, je)
-    call get_coarse_array_bounds(Atm%coarse_graining%bd, is_coarse, ie_coarse, js_coarse, je_coarse)
-    npz = Atm%npz
-    n_prognostic_tracers = Atm%flagstruct%nt_prog
-    n_diagnostic_tracers = Atm%flagstruct%nt_phys
-    n_tracers = n_prognostic_tracers + n_diagnostic_tracers
 
     do n_tracer = 1, n_prognostic_tracers
        call get_tracer_names(MODEL_ATMOS, n_tracer, tracer_name)
@@ -359,9 +343,6 @@ contains
   subroutine coarse_grain_fv_srf_wnd_restart_data_on_model_levels(Atm)
     type(fv_atmos_type), intent(inout) :: Atm
 
-    integer :: is, ie, js, je
-
-    call get_fine_array_bounds(Atm%bd, is, ie, js, je)
     call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), &
          Atm%u_srf(is:ie,js:je), Atm%coarse_graining%restart%u_srf)
     call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), &
@@ -371,9 +352,6 @@ contains
   subroutine coarse_grain_mg_drag_restart_data_on_model_levels(Atm)
     type(fv_atmos_type), intent(inout) :: Atm
 
-    integer :: is, ie, js, je
-
-    call get_fine_array_bounds(Atm%bd, is, ie, js, je)
     call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), &
          Atm%sgh(is:ie,js:je), Atm%coarse_graining%restart%sgh)
   end subroutine coarse_grain_mg_drag_restart_data_on_model_levels
@@ -381,9 +359,6 @@ contains
   subroutine coarse_grain_fv_land_restart_data_on_model_levels(Atm)
     type(fv_atmos_type), intent(inout) :: Atm
 
-    integer :: is, ie, js, je
-
-    call get_fine_array_bounds(Atm%bd, is, ie, js, je)
     call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), &
          Atm%oro(is:ie,js:je), Atm%coarse_graining%restart%oro)
   end subroutine coarse_grain_fv_land_restart_data_on_model_levels
