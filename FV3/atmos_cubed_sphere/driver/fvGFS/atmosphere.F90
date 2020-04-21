@@ -340,7 +340,8 @@ contains
 
    if (Atm(mytile)%flagstruct%do_coarse_graining) then
       call coarse_graining_init(Atm(mytile)%flagstruct%npx, Atm(mytile)%npz, &
-           Atm(mytile)%layout, Atm(mytile)%bd, Atm(mytile)%coarse_graining)
+           Atm(mytile)%layout, Atm(mytile)%bd, Atm(mytile)%flagstruct%write_only_coarse_intermediate_restarts, &
+           Atm(mytile)%coarse_graining)
    endif
 
    Atm(mytile)%Time_init = Time_init

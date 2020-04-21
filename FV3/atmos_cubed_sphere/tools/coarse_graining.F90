@@ -48,11 +48,13 @@ module coarse_graining_mod
 
 contains
 
-  subroutine coarse_graining_init(npx, atm_npz, layout, bd, coarse_graining)
+  subroutine coarse_graining_init(npx, atm_npz, layout, bd, &
+       write_only_coarse_intermediate_restarts, coarse_graining)
     integer, intent(in) :: npx
     integer, intent(in) :: atm_npz
     integer, intent(in) :: layout(2)
     type(fv_grid_bounds_type), intent(in) :: bd
+    logical, intent(in) :: write_only_coarse_intermediate_restarts
     type(fv_coarse_graining_type), intent(inout) :: coarse_graining
 
     character(len=256) :: error_message
@@ -62,6 +64,7 @@ contains
     read(input_nml_file, coarse_graining_nml, iostat=iostat)
     error_code = check_nml_error(iostat, 'coarse_graining_nml')
     coarse_graining%do_coarse_graining = .true.
+    coarse_graining%write_only_coarse_intermediate_restarts = write_only_coarse_intermediate_restarts
 
     call assert_valid_strategy(strategy)
     call compute_nx_coarse(npx, coarsening_factor, nx_coarse)

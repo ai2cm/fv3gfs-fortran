@@ -1211,6 +1211,7 @@ module fv_arrays_mod
      integer :: id_phalf  ! diagnostic vertical axis id for data on z-edges
      character(len=64) :: strategy  ! Current valid values are: 'model_level'
      logical :: do_coarse_graining = .false.
+     logical :: write_only_coarse_intermediate_restarts = .false.
      type(fv_coarse_diag_type) :: idiag  ! container for coarse diagnostic ids
      type(coarse_restart_type) :: restart  ! container for coarse restart data
 
