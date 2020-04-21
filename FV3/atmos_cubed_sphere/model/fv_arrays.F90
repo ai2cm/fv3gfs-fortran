@@ -1024,7 +1024,7 @@ module fv_arrays_mod
 
    logical :: do_coarse_graining = .false.  ! Whether to enable online coarse-graining of restart files and diagnostics
    logical :: write_only_coarse_intermediate_restarts = .false.  ! Whether to write only coarse intermediate restart files (if do_coarse_graining is .true.)
-   !integer, pointer :: test_case
+  !integer, pointer :: test_case
   !real,    pointer :: alpha
   end type fv_flags_type
 
