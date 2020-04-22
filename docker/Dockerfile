@@ -70,7 +70,7 @@ ENV CC=mpicc
 ENV FC=mpifort
 ENV LDFLAGS="-L/usr/lib"
 ENV LOG_DRIVER_FLAGS="--comments"
-ENV CPPFLAGS="-I/usr/include -Duse_LARGEFILE -DMAXFIELDMETHODS_=500"
+ENV CPPFLAGS="-I/usr/include -Duse_LARGEFILE -DMAXFIELDMETHODS_=500 -DGFS_PHYS"
 ENV FCFLAGS="-fcray-pointer -Waliasing -ffree-line-length-none -fno-range-check -fdefault-real-8 -fdefault-double-8 -fopenmp"
 
 COPY FMS /FMS
