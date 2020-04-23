@@ -306,9 +306,9 @@ contains
          Atm%phis(is:ie,js:je), Atm%coarse_graining%restart%phis)
 
     if (Atm%flagstruct%agrid_vel_rst) then
-       call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), &
+       call weighted_block_average(mass(is:ie,js:je,1:npz), &
             Atm%ua(is:ie,js:je,1:npz), Atm%coarse_graining%restart%ua)
-       call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), &
+       call weighted_block_average(mass(is:ie,js:je,1:npz), &
             Atm%va(is:ie,js:je,1:npz), Atm%coarse_graining%restart%va)
     endif
   end subroutine coarse_grain_fv_core_restart_data_on_model_levels
