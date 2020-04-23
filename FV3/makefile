@@ -78,7 +78,7 @@ libs_no_dycore: fms_check
 	$(MAKE) -C io                    $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 
 $(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a fms/libfms.a 
-	$(LD) -cxxlib -o $@ $^ $(NCEPLIBS) -L$(ESMF_DIR)/lib/libO/Unicos.intel.64.mpi.default -lesmf $(LDFLAGS)
+	$(LD) -cxxlib -o $@ $^ $(NCEPLIBS) -L$(ESMF_DIR)/lib -lesmf $(LDFLAGS)
 endif
 
 $(FV3CAP_LIB): atmos_model.o module_fv3_config.o module_fcst_grid_comp.o time_utils.o fv3_cap.o

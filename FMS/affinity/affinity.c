@@ -28,6 +28,13 @@
 #include <sys/syscall.h>
 
 
+static pid_t gettid1(void)
+{
+#ifndef __APPLE__
+  return syscall(SYS_gettid);
+#endif
+}
+
 /*
  * Returns this thread's CPU affinity, if bound to a single core,
  * or else -1.
@@ -38,8 +45,8 @@ int get_cpu_affinity(void)
   cpu_set_t coremask;           /* core affinity mask */
 
   CPU_ZERO(&coremask);
-  if (sched_getaffinity(gettid(),sizeof(cpu_set_t),&coremask) != 0) {
-    fprintf(stderr,"Unable to get thread %d affinity. %s\n",gettid(),strerror(errno));
+  if (sched_getaffinity(gettid1(),sizeof(cpu_set_t),&coremask) != 0) {
+    fprintf(stderr,"Unable to get thread %d affinity. %s\n",gettid1(),strerror(errno));
   }
 
   int cpu;
@@ -65,8 +72,8 @@ int get_cpuset(int fsz, int *output, int pe, _Bool debug)
   cpu_set_t coremask; /* core affinity mask */
 
   CPU_ZERO(&coremask);
-  if (sched_getaffinity(gettid(),sizeof(cpu_set_t),&coremask) != 0) {
-    fprintf(stderr,"Unable to get thread %d affinity. %s\n",gettid(),strerror(errno));
+  if (sched_getaffinity(gettid1(),sizeof(cpu_set_t),&coremask) != 0) {
+    fprintf(stderr,"Unable to get thread %d affinity. %s\n",gettid1(),strerror(errno));
   }
 
   int  cpu;
@@ -109,7 +116,7 @@ int set_cpu_affinity(int cpu)
 
   CPU_ZERO(&coremask);
   CPU_SET(cpu,&coremask);
-  if (sched_setaffinity(gettid(),sizeof(cpu_set_t),&coremask) != 0) {
+  if (sched_setaffinity(gettid1(),sizeof(cpu_set_t),&coremask) != 0) {
     return -1;
   }
 #endif
