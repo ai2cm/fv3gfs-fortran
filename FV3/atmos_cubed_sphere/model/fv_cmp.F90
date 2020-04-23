@@ -393,9 +393,15 @@ subroutine fv_sat_adj (mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te, te0
         ! -----------------------------------------------------------------------
         ! condensation / evaporation between water vapor and cloud water
         ! -----------------------------------------------------------------------
-        
+        !$ser verbatim if (j == js) then
+        !$ser savepoint WQS2-In
+        !$ser data table=table table2=table2 tablew=tablew des2=des2 desw=desw wqsat=wqsat dq2dt=dq2dt 
+        !$ser verbatim endif
         call wqs2_vect (is, ie, pt1, den, wqsat, dq2dt)
-        
+        !$ser verbatim if (j == js) then
+        !$ser savepoint WQS2-Out
+        !$ser data wqsat=wqsat dq2dt=dq2dt
+        !$ser verbatim endif
         adj_fac = sat_adj0
         do i = is, ie
             dq0 = (qv (i, j) - wqsat (i)) / (1. + tcp3 (i) * dq2dt (i))
@@ -1046,7 +1052,7 @@ subroutine qs_init (kmp)
     allocate (tablew (length))
     allocate (des2 (length))
     allocate (desw (length))
-    !$ser savepoint QCInit-In
+    !$ser savepoint QSInit-In
     !$ser data table=table table2=table2 tablew=tablew des2=des2 desw=desw
     call qs_table (length)
     call qs_table2 (length)
@@ -1058,7 +1064,7 @@ subroutine qs_init (kmp)
     enddo
     des2 (length) = des2 (length - 1)
     desw (length) = desw (length - 1)
-    !$ser savepoint QCInit-Out
+    !$ser savepoint QSInit-Out
     !$ser data table=table table2=table2 tablew=tablew des2=des2 desw=desw 
     mp_initialized = .true.
     
