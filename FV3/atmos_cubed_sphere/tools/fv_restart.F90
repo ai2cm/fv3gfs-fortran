@@ -1425,8 +1425,10 @@ contains
 
     if (all(Atm%flagstruct%write_coarse_restart_files)) then
        call fv_io_write_restart_coarse(Atm, grids_on_this_pe, timestamp)
-    endif
-    if (all(.not. Atm%flagstruct%write_only_coarse_intermediate_restarts)) then
+       if (all(.not. Atm%flagstruct%write_only_coarse_intermediate_restarts)) then
+          call fv_io_write_restart(Atm, grids_on_this_pe, timestamp)
+       endif
+    else
        call fv_io_write_restart(Atm, grids_on_this_pe, timestamp)
     endif
     do n=1,size(Atm)
