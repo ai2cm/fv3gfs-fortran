@@ -1492,7 +1492,7 @@ endif        ! end last_step check
       !$ser data qs_column=qs q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:) dp1_2d=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord
       !$ser verbatim endif
       
-      call  cs_profile( qs, q4, dp1, km, i1, i2, iv, kord )
+      call  cs_profile( qs, q4, dp1, km, i1, i2, iv, kord, j )
       
       !$ser verbatim if(j == jbeg + 3  .and. mod(i2-i1+1, 2)==1) then 
       !$ser savepoint CS_Profile_2d-Out
@@ -2254,7 +2254,7 @@ endif        ! end last_step check
 
  end subroutine scalar_profile
 
- subroutine cs_profile(qs, a4, delp, km, i1, i2, iv, kord)
+ subroutine cs_profile(qs, a4, delp, km, i1, i2, iv, kord, j)
 ! Optimized vertical profile reconstruction:
 ! Latest: Apr 2008 S.-J. Lin, NOAA/GFDL
  integer, intent(in):: i1, i2
@@ -2266,6 +2266,7 @@ endif        ! end last_step check
  real, intent(in)   ::   qs(i1:i2)
  real, intent(in)   :: delp(i1:i2,km)     !< layer pressure thickness
  real, intent(inout):: a4(4,i1:i2,km)     !< Interpolated values
+ integer, intent(in), optional :: j
 !-----------------------------------------------------------------------
  logical, dimension(i1:i2,km):: extm, ext5, ext6
  real  gam(i1:i2,km)
@@ -2327,7 +2328,10 @@ endif        ! end last_step check
         q(i,k) = q(i,k) - gam(i,k)*q(i,k+1)
      enddo
   enddo
- endif
+endif
+  !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==1) then 
+  !$ser data set_gam=gam set_q=q 
+  !$ser verbatim endif
 !----- Perfectly linear scheme --------------------------------
  if ( abs(kord) > 16 ) then
   do k=1,km
@@ -2411,7 +2415,9 @@ endif        ! end last_step check
        enddo
      endif
   enddo
-
+  !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==1) then 
+  !$ser data b_q=q b_gam=gam b_a4=a4 b_extm=extm b_ext5=ext5 b_ext6=ext6 
+  !$ser verbatim endif
 !---------------------------
 ! Apply subgrid constraints:
 !---------------------------
@@ -2445,6 +2451,7 @@ endif        ! end last_step check
    do i=i1,i2
       a4(4,i,2) = 3.*(2.*a4(1,i,2) - (a4(2,i,2)+a4(3,i,2)))
    enddo
+   
    call cs_limiters(im, extm(i1,2), a4(1,i1,2), 2)
 
 !-------------------------------------
