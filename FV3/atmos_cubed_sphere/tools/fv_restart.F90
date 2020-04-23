@@ -1423,7 +1423,7 @@ contains
     logical, intent(IN) :: grids_on_this_pe(:)
     integer n
 
-    if (all(Atm%flagstruct%do_coarse_graining)) then
+    if (all(Atm%flagstruct%write_coarse_restart_files)) then
        call fv_io_write_restart_coarse(Atm, grids_on_this_pe, timestamp)
     endif
     if (all(.not. Atm%flagstruct%write_only_coarse_intermediate_restarts)) then
@@ -1522,7 +1522,7 @@ contains
 
    enddo
 
-   if (all(Atm%flagstruct%do_coarse_graining)) then
+   if (all(Atm%flagstruct%write_coarse_restart_files)) then
       call fv_io_write_restart_coarse(Atm, grids_on_this_pe)
    endif
    call fv_io_write_restart(Atm, grids_on_this_pe)

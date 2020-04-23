@@ -336,7 +336,8 @@ module fv_control_mod
   real, pointer :: s_weight, update_blend
 
   integer, pointer :: layout(:), io_layout(:)
-  logical, pointer :: do_coarse_graining
+  logical, pointer :: write_coarse_restart_files
+  logical, pointer :: write_coarse_diagnostics
   logical, pointer :: write_only_coarse_intermediate_restarts
 
    integer :: ntilesMe                ! Number of tiles on this process =1 for now
@@ -674,7 +675,8 @@ module fv_control_mod
                          refinement, nestbctype, nestupdate, nsponge, s_weight, &
                          ioffset, joffset, check_negative, nudge_ic, halo_update_type, gfs_phil, agrid_vel_rst,     &
                          do_uni_zfull, adj_mass_vmr, fac_n_spl, fhouri, &
-                         regional, bc_update_interval, do_coarse_graining, write_only_coarse_intermediate_restarts
+                         regional, bc_update_interval,&
+                         write_coarse_restart_files, write_coarse_diagnostics, write_only_coarse_intermediate_restarts
 
    namelist /test_case_nml/test_case, bubble_do, alpha, nsolitons, soliton_Umax, soliton_size
 #ifdef MULTI_GASES
@@ -1345,7 +1347,8 @@ module fv_control_mod
 
      layout                        => Atm%layout
      io_layout                     => Atm%io_layout
-     do_coarse_graining            => Atm%flagstruct%do_coarse_graining
+     write_coarse_restart_files    => Atm%flagstruct%write_coarse_restart_files
+     write_coarse_diagnostics      => Atm%flagstruct%write_coarse_diagnostics
      write_only_coarse_intermediate_restarts => Atm%flagstruct%write_only_coarse_intermediate_restarts
   end subroutine setup_pointers
 

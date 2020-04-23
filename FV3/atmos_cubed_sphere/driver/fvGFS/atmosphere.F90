@@ -338,9 +338,11 @@ contains
       if (grids_on_this_pe(n)) mytile = n
    enddo
 
-   if (Atm(mytile)%flagstruct%do_coarse_graining) then
+   if (Atm(mytile)%flagstruct%write_coarse_restart_files .or. Atm(mytile)%flagstruct%write_coarse_diagnostics) then
       call coarse_graining_init(Atm(mytile)%flagstruct%npx, Atm(mytile)%npz, &
-           Atm(mytile)%layout, Atm(mytile)%bd, Atm(mytile)%flagstruct%write_only_coarse_intermediate_restarts, &
+           Atm(mytile)%layout, Atm(mytile)%bd, Atm(mytile)%flagstruct%write_coarse_restart_files, &
+           Atm(mytile)%flagstruct%write_coarse_diagnostics, &
+           Atm(mytile)%flagstruct%write_only_coarse_intermediate_restarts, &
            Atm(mytile)%coarse_graining)
    endif
 
@@ -435,9 +437,11 @@ contains
        !I've had trouble getting this to work with multiple grids at a time; worth revisiting?
    call fv_diag_init(Atm(mytile:mytile), Atm(mytile)%atmos_axes, Time, npx, npy, npz, Atm(mytile)%flagstruct%p_ref)
 
-   if (Atm(mytile)%coarse_graining%do_coarse_graining) then
+   if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
       call fv_coarse_diag_init(Atm(mytile)%bd, Time, Atm(mytile)%atmos_axes(3), &
            Atm(mytile)%atmos_axes(4), Atm(mytile)%coarse_graining)
+   endif
+   if (Atm(mytile)%coarse_graining%write_coarse_restart_files) then
       call fv_coarse_restart_init(mytile, Atm(mytile)%npz, Atm(mytile)%flagstruct%nt_prog, &
            Atm(mytile)%flagstruct%nt_phys, Atm(mytile)%flagstruct%hydrostatic, &
            Atm(mytile)%flagstruct%hybrid_z, Atm(mytile)%flagstruct%agrid_vel_rst, &
@@ -798,7 +802,7 @@ contains
       call timing_on('FV_DIAG')
       call fv_diag(Atm(mytile:mytile), zvir, fv_time, Atm(mytile)%flagstruct%print_freq)
       call fv_nggps_diag(Atm(mytile:mytile), zvir, fv_time)
-      if (Atm(mytile)%coarse_graining%do_coarse_graining) then
+      if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
          call fv_coarse_diag(Atm(mytile:mytile), fv_time)
       endif
       first_diag = .false.
@@ -1649,7 +1653,7 @@ contains
      call nullify_domain()
      call timing_on('FV_DIAG')
      call fv_diag(Atm(mytile:mytile), zvir, fv_time, Atm(mytile)%flagstruct%print_freq)
-     if (Atm(mytile)%coarse_graining%do_coarse_graining) then
+     if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
         call fv_coarse_diag(Atm(mytile:mytile), fv_time)
      endif
      first_diag = .false.
