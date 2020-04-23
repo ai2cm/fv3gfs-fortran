@@ -1,0 +1,4 @@
+To compile on Piz Daint you have to do the following:
+> source ./env.daint_intel
+> ./configure (select daint_intel)
+> ./compile

@@ -13,4 +13,8 @@ experiments
 /TAGS
 .DS_Store
 *.tar.gz
-
+depend
+*/depend
+*/*/depend
+FV3/gfsphysics/GFS_layer/*.tmp.f90
+stochastic_physics/four_to_grid_stochy.f
