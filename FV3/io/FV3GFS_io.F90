@@ -55,6 +55,8 @@ module FV3GFS_io_mod
   use IPD_typedefs,       only: IPD_control_type, IPD_data_type, &
                                 IPD_restart_type, IPD_diag_type, &
                                 kind_phys => IPD_kind_phys
+  use fv_arrays_mod, only: fv_coarse_grid_bounds_type
+  use coarse_graining_mod, only: get_coarse_array_bounds, weighted_block_average
 !
 !-----------------------------------------------------------------------
   implicit none
@@ -63,7 +65,7 @@ module FV3GFS_io_mod
   !--- public interfaces ---
   public  FV3GFS_restart_read, FV3GFS_restart_write
   public  FV3GFS_IPD_checksum
-  public  fv3gfs_diag_register, fv3gfs_diag_output
+  public  fv3gfs_diag_register, fv3gfs_diag_output, fv3gfs_diag_register_coarse
 #ifdef use_WRTCOMP
   public  fv_phys_bundle_setup
 #endif
@@ -110,6 +112,9 @@ module FV3GFS_io_mod
   logical :: use_wrtgridcomp_output = .FALSE.
   logical :: module_is_initialized  = .FALSE.
 
+  character(len=64) :: AREA_WEIGHTED = 'area_weighted'
+  character(len=64) :: MASS_WEIGHTED = 'mass_weighted'
+  
   CONTAINS
 
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2206,6 +2211,42 @@ module FV3GFS_io_mod
        ' nrgst_vctbl=',nrgst_vctbl, 'isco=',isco,ieco,'jsco=',jsco,jeco,' num_axes_phys=', num_axes_phys
 
   end subroutine fv3gfs_diag_register
+
+  subroutine populate_coarse_diag_type(diagnostic, coarse_diagnostic)
+    type(IPD_diag_type), intent(in) :: diagnostic
+    type(IPD_diag_type), intent(inout) :: coarse_diagnostic
+
+   ! We leave the data attribute empty for these, because we will coarsen it
+   ! directly from the data attribute in the full resolution version of each
+   ! diagnostic. 
+   coarse_diagnostic%axes = diagnostic%axes
+   coarse_diagnostic%time_avg = diagnostic%time_avg
+   coarse_diagnostic%mod_name = diagnostic%mod_name
+   coarse_diagnostic%name = trim(diagnostic%name) // '_coarse'
+   coarse_diagnostic%desc = diagnostic%desc
+   coarse_diagnostic%unit = diagnostic%unit
+   coarse_diagnostic%cnvfac = diagnostic%cnvfac
+   coarse_diagnostic%coarse_graining_method = diagnostic%coarse_graining_method
+  end subroutine populate_coarse_diag_type
+  
+  subroutine fv3gfs_diag_register_coarse(Diag, Time, coarse_axes, Diag_coarse)
+    type(IPD_diag_type), intent(in) :: Diag(:)
+    type(time_type), intent(in) :: Time
+    integer, intent(in) :: coarse_axes(4)
+    type(IPD_diag_type), intent(inout) :: Diag_coarse(:)
+
+    integer :: index
+
+    do index = 1, DIAG_SIZE
+       if (Diag(index)%name .eq. '') exit  ! No need to populate non-existent coarse diagnostics
+       call populate_coarse_diag_type(Diag(index), Diag_coarse(index))
+       Diag_coarse(index)%id = register_diag_field( &
+            trim(Diag_coarse(index)%mod_name), trim(Diag_coarse(index)%name),  &
+            coarse_axes(1:Diag_coarse(index)%axes), Time, trim(Diag_coarse(index)%desc), &
+            trim(Diag_coarse(index)%unit), missing_value=real(missing_value))       
+    enddo
+  end subroutine fv3gfs_diag_register_coarse
+  
 !-------------------------------------------------------------------------      
 
 
@@ -2217,18 +2258,23 @@ module FV3GFS_io_mod
 !
 !    calls:  send_data
 !-------------------------------------------------------------------------      
-  subroutine fv3gfs_diag_output(time, diag, atm_block, nx, ny, levs, ntcw, ntoz, &
-                                dt, time_int, time_intfull, time_radsw, time_radlw)
+  subroutine fv3gfs_diag_output(time, diag, atm_block, IPD_Data, nx, ny, levs, ntcw, ntoz, &
+                                dt, time_int, time_intfull, time_radsw, &
+                                time_radlw, write_coarse_diagnostics, diag_coarse, coarse_bd)
 !--- subroutine interface variable definitions
     type(time_type),           intent(in) :: time
     type(IPD_diag_type),       intent(in) :: diag(:)
     type (block_control_type), intent(in) :: atm_block
+    type(IPD_data_type),       intent(in) :: IPD_Data(:)
     integer,                   intent(in) :: nx, ny, levs, ntcw, ntoz
     real(kind=kind_phys),      intent(in) :: dt
     real(kind=kind_phys),      intent(in) :: time_int
     real(kind=kind_phys),      intent(in) :: time_intfull
     real(kind=kind_phys),      intent(in) :: time_radsw
     real(kind=kind_phys),      intent(in) :: time_radlw
+    logical, intent(in) :: write_coarse_diagnostics
+    type(IPD_diag_type), intent(in) :: diag_coarse(:)
+    type(fv_coarse_grid_bounds_type), intent(in) :: coarse_bd
 !--- local variables
     integer :: i, j, k, idx, nblks, nb, ix, ii, jj
     integer :: is_in, js_in, isc, jsc
@@ -2240,7 +2286,10 @@ module FV3GFS_io_mod
     real(kind=kind_phys) :: rdt, rtime_int, rtime_intfull, lcnvfac
     real(kind=kind_phys) :: rtime_radsw, rtime_radlw
     logical :: used
-
+    logical :: require_area, require_mass
+    real(kind=kind_phys), allocatable :: area(:,:)
+    real(kind=kind_phys), allocatable :: mass(:,:,:)  ! Note this is flipped in the vertical relative to the dycore
+    
      nblks         = atm_block%nblks
      rdt           = 1.0d0/dt
      rtime_int     = 1.0d0/time_int
@@ -2253,9 +2302,21 @@ module FV3GFS_io_mod
      is_in = atm_block%isc
      js_in = atm_block%jsc
 
+     if (write_coarse_diagnostics) then
+        call determine_required_coarse_graining_weights(diag_coarse, require_area, require_mass)
+        if (require_area) then
+           allocate(area(nx, ny))
+           call get_area(Atm_block, IPD_Data, nx, ny, area)
+        endif
+        if (require_mass) then
+           allocate(mass(nx, ny, levs))
+           call get_mass(Atm_block, IPD_Data, nx, ny, levs, mass)
+        endif
+     endif
+     
 !     if(mpp_pe()==mpp_root_pe())print *,'in,fv3gfs_io. time avg, time_int=',time_int
      do idx = 1,tot_diag_idx
-       if (diag(idx)%id > 0) then
+       if ((diag(idx)%id > 0) .or. (diag_coarse(idx)%id > 0)) then
          lcnvfac = diag(idx)%cnvfac
          if (diag(idx)%time_avg) then
            if ( trim(diag(idx)%time_avg_kind) == 'full' ) then
@@ -2372,7 +2433,14 @@ module FV3GFS_io_mod
            endif
 !           used=send_data(Diag(idx)%id, var2, Time)
 !           print *,'in phys, after store_data, idx=',idx,' var=', trim(Diag(idx)%name)
-           call store_data(Diag(idx)%id, var2, Time, idx, Diag(idx)%intpl_method, Diag(idx)%name)
+           if (Diag(idx)%id > 0) then
+              call store_data(Diag(idx)%id, var2, Time, idx, Diag(idx)%intpl_method, Diag(idx)%name)
+           endif
+           if (Diag_coarse(idx)%id > 0) then
+              call store_data2D_coarse(Diag_coarse(idx)%id, Diag_coarse(idx)%name, &
+                   Diag_coarse(idx)%coarse_graining_method, &
+                   nx, ny, var2, area, Time, coarse_bd)
+           endif
 !           if(trim(Diag(idx)%name) == 'totprcp_ave' ) print *,'in gfs_io, totprcp=',Diag(idx)%data(1)%var2(1:3), &
 !             ' lcnvfac=', lcnvfac
          elseif (Diag(idx)%axes == 3) then
@@ -2557,6 +2625,91 @@ module FV3GFS_io_mod
     endif
 !
  end subroutine store_data
+
+ subroutine determine_required_coarse_graining_weights(coarse_diag, require_area, require_mass)
+   type(IPD_diag_type), intent(in) :: coarse_diag(:)
+   logical, intent(out) :: require_area, require_mass
+
+   require_area = any(coarse_diag%coarse_graining_method .eq. AREA_WEIGHTED)
+   require_mass = any(coarse_diag%coarse_graining_method .eq. MASS_WEIGHTED)
+ end subroutine determine_required_coarse_graining_weights
+
+ subroutine get_area(Atm_block, IPD_Data, nx, ny, area)
+   type(block_control_type), intent(in) :: Atm_block
+   type(IPD_data_type), intent(in) :: IPD_Data(:)
+   integer, intent(in) :: nx, ny
+   real(kind=kind_phys), intent(out) :: area(1:nx,1:ny)
+
+   integer :: i, ii, j, jj, block_number, column
+   do j = 1, ny
+      jj = j + jsco - 1
+      do i = 1, nx
+         ii = i + isco - 1
+         block_number = Atm_block%blkno(ii,jj)
+         column = Atm_block%ixp(ii,jj)
+         area(i,j) = IPD_Data(block_number)%Grid%area(column)
+      enddo
+   enddo
+ end subroutine get_area
+
+ subroutine get_mass(Atm_block, IPD_Data, nx, ny, nz, mass)
+   type(block_control_type), intent(in) :: Atm_block
+   type(IPD_data_type), intent(in) :: IPD_Data(:)
+   integer, intent(in) :: nx, ny, nz
+   real(kind=kind_phys), intent(out) :: mass(1:nx,1:ny,1:nz)
+
+   integer :: i, ii, j, jj, k, block_number, column, isc, jsc
+   real(kind=kind_phys) :: area_value, delp_value
+   
+   do k = 1, nz
+      do j = 1, ny
+         jj = j + jsco - 1
+         do i = 1, nx
+            ii = i + isco - 1
+            block_number = Atm_block%blkno(ii,jj)
+            column = Atm_block%ixp(ii,jj)
+            area_value = IPD_Data(block_number)%Grid%area(column)
+            delp_value = IPD_Data(block_number)%Statein%prsl(column, k)
+            mass(i,j,k) = area_value * delp_value
+         enddo
+      enddo
+   enddo
+ end subroutine get_mass
+
+ subroutine store_data2D_coarse(id, name, method, nx, ny, full_resolution_field, &
+      area, Time, coarse_bd)
+   integer, intent(in) :: id
+   character(len=64), intent(in) :: name
+   character(len=64), intent(in) :: method
+   integer, intent(in) :: nx, ny
+   real(kind=kind_phys), intent(in) :: full_resolution_field(1:nx,1:ny)
+   real(kind=kind_phys), intent(in) :: area(1:nx,1:ny)
+   type(time_type), intent(in) :: Time
+   type(fv_coarse_grid_bounds_type) :: coarse_bd
+
+   real(kind=kind_phys), allocatable :: coarse(:,:)
+   character(len=128) :: message
+   integer :: is_coarse, ie_coarse, js_coarse, je_coarse, nx_coarse, ny_coarse
+   logical :: used
+
+   call get_coarse_array_bounds(coarse_bd, is_coarse, ie_coarse, js_coarse, je_coarse)
+   nx_coarse = ie_coarse - is_coarse + 1
+   ny_coarse = je_coarse - js_coarse + 1
+
+   allocate(coarse(nx_coarse, ny_coarse))
+
+   if (method .eq. AREA_WEIGHTED) then
+      call weighted_block_average(area, full_resolution_field, coarse)
+   elseif (method .eq. MASS_WEIGHTED) then
+      message = 'mass_weighted is not a valid coarse_graining_method for 2D variable ' // trim(name)
+      call mpp_error(FATAL, message)
+   else
+      message = 'A valid coarse_graining_method must be specified for ' // trim(name)
+      call mpp_error(FATAL, message)
+   endif
+   used = send_data(id, coarse, Time)
+ end subroutine store_data2D_coarse
+ 
 !
 !-------------------------------------------------------------------------
 !

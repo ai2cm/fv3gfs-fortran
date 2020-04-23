@@ -37,6 +37,7 @@ module GFS_diagnostics
     character(len=64)    :: unit
     character(len=64)    :: mask
     character(len=64)    :: intpl_method
+    character(len=64)    :: coarse_graining_method = 'unspecified'
     real(kind=kind_phys) :: cnvfac
     type(data_subtype), dimension(:), allocatable :: data
    end type GFS_externaldiag_type
@@ -75,6 +76,7 @@ module GFS_diagnostics
 !     ExtDiag%unit                 [char*64 ]   units associated with field                   !
 !     ExtDiag%mask                 [char*64 ]   description of mask-type                      !
 !     ExtDiag%intpl_method         [char*64 ]   method to use for interpolation               !
+!     ExtDiag%coarse_graining_method         [char*64 ]   method to use for coarsening        !
 !     ExtDiag%cnvfac               [real*8  ]   conversion factor to output specified units   !
 !     ExtDiag%data(nb)%var2(:)     [real*8  ]   pointer to 2D data [=> null() for a 3D field] !
 !     ExtDiag%data(nb)%var21(:)    [real*8  ]   pointer to 2D data for ratios                 !
@@ -169,6 +171,7 @@ module GFS_diagnostics
     ExtDiag(idx)%cnvfac = cn_one
     ExtDiag(idx)%time_avg = .TRUE.
     ExtDiag(idx)%intpl_method = 'bilinear'
+    ExtDiag(idx)%coarse_graining_method = 'area_weighted'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%ulwsfc(:)
