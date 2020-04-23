@@ -1,0 +1,41 @@
+#!/bin/bash
+set -eu
+
+echo
+
+if [[ ! -f conf/configure.fv3 ]]; then
+    echo "File conf/configure.fv3 not found!"
+    echo "Running ./configure .... "
+    ./configure
+fi
+
+if [[ -f conf/modules.fv3 ]]; then
+    echo -n "Loading modules .... "
+    source conf/modules.fv3
+    echo "done."
+    echo
+fi
+
+set -x
+
+echo "Running make" "$@"
+
+make clean
+make -j 8 "$@" 2>&1 | tee compile_default.out
+mv fv3.exe fv3_default.exe
+
+make clean
+make -j 8 DEBUG=Y "$@" 2>&1 | tee compile_debug.out
+mv fv3.exe fv3_debug.exe
+
+make clean
+make -j 8 OPENMP= "$@" 2>&1 | tee compile_noomp.out
+mv fv3.exe fv3_noomp.exe
+
+make clean
+make -j 8 32BIT=Y "$@" 2>&1 | tee compile_32bit.out
+mv fv3.exe fv3_32bit.exe
+
+echo
+echo "Compilation finished successfully."
+echo

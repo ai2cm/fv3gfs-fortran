@@ -951,8 +951,10 @@ subroutine atmos_model_end (Atmos)
 !---- termination routine for atmospheric model ----
                                               
     call atmosphere_end (Atmos % Time, Atmos%grid)
+#ifndef NO_RESTART_AT_END
     call FV3GFS_restart_write (IPD_Data, IPD_Restart, Atm_block, &
                                IPD_Control, Atmos%domain)
+#endif
 
 #ifdef CCPP
 !   Fast physics (from dynamics) are finalized in atmosphere_end above;

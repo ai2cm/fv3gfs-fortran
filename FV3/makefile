@@ -2,7 +2,9 @@ SHELL = /bin/sh
 
 include conf/configure.fv3
 
-FMS_DIR?=
+ifeq ($(strip $(FMS_DIR)),)
+  FMS_DIR=$(realpath ./fms)
+endif
 fms_exist=$(wildcard $(FMS_DIR))
 
 FFLAGS   += -I$(FMS_DIR) -Igfsphysics -Iipd -Icpl -Iio -Iatmos_cubed_sphere -Iccpp/driver -I../stochastic_physics
@@ -24,7 +26,7 @@ PPSER_FLAGS = --verbose --ignore-identical -m utils_ppser_kbuff
 FV3_EXE  = fv3.exe
 FV3CAP_LIB  = libfv3cap.a
 
-all: libs fms_check
+all: info libs fms_check
 	$(MAKE) $(FV3_EXE) $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 
 nems: libs fms_check
@@ -38,6 +40,7 @@ endif
 
 ifneq (,$(findstring CCPP,$(CPPDEFS)))
 libs: fms_check
+	$(MAKE) -C fms                   $(MAKE_OPTS)
 	$(MAKE) -C cpl                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C gfsphysics            $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  DYN32=$(DYN32) # force gfs physics to 64bit, flag to CCPP build for 32bit dynamics
 	$(MAKE) -C ccpp/driver           $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  DYN32=$(DYN32) # force gfs physics to 64bit, flag to CCPP build for 32bit dynamics
@@ -47,6 +50,7 @@ libs: fms_check
 	$(MAKE) -C ../stochastic_physics $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 
 libs_no_dycore: fms_check
+	$(MAKE) -C fms                   $(MAKE_OPTS)
 	$(MAKE) -C cpl                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C gfsphysics            $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  DYN32=$(DYN32) # force gfs physics to 64bit, flag to CCPP build for 32bit dynamics
 	$(MAKE) -C ccpp/driver           $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  DYN32=$(DYN32) # force gfs physics to 64bit, flag to CCPP build for 32bit dynamics
@@ -58,6 +62,7 @@ $(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o ccpp/driver/libccpp
 
 else
 libs: fms_check
+	$(MAKE) -C fms                   $(MAKE_OPTS)
 	$(MAKE) -C cpl                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C gfsphysics            $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 	$(MAKE) -C ipd                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
@@ -66,13 +71,14 @@ libs: fms_check
 	$(MAKE) -C ../stochastic_physics $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 
 libs_no_dycore: fms_check
+	$(MAKE) -C fms                   $(MAKE_OPTS)
 	$(MAKE) -C cpl                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C gfsphysics            $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  DYN32=$(DYN32) # force gfs physics to 64bit, flag to CCPP build for 32bit dynamics
 	$(MAKE) -C ipd                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 	$(MAKE) -C io                    $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 
-$(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a
-	$(LD) -o $@ $^ $(NCEPLIBS) $(LDFLAGS)
+$(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a fms/libfms.a 
+	$(LD) -cxxlib -o $@ $^ $(NCEPLIBS) -L$(ESMF_DIR)/lib/libO/Unicos.intel.64.mpi.default -lesmf $(LDFLAGS)
 endif
 
 $(FV3CAP_LIB): atmos_model.o module_fv3_config.o module_fcst_grid_comp.o time_utils.o fv3_cap.o
@@ -176,7 +182,7 @@ pp_ser_calls: serialize_outdir_check
 	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/atmos_cubed_sphere/model $(CWD)/atmos_cubed_sphere/model/*.F90
 	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/atmos_cubed_sphere/driver/fvGFS $(CWD)/atmos_cubed_sphere/driver/fvGFS/*.F90
 
-.PHONY: clean cleanall serialize serialize_preprocess fms_check serialize_outdir_check
+.PHONY: clean cleanall serialize serialize_preprocess fms_check serialize_outdir_check info
 clean:
 	@echo "Cleaning ... "
 	@echo
@@ -187,6 +193,7 @@ clean:
 	(cd io                    && make clean)
 	(cd atmos_cubed_sphere    && make clean)
 	(cd cpl                   && make clean)
+	(cd fms                   && make clean)
 	$(RM) -f $(FV3_EXE) $(FV3CAP_LIB) *.o *.mod *.i90 *.lst depend
 
 clean_no_dycore:
@@ -198,6 +205,7 @@ clean_no_dycore:
 	(cd ../stochastic_physics && make clean)
 	(cd io                    && make clean)
 	(cd cpl                   && make clean)
+	(cd fms                   && make clean)
 	$(RM) -f $(FV3_EXE) $(FV3CAP_LIB) *.o *.mod *.i90 *.lst depend
 
 cleanall: clean
@@ -205,6 +213,35 @@ cleanall: clean
 	$(RM) -f conf/modules.fv3
 	$(RM) -f conf/configure.fv3
 	$(RM) -rf $(SERIALBOX_OUTDIR)
+
+info:
+	@echo "=============== BUILD INFORMATION ================"
+	@echo "Compiler:"
+	@echo "  FC=$(FC)"
+	@echo "  CC=$(CC)"
+	@echo "  CXX=$(CXX)"
+	@echo "  LD=$(LD)"
+	@echo "Configuration:"
+	@echo "  DEBUG=$(DEBUG)"
+	@echo "  REPRO=$(REPRO)"
+	@echo "  VERBOSE=$(VERBOSE)"
+	@echo "  OPENMP=$(OPENMP)"
+	@echo "  AVX2=$(AVX2)"
+	@echo "  HYDRO=$(HYDRO)"
+	@echo "Flags:"
+	@echo "  MAKE_OPTS=$(MAKE_TOPS)"
+	@echo "  CPPDEFS=$(CPPDEFS)"
+	@echo "  FPPFLAGS=$(FPPFLAGS)"
+	@echo "  CPPFLAGS=$(CPPFLAGS)"
+	@echo "  FFLAGS=$(FFLAGS)"
+	@echo "  CFLAGS=$(CFLAGS)"
+	@echo "  LDFLAGS=$(LDFLAGS)"
+	@echo "  OTHERFLAGS=$(OTHERFLAGS)"
+	@echo "  OTHER_FLAGS=$(OTHER_FLAGS)"
+	@echo "Dependencies:"
+	@echo "  FMS_DIR=$(FMS_DIR)"
+	@echo "  ESMF_DIR=$(ESMF_DIR)"
+	@echo "=================================================="
 
 MKDEPENDS = ./mkDepends.pl
 include conf/make.rules
