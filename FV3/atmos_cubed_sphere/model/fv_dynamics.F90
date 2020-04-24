@@ -317,7 +317,7 @@ contains
       nwat    = flagstruct%nwat
       nq      = nq_tot - flagstruct%dnats
       rdg     = -rdgas * agrav
-
+      !$ser off
 #ifdef CCPP
 
       ! Reset all interstitial variables for CCPP version
@@ -796,6 +796,7 @@ contains
 #ifdef AVEC_TIMERS
                                                   call avec_timer_start(6)
 #endif
+         !$ser on
          !$ser savepoint Remapping-In
          !$ser data iq=iq last_step=last_step consv_te=consv_te ps=ps pe=pe delp=delp pkz=pkz pk=pk mdt=mdt bdt=bdt sphum=sphum q_con=q_con u=u v=v w=w delz=delz pt=pt  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) q4d=q phis=phis zvir=zvir akap=akap cappa=cappa kord_tracer=kord_tracer peln=peln te_2d=te_2d ua=ua va=va omga=omga dp1=dp1 wsd=ws  reproduce_sum=reproduce_sum id_mdt=id_mdt ptop=ptop ak=ak bk=bk pfull=pfull hybrid_z=hybrid_z do_adiabatic_init=do_adiabatic_init
          call Lagrangian_to_Eulerian(last_step, consv_te, ps, pe, delp,                 &
@@ -809,6 +810,7 @@ contains
                      flagstruct%adiabatic, do_adiabatic_init)
          !$ser savepoint Remapping-Out
          !$ser data te_2d=te_2d pk=pk  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) q4d=q delp=delp pe=pe ps=ps u=u v=v w=w pt=pt delz=delz q_con=q_con cappa=cappa ua=ua va=va omga=omga peln=peln pkz=pkz dp1=dp1
+         !$ser off
 #ifdef AVEC_TIMERS
                                                   call avec_timer_stop(6)
 #endif

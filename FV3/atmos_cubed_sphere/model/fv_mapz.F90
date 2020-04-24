@@ -1395,7 +1395,7 @@ endif        ! end last_step check
 
 ! Compute vertical subgrid distribution
    if ( kord >7 ) then
-        call scalar_profile( qs, q4, dp1, km, i1, i2, iv, kord, q_min )
+        call scalar_profile( qs, q4, dp1, km, i1, i2, iv, kord, q_min, j )
    else
         call ppm_profile( q4, dp1, km, i1, i2, iv, kord )
    endif
@@ -1847,7 +1847,7 @@ endif        ! end last_step check
  end subroutine remap_2d
 
 
- subroutine scalar_profile(qs, a4, delp, km, i1, i2, iv, kord, qmin)
+ subroutine scalar_profile(qs, a4, delp, km, i1, i2, iv, kord, qmin, j)
 ! Optimized vertical profile reconstruction:
 ! Latest: Apr 2008 S.-J. Lin, NOAA/GFDL
  integer, intent(in):: i1, i2
@@ -1858,6 +1858,7 @@ endif        ! end last_step check
  real, intent(in)   :: delp(i1:i2,km)     !< Layer pressure thickness
  real, intent(inout):: a4(4,i1:i2,km)     !< Interpolated values
  real, intent(in):: qmin
+ integer, intent(in), optional :: j
 !-----------------------------------------------------------------------
  logical, dimension(i1:i2,km):: extm, ext5, ext6
  real  gam(i1:i2,km)
@@ -1867,6 +1868,7 @@ endif        ! end last_step check
  real   pmp_1, lac_1, pmp_2, lac_2, x0, x1
  integer i, k, im
 
+!$ser verbatim integer ks
  if ( iv .eq. -2 ) then
       do i=i1,i2
          gam(i,2) = 0.5
@@ -2037,8 +2039,17 @@ endif        ! end last_step check
    do i=i1,i2
       a4(4,i,2) = 3.*(2.*a4(1,i,2) - (a4(2,i,2)+a4(3,i,2)))
    enddo
+   
+   !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==1) then
+   !$ser savepoint CS_Limiters-In
+   !$ser verbatim ks=2
+   !$ser data extm=extm a4_1=a4(1,:,:) im=im kstart=ks i1=i1
+   !$ser verbatim endif
    call cs_limiters(im, extm(i1,2), a4(1,i1,2), 2)
-
+   !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==1) then
+   !$ser savepoint CS_Limiters-Out
+   !$ser data a4_1=a4(1,:,:)
+   !$ser verbatim endif
 !-------------------------------------
 ! Huynh's 2nd constraint for interior:
 !-------------------------------------
@@ -2233,7 +2244,8 @@ endif        ! end last_step check
 
 !----------------------------------
 ! Bottom layer subgrid constraints:
-!----------------------------------
+
+  !----------------------------------
   if ( iv==0 ) then
      do i=i1,i2
         a4(3,i,km) = max(0., a4(3,i,km))
@@ -2330,7 +2342,7 @@ endif        ! end last_step check
   enddo
 endif
   !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==1) then 
-  !$ser data set_gam=gam set_q=q 
+  !$ser data set_gam=gam set_q=q set_a4=a4
   !$ser verbatim endif
 !----- Perfectly linear scheme --------------------------------
  if ( abs(kord) > 16 ) then
@@ -2444,16 +2456,26 @@ endif
      do i=i1,i2
         a4(4,i,1) = 3.*(2.*a4(1,i,1) - (a4(2,i,1)+a4(3,i,1)))
      enddo
+     !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==1) then 
+     !$ser data cs1_extm=extm cs1_a4_1=a4(1,:,:)  cs1_a4_2=a4(2,:,:)  cs1_a4_3=a4(3,:,:)  cs1_a4_4=a4(4,:,:) 
+     !$ser verbatim endif
      call cs_limiters(im, extm(i1,1), a4(1,i1,1), 1)
+     !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==1) then 
+     !$ser data cs1b_a4_1=a4(1,:,:)  cs1b_a4_2=a4(2,:,:)  cs1b_a4_3=a4(3,:,:)  cs1b_a4_4=a4(4,:,:) 
+     !$ser verbatim endif
   endif
 
-! k=2
+  ! k=2
    do i=i1,i2
       a4(4,i,2) = 3.*(2.*a4(1,i,2) - (a4(2,i,2)+a4(3,i,2)))
    enddo
-   
+   !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==1) then 
+   !$ser data cs2_extm=extm cs2_a4_1=a4(1,:,:)  cs2_a4_2=a4(2,:,:)  cs2_a4_3=a4(3,:,:)  cs2_a4_4=a4(4,:,:) 
+   !$ser verbatim endif
    call cs_limiters(im, extm(i1,2), a4(1,i1,2), 2)
-
+   !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==1) then 
+   !$ser data  cs2b_a4_1=a4(1,:,:)  cs2b_a4_2=a4(2,:,:)  cs2b_a4_3=a4(3,:,:)  cs2b_a4_4=a4(4,:,:) 
+   !$ser verbatim endif
 !-------------------------------------
 ! Huynh's 2nd constraint for interior:
 !-------------------------------------
@@ -2639,7 +2661,9 @@ endif
      if ( iv==0 ) call cs_limiters(im, extm(i1,k), a4(1,i1,k), 0)
 
   enddo      ! k-loop
-
+  !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==1) then 
+   !$ser data huy_a4_1=a4(1,:,:)  huy_a4_2=a4(2,:,:)  huy_a4_3=a4(3,:,:)  huy_a4_4=a4(4,:,:) 
+   !$ser verbatim endif
 !----------------------------------
 ! Bottom layer subgrid constraints:
 !----------------------------------
