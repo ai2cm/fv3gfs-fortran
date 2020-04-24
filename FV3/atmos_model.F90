@@ -170,7 +170,7 @@ logical :: dycore_only  = .false.
 logical :: debug        = .false.
 !logical :: debug        = .true.
 logical :: sync         = .false.
-integer, parameter     :: maxhr = 4096
+integer, parameter     :: maxhr = 65536
 real, dimension(maxhr) :: fdiag = 0.
 real                   :: fhmax=384.0, fhmaxhf=120.0, fhout=3.0, fhouthf=1.0,avg_max_length=3600.
 #ifdef CCPP

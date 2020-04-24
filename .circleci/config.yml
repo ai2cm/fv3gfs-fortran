@@ -5,6 +5,7 @@ jobs:
   build_default:
     machine:
       docker_layer_caching: true
+      image: ubuntu-1604:201903-01
     environment:
       FV3CONFIG_CACHE_DIR: /tmp/.fv3config
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
@@ -13,13 +14,20 @@ jobs:
       - run:
           name: "gcloud auth"
           command: |
-            echo $ENCODED_GCR_KEY | base64 -d > $GOOGLE_APPLICATION_CREDENTIALS 
+            echo $ENCODED_GCR_KEY | base64 -d > $GOOGLE_APPLICATION_CREDENTIALS
+            echo "export GCLOUD_SERVICE_KEY=\$(echo \$ENCODED_GCR_KEY | base64 --decode)" >> $BASH_ENV
+      - gcp-gcr/gcr-auth
+      - run: 
+          name: "Pull dependency images"
+          command: |
+            echo "$ENCODED_GCR_KEY" | base64 --decode | docker login --username _json_key --password-stdin https://gcr.io
+            make pull_deps
       - run:
           name: "Pull Submodules"
           command: |
             git submodule init
             git submodule update
-      - run: make build build_serialize
+      - run: DOCKER_BUILDKIT=1 BUILD_FROM_INTERMEDIATE=y make build build_serialize
       - restore_cache:
           keys:
             - v1.3-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt"}}
@@ -44,6 +52,7 @@ jobs:
           # -s to avoid capturing stdout/stderr of md5sum call
           command: |
             make test
+          no_output_timeout: 1200
       - run:
           name: "Delete data files"
           command: |

@@ -184,6 +184,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: smc (:,:)   => null()  !< soil moisture content
     real (kind=kind_phys), pointer :: stc (:,:)   => null()  !< soil temperature content
     real (kind=kind_phys), pointer :: slc (:,:)   => null()  !< soil liquid water content
+    real (kind=kind_phys), pointer :: atm_ts (:)  => null() !< surface temperature from dynamical core
  
     contains
       procedure :: create  => statein_create  !<   allocate array data
@@ -648,6 +649,7 @@ module GFS_typedefs
     logical              :: norad_precip    !< radiation precip flag for Ferrier/Moorthi
     logical              :: lwhtr           !< flag to output lw heating rate (Radtend%lwhc)
     logical              :: swhtr           !< flag to output sw heating rate (Radtend%swhc)
+    logical              :: do_only_clearsky_rad !< flag for whether to do only clear-sky radiation
 
 !--- microphysical switch
     integer              :: ncld            !< choice of cloud scheme
@@ -714,6 +716,7 @@ module GFS_typedefs
 
     !--- GFDL microphysical paramters
     logical              :: lgfdlmprad      !< flag for GFDL mp scheme and radiation consistency 
+    logical        :: do_gfdl_mp_in_physics !< flag for whether to call gfdl_cloud_microphys_driver
 
     !--- land/surface model parameters
     integer              :: lsm             !< flag for land surface model lsm=1 for noah lsm
@@ -747,7 +750,8 @@ module GFS_typedefs
     integer              :: iopt_stc  !snow/soil temperature time scheme (only layer 1)
 
     logical              :: use_ufo         !< flag for gcycle surface option
-
+    logical              :: use_analysis_sst ! whether to set physics SST to dynamical core ts, which is
+                                             ! equal to analysis SST when nudging is active
 !--- tuning parameters for physical parameterizations
     logical              :: ras             !< flag for ras convection scheme
     logical              :: flipv           !< flag for vertical direction flip (ras)
@@ -1970,6 +1974,10 @@ module GFS_typedefs
     Statein%stc   = clear_val
     Statein%slc   = clear_val
 
+    ! surface temperature from atmospheric prognostic state
+    allocate (Statein%atm_ts(IM))
+    Statein%atm_ts = clear_val
+
   end subroutine statein_create
 
 
@@ -2715,6 +2723,7 @@ module GFS_typedefs
     logical              :: norad_precip      = .false.      !< radiation precip flag for Ferrier/Moorthi
     logical              :: lwhtr             = .true.       !< flag to output lw heating rate (Radtend%lwhc)
     logical              :: swhtr             = .true.       !< flag to output sw heating rate (Radtend%swhc)
+    logical              :: do_only_clearsky_rad = .false.   !< flag for whether to do only clear-sky radiation
 
 !--- Z-C microphysical parameters
     integer              :: ncld              =  1                 !< choice of cloud scheme
@@ -2770,6 +2779,7 @@ module GFS_typedefs
 
     !--- GFDL microphysical parameters
     logical              :: lgfdlmprad     = .false.            !< flag for GFDLMP radiation interaction 
+    logical       :: do_gfdl_mp_in_physics = .true.             !< flag for whether to call gfdl_cloud_microphys_driver
 
     !--- land/surface model parameters
     integer              :: lsm            =  1              !< flag for land surface model to use =0  for osu lsm; =1  for noah lsm; =2  for noah mp lsm; =3  for RUC lsm
@@ -2801,6 +2811,8 @@ module GFS_typedefs
     integer              :: iopt_stc       =  1  !snow/soil temperature time scheme (only layer 1)
 
     logical              :: use_ufo        = .false.         !< flag for gcycle surface option
+    logical              :: use_analysis_sst = .false. ! whether to set physics SST to dynamical core ts
+                                                       ! which is equal to analysis SST when nudging is active
 
 !--- tuning parameters for physical parameterizations
     logical              :: ras            = .false.                  !< flag for ras convection scheme
@@ -3040,6 +3052,7 @@ module GFS_typedefs
                                fhswr, fhlwr, levr, nfxr, aero_in, iflip, isol, ico2, ialb,  &
                                isot, iems, iaer, icliq_sw, iovr_sw, iovr_lw, ictm, isubc_sw,&
                                isubc_lw, crick_proof, ccnorm, lwhtr, swhtr,                 &
+                               do_only_clearsky_rad,                                        &
                           ! IN CCN forcing
                                iccn,                                                        &
                           !--- microphysical parameterizations
@@ -3055,6 +3068,7 @@ module GFS_typedefs
                                mg_ncnst, mg_ninst, mg_ngnst, sed_supersat, do_sb_physics,   &
                                mg_alf,   mg_qcmin, mg_do_ice_gmao, mg_do_liq_liu,           &
                                ltaerosol, lradar, ttendlim, lgfdlmprad,                     &
+                               do_gfdl_mp_in_physics,                                       &
                           !--- max hourly
                                avg_max_length,                                              &
                           !--- land/surface model control
@@ -3063,6 +3077,7 @@ module GFS_typedefs
 #else
                                lsm, lsoil, nmtvr, ivegsrc, use_ufo,                         &
 #endif
+                               use_analysis_sst,                                           &
                           !    Noah MP options
                                iopt_dveg,iopt_crs,iopt_btr,iopt_run,iopt_sfc, iopt_frz,     &
                                iopt_inf, iopt_rad,iopt_alb,iopt_snf,iopt_tbot,iopt_stc,     &
@@ -3279,6 +3294,7 @@ module GFS_typedefs
     Model%ccnorm           = ccnorm
     Model%lwhtr            = lwhtr
     Model%swhtr            = swhtr
+    Model%do_only_clearsky_rad = do_only_clearsky_rad
 #ifdef CCPP
     ! The CCPP versions of the RRTMG lw/sw schemes are configured
     ! such that lw and sw heating rate are output, i.e. they rely
@@ -3343,6 +3359,7 @@ module GFS_typedefs
     Model%ttendlim         = ttendlim
 !--- gfdl  MP parameters
     Model%lgfdlmprad       = lgfdlmprad
+    Model%do_gfdl_mp_in_physics = do_gfdl_mp_in_physics
 
 !--- land/surface model parameters
     Model%lsm              = lsm
@@ -3371,6 +3388,8 @@ module GFS_typedefs
     Model%ivegsrc          = ivegsrc
     Model%isot             = isot
     Model%use_ufo          = use_ufo
+
+    Model%use_analysis_sst = use_analysis_sst
 
 ! Noah MP options from namelist
 !
@@ -3887,6 +3906,7 @@ module GFS_typedefs
       endif
 
       print *,' nst_anl=',Model%nst_anl,' use_ufo=',Model%use_ufo,' frac_grid=',Model%frac_grid
+      print *,' use_analysis_sst=',Model%use_analysis_sst
       print *,' min_lakeice=',Model%min_lakeice,' min_seaice=',Model%min_seaice
       if (Model%nstf_name(1) > 0 ) then
         print *,' NSSTM is active '
@@ -4326,6 +4346,7 @@ module GFS_typedefs
       print *, ' norad_precip      : ', Model%norad_precip
       print *, ' lwhtr             : ', Model%lwhtr
       print *, ' swhtr             : ', Model%swhtr
+      print *, ' do_only_clearsky_rad: ', Model%do_only_clearsky_rad
       print *, ' '
       print *, 'microphysical switch'
       print *, ' ncld              : ', Model%ncld
@@ -4361,6 +4382,7 @@ module GFS_typedefs
       if (Model%imp_physics == Model%imp_physics_gfdl) then
         print *, ' GFDL microphysical parameters'
         print *, ' GFDL MP radiation inter: ', Model%lgfdlmprad
+        print *, ' GFDL MP do microphysics in physics switch: ', Model%do_gfdl_mp_in_physics
         print *, ' '
       endif
 
@@ -4392,6 +4414,7 @@ module GFS_typedefs
      endif
 
       print *, ' use_ufo           : ', Model%use_ufo
+      print *, ' use_analysis_sst : ', Model%use_analysis_sst
       print *, ' '
       print *, 'tuning parameters for physical parameterizations'
       print *, ' ras               : ', Model%ras

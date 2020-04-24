@@ -171,15 +171,27 @@
       ne_corner = gridstruct%ne_corner
 
       iep1 = ie+1; jep1 = je+1
-
+      !$ser savepoint D2A2C_Vect-In
+      !$ser data_kbuff k=k k_size=nz uc=uc vc=vc u=u v=v ua=ua va=va utc=ut vtc=vt
+      !$ser verbatim if (k == nz) then 
+      !$ser data dord4=dord4
+      !$ser verbatim endif
+    
       call d2a2c_vect(u, v, ua, va, uc, vc, ut, vt, dord4, gridstruct, bd, &
-                      npx, npy, nested, flagstruct%grid_type, regional )
+           npx, npy, nested, flagstruct%grid_type, regional )
+      !$ser savepoint D2A2C_Vect-Out
+      !$ser data_kbuff k=k k_size=nz uc=uc vc=vc ua=ua va=va utc=ut vtc=vt
+
 
       if( nord > 0 ) then
          if (nested .or. regional) then
             call divergence_corner_nest(u, v, ua, va, divg_d, gridstruct, flagstruct, bd)
          else
+            !$ser savepoint DivergenceCorner-In
+            !$ser data_kbuff k=k k_size=nz u=u v=v ua=ua va=va divg_d=divg_d
             call divergence_corner(u, v, ua, va, divg_d, gridstruct, flagstruct, bd)
+            !$ser savepoint DivergenceCorner-Out
+            !$ser data_kbuff k=k k_size=nz divg_d=divg_d
          endif
       endif
 
@@ -206,9 +218,20 @@
 ! Transport delp:
 !----------------
 ! Xdir:
+      !$ser savepoint TransportDelp-In
+      !$ser data_kbuff k=k k_size=nz delp=delp pt=pt w=w utc=ut vtc=vt
+      !$ser verbatim dir=1
+      !$ser verbatim if (flagstruct%grid_type < 3 .and. .not. (nested .or. regional)) then
+      !$ser savepoint Fill2_4Corners-In
+      !$ser data_kbuff k=k k_size=nz q1c=delp q2c=pt
+      !$ser verbatim if (k == nz) then 
+      !$ser data dir=dir
+      !$ser verbatim endif
       if (flagstruct%grid_type < 3 .and. .not. (nested .or. regional)) &
        call fill2_4corners(delp, pt, 1, bd, npx, npy, sw_corner, se_corner, ne_corner, nw_corner)
-
+      !$ser savepoint Fill2_4Corners-Out
+      !$ser data_kbuff k=k k_size=nz q1c=delp q2c=pt
+      !$ser verbatim endif
       if ( hydrostatic ) then
 #ifdef SW_DYNAMICS
            do j=js-1,jep1
@@ -238,7 +261,6 @@
 #endif
         else
            !$ser savepoint Fill4Corners-In
-           !$ser verbatim dir=1
            !$ser data_kbuff k=k k_size=nz q4c=w
            !$ser verbatim if (k == nz) then 
            !$ser data dir=dir
@@ -263,12 +285,22 @@
                  fx2(i,j) = fx1(i,j)*fx2(i,j)
               enddo
            enddo
+          
       endif
 
 ! Ydir:
+      !$ser verbatim dir=2
+      !$ser verbatim if (flagstruct%grid_type < 3 .and. .not. (nested .or. regional)) then
+      !$ser savepoint Fill2_4Corners-In
+      !$ser data_kbuff k=k k_size=nz q1c=delp q2c=pt
+      !$ser verbatim if (k == nz) then 
+      !$ser data dir=dir
+      !$ser verbatim endif
       if (flagstruct%grid_type < 3 .and. .not. (nested .or. regional))  &
        call fill2_4corners(delp, pt, 2, bd, npx, npy, sw_corner, se_corner, ne_corner, nw_corner)
-
+       !$ser savepoint Fill2_4Corners-Out
+       !$ser data_kbuff k=k k_size=nz q1c=delp q2c=pt
+       !$ser verbatim endif
       if ( hydrostatic ) then
            do j=js-1,jep1+1
               do i=is-1,iep1      
@@ -296,7 +328,6 @@
            enddo
       else
            !$ser savepoint Fill4Corners-In
-           !$ser verbatim dir=2
            !$ser data_kbuff k=k k_size=nz q4c=w
            !$ser verbatim if (k == nz) then 
            !$ser data dir=dir
@@ -330,7 +361,8 @@
               enddo
            enddo
       endif
-
+      !$ser savepoint TransportDelp-Out
+      !$ser data_kbuff k=k k_size=nz delpc=delpc ptc=ptc wc=wc
 !------------
 ! Compute KE:
 !------------
@@ -342,7 +374,9 @@
 !!!   and for cubed-sphere
       !$ser savepoint KE_C_SW-In
       !$ser data_kbuff k=k k_size=nz uc=uc vc=vc u=u v=v ua=ua va=va
- 
+      !$ser verbatim if (k == nz) then 
+      !$ser data dt2=dt2
+      !$ser verbatim endif
       if (nested .or. regional .or. flagstruct%grid_type >=3 ) then
          do j=js-1,jep1
          do i=is-1,iep1
@@ -420,7 +454,7 @@
 !------------------------------
 ! To consider using true co-variant winds at face edges?
       !$ser savepoint Circulation_Cgrid-In
-      !$ser data_kbuff k=k k_size=nz uc=uc vc=vc 
+      !$ser data_kbuff k=k k_size=nz uc=uc vc=vc vort_c=vort
       do j=js-1,je+1
          do i=is,ie+1
             fx(i,j) = uc(i,j) * dxc(i,j)
@@ -467,8 +501,8 @@
       !$ser verbatim if (k == nz) then 
       !$ser data dt2=dt2
       !$ser verbatim endif
-!! TO DO: separate versions for nesting/single-tile and cubed-sphere
-      if (nested .or. regional .or. flagstruct%grid_type >= 3) then
+      !! TO DO: separate versions for nesting/single-tile and cubed-sphere
+        if (nested .or. regional .or. flagstruct%grid_type >= 3) then
          do j=js,je
             do i=is,iep1
                fy1(i,j) = dt2*(v(i,j)-uc(i,j)*cosa_u(i,j))/sina_u(i,j)
@@ -631,7 +665,7 @@
       integer :: isd, ied, jsd, jed
       integer :: npx, npy
       logical :: nested,regional
-      !$ser verbatim integer :: tile_id,ier
+      !$ser verbatim integer :: mpi_rank,ier
       !$ser verbatim integer :: nz, dir
       !$ser verbatim real, dimension(1,1) :: damp_v_dup, nord_v_dup, nord_dup, nord_w_dup, damp4_dup, d2_bg_dup
       !$ser verbatim damp_v_dup(1,1)=damp_v
@@ -639,7 +673,7 @@
       !$ser verbatim nord_dup(1,1)=nord
       !$ser verbatim nord_w_dup(1,1)=nord_w
       !$ser verbatim d2_bg_dup(1,1)=d2_bg
-      !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, tile_id,ier)
+      !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, mpi_rank,ier)
       !$ser verbatim call get_nz(nz)
       is  = bd%is
       ie  = bd%ie

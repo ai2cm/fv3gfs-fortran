@@ -1,4 +1,7 @@
 ARG serialize=false
+ARG FMS_IMAGE=fv3gfs-fms
+ARG ESMF_IMAGE=fv3gfs-esmf
+ARG SERIALBOX_IMAGE=fv3gfs-environment-serialbox
 
 FROM ubuntu:19.10 AS fv3gfs-environment
 
@@ -67,7 +70,7 @@ ENV CC=mpicc
 ENV FC=mpifort
 ENV LDFLAGS="-L/usr/lib"
 ENV LOG_DRIVER_FLAGS="--comments"
-ENV CPPFLAGS="-I/usr/include -Duse_LARGEFILE -DMAXFIELDMETHODS_=500"
+ENV CPPFLAGS="-I/usr/include -Duse_LARGEFILE -DMAXFIELDMETHODS_=500 -DGFS_PHYS"
 ENV FCFLAGS="-fcray-pointer -Waliasing -ffree-line-length-none -fno-range-check -fdefault-real-8 -fdefault-double-8 -fopenmp"
 
 COPY FMS /FMS
@@ -120,7 +123,7 @@ COPY FV3/atmos_cubed_sphere /FV3/atmos_cubed_sphere
 
 ## Convert FV3GFS sources for serialize image
 ##---------------------------------------------------------------------------------
-FROM fv3gfs-environment-serialbox AS fv3gfs-src-serialize-true
+FROM $SERIALBOX_IMAGE AS fv3gfs-src-serialize-true
 
 ARG compile_option
 ARG configure_file=configure.fv3.gnu_docker_serialize
@@ -141,21 +144,26 @@ RUN cp $FV3_BASE/conf/$configure_file \
 
 FROM fv3gfs-src-serialize-$serialize AS fv3gfs-sources
 
+FROM $FMS_IMAGE AS fms_image
+FROM $ESMF_IMAGE AS esmf_image
+FROM $SERIALBOX_IMAGE AS serialbox_image
+
 ## Build FV3 executable in its own image
 ##---------------------------------------------------------------------------------
 FROM fv3gfs-environment AS fv3gfs-build
 
-ENV SERIALBOX_DIR=/serialbox2
-ENV SERIALBOX_OUTDIR=/FV3
-ENV PPSER_PY=$(SERIALBOX_DIR)/python/pp_ser/pp_ser.py
-ENV FMS_DIR=/FMS
-ENV ESMF_DIR=/usr/local/esmf
-ENV ESMF_INC="-I/usr/local/esmf/include -I${ESMF_DIR}/mod/modO3/Linux.gfortran.64.mpiuni.default/"
-ENV LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ESMF_DIR}/lib/libO3/Linux.gfortran.64.mpiuni.default/:${FMS_DIR}/libFMS/.libs/:${SERIALBOX_DIR}/lib
+ENV SERIALBOX_DIR=/serialbox2 \
+    SERIALBOX_OUTDIR=/FV3 \
+    FMS_DIR=/FMS \
+    ESMF_DIR=/usr/local/esmf
 
-COPY --from=fv3gfs-environment-serialbox /serialbox2/install $SERIALBOX_DIR
-COPY --from=fv3gfs-fms /FMS $FMS_DIR
-COPY --from=fv3gfs-esmf /usr/local/esmf ${ESMF_DIR}
+ENV ESMF_INC="-I/usr/local/esmf/include -I${ESMF_DIR}/mod/modO3/Linux.gfortran.64.mpiuni.default/" \
+    LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ESMF_DIR}/lib/libO3/Linux.gfortran.64.mpiuni.default/:${FMS_DIR}/libFMS/.libs/:${SERIALBOX_DIR}/lib \
+    PPSER_PY=$(SERIALBOX_DIR)/python/pp_ser/pp_ser.py
+
+COPY --from=serialbox_image /serialbox2/install $SERIALBOX_DIR
+COPY --from=fms_image /FMS $FMS_DIR
+COPY --from=esmf_image /usr/local/esmf $ESMF_DIR
 
 COPY --from=fv3gfs-sources /FV3 /FV3
 COPY --from=fv3gfs-sources /stochastic_physics /stochastic_physics
