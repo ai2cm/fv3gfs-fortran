@@ -165,6 +165,7 @@ module fv_restart_mod
   use fv_timing_mod,       only: timing_on, timing_off
   use fms_mod,             only: file_exist
   use fv_treat_da_inc_mod, only: read_da_inc
+  use coarse_grained_restart_files_mod, only: fv_io_write_restart_coarse
 #ifdef MULTI_GASES
   use multi_gases_mod,  only:  virq
 #endif
@@ -1422,7 +1423,14 @@ contains
     logical, intent(IN) :: grids_on_this_pe(:)
     integer n
 
-    call fv_io_write_restart(Atm, grids_on_this_pe, timestamp)
+    if (all(Atm%flagstruct%write_coarse_restart_files)) then
+       call fv_io_write_restart_coarse(Atm, grids_on_this_pe, timestamp)
+       if (all(.not. Atm%flagstruct%write_only_coarse_intermediate_restarts)) then
+          call fv_io_write_restart(Atm, grids_on_this_pe, timestamp)
+       endif
+    else
+       call fv_io_write_restart(Atm, grids_on_this_pe, timestamp)
+    endif
     do n=1,size(Atm)
        if (Atm(n)%neststruct%nested .and. grids_on_this_pe(n)) then
           call fv_io_write_BCs(Atm(n))
@@ -1516,6 +1524,9 @@ contains
 
    enddo
 
+   if (all(Atm%flagstruct%write_coarse_restart_files)) then
+      call fv_io_write_restart_coarse(Atm, grids_on_this_pe)
+   endif
    call fv_io_write_restart(Atm, grids_on_this_pe)
    do n=1,ntileMe
       if (Atm(n)%neststruct%nested .and. grids_on_this_pe(n)) call fv_io_write_BCs(Atm(n))

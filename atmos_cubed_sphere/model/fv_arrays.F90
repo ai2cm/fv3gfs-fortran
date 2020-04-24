@@ -1022,7 +1022,9 @@ module fv_arrays_mod
    logical  :: adj_mass_vmr = .false. !TER: This is to reproduce answers for verona patch.  This default can be changed
                                      !     to .true. in the next city release if desired
 
-   logical :: do_coarse_graining = .false.  ! Whether to enable online coarse-graining of restart files and diagnostics
+   logical :: write_coarse_restart_files = .false.  ! Whether to write coarse restart files
+   logical :: write_coarse_diagnostics = .false.  ! Whether to enable writing coarse diagnostics
+   logical :: write_only_coarse_intermediate_restarts = .false.  ! Whether to write only coarse intermediate restart files (if do_coarse_graining is .true.)
   !integer, pointer :: test_case
   !real,    pointer :: alpha
   end type fv_flags_type
@@ -1170,6 +1172,32 @@ module fv_arrays_mod
 
   end type fv_coarse_grid_bounds_type
 
+  type coarse_restart_type
+
+     real, _ALLOCATABLE :: u(:,:,:)
+     real, _ALLOCATABLE :: v(:,:,:)
+     real, _ALLOCATABLE :: w(:,:,:)
+     real, _ALLOCATABLE :: pt(:,:,:)
+     real, _ALLOCATABLE :: q(:,:,:,:)
+     real, _ALLOCATABLE :: qdiag(:,:,:,:)
+     real, _ALLOCATABLE :: delz(:,:,:)
+     real, _ALLOCATABLE :: phis(:,:)
+     real, _ALLOCATABLE :: delp(:,:,:)
+     real, _ALLOCATABLE :: ua(:,:,:)
+     real, _ALLOCATABLE :: va(:,:,:)
+     real, _ALLOCATABLE :: u_srf(:,:)
+     real, _ALLOCATABLE :: v_srf(:,:)
+     real, _ALLOCATABLE :: sgh(:,:)
+     real, _ALLOCATABLE :: oro(:,:)
+     real, _ALLOCATABLE :: ze0(:,:,:)
+     type(restart_file_type) :: fv_core_coarse
+     type(restart_file_type) :: fv_tracer_coarse
+     type(restart_file_type) :: fv_srf_wnd_coarse
+     type(restart_file_type) :: mg_drag_coarse
+     type(restart_file_type) :: fv_land_coarse
+
+  end type coarse_restart_type
+  
   type fv_coarse_graining_type
 
      type(fv_coarse_grid_bounds_type) :: bd
@@ -1183,11 +1211,14 @@ module fv_arrays_mod
      integer :: id_pfull  ! diagnostic vertical axis id for data on z-centers
      integer :: id_phalf  ! diagnostic vertical axis id for data on z-edges
      character(len=64) :: strategy  ! Current valid values are: 'model_level'
-     logical :: do_coarse_graining = .false.
+     logical :: write_coarse_restart_files = .false.
+     logical :: write_coarse_diagnostics = .false.
+     logical :: write_only_coarse_intermediate_restarts = .false.
      type(fv_coarse_diag_type) :: idiag  ! container for coarse diagnostic ids
+     type(coarse_restart_type) :: restart  ! container for coarse restart data
 
   end type fv_coarse_graining_type
-  
+
   type fv_regional_bc_bounds_type
 
      integer :: is_north ,ie_north ,js_north ,je_north &
@@ -2022,7 +2053,7 @@ contains
     if (Atm%flagstruct%grid_type < 4) then
        if(allocated(Atm%grid_global)) deallocate(Atm%grid_global)
     end if
-    
+
     Atm%allocated = .false.
 
   end subroutine deallocate_fv_atmos_type
