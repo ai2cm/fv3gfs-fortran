@@ -1347,9 +1347,9 @@ module fv_control_mod
 
      layout                        => Atm%layout
      io_layout                     => Atm%io_layout
-     write_coarse_restart_files    => Atm%flagstruct%write_coarse_restart_files
-     write_coarse_diagnostics      => Atm%flagstruct%write_coarse_diagnostics
-     write_only_coarse_intermediate_restarts => Atm%flagstruct%write_only_coarse_intermediate_restarts
+     write_coarse_restart_files    => Atm%coarse_graining%write_coarse_restart_files
+     write_coarse_diagnostics      => Atm%coarse_graining%write_coarse_diagnostics
+     write_only_coarse_intermediate_restarts => Atm%coarse_graining%write_only_coarse_intermediate_restarts
   end subroutine setup_pointers
 
        

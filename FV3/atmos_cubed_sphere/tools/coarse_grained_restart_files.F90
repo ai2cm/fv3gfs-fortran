@@ -5,7 +5,7 @@ module coarse_grained_restart_files_mod
        weighted_block_edge_average_x, weighted_block_edge_average_y
   use field_manager_mod, only: MODEL_ATMOS
   use fms_io_mod,      only: register_restart_field, save_restart
-  use fv_arrays_mod, only: coarse_restart_type, fv_atmos_type, fv_coarse_grid_bounds_type, fv_grid_bounds_type
+  use fv_arrays_mod, only: coarse_restart_type, fv_atmos_type
   use mpp_domains_mod, only: domain2d, EAST, NORTH
   use tracer_manager_mod, only: get_tracer_names, set_tracer_profile
 
@@ -23,16 +23,14 @@ contains
 
   subroutine fv_coarse_restart_init(tile_count, nz, nt_prog, &
        nt_phys, hydrostatic, hybrid_z, agrid_vel_rst, fv_land, &
-       coarse_domain, fine_bd, coarse_bd, restart)
+       coarse_domain, restart)
     integer, intent(in) :: tile_count, nz, nt_prog, nt_phys
     logical, intent(in) :: hydrostatic, hybrid_z, agrid_vel_rst, fv_land
     type(domain2d), intent(inout) :: coarse_domain
-    type(fv_grid_bounds_type), intent(in) :: fine_bd
-    type(fv_coarse_grid_bounds_type), intent(in) :: coarse_bd
     type(coarse_restart_type), intent(inout) :: restart
 
-    call get_fine_array_bounds(fine_bd, is, ie, js, je)
-    call get_coarse_array_bounds(coarse_bd, is_coarse, ie_coarse, js_coarse, je_coarse)
+    call get_fine_array_bounds(is, ie, js, je)
+    call get_coarse_array_bounds(is_coarse, ie_coarse, js_coarse, je_coarse)
     n_prognostic_tracers = nt_prog
     n_diagnostic_tracers = nt_phys
     n_tracers = nt_prog + nt_phys

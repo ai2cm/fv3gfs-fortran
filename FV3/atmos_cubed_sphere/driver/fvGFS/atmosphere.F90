@@ -338,12 +338,14 @@ contains
       if (grids_on_this_pe(n)) mytile = n
    enddo
 
-   if (Atm(mytile)%flagstruct%write_coarse_restart_files .or. Atm(mytile)%flagstruct%write_coarse_diagnostics) then
+   if (Atm(mytile)%coarse_graining%write_coarse_restart_files .or. &
+        Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
       call coarse_graining_init(Atm(mytile)%flagstruct%npx, Atm(mytile)%npz, &
-           Atm(mytile)%layout, Atm(mytile)%bd, Atm(mytile)%flagstruct%write_coarse_restart_files, &
-           Atm(mytile)%flagstruct%write_coarse_diagnostics, &
-           Atm(mytile)%flagstruct%write_only_coarse_intermediate_restarts, &
-           Atm(mytile)%coarse_graining)
+           Atm(mytile)%layout, Atm(mytile)%bd%is, Atm(mytile)%bd%ie, &
+           Atm(mytile)%bd%js, Atm(mytile)%bd%je, Atm(mytile)%coarse_graining%factor, &
+           Atm(mytile)%coarse_graining%nx_coarse, &
+           Atm(mytile)%coarse_graining%strategy, &
+           Atm(mytile)%coarse_graining%domain)
    endif
 
    Atm(mytile)%Time_init = Time_init
@@ -438,7 +440,7 @@ contains
    call fv_diag_init(Atm(mytile:mytile), Atm(mytile)%atmos_axes, Time, npx, npy, npz, Atm(mytile)%flagstruct%p_ref)
 
    if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
-      call fv_coarse_diag_init(Atm(mytile)%bd, Time, Atm(mytile)%atmos_axes(3), &
+      call fv_coarse_diag_init(Time, Atm(mytile)%atmos_axes(3), &
            Atm(mytile)%atmos_axes(4), Atm(mytile)%coarse_graining)
    endif
    if (Atm(mytile)%coarse_graining%write_coarse_restart_files) then
@@ -446,7 +448,6 @@ contains
            Atm(mytile)%flagstruct%nt_phys, Atm(mytile)%flagstruct%hydrostatic, &
            Atm(mytile)%flagstruct%hybrid_z, Atm(mytile)%flagstruct%agrid_vel_rst, &
            Atm(mytile)%flagstruct%fv_land, Atm(mytile)%coarse_graining%domain, &
-           Atm(mytile)%bd, Atm(mytile)%coarse_graining%bd, &
            Atm(mytile)%coarse_graining%restart)
    endif
 !---------- reference profile -----------
