@@ -339,6 +339,7 @@ module fv_control_mod
   logical, pointer :: write_coarse_restart_files
   logical, pointer :: write_coarse_diagnostics
   logical, pointer :: write_only_coarse_intermediate_restarts
+  logical, pointer :: restart_from_agrid_winds
 
    integer :: ntilesMe                ! Number of tiles on this process =1 for now
 
@@ -676,7 +677,8 @@ module fv_control_mod
                          ioffset, joffset, check_negative, nudge_ic, halo_update_type, gfs_phil, agrid_vel_rst,     &
                          do_uni_zfull, adj_mass_vmr, fac_n_spl, fhouri, &
                          regional, bc_update_interval,&
-                         write_coarse_restart_files, write_coarse_diagnostics, write_only_coarse_intermediate_restarts
+                         write_coarse_restart_files, write_coarse_diagnostics,&
+                         write_only_coarse_intermediate_restarts, restart_from_agrid_winds
 
    namelist /test_case_nml/test_case, bubble_do, alpha, nsolitons, soliton_Umax, soliton_size
 #ifdef MULTI_GASES
@@ -1350,7 +1352,8 @@ module fv_control_mod
      write_coarse_restart_files    => Atm%flagstruct%write_coarse_restart_files
      write_coarse_diagnostics      => Atm%flagstruct%write_coarse_diagnostics
      write_only_coarse_intermediate_restarts => Atm%flagstruct%write_only_coarse_intermediate_restarts
-  end subroutine setup_pointers
+     restart_from_agrid_winds      => Atm%flagstruct%restart_from_agrid_winds
+ end subroutine setup_pointers
 
        
 end module fv_control_mod

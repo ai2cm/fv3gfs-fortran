@@ -1025,6 +1025,7 @@ module fv_arrays_mod
    logical :: write_coarse_restart_files = .false.  ! Whether to write coarse restart files
    logical :: write_coarse_diagnostics = .false.  ! Whether to enable writing coarse diagnostics
    logical :: write_only_coarse_intermediate_restarts = .false.  ! Whether to write only coarse intermediate restart files (if do_coarse_graining is .true.)
+   logical :: restart_from_agrid_winds = .false.  ! Whether to restart from A-grid winds
   !integer, pointer :: test_case
   !real,    pointer :: alpha
   end type fv_flags_type
