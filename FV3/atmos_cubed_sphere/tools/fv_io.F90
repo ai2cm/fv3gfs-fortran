@@ -118,6 +118,7 @@ module fv_io_mod
   public :: fv_io_read_tracers, fv_io_register_restart, fv_io_register_nudge_restart
   public :: fv_io_register_restart_BCs, fv_io_register_restart_BCs_NH
   public :: fv_io_write_BCs, fv_io_read_BCs
+  public :: cubed_a2d
 
   logical                       :: module_is_initialized = .FALSE.
 
