@@ -5067,7 +5067,7 @@ module GFS_typedefs
 !      allocate (Diag%upd_mf (IM,Model%levs))
 !      allocate (Diag%dwn_mf (IM,Model%levs))
 !      allocate (Diag%det_mf (IM,Model%levs))
-!      allocate (Diag%cldcov (IM,Model%levs))
+     allocate (Diag%cldcov (IM,Model%levs))
     endif
 
 !vay-2018

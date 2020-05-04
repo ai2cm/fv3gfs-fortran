@@ -901,7 +901,9 @@ subroutine update_atmos_model_state (Atmos)
                             IPD_Control%levs, 1, 1, 1.d0, time_int, time_intfull,              &
                             IPD_Control%fhswr, IPD_Control%fhlwr, &
                             Atm(mytile)%flagstruct%write_coarse_diagnostics, &
-                            IPD_Diag_coarse, Atm(mytile)%coarse_graining%bd)
+                            IPD_Diag_coarse, Atm(mytile)%coarse_graining%bd, &
+                            Atm(mytile)%delp(Atm(mytile)%bd%is:Atm(mytile)%bd%ie, &
+                            Atm(mytile)%bd%js:Atm(mytile)%bd%je,1:Atm(mytile)%npz))
       if (nint(IPD_Control%fhzero) > 0) then 
         if (mod(isec,3600*nint(IPD_Control%fhzero)) == 0) diag_time = Atmos%Time
       else

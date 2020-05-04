@@ -2260,7 +2260,8 @@ module FV3GFS_io_mod
 !-------------------------------------------------------------------------      
   subroutine fv3gfs_diag_output(time, diag, atm_block, IPD_Data, nx, ny, levs, ntcw, ntoz, &
                                 dt, time_int, time_intfull, time_radsw, &
-                                time_radlw, write_coarse_diagnostics, diag_coarse, coarse_bd)
+                                time_radlw, write_coarse_diagnostics,&
+                                diag_coarse, coarse_bd, delp)
 !--- subroutine interface variable definitions
     type(time_type),           intent(in) :: time
     type(IPD_diag_type),       intent(in) :: diag(:)
@@ -2275,6 +2276,7 @@ module FV3GFS_io_mod
     logical, intent(in) :: write_coarse_diagnostics
     type(IPD_diag_type), intent(in) :: diag_coarse(:)
     type(fv_coarse_grid_bounds_type), intent(in) :: coarse_bd
+    real(kind=kind_phys),      intent(in) :: delp(isco:ieco,jsco:jeco,1:levo)
 !--- local variables
     integer :: i, j, k, idx, nblks, nb, ix, ii, jj
     integer :: is_in, js_in, isc, jsc
@@ -2288,7 +2290,7 @@ module FV3GFS_io_mod
     logical :: used
     logical :: require_area, require_mass
     real(kind=kind_phys), allocatable :: area(:,:)
-    real(kind=kind_phys), allocatable :: mass(:,:,:)  ! Note this is flipped in the vertical relative to the dycore
+    real(kind=kind_phys), allocatable :: mass(:,:,:)
     
      nblks         = atm_block%nblks
      rdt           = 1.0d0/dt
@@ -2310,7 +2312,7 @@ module FV3GFS_io_mod
         endif
         if (require_mass) then
            allocate(mass(nx, ny, levs))
-           call get_mass(Atm_block, IPD_Data, nx, ny, levs, mass)
+           call get_mass(Atm_block, IPD_Data, delp, nx, ny, levs, mass)
         endif
      endif
      
@@ -2447,22 +2449,36 @@ module FV3GFS_io_mod
          !---
          !--- skipping other 3D variables with the following else statement
          !---
-         if(mpp_pe()==mpp_root_pe())print *,'in,fv3gfs_io. 3D fields, idx=',idx,'varname=',trim(diag(idx)%name), &
-             'lcnvfac=',lcnvfac, 'levo=',levo,'nx=',nx,'ny=',ny
-           do k=1, levo
-             do j = 1, ny
-               jj = j + jsc -1
-               do i = 1, nx
-                 ii = i + isc -1
-                 nb = Atm_block%blkno(ii,jj)
-                 ix = Atm_block%ixp(ii,jj)
+
+         if (trim(Diag(idx)%name) .ne. 'delp_phys') then
+            if(mpp_pe()==mpp_root_pe())print *,'in,fv3gfs_io. 3D fields, idx=',idx,'varname=',trim(diag(idx)%name), &
+                 'lcnvfac=',lcnvfac, 'levo=',levo,'nx=',nx,'ny=',ny
+            do k=1, levo
+               do j = 1, ny
+                  jj = j + jsc -1
+                  do i = 1, nx
+                     ii = i + isc -1
+                     nb = Atm_block%blkno(ii,jj)
+                     ix = Atm_block%ixp(ii,jj)
 !         if(mpp_pe()==mpp_root_pe())print *,'in,fv3gfs_io,sze(Diag(idx)%data(nb)%var3)=',  &
 !             size(Diag(idx)%data(nb)%var3,1),size(Diag(idx)%data(nb)%var3,2)
-                 var3(i,j,k) = Diag(idx)%data(nb)%var3(ix,levo-k+1)*lcnvfac
+                     var3(i,j,k) = Diag(idx)%data(nb)%var3(ix,levo-k+1)*lcnvfac
+                  enddo
                enddo
-             enddo
-           enddo
-           call store_data3D(Diag(idx)%id, var3, Time, idx, Diag(idx)%intpl_method, Diag(idx)%name)
+            enddo
+            if (Diag(idx)%id > 0) then
+               call store_data3D(Diag(idx)%id, var3, Time, idx, Diag(idx)%intpl_method, Diag(idx)%name)
+            endif
+            if (Diag_coarse(idx)%id > 0) then
+               call store_data3D_coarse(Diag_coarse(idx)%id, Diag_coarse(idx)%name, &
+                    Diag_coarse(idx)%coarse_graining_method, &
+                  nx, ny, levo, var3, area, mass, Time, coarse_bd)
+            endif
+         else
+            if (Diag(idx)%id > 0) then
+               call store_data3D(Diag(idx)%id, delp, Time, idx, Diag(idx)%intpl_method, Diag(idx)%name)
+            endif
+         endif
 #ifdef JUNK
          else
            !--- dt3dt variables
@@ -2652,14 +2668,15 @@ module FV3GFS_io_mod
    enddo
  end subroutine get_area
 
- subroutine get_mass(Atm_block, IPD_Data, nx, ny, nz, mass)
+ subroutine get_mass(Atm_block, IPD_Data, delp, nx, ny, nz, mass)
    type(block_control_type), intent(in) :: Atm_block
    type(IPD_data_type), intent(in) :: IPD_Data(:)
    integer, intent(in) :: nx, ny, nz
+   real(kind=kind_phys), intent(in) :: delp(1:nx,1:ny,1:nz)
    real(kind=kind_phys), intent(out) :: mass(1:nx,1:ny,1:nz)
 
    integer :: i, ii, j, jj, k, block_number, column, isc, jsc
-   real(kind=kind_phys) :: area_value, delp_value
+   real(kind=kind_phys) :: area_value
    
    do k = 1, nz
       do j = 1, ny
@@ -2669,8 +2686,7 @@ module FV3GFS_io_mod
             block_number = Atm_block%blkno(ii,jj)
             column = Atm_block%ixp(ii,jj)
             area_value = IPD_Data(block_number)%Grid%area(column)
-            delp_value = IPD_Data(block_number)%Statein%prsl(column, k)
-            mass(i,j,k) = area_value * delp_value
+            mass(i,j,k) = area_value * delp(i,j,k)
          enddo
       enddo
    enddo
@@ -2811,6 +2827,40 @@ module FV3GFS_io_mod
     endif
 !
  end subroutine store_data3D
+
+ subroutine store_data3D_coarse(id, name, method, nx, ny, nz, full_resolution_field, &
+      area, mass, Time, coarse_bd)
+   integer, intent(in) :: id
+   character(len=64), intent(in) :: name
+   character(len=64), intent(in) :: method
+   integer, intent(in) :: nx, ny, nz
+   real(kind=kind_phys), intent(in) :: full_resolution_field(1:nx,1:ny,1:nz)
+   real(kind=kind_phys), intent(in) :: area(1:nx,1:ny)
+   real(kind=kind_phys), intent(in) :: mass(1:nx,1:ny,1:nz)
+   type(time_type), intent(in) :: Time
+   type(fv_coarse_grid_bounds_type) :: coarse_bd
+
+   real(kind=kind_phys), allocatable :: coarse(:,:,:)
+   character(len=128) :: message
+   integer :: is_coarse, ie_coarse, js_coarse, je_coarse, nx_coarse, ny_coarse
+   logical :: used
+
+   call get_coarse_array_bounds(coarse_bd, is_coarse, ie_coarse, js_coarse, je_coarse)
+   nx_coarse = ie_coarse - is_coarse + 1
+   ny_coarse = je_coarse - js_coarse + 1
+
+   allocate(coarse(nx_coarse, ny_coarse, nz))
+
+   if (method .eq. AREA_WEIGHTED) then
+      call weighted_block_average(area, full_resolution_field, coarse)
+   elseif (method .eq. MASS_WEIGHTED) then
+      call weighted_block_average(mass, full_resolution_field, coarse)
+   else
+      message = 'A valid coarse_graining_method must be specified for ' // trim(name)
+      call mpp_error(FATAL, message)
+   endif
+   used = send_data(id, coarse, Time)
+ end subroutine store_data3D_coarse
 !
 !-------------------------------------------------------------------------
 !
