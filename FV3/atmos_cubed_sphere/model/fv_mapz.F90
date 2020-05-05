@@ -1395,7 +1395,9 @@ endif        ! end last_step check
 
 ! Compute vertical subgrid distribution
    if ( kord >7 ) then
-        call scalar_profile( qs, q4, dp1, km, i1, i2, iv, kord, q_min )
+     
+      call scalar_profile( qs, q4, dp1, km, i1, i2, iv, kord, q_min )
+     
    else
         call ppm_profile( q4, dp1, km, i1, i2, iv, kord )
    endif
@@ -1479,24 +1481,36 @@ endif        ! end last_step check
       do i=i1,i2
          dp1(i,k) = pe1(i,k+1) - pe1(i,k)
          q4(1,i,k) = q1(i,j,k)
-         !$ser verbatim q4(2, i, k) = 0.0
-         !$ser verbatim q4(3, i, k) = 0.0
-         !$ser verbatim q4(4, i, k) = 0.0
+         !_$ser verbatim q4(2, i, k) = 0.0
+         !_$ser verbatim q4(3, i, k) = 0.0
+         !_$ser verbatim q4(4, i, k) = 0.0
       enddo
    enddo
 
 ! Compute vertical subgrid distribution
    if ( kord >7 ) then
-      !$ser verbatim if(j == jbeg + 3 .and. mod(i2-i1+1, 2)==1) then 
+      !$ser verbatim if(j == jbeg + 3 ) then
+        !$ser verbatim if (mod(i2-i1+1, 2)==1) then 
       !$ser savepoint CS_Profile_2d-In
-      !$ser data qs_column=qs q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:) dp1_2d=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord
+        !$ser data qs_column=qs q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:) dp1_2d=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord
+        !$ser verbatim else
+      !$ser savepoint CS_Profile_2d-2-In
+        !$ser data qs_column_2=qs q4_1_2=q4(1,:,:) q4_2_2=q4(2,:,:) q4_3_2=q4(3,:,:) q4_4_2=q4(4,:,:) dp1_2d_2=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord
+        !$ser verbatim endif
+      
       !$ser verbatim endif
       
       call  cs_profile( qs, q4, dp1, km, i1, i2, iv, kord )
       
-      !$ser verbatim if(j == jbeg + 3  .and. mod(i2-i1+1, 2)==1) then 
+      !$ser verbatim if(j == jbeg + 3) then
+        !$ser verbatim if (mod(i2-i1+1, 2)==1) then 
       !$ser savepoint CS_Profile_2d-Out
-      !$ser data  q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:)
+       !$ser data  q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:)
+        !$ser verbatim else
+      !$ser savepoint CS_Profile_2d-2-In
+       !$ser data  q4_1_2=q4(1,:,:) q4_2_2=q4(2,:,:) q4_3_2=q4(3,:,:) q4_4_2=q4(4,:,:)
+        !$ser verbatim endif
+       
       !$ser verbatim endif
    else
       !$ser verbatim if(j == jbeg + 3 .and. mod(i2-i1+1, 2)==1) then 
@@ -1575,7 +1589,7 @@ endif        ! end last_step check
       real:: qs(i1:i2)
       real:: pl, pr, dp, esl, fac1, fac2
       integer:: i, k, l, m, k0, iq
-
+      !$ser verbatim integer:: kord_iq, iv
       do k=1,km
          do i=i1,i2
             dp1(i,k) = pe1(i,k+1) - pe1(i,k)
@@ -1588,7 +1602,18 @@ endif        ! end last_step check
                q4(1,i,k,iq) = q1(i,j,k,iq)
             enddo
          enddo
+         !$ser verbatim if(j == jsd + 3 ) then
+         !$ser verbatim kord_iq = kord(iq)
+         !$ser verbatim iv = 0
+         !$ser savepoint Scalar_Profile_2d-In
+         !$ser data qs_column_scalar=qs q4_1s=q4(1,:,:,iq)  dp1_2d_scalar=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord_iq q_min=q_min
+         !$ser verbatim endif
+      
          call scalar_profile( qs, q4(1,i1,1,iq), dp1, km, i1, i2, 0, kord(iq), q_min )
+         !$ser verbatim if(j == jsd + 3 ) then
+         !$ser savepoint Scalar_Profile_2d-Out
+         !$ser data  q4_1s=q4(1,:,:,iq) 
+         !$ser verbatim endif
       enddo
 
 ! Mapping
