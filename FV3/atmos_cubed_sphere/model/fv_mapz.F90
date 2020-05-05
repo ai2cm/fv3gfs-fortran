@@ -1481,9 +1481,6 @@ endif        ! end last_step check
       do i=i1,i2
          dp1(i,k) = pe1(i,k+1) - pe1(i,k)
          q4(1,i,k) = q1(i,j,k)
-         !_$ser verbatim q4(2, i, k) = 0.0
-         !_$ser verbatim q4(3, i, k) = 0.0
-         !_$ser verbatim q4(4, i, k) = 0.0
       enddo
    enddo
 
