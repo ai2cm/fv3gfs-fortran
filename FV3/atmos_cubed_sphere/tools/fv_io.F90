@@ -514,6 +514,15 @@ contains
 
     do n = 1, ntileMe
        fname = 'fv_core.res'//trim(stile_name)//'.nc'
+
+       !--- optionally include D-grid winds even if restarting from A-grid winds
+       if (Atm(n)%flagstruct%optional_dgrid_vel_rst .and. Atm(n)%flagstruct%restart_from_agrid_winds) then
+          id_restart =  register_restart_field(Atm(n)%Fv_tile_restart, fname, 'u', Atm(n)%u, &
+               domain=fv_domain, position=NORTH, mandatory=.false., tile_count=n)
+          id_restart =  register_restart_field(Atm(n)%Fv_tile_restart, fname, 'v', Atm(n)%v, &
+               domain=fv_domain, position=EAST, mandatory=.false., tile_count=n)          
+       endif
+       
        if (Atm(n)%flagstruct%restart_from_agrid_winds) then
          id_restart =  register_restart_field(Atm(n)%Fv_tile_restart, fname, 'ua', Atm(n)%ua, &
                        domain=fv_domain, tile_count=n)
@@ -524,14 +533,6 @@ contains
                domain=fv_domain, position=NORTH,tile_count=n)
           id_restart =  register_restart_field(Atm(n)%Fv_tile_restart, fname, 'v', Atm(n)%v, &
                domain=fv_domain, position=EAST,tile_count=n)
-       endif
-
-       !--- optionally include D-grid winds even if restarting from A-grid winds
-       if (Atm(n)%flagstruct%optional_dgrid_vel_rst .and. Atm(n)%flagstruct%restart_from_agrid_winds) then
-          id_restart =  register_restart_field(Atm(n)%Fv_tile_restart, fname, 'u', Atm(n)%u, &
-               domain=fv_domain, position=NORTH, mandatory=.false., tile_count=n)
-          id_restart =  register_restart_field(Atm(n)%Fv_tile_restart, fname, 'v', Atm(n)%v, &
-               domain=fv_domain, position=EAST, mandatory=.false., tile_count=n)          
        endif
        
        if (.not.Atm(n)%flagstruct%hydrostatic) then

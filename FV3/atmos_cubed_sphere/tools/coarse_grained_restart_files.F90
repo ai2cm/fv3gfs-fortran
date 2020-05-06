@@ -157,6 +157,16 @@ contains
 
     filename = 'fv_core_coarse.res.nc'
 
+    !--- optionally include D-grid winds even if restarting from A-grid winds
+    if (optional_dgrid_vel_rst .and. restart_from_agrid_winds) then
+       id_restart = register_restart_field(restart%fv_core_coarse, &
+            filename, 'u', restart%u, domain=coarse_domain, position=NORTH, &
+            mandatory=.false., tile_count=tile_count)
+       id_restart = register_restart_field(restart%fv_core_coarse, &
+            filename, 'v', restart%v, domain=coarse_domain, position=EAST, &
+            mandatory=.false., tile_count=tile_count)
+    endif
+    
     if (restart_from_agrid_winds) then
        id_restart = register_restart_field(restart%fv_core_coarse, &
             filename, 'ua', restart%ua, domain=coarse_domain, tile_count=tile_count)
@@ -167,16 +177,6 @@ contains
          filename, 'u', restart%u, domain=coarse_domain, position=NORTH, tile_count=tile_count)
        id_restart = register_restart_field(restart%fv_core_coarse, &
          filename, 'v', restart%v, domain=coarse_domain, position=EAST, tile_count=tile_count)
-    endif
-
-    !--- optionally include D-grid winds even if restarting from A-grid winds
-    if (optional_dgrid_vel_rst .and. restart_from_agrid_winds) then
-       id_restart = register_restart_field(restart%fv_core_coarse, &
-            filename, 'u', restart%u, domain=coarse_domain, position=NORTH, &
-            mandatory=.false., tile_count=tile_count)
-       id_restart = register_restart_field(restart%fv_core_coarse, &
-            filename, 'v', restart%v, domain=coarse_domain, position=EAST, &
-            mandatory=.false., tile_count=tile_count)
     endif
     
     if (.not. hydrostatic) then
