@@ -197,7 +197,7 @@ contains
     id_restart = register_restart_field(restart%fv_core_coarse, &
             filename, 'phis', restart%phis, domain=coarse_domain, tile_count=tile_count)
 
-    if (agrid_vel_rst) then
+    if (agrid_vel_rst .and. .not. restart_from_agrid_winds) then
        id_restart = register_restart_field(restart%fv_core_coarse, &
             filename, 'ua', restart%ua, domain=coarse_domain, mandatory=.false., tile_count=tile_count)
        id_restart = register_restart_field(restart%fv_core_coarse, &
