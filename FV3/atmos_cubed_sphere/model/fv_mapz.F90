@@ -1394,7 +1394,7 @@ endif        ! end last_step check
    enddo
 
 ! Compute vertical subgrid distribution
-   if ( kord >7 ) then  
+   if ( kord >7 ) then
         call scalar_profile( qs, q4, dp1, km, i1, i2, iv, kord, q_min )
    else
         call ppm_profile( q4, dp1, km, i1, i2, iv, kord )
