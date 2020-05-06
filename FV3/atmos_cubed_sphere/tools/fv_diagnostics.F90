@@ -724,6 +724,7 @@ contains
           !--------------------
           idiag%id_pv = register_diag_field ( trim(field), 'pv', axes(1:3), Time,       &
                'potential vorticity', '1/s', missing_value=missing_value )
+
        endif
 
 ! Total energy (only when moist_phys = .T.)
