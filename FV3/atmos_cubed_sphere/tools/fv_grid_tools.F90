@@ -658,7 +658,8 @@ contains
     ntiles_g = nregions
     latlon = .false.
     cubed_sphere = .false.
-
+!$ser savepoint Grid_Grid-In
+!$ser data grid_file=grid_file ndims=ndims nregions=nregions
     if ( Atm%flagstruct%do_schmidt .and. abs(atm%flagstruct%stretch_fac-1.) > 1.E-5 ) stretched_grid = .true.
 
     if (Atm%flagstruct%grid_type>3) then
@@ -757,8 +758,10 @@ contains
          call fill_corners(grid(:,:,1), npx, npy, FILL=XDir, BGRID=.true.)
          call fill_corners(grid(:,:,2), npx, npy, FILL=XDir, BGRID=.true.)
        endif
-
-
+     !$ser savepoint Grid_Grid-Out
+     !$ser data gridvar=grid grid_global=grid_global
+     !$ser savepoint Grid_DxDy-In
+     !$ser data gridvar=grid
           !--- dx and dy         
 
           if( .not. Atm%flagstruct%regional) then
@@ -796,7 +799,7 @@ contains
              call get_symmetry(dx(is:ie,js:je+1), dy(is:ie+1,js:je), 0, 1, Atm%layout(1), Atm%layout(2), &
                   Atm%domain, Atm%tile, Atm%gridstruct%npx_g, Atm%bd)
           endif
-
+          !$ser data dx_nohalo=dx dy_nohalo=dy
           call mpp_get_boundary( dy, dx, Atm%domain, ebufferx=ebuffer, wbufferx=wbuffer, sbuffery=sbuffer, nbuffery=nbuffer,&
                flags=SCALAR_PAIR+XUPDATE, gridtype=CGRID_NE_PARAM)
           if( .not. Atm%flagstruct%regional ) then
@@ -813,7 +816,11 @@ contains
           if (cubed_sphere .and. (.not. (Atm%neststruct%nested .or. Atm%flagstruct%regional))) then
             call fill_corners(dx, dy, npx, npy, DGRID=.true.)
           endif
+     !$ser savepoint Grid_DxDy-Out
+     !$ser data dx=dx dy=dy
 
+     !$ser savepoint Grid_Agrid-In
+     !$ser data agrid=agrid gridvar=grid cubed_sphere=cubed_sphere 
        if( .not. stretched_grid )         &
            call sorted_inta(isd, ied, jsd, jed, cubed_sphere, grid, iinta, jinta)
 
@@ -859,7 +866,7 @@ contains
          call fill_corners(dxa, dya, npx, npy, AGRID=.true.)
        endif
 
-
+    
     end if !if nested
 
        do j=jsd,jed
@@ -888,18 +895,25 @@ contains
           dyc(i,jed+1) = dyc(i,jed)
        end do
 
-
+    
        if( .not. stretched_grid )      &
            call sorted_intb(isd, ied, jsd, jed, is, ie, js, je, npx, npy, &
                             cubed_sphere, agrid, iintb, jintb)
-
+      !$ser savepoint Grid_Agrid-Out
+       !$ser data agrid=agrid gridvar=grid dya=dya dxa=dxa dxc=dxc dyc=dyc iinta=iinta jinta=jinta iintb=iintb jinb=jintb
+       !$ser savepoint Grid_Areas-In
+       !$ser data ndims=ndims nregions=nregions gridvar=grid agrid=agrid iinta=iinta jinta=jinta iintb=iintb jintb=jintb area=area area_c=area_c
+      
        call grid_area( npx, npy, ndims, nregions, Atm%neststruct%nested, Atm%gridstruct, Atm%domain, Atm%bd, Atm%flagstruct%regional )
+       !$ser savepoint Grid_Areas-Out
+       !$ser data area=area area_c=area_c
 !      stretched_grid = .false.
 
 !----------------------------------
 ! Compute area_c, rarea_c, dxc, dyc
 !----------------------------------
-
+!$ser savepoint Grid_MoreAreas-In
+!$ser data  ndims=ndims nregions=nregions gridvar=grid agrid=agrid area=area area_c=area_c rarea_c=rarea_c dxc=dxc dyc=dyc dx=dx dy=dy
   if ( .not. stretched_grid .and. (.not. (Atm%neststruct%nested .or. Atm%flagstruct%regional))) then
 ! For symmetrical grids:
        if ( is==1 ) then
@@ -1075,7 +1089,8 @@ contains
              rarea_c(i,j) = 1.0/area_c(i,j)
           enddo
        enddo
-
+!$ser savepoint Grid_MoreAreas-Out
+!$ser data rarea_c=rarea_c dxc=dxc dyc=dyc area_c=area_c rdxa=rdxa rdya=rdya rdxc=rdxc rdyc=rdyc rdx=rdx rdy=rdy
 200    format(A,f9.2,A,f9.2,A,f9.2)
 201    format(A,f9.2,A,f9.2,A,f9.2,A,f9.2)
 202    format(A,A,i4.4,A,i4.4,A)

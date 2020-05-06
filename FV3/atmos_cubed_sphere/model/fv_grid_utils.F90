@@ -244,8 +244,12 @@
            Atm%ks    = 0
       elseif ( .not. Atm%flagstruct%hybrid_z ) then
 ! Initialize (ak,bk) for cold start; overwritten with restart file
-           if (.not. Atm%flagstruct%external_eta) then
-              call set_eta(npz, Atm%ks, Atm%ptop, Atm%ak, Atm%bk)
+         if (.not. Atm%flagstruct%external_eta) then
+            !$ser savepoint GridUtils_Eta-In
+            !$ser data npz=npz
+            call set_eta(npz, Atm%ks, Atm%ptop, Atm%ak, Atm%bk)
+            !$ser savepoint GridUtils_Eta-Out
+            !$ser data ks=Atm%ks ptop=Atm%ptop ak=Atm%ak bk=Atm%bk
               if ( is_master() ) then
                  write(*,*) 'Grid_init', npz, Atm%ks, Atm%ptop
                  tmp1 = Atm%ak(Atm%ks+1)
@@ -285,7 +289,8 @@
        tmp2 = great_circle_dist(grid(1,1,1:2), agrid(2,2,1:2))
        write(*,*) 'Corner interpolation coefficient=', tmp2/(tmp2-tmp1)
   endif
-
+  !$ser savepoint GridUtils_GridFill-In
+  !$ser data gridvar=grid grid3=grid3 agrid=agrid
   if (grid_type < 3) then
 !xxx if ( .not. Atm%neststruct%nested ) then
      if ( .not. Atm%neststruct%nested .and. .not.Atm%flagstruct%regional ) then
@@ -309,8 +314,7 @@
         call fill_ghost(ec2(k,:,:), npx, npy, big_number, Atm%bd)
      enddo
      end if
-
-
+    
      do j=jsd,jed
         do i=isd+1,ied
         if ( ( (i<1   .and. j<1  ) .or. (i>npx .and. j<1  ) .or.  &
@@ -338,7 +342,7 @@
         endif
         enddo
      enddo
-
+     
      do j=jsd+1,jed
         do i=isd,ied
         if ( ( (i<1   .and. j<1  ) .or. (i>(npx-1) .and. j<1  ) .or.  &
@@ -366,12 +370,16 @@
         endif
         enddo
      enddo
+     !$ser savepoint GridUtils_GridFill-Out
+     !$ser data gridvar=grid grid3=grid3 agrid=agrid ec1=ec1 ec2=ec2 ew=ew es=es ppg=pp p3=p3 p2=p2
 
 !     9---4---8
 !     |       |
 !     1   5   3
 !     |       |
 !     6---2---7
+     !$ser savepoint GridUtils_SG-In
+     !$ser data grid3=grid3 agrid=agrid 
 
       do j=jsd,jed
          do i=isd,ied
@@ -413,7 +421,7 @@
             enddo
          enddo
       enddo
-
+  
 ! -------------------------------
 ! For transport operation
 ! -------------------------------
@@ -448,7 +456,8 @@
            enddo
         endif
      endif
-
+     !$ser savepoint GridUtils_SG-Out
+     !$ser data sin_sg=sin_sg cos_sg=cos_sg
 ! For AAM correction:
      do j=js,je
         do i=is,ie+1
@@ -500,7 +509,9 @@
      es(3,:,:,2)=0.
   endif
 
-   if ( non_ortho ) then
+  if ( non_ortho ) then
+      !$ser savepoint GridUtils_NonOrtho-In
+      !$ser data  ppg=pp grid3=grid3 ee1=ee1 ee2=ee2
            cosa_u = big_number
            cosa_v = big_number
            cosa_s = big_number
@@ -614,6 +625,8 @@
             endif
          enddo
       enddo
+  !$ser savepoint GridUtils_NonOrtho-Out
+  !$ser data  cosa_u=cosa_u cosa_v=cosa_v cosa_s=cosa_s sina_u=sina_u sina_v=sina_v rsin_u=rsin_u rsin_v=rsin_v rsina=rsina rsin2=rsin2 cosa=cosa sina=sina
 
       !EXPLANATION HERE: calling fill_ghost overwrites **SOME** of the sin_sg 
       !values along the outward-facing edge of a tile in the corners, which is incorrect. 
@@ -629,6 +642,8 @@
 ! -------------------------------
 ! For transport operation
 ! -------------------------------
+      !$ser savepoint GridUtils_SGCorner-In
+      !$ser data sin_sg=sin_sg cos_sg=cos_sg
       if ( sw_corner ) then
            do i=0,-2,-1
               sin_sg(0,i,3) = sin_sg(i,1,2) 
@@ -700,7 +715,8 @@
            rsin_u = 1.
            rsin_v = 1.
    endif
-
+  !$ser savepoint GridUtils_SGCorner-Out
+  !$ser data sin_sg=sin_sg cos_sg=cos_sg
    if ( grid_type < 3 ) then
 
 #ifdef USE_NORM_VECT
@@ -757,7 +773,8 @@
 ! Make unit vectors for the coordinate extension:
 !-------------------------------------------------------------
   endif
- 
+!$ser savepoint GridUtils_DivDel-In
+!$ser data sin_sg=sin_sg cos_sg=cos_sg dxc=dxc dyc=dyc dx=dx dy=dy
 !xxxx
 !!!  should we insert .not.regional into the following loops alongside .not.nested ????
 !xxxx
@@ -788,17 +805,25 @@
          del6_v(ie+1,j) = 0.5*(sin_sg(npx,j,1)+sin_sg(npx-1,j,3))*dy(ie+1,j)/dxc(ie+1,j)
      endif
   enddo
-
+!$ser savepoint GridUtils_DivDel-Out
+!$ser data divg_u=divg_u divg_v=divg_v del6_u=del6_u del6_v=del6_v
+!$ser savepoint InitCubed_To_LatLon-In
+!$ser data sin_sg=sin_sg agrid=agrid ec1=ec1 ec2=ec2 
 ! Initialize cubed_sphere to lat-lon transformation:
      call init_cubed_to_latlon( Atm%gridstruct, Atm%flagstruct%hydrostatic, agrid, grid_type, c2l_order, Atm%bd )
+!$ser savepoint InitCubed_To_LatLon-Out
+     !$ser data a11=Atm%gridstruct%a11 a12=Atm%gridstruct%a12 a21=Atm%gridstruct%a21 a22=Atm%gridstruct%a22  z11=Atm%gridstruct%z11 z12=Atm%gridstruct%z12 z21=Atm%gridstruct%z21 z22=Atm%gridstruct%z22 vlon=Atm%gridstruct%vlon vlat=Atm%gridstruct%vlat
 
+     !$ser savepoint GridUtils_Da-In
+     !$ser data area=area area_c=area_c
      call global_mx(area, ng, Atm%gridstruct%da_min, Atm%gridstruct%da_max, Atm%bd)
      if( is_master() ) write(*,*) 'da_max/da_min=', Atm%gridstruct%da_max/Atm%gridstruct%da_min
 
      call global_mx_c(area_c(is:ie,js:je), is, ie, js, je, Atm%gridstruct%da_min_c, Atm%gridstruct%da_max_c)
 
      if( is_master() ) write(*,*) 'da_max_c/da_min_c=', Atm%gridstruct%da_max_c/Atm%gridstruct%da_min_c
-
+     !$ser savepoint GridUtils_Da-Out
+     !$ser data da_min=Atm%gridstruct%da_min da_max=Atm%gridstruct%da_max da_min_c=Atm%gridstruct%da_min_c da_max_c=Atm%gridstruct%da_max_c
 !------------------------------------------------
 ! Initialization for interpolation at face edges
 !------------------------------------------------
