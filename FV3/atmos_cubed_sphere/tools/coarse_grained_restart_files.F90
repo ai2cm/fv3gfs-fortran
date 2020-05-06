@@ -203,10 +203,6 @@ contains
        id_restart = register_restart_field(restart%fv_core_coarse, &
             filename, 'va', restart%va, domain=coarse_domain, mandatory=.false., tile_count=tile_count)
     endif
-
-    if (restart_from_agrid_winds) then
-
-    endif
   end subroutine register_fv_core_coarse
 
   subroutine register_fv_tracer_coarse(tile_count, coarse_domain, restart)

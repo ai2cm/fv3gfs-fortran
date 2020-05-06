@@ -558,7 +558,7 @@ contains
          id_restart =  register_restart_field(Atm(n)%Fv_tile_restart, fname, 'va', Atm(n)%va, &
                        domain=fv_domain, tile_count=n, mandatory=.false.)
        endif
-       
+
        fname = 'fv_srf_wnd.res'//trim(stile_name)//'.nc'
        id_restart =  register_restart_field(Atm(n)%Rsf_restart, fname, 'u_srf', Atm(n)%u_srf, &
                      domain=fv_domain, tile_count=n)
