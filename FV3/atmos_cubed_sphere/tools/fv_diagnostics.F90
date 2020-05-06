@@ -148,7 +148,6 @@ module fv_diagnostics_mod
 #ifdef MULTI_GASES
  use multi_gases_mod,  only:  virq, virqd, vicpqd, vicvqd, num_gas
 #endif
- use fv_io_mod,  only: cubed_a2d
 
  implicit none
  private
@@ -725,21 +724,6 @@ contains
           !--------------------
           idiag%id_pv = register_diag_field ( trim(field), 'pv', axes(1:3), Time,       &
                'potential vorticity', '1/s', missing_value=missing_value )
-
-          !--------------------
-          ! D-grid winds
-          !--------------------
-          idiag%id_ud = register_diag_field ( trim(field), 'x_wind', (/ id_xt, id_y, id_pfull /), Time,        &
-               'x-wind', 'm/sec', missing_value=missing_value, range=vrange )
-          idiag%id_vd = register_diag_field ( trim(field), 'y_wind', (/ id_x, id_yt, id_pfull /), Time,        &
-               'y-wind', 'm/sec', missing_value=missing_value, range=vrange )
-          !--------------------
-          ! D-to-A-to-D winds
-          !--------------------
-          idiag%id_ud_roundtripped = register_diag_field ( trim(field), 'x_wind_roundtripped', (/ id_xt, id_y, id_pfull /), Time,        &
-               'x-wind roundtripped from D to A to D grid', 'm/sec', missing_value=missing_value, range=vrange )
-          idiag%id_vd_roundtripped = register_diag_field ( trim(field), 'y_wind_roundtripped', (/ id_x, id_yt, id_pfull /), Time,        &
-               'y-wind roundtripped from D to A to D grid', 'm/sec', missing_value=missing_value, range=vrange )
        endif
 
 ! Total energy (only when moist_phys = .T.)
@@ -1196,7 +1180,6 @@ contains
     logical, allocatable :: storm(:,:), cat_crt(:,:)
     real :: tmp2, pvsum, e2, einf, qm, mm, maxdbz, allmax, rgrav
     integer :: Cl, Cl2
-    real, allocatable :: roundtripped_u(:,:,:), roundtripped_v(:,:,:)
     !!! CLEANUP: does it really make sense to have this routine loop over Atm% anymore? We assume n=1 below anyway
 
 ! cat15: SLP<1000; srf_wnd>ws_0; vort>vort_c0
@@ -2482,20 +2465,6 @@ contains
 
        if(idiag%id_ua > 0) used=send_data(idiag%id_ua, Atm(n)%ua(isc:iec,jsc:jec,:), Time)
        if(idiag%id_va > 0) used=send_data(idiag%id_va, Atm(n)%va(isc:iec,jsc:jec,:), Time)
-
-       if(idiag%id_ud > 0) used=send_data(idiag%id_ud, Atm(n)%u(isc:iec,jsc:jec+1,:), Time)
-       if(idiag%id_vd > 0) used=send_data(idiag%id_vd, Atm(n)%v(isc:iec+1,jsc:jec,:), Time)
-
-       if (idiag%id_ud_roundtripped > 0 .or. idiag%id_vd_roundtripped > 0) then
-          allocate(roundtripped_u(isd:ied,jsd:jed+1,1:npz))
-          allocate(roundtripped_v(isd:ied+1,jsd:jed,1:npz))
-          call cubed_a2d(Atm(n)%npx, Atm(n)%npy, Atm(n)%npz, Atm(n)%ua, Atm(n)%va, &
-               roundtripped_u, roundtripped_v, Atm(n)%gridstruct, Atm(n)%domain, Atm(n)%bd)
-          if(idiag%id_ud_roundtripped > 0) used=send_data(idiag%id_ud_roundtripped, roundtripped_u(isc:iec,jsc:jec+1,:), Time)
-          if(idiag%id_vd_roundtripped > 0) used=send_data(idiag%id_vd_roundtripped, roundtripped_v(isc:iec+1,jsc:jec,:), Time)
-          deallocate(roundtripped_u)
-          deallocate(roundtripped_v)
-       endif
 
        if(idiag%id_ke > 0) then
           a2(:,:) = 0.

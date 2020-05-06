@@ -114,7 +114,6 @@ module fv_arrays_mod
      integer :: id_t_dt_nudge, id_ps_dt_nudge, id_delp_dt_nudge
      integer :: id_u_dt_nudge, id_v_dt_nudge, id_q_dt_nudge
 
-     integer :: id_ud, id_vd, id_ud_roundtripped, id_vd_roundtripped
   end type fv_diag_type
 
   type fv_coarse_diag_type
