@@ -23,9 +23,10 @@ contains
 
   subroutine fv_coarse_restart_init(tile_count, nz, nt_prog, &
        nt_phys, hydrostatic, hybrid_z, agrid_vel_rst, fv_land, &
-       restart_from_agrid_winds, coarse_domain, fine_bd, coarse_bd, restart)
+       restart_from_agrid_winds, optional_dgrid_vel_rst, coarse_domain, fine_bd, coarse_bd, restart)
     integer, intent(in) :: tile_count, nz, nt_prog, nt_phys
-    logical, intent(in) :: hydrostatic, hybrid_z, agrid_vel_rst, fv_land, restart_from_agrid_winds
+    logical, intent(in) :: hydrostatic, hybrid_z, agrid_vel_rst, fv_land
+    logical, intent(in) :: restart_from_agrid_winds, optional_dgrid_vel_rst
     type(domain2d), intent(inout) :: coarse_domain
     type(fv_grid_bounds_type), intent(in) :: fine_bd
     type(fv_coarse_grid_bounds_type), intent(in) :: coarse_bd
@@ -39,10 +40,10 @@ contains
     npz = nz
 
     call allocate_coarse_restart_type(hydrostatic, hybrid_z, &
-         agrid_vel_rst, fv_land, restart_from_agrid_winds, restart)
+         agrid_vel_rst, fv_land, restart_from_agrid_winds, optional_dgrid_vel_rst, restart)
     call register_coarse_restart_files(tile_count, hydrostatic, &
          hybrid_z, agrid_vel_rst, fv_land, restart_from_agrid_winds, &
-         coarse_domain, restart)
+         optional_dgrid_vel_rst, coarse_domain, restart)
   end subroutine fv_coarse_restart_init
 
   subroutine fv_io_write_restart_coarse(Atm, grids_on_this_pe, timestamp)
@@ -68,12 +69,16 @@ contains
   end subroutine fv_io_write_restart_coarse
 
   subroutine allocate_coarse_restart_type(hydrostatic, hybrid_z, agrid_vel_rst,&
-       fv_land, restart_from_agrid_winds, restart)
-    logical, intent(in) :: hydrostatic, hybrid_z, agrid_vel_rst, fv_land, restart_from_agrid_winds
+       fv_land, restart_from_agrid_winds, optional_dgrid_vel_rst, restart)
+    logical, intent(in) :: hydrostatic, hybrid_z, agrid_vel_rst, fv_land
+    logical, intent(in) :: restart_from_agrid_winds, optional_dgrid_vel_rst
     type(coarse_restart_type), intent(inout) :: restart
 
-    allocate(restart%u(is_coarse:ie_coarse,js_coarse:je_coarse+1,npz))
-    allocate(restart%v(is_coarse:ie_coarse+1,js_coarse:je_coarse,npz))
+    if (.not. restart_from_agrid_winds .or. (restart_from_agrid_winds .and. optional_dgrid_vel_rst)) then
+       allocate(restart%u(is_coarse:ie_coarse,js_coarse:je_coarse+1,npz))
+       allocate(restart%v(is_coarse:ie_coarse+1,js_coarse:je_coarse,npz))
+    endif
+
     allocate(restart%u_srf(is_coarse:ie_coarse,js_coarse:je_coarse))
     allocate(restart%v_srf(is_coarse:ie_coarse,js_coarse:je_coarse))
     allocate(restart%delp(is_coarse:ie_coarse,js_coarse:je_coarse,npz))
@@ -121,14 +126,16 @@ contains
   end subroutine deallocate_coarse_restart_type
 
   subroutine register_coarse_restart_files(tile_count, hydrostatic, &
-       hybrid_z, agrid_vel_rst, fv_land, restart_from_agrid_winds, coarse_domain, restart)
+       hybrid_z, agrid_vel_rst, fv_land, restart_from_agrid_winds, optional_dgrid_vel_rst, &
+         coarse_domain, restart)
     integer, intent(in) :: tile_count
-    logical, intent(in) :: hydrostatic, hybrid_z, agrid_vel_rst, fv_land, restart_from_agrid_winds
+    logical, intent(in) :: hydrostatic, hybrid_z, agrid_vel_rst, fv_land
+    logical, intent(in) :: restart_from_agrid_winds, optional_dgrid_vel_rst
     type(domain2d), intent(in) :: coarse_domain
     type(coarse_restart_type), intent(inout) :: restart
 
     call register_fv_core_coarse(tile_count, hydrostatic, hybrid_z, agrid_vel_rst, &
-         restart_from_agrid_winds, coarse_domain, restart)
+         restart_from_agrid_winds, optional_dgrid_vel_rst, coarse_domain, restart)
     call register_fv_tracer_coarse(tile_count, coarse_domain, restart)
     call register_fv_srf_wnd_coarse(tile_count, coarse_domain, restart)
     if (fv_land) then
@@ -138,9 +145,10 @@ contains
   end subroutine register_coarse_restart_files
 
   subroutine register_fv_core_coarse(tile_count, hydrostatic, hybrid_z, &
-       agrid_vel_rst, restart_from_agrid_winds, coarse_domain, restart)
+       agrid_vel_rst, restart_from_agrid_winds, optional_dgrid_vel_rst, coarse_domain, restart)
     integer, intent(in) :: tile_count
     logical, intent(in) :: hydrostatic, hybrid_z, agrid_vel_rst, restart_from_agrid_winds
+    logical, intent(in) :: optional_dgrid_vel_rst
     type(domain2d), intent(in) :: coarse_domain
     type(coarse_restart_type), intent(inout) :: restart
 
@@ -149,11 +157,28 @@ contains
 
     filename = 'fv_core_coarse.res.nc'
 
-    id_restart = register_restart_field(restart%fv_core_coarse, &
+    if (restart_from_agrid_winds) then
+       id_restart = register_restart_field(restart%fv_core_coarse, &
+            filename, 'ua', restart%ua, domain=coarse_domain, tile_count=tile_count)
+       id_restart = register_restart_field(restart%fv_core_coarse, &
+            filename, 'va', restart%va, domain=coarse_domain, tile_count=tile_count)
+    else
+       id_restart = register_restart_field(restart%fv_core_coarse, &
          filename, 'u', restart%u, domain=coarse_domain, position=NORTH, tile_count=tile_count)
-    id_restart = register_restart_field(restart%fv_core_coarse, &
+       id_restart = register_restart_field(restart%fv_core_coarse, &
          filename, 'v', restart%v, domain=coarse_domain, position=EAST, tile_count=tile_count)
+    endif
 
+    !--- optionally include D-grid winds even if restarting from A-grid winds
+    if (optional_dgrid_vel_rst .and. restart_from_agrid_winds) then
+       id_restart = register_restart_field(restart%fv_core_coarse, &
+            filename, 'u', restart%u, domain=coarse_domain, position=NORTH, &
+            mandatory=.false., tile_count=tile_count)
+       id_restart = register_restart_field(restart%fv_core_coarse, &
+            filename, 'v', restart%v, domain=coarse_domain, position=EAST, &
+            mandatory=.false., tile_count=tile_count)
+    endif
+    
     if (.not. hydrostatic) then
        id_restart = register_restart_field(restart%fv_core_coarse, &
             filename, 'W', restart%w, domain=coarse_domain, mandatory=.false., tile_count=tile_count)
@@ -180,10 +205,7 @@ contains
     endif
 
     if (restart_from_agrid_winds) then
-       id_restart = register_restart_field(restart%fv_core_coarse, &
-            filename, 'ua', restart%ua, domain=coarse_domain, tile_count=tile_count)
-       id_restart = register_restart_field(restart%fv_core_coarse, &
-            filename, 'va', restart%va, domain=coarse_domain, tile_count=tile_count)
+
     endif
   end subroutine register_fv_core_coarse
 
@@ -291,10 +313,13 @@ contains
     type(fv_atmos_type), intent(inout) :: Atm
     real, intent(in) :: mass(is:ie,js:je,1:npz)
 
-    call weighted_block_edge_average_x(Atm%gridstruct%dx(is:ie,js:je+1), &
-         Atm%u(is:ie,js:je+1,1:npz), Atm%coarse_graining%restart%u)
-    call weighted_block_edge_average_y(Atm%gridstruct%dy(is:ie+1,js:je), &
-         Atm%v(is:ie+1,js:je,1:npz), Atm%coarse_graining%restart%v)
+    if (.not. Atm%flagstruct%restart_from_agrid_winds .or. &
+         (Atm%flagstruct%restart_from_agrid_winds .and. Atm%flagstruct%optional_dgrid_vel_rst)) then
+       call weighted_block_edge_average_x(Atm%gridstruct%dx(is:ie,js:je+1), &
+            Atm%u(is:ie,js:je+1,1:npz), Atm%coarse_graining%restart%u)
+       call weighted_block_edge_average_y(Atm%gridstruct%dy(is:ie+1,js:je), &
+            Atm%v(is:ie+1,js:je,1:npz), Atm%coarse_graining%restart%v)
+    endif
 
     if (.not. Atm%flagstruct%hydrostatic) then
        call weighted_block_average(mass(is:ie,js:je,1:npz), &
@@ -314,7 +339,7 @@ contains
     call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), &
          Atm%phis(is:ie,js:je), Atm%coarse_graining%restart%phis)
 
-    if (Atm%flagstruct%agrid_vel_rst) then
+    if (Atm%flagstruct%agrid_vel_rst .or. Atm%flagstruct%restart_from_agrid_winds) then
        call weighted_block_average(mass(is:ie,js:je,1:npz), &
             Atm%ua(is:ie,js:je,1:npz), Atm%coarse_graining%restart%ua)
        call weighted_block_average(mass(is:ie,js:je,1:npz), &

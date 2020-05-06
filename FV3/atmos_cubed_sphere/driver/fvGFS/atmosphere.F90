@@ -446,7 +446,7 @@ contains
            Atm(mytile)%flagstruct%nt_phys, Atm(mytile)%flagstruct%hydrostatic, &
            Atm(mytile)%flagstruct%hybrid_z, Atm(mytile)%flagstruct%agrid_vel_rst, &
            Atm(mytile)%flagstruct%fv_land, Atm(mytile)%flagstruct%restart_from_agrid_winds, &
-           Atm(mytile)%coarse_graining%domain, &
+           Atm(mytile)%flagstruct%optional_dgrid_vel_rst, Atm(mytile)%coarse_graining%domain, &
            Atm(mytile)%bd, Atm(mytile)%coarse_graining%bd, &
            Atm(mytile)%coarse_graining%restart)
    endif
