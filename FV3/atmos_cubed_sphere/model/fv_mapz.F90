@@ -131,8 +131,8 @@ module fv_mapz_mod
          rst_remap, mappm, E_Flux
 
 contains
- 
 
+ 
 !>@brief The subroutine 'Lagrangian_to_Eulerian' remaps deformed Lagrangian layers back to the reference Eulerian coordinate.
 !>@details It also includes the entry point for calling fast microphysical processes. This is typically calle on the k_split loop.
  subroutine Lagrangian_to_Eulerian(last_step, consv, ps, pe, delp, pkz, pk,   &
@@ -201,7 +201,8 @@ contains
   real, intent(inout)::   dtdt(is:ie,js:je,km)
   real, intent(out)::    pkz(is:ie,js:je,km)       !< layer-mean pk for converting t to pt
   real, intent(out)::     te(isd:ied,jsd:jed,km)
-  !$ser verbatim integer:: mode
+  
+
 ! !DESCRIPTION:
 !
 ! !REVISION HISTORY:
@@ -228,8 +229,12 @@ contains
   integer :: ierr
 #else
   integer:: nt, liq_wat, ice_wat, rainwat, snowwat, cld_amt, graupel, iq, n, kmp, kp, k_next
+  !$ser verbatim integer:: mode, abskord, iep1, iedp1, jedp1
   !$ser verbatim real :: qmin
   !$ser verbatim qmin = 0.0
+  !$ser verbatim iep1=ie+1
+  !$ser verbatim iedp1=ied+1
+  !$ser verbatim jedp1=jed+1
 #endif
 
 #ifdef CCPP
@@ -265,7 +270,7 @@ contains
 !$OMP parallel do default(none) shared(is,ie,js,je,km,pe,ptop,kord_tm,hydrostatic, &
 !$OMP                                  pt,pk,rg,peln,q,nwat,liq_wat,rainwat,ice_wat,snowwat,    &
 #ifdef SERIALIZE
-!$OMP  ppser_savepoint, ppser_serializer, ppser_serializer_ref, ppser_zrperturb, cld_amt, mode,qmin, &
+!$OMP  ppser_savepoint, ppser_serializer, ppser_serializer_ref, ppser_zrperturb, cld_amt, mode,qmin, abskord,iep1, iedp1, jedp1, &
 #endif
 !$OMP                                  graupel,q_con,sphum,cappa,r_vir,rcp,k1k,delp, &
 !$OMP                                  delz,akap,pkz,te,u,v,ps, gridstruct, last_step, &
@@ -309,7 +314,7 @@ contains
 ! Transform "density pt" to "density temp"
                !$ser verbatim if(j == js) then 
                !$ser savepoint MoistCVPlusPt_2d-In
-               !$ser data  qvapor_js=q(:,j,:,sphum) qliquid_js=q(:,j,:,liq_wat) qice_js=q(:,j,:,ice_wat) qrain_js=q(:,j,:,rainwat) qsnow_js=q(:,j,:,snowwat) qgraupel_js=q(:,j,:,graupel) qcld_js=q(:,j,:,cld_amt) gz1d=gz cvm=cvm r_vir=r_vir cappa=cappa rrg=rrg delp=delp delz=delz pt=pt k1k=k1k q_con=q_con
+               !$ser data  qvapor_js=q(:,j,:,sphum) qliquid_js=q(:,j,:,liq_wat) qice_js=q(:,j,:,ice_wat) qrain_js=q(:,j,:,rainwat) qsnow_js=q(:,j,:,snowwat) qgraupel_js=q(:,j,:,graupel) qcld_js=q(:,j,:,cld_amt) gz1d=gz cvm=cvm r_vir=r_vir cappa=cappa rrg=rrg delp=delp delz=delz pt=pt k1k=k1k q_con=q_con j_2d=js
                !$ser verbatim endif
                do k=1,km
 #ifdef MOIST_CAPPA
@@ -484,7 +489,7 @@ contains
       !$ser verbatim if(j == js) then 
       !$ser savepoint Map1_PPM_2d-In
       !$ser verbatim mode=-2
-      !$ser data j_2d=js pe1=pe1 pe2=pe2 var_in=w ws_1d=ws(:,j) var_inout=w mode=mode
+      !$ser data j_2d=js pe1=pe1 pe2=pe2 var_in=w ws_1d=ws(:,j) var_inout=w mode=mode kord=kord_wz i1=is i2=ie ibeg=isd iend=ied jbeg=jsd jend=jed
       !$ser verbatim endif
         call map1_ppm (km,   pe1,  w,  ws(is,j),   &
                        km,   pe2,  w,              &
@@ -496,8 +501,9 @@ contains
 ! Remap delz for hybrid sigma-p coordinate
       !$ser verbatim if(j == js) then 
       !$ser savepoint Map1_PPM_2d-In
-      !$ser verbatim mode=1
-      !$ser data j_2d=js pe1=pe1 pe2=pe2 var_in=delz ws_1d=gz var_inout=delz mode=mode
+        !$ser verbatim mode=1
+        !$ser verbatim abskord = abs(kord_tm)
+      !$ser data j_2d=js pe1=pe1 pe2=pe2 var_in=delz ws_1d=gz var_inout=delz mode=mode kord=abskord  i1=is i2=ie ibeg=isd iend=ied jbeg=jsd jend=jed
       !$ser verbatim endif
         call map1_ppm (km,   pe1, delz,  gz,   &
                        km,   pe2, delz,              &
@@ -560,7 +566,7 @@ contains
 ! Note: pt at this stage is T_v or T_m
       !$ser verbatim if(j == js) then 
       !$ser savepoint MoistCVPlusPkz_2d-In
-      !$ser data  qvapor_js=q(:,j,:,sphum) qliquid_js=q(:,j,:,liq_wat) qice_js=q(:,j,:,ice_wat) qrain_js=q(:,j,:,rainwat) qsnow_js=q(:,j,:,snowwat) qgraupel_js=q(:,j,:,graupel) qcld_js=q(:,j,:,cld_amt) gz1d=gz cvm=cvm r_vir=r_vir cappa=cappa rrg=rrg delp=delp delz=delz pt=pt k1k=k1k q_con=q_con pkz=pkz last_step=last_step
+      !$ser data  qvapor_js=q(:,j,:,sphum) qliquid_js=q(:,j,:,liq_wat) qice_js=q(:,j,:,ice_wat) qrain_js=q(:,j,:,rainwat) qsnow_js=q(:,j,:,snowwat) qgraupel_js=q(:,j,:,graupel) qcld_js=q(:,j,:,cld_amt) gz1d=gz cvm=cvm r_vir=r_vir cappa=cappa rrg=rrg delp=delp delz=delz pt=pt k1k=k1k q_con=q_con pkz=pkz last_step=last_step j_2d=js
       !$ser verbatim endif
          do k=1,km
 #ifdef MOIST_CAPPA
@@ -658,7 +664,7 @@ contains
       !$ser verbatim if(j == js) then 
       !$ser savepoint Map1_PPM_2d-2-In
       !$ser verbatim mode=-1
-      !$ser data j_2d=js pe1_2=pe0 pe2_2=pe3 var_in_2=u ws_1d=gz var_inout_2=u mode=mode
+      !$ser data j_2d=js pe1_2=pe0 pe2_2=pe3 var_in_2=u ws_1d=gz var_inout_2=u mode=mode kord=kord_mt  i1=is i2=ie ibeg=isd iend=ied jbeg=jsd jend=jedp1
       !$ser verbatim endif
       call map1_ppm( km, pe0(is:ie,:),   u,   gz,   &
                      km, pe3(is:ie,:),   u,               &
@@ -685,7 +691,7 @@ contains
       !$ser verbatim if(j == js) then 
       !$ser savepoint Map1_PPM_2d-3-In
       !$ser verbatim mode=-1
-      !$ser data j_2d=js pe1_2=pe0 pe2_2=pe3 var_in_3=v ws_1d=gz var_inout_3=v mode=mode
+      !$ser data j_2d=js pe1_2=pe0 pe2_2=pe3 var_in_3=v ws_1d=gz var_inout_3=v mode=mode kord=kord_mt  i1=is i2=iep1 ibeg=isd iend=iedp1 jbeg=jsd jend=jed
       !$ser verbatim endif
        call map1_ppm (km, pe0,  v, gz,    &
                       km, pe3,  v, is, ie+1,    &
@@ -926,7 +932,7 @@ endif        ! end last_step check
 #else
     
 !$ser savepoint SatAdjust3d-In
-!$ser data dpln=dpln peln=peln mdt=mdt r_vir=r_vir fast_mp_consv=fast_mp_consv te=te  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel)  qcld=q(:,:,:,cld_amt)  hs=hs delz=delz pt=pt delp=delp q_con=q_con cappa=cappa  out_dt=out_dt last_step=last_step cld_amt=cld_amt pkz=pkz rrg=rrg akap=akap
+!$ser data dpln=dpln peln=peln mdt=mdt r_vir=r_vir fast_mp_consv=fast_mp_consv te=te  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel)  qcld=q(:,:,:,cld_amt)  hs=hs delz=delz pt=pt delp=delp q_con=q_con cappa=cappa  out_dt=out_dt last_step=last_step  pkz=pkz rrg=rrg akap=akap kmp=kmp
 !$OMP do
            do k=kmp,km
               do j=js,je
@@ -1478,9 +1484,39 @@ endif        ! end last_step check
 
 ! Compute vertical subgrid distribution
    if ( kord >7 ) then
-        call  cs_profile( qs, q4, dp1, km, i1, i2, iv, kord )
+      !$ser verbatim if(j == jbeg + 3 ) then
+        !$ser verbatim if (mod(i2-i1+1, 2)==1) then 
+      !$ser savepoint CS_Profile_2d-In
+        !$ser data qs_column=qs q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:) dp1_2d=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord
+        !$ser verbatim else
+      !$ser savepoint CS_Profile_2d-2-In
+        !$ser data qs_column_2=qs q4_1_2=q4(1,:,:) q4_2_2=q4(2,:,:) q4_3_2=q4(3,:,:) q4_4_2=q4(4,:,:) dp1_2d_2=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord
+        !$ser verbatim endif
+      
+      !$ser verbatim endif
+      
+      call  cs_profile( qs, q4, dp1, km, i1, i2, iv, kord )
+      
+      !$ser verbatim if(j == jbeg + 3) then
+        !$ser verbatim if (mod(i2-i1+1, 2)==1) then 
+      !$ser savepoint CS_Profile_2d-Out
+       !$ser data  q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:)
+        !$ser verbatim else
+      !$ser savepoint CS_Profile_2d-2-In
+       !$ser data  q4_1_2=q4(1,:,:) q4_2_2=q4(2,:,:) q4_3_2=q4(3,:,:) q4_4_2=q4(4,:,:)
+        !$ser verbatim endif
+       
+      !$ser verbatim endif
    else
-        call ppm_profile( q4, dp1, km, i1, i2, iv, kord )
+      !$ser verbatim if(j == jbeg + 3 .and. mod(i2-i1+1, 2)==1) then 
+      !$ser savepoint PPM_Profile_2d-In
+      !$ser data qs_column=qs q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:) dp1_2d=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord
+      !$ser verbatim endif
+      call ppm_profile( q4, dp1, km, i1, i2, iv, kord )
+      !$ser verbatim if(j == jbeg + 3 .and. mod(i2-i1+1, 2)==1) then 
+      !$ser savepoint PPM_Profile_2d-Out
+      !$ser data  q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:)
+      !$ser verbatim endif
    endif
 
   do i=i1,i2
@@ -1548,7 +1584,7 @@ endif        ! end last_step check
       real:: qs(i1:i2)
       real:: pl, pr, dp, esl, fac1, fac2
       integer:: i, k, l, m, k0, iq
-
+      !$ser verbatim integer:: kord_iq, iv
       do k=1,km
          do i=i1,i2
             dp1(i,k) = pe1(i,k+1) - pe1(i,k)
@@ -1561,7 +1597,18 @@ endif        ! end last_step check
                q4(1,i,k,iq) = q1(i,j,k,iq)
             enddo
          enddo
+         !$ser verbatim if(j == jsd + 3 ) then
+         !$ser verbatim kord_iq = kord(iq)
+         !$ser verbatim iv = 0
+         !$ser savepoint Scalar_Profile_2d-In
+         !$ser data qs_column_scalar=qs q4_1s=q4(1,:,:,iq)  dp1_2d_scalar=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord_iq q_min=q_min
+         !$ser verbatim endif
+      
          call scalar_profile( qs, q4(1,i1,1,iq), dp1, km, i1, i2, 0, kord(iq), q_min )
+         !$ser verbatim if(j == jsd + 3 ) then
+         !$ser savepoint Scalar_Profile_2d-Out
+         !$ser data  q4_1s=q4(1,:,:,iq) 
+         !$ser verbatim endif
       enddo
 
 ! Mapping
