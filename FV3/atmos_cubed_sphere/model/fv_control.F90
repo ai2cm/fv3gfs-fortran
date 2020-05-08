@@ -1354,14 +1354,14 @@ module fv_control_mod
 
      layout                        => Atm%layout
      io_layout                     => Atm%io_layout
-     write_coarse_restart_files    => Atm%flagstruct%write_coarse_restart_files
-     write_coarse_diagnostics      => Atm%flagstruct%write_coarse_diagnostics
-     write_only_coarse_intermediate_restarts => Atm%flagstruct%write_only_coarse_intermediate_restarts
+
+     write_coarse_restart_files    => Atm%coarse_graining%write_coarse_restart_files
+     write_coarse_diagnostics      => Atm%coarse_graining%write_coarse_diagnostics
+     write_only_coarse_intermediate_restarts => Atm%coarse_graining%write_only_coarse_intermediate_restarts
      restart_from_agrid_winds      => Atm%flagstruct%restart_from_agrid_winds
      write_optional_dgrid_vel_rst  => Atm%flagstruct%write_optional_dgrid_vel_rst
      write_coarse_dgrid_vel_rst    => Atm%coarse_graining%write_coarse_dgrid_vel_rst
      write_coarse_agrid_vel_rst    => Atm%coarse_graining%write_coarse_agrid_vel_rst
  end subroutine setup_pointers
-
        
 end module fv_control_mod

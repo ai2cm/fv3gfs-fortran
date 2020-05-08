@@ -1021,10 +1021,6 @@ module fv_arrays_mod
    !f1p
    logical  :: adj_mass_vmr = .false. !TER: This is to reproduce answers for verona patch.  This default can be changed
                                      !     to .true. in the next city release if desired
-
-   logical :: write_coarse_restart_files = .false.  ! Whether to write coarse restart files
-   logical :: write_coarse_diagnostics = .false.  ! Whether to enable writing coarse diagnostics
-   logical :: write_only_coarse_intermediate_restarts = .false.  ! Whether to write only coarse intermediate restart files (if do_coarse_graining is .true.)
    logical :: restart_from_agrid_winds = .false.  ! Whether to restart from A-grid winds
    logical :: write_optional_dgrid_vel_rst = .false.  ! Whether to write out optional D-grid winds when restart_from_agrid_winds is active
   !integer, pointer :: test_case
@@ -1168,12 +1164,6 @@ module fv_arrays_mod
 
   end type fv_grid_bounds_type
 
-  type fv_coarse_grid_bounds_type
-
-     integer :: is_coarse, ie_coarse, js_coarse, je_coarse
-
-  end type fv_coarse_grid_bounds_type
-
   type coarse_restart_type
 
      real, _ALLOCATABLE :: u(:,:,:)
@@ -1202,7 +1192,6 @@ module fv_arrays_mod
   
   type fv_coarse_graining_type
 
-     type(fv_coarse_grid_bounds_type) :: bd
      type(domain2d) :: domain
      integer :: factor
      integer :: nx_coarse
@@ -1213,9 +1202,9 @@ module fv_arrays_mod
      integer :: id_pfull  ! diagnostic vertical axis id for data on z-centers
      integer :: id_phalf  ! diagnostic vertical axis id for data on z-edges
      character(len=64) :: strategy  ! Current valid values are: 'model_level'
-     logical :: write_coarse_restart_files = .false.
-     logical :: write_coarse_diagnostics = .false.
-     logical :: write_only_coarse_intermediate_restarts = .false.
+     logical :: write_coarse_restart_files = .false.  ! Whether to write coarse restart files
+     logical :: write_coarse_diagnostics = .false.  ! Whether to enable writing coarse diagnostics
+     logical :: write_only_coarse_intermediate_restarts = .false.  ! Whether to write only coarse intermediate restart files (if write_coarse_restart_files is .true.)
      type(fv_coarse_diag_type) :: idiag  ! container for coarse diagnostic ids
      type(coarse_restart_type) :: restart  ! container for coarse restart data
      logical :: write_coarse_dgrid_vel_rst = .true.  ! Whether to write D-grid winds to coarse restart files

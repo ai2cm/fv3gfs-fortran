@@ -1,7 +1,7 @@
 module coarse_grained_diagnostics_mod
 
   use diag_manager_mod, only: diag_axis_init, register_diag_field, register_static_field, send_data
-  use fv_arrays_mod, only: fv_atmos_type, fv_coarse_diag_type, fv_coarse_graining_type, fv_grid_bounds_type
+  use fv_arrays_mod, only: fv_atmos_type, fv_coarse_diag_type, fv_coarse_graining_type
   use mpp_domains_mod, only: domain2d
   use mpp_mod, only: FATAL, mpp_error
   use coarse_graining_mod, only: block_sum, get_fine_array_bounds, get_coarse_array_bounds, MODEL_LEVEL, weighted_block_average
@@ -16,16 +16,15 @@ module coarse_grained_diagnostics_mod
 
 contains
   
-  subroutine fv_coarse_diag_init(bd, Time, id_pfull, id_phalf, coarse_graining)
-    type(fv_grid_bounds_type), intent(in) :: bd
+  subroutine fv_coarse_diag_init(Time, id_pfull, id_phalf, coarse_graining)
     type(time_type), intent(in) :: Time
     integer, intent(in) :: id_pfull, id_phalf
     type(fv_coarse_graining_type), intent(inout) :: coarse_graining
 
     integer :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse
 
-    call get_fine_array_bounds(bd, is, ie, js, je)
-    call get_coarse_array_bounds(coarse_graining%bd, is_coarse, ie_coarse, js_coarse, je_coarse)    
+    call get_fine_array_bounds(is, ie, js, je)
+    call get_coarse_array_bounds(is_coarse, ie_coarse, js_coarse, je_coarse)
     call initialize_coarse_diagnostic_axes(coarse_graining%domain, coarse_graining%nx_coarse, &
          coarse_graining%id_x_coarse, coarse_graining%id_y_coarse, coarse_graining%id_xt_coarse, &
          coarse_graining%id_yt_coarse)
@@ -108,8 +107,8 @@ contains
     logical :: used
 
     call get_diagnostic_ids_3d(Atm(tile_count)%coarse_graining%idiag, diagnostic_ids_3d)
-    call get_fine_array_bounds(Atm(tile_count)%bd, is, ie, js, je)
-    call get_coarse_array_bounds(Atm(tile_count)%coarse_graining%bd, is_coarse, ie_coarse, js_coarse, je_coarse)
+    call get_fine_array_bounds(is, ie, js, je)
+    call get_coarse_array_bounds(is_coarse, ie_coarse, js_coarse, je_coarse)
     npz = Atm(tile_count)%npz
 
     if (any(diagnostic_ids_3d > 0)) then
