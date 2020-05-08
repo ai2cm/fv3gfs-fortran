@@ -449,8 +449,10 @@ contains
    if (Atm(mytile)%coarse_graining%write_coarse_restart_files) then
       call fv_coarse_restart_init(mytile, Atm(mytile)%npz, Atm(mytile)%flagstruct%nt_prog, &
            Atm(mytile)%flagstruct%nt_phys, Atm(mytile)%flagstruct%hydrostatic, &
-           Atm(mytile)%flagstruct%hybrid_z, Atm(mytile)%flagstruct%agrid_vel_rst, &
-           Atm(mytile)%flagstruct%fv_land, Atm(mytile)%coarse_graining%domain, &
+           Atm(mytile)%flagstruct%hybrid_z, Atm(mytile)%flagstruct%fv_land, &
+           Atm(mytile)%coarse_graining%write_coarse_dgrid_vel_rst, &
+           Atm(mytile)%coarse_graining%write_coarse_agrid_vel_rst, &
+           Atm(mytile)%coarse_graining%domain, &
            Atm(mytile)%bd, Atm(mytile)%coarse_graining%bd, &
            Atm(mytile)%coarse_graining%restart)
    endif
