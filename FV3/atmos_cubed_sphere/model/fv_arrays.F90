@@ -1021,6 +1021,8 @@ module fv_arrays_mod
    !f1p
    logical  :: adj_mass_vmr = .false. !TER: This is to reproduce answers for verona patch.  This default can be changed
                                      !     to .true. in the next city release if desired
+   logical :: restart_from_agrid_winds = .false.  ! Whether to restart from A-grid winds
+   logical :: write_optional_dgrid_vel_rst = .false.  ! Whether to write out optional D-grid winds when restart_from_agrid_winds is active
   !integer, pointer :: test_case
   !real,    pointer :: alpha
   end type fv_flags_type
@@ -1205,6 +1207,8 @@ module fv_arrays_mod
      logical :: write_only_coarse_intermediate_restarts = .false.  ! Whether to write only coarse intermediate restart files (if write_coarse_restart_files is .true.)
      type(fv_coarse_diag_type) :: idiag  ! container for coarse diagnostic ids
      type(coarse_restart_type) :: restart  ! container for coarse restart data
+     logical :: write_coarse_dgrid_vel_rst = .true.  ! Whether to write D-grid winds to coarse restart files
+     logical :: write_coarse_agrid_vel_rst = .false.  ! Whether to write A-grid winds to coarse restart files
 
   end type fv_coarse_graining_type
 
