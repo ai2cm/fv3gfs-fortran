@@ -457,7 +457,7 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
   integer              :: bdat(8), cdat(8)
   integer              :: ntracers, maxhf, maxh
   character(len=32), allocatable, target :: tracer_names(:)
-  integer :: nthrds
+  integer :: nthrds, nb
 
 !-----------------------------------------------------------------------
 
