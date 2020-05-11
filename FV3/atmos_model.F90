@@ -457,7 +457,7 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
   integer              :: bdat(8), cdat(8)
   integer              :: ntracers, maxhf, maxh
   character(len=32), allocatable, target :: tracer_names(:)
-  integer :: nthrds
+  integer :: nthrds, nb
 
 !-----------------------------------------------------------------------
 
@@ -684,6 +684,12 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
 #else
    call FV3GFS_restart_read (IPD_Data, IPD_Restart, Atm_block, IPD_Control, Atmos%domain)
 #endif
+
+   if (dycore_only) then
+     do nb = 1, Atm_block%nblks
+       IPD_Data(nb)%Sfcprop%tprcp(:) = 0.0
+     end do
+   endif
 
    !--- set the initial diagnostic timestamp
    diag_time = Time 
