@@ -635,6 +635,8 @@ contains
 
       unit = stdout()
       write(unit,*)
+      write(unit,*) 'fv_restart ua   ', trim(gn),' = ', mpp_chksum(Atm(n)%ua(isc:iec,jsc:jec,:))
+      write(unit,*) 'fv_restart va   ', trim(gn),' = ', mpp_chksum(Atm(n)%va(isc:iec,jsc:jec,:))
       write(unit,*) 'fv_restart u   ', trim(gn),' = ', mpp_chksum(Atm(n)%u(isc:iec,jsc:jec,:))
       write(unit,*) 'fv_restart v   ', trim(gn),' = ', mpp_chksum(Atm(n)%v(isc:iec,jsc:jec,:))
       if ( .not.Atm(n)%flagstruct%hydrostatic )   &
@@ -1423,9 +1425,9 @@ contains
     logical, intent(IN) :: grids_on_this_pe(:)
     integer n
 
-    if (all(Atm%flagstruct%write_coarse_restart_files)) then
+    if (all(Atm%coarse_graining%write_coarse_restart_files)) then
        call fv_io_write_restart_coarse(Atm, grids_on_this_pe, timestamp)
-       if (all(.not. Atm%flagstruct%write_only_coarse_intermediate_restarts)) then
+       if (all(.not. Atm%coarse_graining%write_only_coarse_intermediate_restarts)) then
           call fv_io_write_restart(Atm, grids_on_this_pe, timestamp)
        endif
     else
@@ -1485,6 +1487,8 @@ contains
 
       unit = stdout()
       write(unit,*)
+      write(unit,*) 'fv_restart_end ua   ', trim(gn),' = ', mpp_chksum(Atm(n)%ua(isc:iec,jsc:jec,:))
+      write(unit,*) 'fv_restart_end va   ', trim(gn),' = ', mpp_chksum(Atm(n)%va(isc:iec,jsc:jec,:))
       write(unit,*) 'fv_restart_end u   ', trim(gn),' = ', mpp_chksum(Atm(n)%u(isc:iec,jsc:jec,:))
       write(unit,*) 'fv_restart_end v   ', trim(gn),' = ', mpp_chksum(Atm(n)%v(isc:iec,jsc:jec,:))
       if ( .not. Atm(n)%flagstruct%hydrostatic )    &
@@ -1524,7 +1528,7 @@ contains
 
    enddo
 
-   if (all(Atm%flagstruct%write_coarse_restart_files)) then
+   if (all(Atm%coarse_graining%write_coarse_restart_files)) then
       call fv_io_write_restart_coarse(Atm, grids_on_this_pe)
    endif
    call fv_io_write_restart(Atm, grids_on_this_pe)

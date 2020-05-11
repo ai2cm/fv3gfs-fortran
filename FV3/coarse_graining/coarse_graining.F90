@@ -1,6 +1,5 @@
 module coarse_graining_mod
 
-  use fv_arrays_mod, only: fv_coarse_grid_bounds_type, fv_grid_bounds_type, fv_coarse_graining_type
   use fms_mod, only: check_nml_error, close_file, open_namelist_file
   use mpp_domains_mod, only: domain2d, mpp_define_io_domain, mpp_define_mosaic, mpp_get_compute_domain
   use mpp_mod, only: FATAL, input_nml_file, mpp_error, mpp_npes
@@ -33,10 +32,8 @@ module coarse_graining_mod
   end interface weighted_block_edge_average_y
   
   ! Global variables for the module, initialized in coarse_graining_init
-  type(domain2d) :: coarse_domain
   integer :: is, ie, js, je, npz
   integer :: is_coarse, ie_coarse, js_coarse, je_coarse
-  integer :: nx_coarse
   character(len=11) :: MODEL_LEVEL = 'model_level'
   
   ! Namelist parameters initialized with default values
@@ -48,17 +45,16 @@ module coarse_graining_mod
 
 contains
 
-  subroutine coarse_graining_init(npx, atm_npz, layout, bd, &
-       write_coarse_restart_files, write_coarse_diagnostics, &
-       write_only_coarse_intermediate_restarts, coarse_graining)
+  subroutine coarse_graining_init(npx, atm_npz, layout, is_fine, ie_fine, &
+       js_fine, je_fine, factor, nx_coarse, coarse_graining_strategy, coarse_domain)
     integer, intent(in) :: npx
     integer, intent(in) :: atm_npz
     integer, intent(in) :: layout(2)
-    type(fv_grid_bounds_type), intent(in) :: bd
-    logical, intent(in) :: write_coarse_restart_files
-    logical, intent(in) :: write_coarse_diagnostics
-    logical, intent(in) :: write_only_coarse_intermediate_restarts
-    type(fv_coarse_graining_type), intent(inout) :: coarse_graining
+    integer, intent(in) :: is_fine, ie_fine, js_fine, je_fine
+    integer, intent(out) :: factor
+    integer, intent(out) :: nx_coarse
+    character(len=64), intent(out) :: coarse_graining_strategy
+    type(domain2d), intent(out) :: coarse_domain
 
     character(len=256) :: error_message
     logical :: exists
@@ -66,9 +62,6 @@ contains
 
     read(input_nml_file, coarse_graining_nml, iostat=iostat)
     error_code = check_nml_error(iostat, 'coarse_graining_nml')
-    coarse_graining%write_coarse_restart_files = write_coarse_restart_files
-    coarse_graining%write_coarse_diagnostics = write_coarse_diagnostics
-    coarse_graining%write_only_coarse_intermediate_restarts = write_only_coarse_intermediate_restarts
 
     call assert_valid_strategy(strategy)
     call compute_nx_coarse(npx, coarsening_factor, nx_coarse)
@@ -76,16 +69,10 @@ contains
     call define_cubic_mosaic(coarse_domain, nx_coarse, nx_coarse, layout)
     call mpp_define_io_domain(coarse_domain, coarse_io_layout)
     call mpp_get_compute_domain(coarse_domain, is_coarse, ie_coarse, js_coarse, je_coarse)
-    call get_fine_array_bounds(bd, is, ie, js, je)
+    call set_fine_array_bounds(is_fine, ie_fine, js_fine, je_fine)
     npz = atm_npz
-       
-    coarse_graining%bd%is_coarse = is_coarse
-    coarse_graining%bd%ie_coarse = ie_coarse
-    coarse_graining%bd%js_coarse = js_coarse
-    coarse_graining%bd%je_coarse = je_coarse
-    coarse_graining%nx_coarse = nx_coarse
-    coarse_graining%domain = coarse_domain
-    coarse_graining%strategy = strategy
+    factor = coarsening_factor
+    coarse_graining_strategy = strategy
   end subroutine coarse_graining_init
 
   subroutine compute_nx_coarse(npx, coarsening_factor, nx_coarse)
@@ -130,24 +117,31 @@ contains
     endif
   end subroutine assert_valid_strategy
 
-  subroutine get_fine_array_bounds(bd, is, ie, js, je)
-    type(fv_grid_bounds_type), intent(in) :: bd
-    integer, intent(out) :: is, ie, js, je
+  subroutine set_fine_array_bounds(is_in, ie_in, js_in, je_in)
+    integer, intent(in) :: is_in, ie_in, js_in, je_in
 
-    is = bd%is
-    ie = bd%ie
-    js = bd%js
-    je = bd%je
+    is = is_in
+    ie = ie_in
+    js = js_in
+    je = je_in
+  end subroutine set_fine_array_bounds
+
+  subroutine get_fine_array_bounds(is_out, ie_out, js_out, je_out)
+    integer, intent(out) :: is_out, ie_out, js_out, je_out
+
+    is_out = is
+    ie_out = ie
+    js_out = js
+    je_out = je
   end subroutine get_fine_array_bounds
-  
-  subroutine get_coarse_array_bounds(coarse_bd, is_coarse, ie_coarse, js_coarse, je_coarse)
-    type(fv_coarse_grid_bounds_type), intent(in) :: coarse_bd
-    integer, intent(out) :: is_coarse, ie_coarse, js_coarse, je_coarse
 
-    is_coarse = coarse_bd%is_coarse
-    ie_coarse = coarse_bd%ie_coarse
-    js_coarse = coarse_bd%js_coarse
-    je_coarse = coarse_bd%je_coarse
+  subroutine get_coarse_array_bounds(is_out, ie_out, js_out, je_out)
+    integer, intent(out) :: is_out, ie_out, js_out, je_out
+
+    is_out = is_coarse
+    ie_out = ie_coarse
+    js_out = js_coarse
+    je_out = je_coarse
   end subroutine get_coarse_array_bounds
 
   subroutine compute_mass_weights(area, delp, mass)
