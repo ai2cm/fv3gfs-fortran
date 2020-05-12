@@ -1487,16 +1487,27 @@ endif        ! end last_step check
 
 ! Compute vertical subgrid distribution
    if ( kord >7 ) then
-      !$ser verbatim if(j == jbeg + 3 .and. mod(i2-i1+1, 2)==1) then 
+     !$ser verbatim if(j == jbeg + 3 ) then
+        !$ser verbatim if (mod(i2-i1+1, 2)==1) then 
       !$ser savepoint CS_Profile_2d-In
-      !$ser data qs_column=qs q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:) dp1_2d=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord
-      !$ser verbatim endif
+        !$ser data qs_column=qs q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:) dp1_2d=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord
+        !$ser verbatim else
+      !$ser savepoint CS_Profile_2d-2-In
+        !$ser data qs_column_2=qs q4_1_2=q4(1,:,:) q4_2_2=q4(2,:,:) q4_3_2=q4(3,:,:) q4_4_2=q4(4,:,:) dp1_2d_2=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord
+        !$ser verbatim endif
       
+      !$ser verbatim endif
       call  cs_profile( qs, q4, dp1, km, i1, i2, iv, kord, j )
       
-      !$ser verbatim if(j == jbeg + 3  .and. mod(i2-i1+1, 2)==1) then 
+     !$ser verbatim if(j == jbeg + 3) then
+        !$ser verbatim if (mod(i2-i1+1, 2)==1) then 
       !$ser savepoint CS_Profile_2d-Out
-      !$ser data  q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:)
+       !$ser data  q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:)
+        !$ser verbatim else
+      !$ser savepoint CS_Profile_2d-2-Out
+       !$ser data  q4_1_2=q4(1,:,:) q4_2_2=q4(2,:,:) q4_3_2=q4(3,:,:) q4_4_2=q4(4,:,:)
+        !$ser verbatim endif
+       
       !$ser verbatim endif
    else
       !$ser verbatim if(j == jbeg + 3 .and. mod(i2-i1+1, 2)==1) then 
@@ -2341,7 +2352,7 @@ endif        ! end last_step check
      enddo
   enddo
 endif
-  !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==1) then 
+  !$ser verbatim if( present(j) .and. j == 1  .and. mod(i2-i1+1, 2)==0) then 
   !$ser data set_gam=gam set_q=q set_a4=a4
   !$ser verbatim endif
 !----- Perfectly linear scheme --------------------------------
@@ -2427,7 +2438,7 @@ endif
        enddo
      endif
   enddo
-  !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==1) then 
+  !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==0) then 
   !$ser data b_q=q b_gam=gam b_a4=a4 b_extm=extm b_ext5=ext5 b_ext6=ext6 
   !$ser verbatim endif
 !---------------------------
@@ -2456,11 +2467,11 @@ endif
      do i=i1,i2
         a4(4,i,1) = 3.*(2.*a4(1,i,1) - (a4(2,i,1)+a4(3,i,1)))
      enddo
-     !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==1) then 
+     !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==0) then 
      !$ser data cs1_extm=extm cs1_a4_1=a4(1,:,:)  cs1_a4_2=a4(2,:,:)  cs1_a4_3=a4(3,:,:)  cs1_a4_4=a4(4,:,:) 
      !$ser verbatim endif
      call cs_limiters(im, extm(i1,1), a4(1,i1,1), 1)
-     !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==1) then 
+     !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==0) then 
      !$ser data cs1b_a4_1=a4(1,:,:)  cs1b_a4_2=a4(2,:,:)  cs1b_a4_3=a4(3,:,:)  cs1b_a4_4=a4(4,:,:) 
      !$ser verbatim endif
   endif
@@ -2469,11 +2480,11 @@ endif
    do i=i1,i2
       a4(4,i,2) = 3.*(2.*a4(1,i,2) - (a4(2,i,2)+a4(3,i,2)))
    enddo
-   !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==1) then 
+   !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==0) then 
    !$ser data cs2_extm=extm cs2_a4_1=a4(1,:,:)  cs2_a4_2=a4(2,:,:)  cs2_a4_3=a4(3,:,:)  cs2_a4_4=a4(4,:,:) 
    !$ser verbatim endif
    call cs_limiters(im, extm(i1,2), a4(1,i1,2), 2)
-   !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==1) then 
+   !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==0) then 
    !$ser data  cs2b_a4_1=a4(1,:,:)  cs2b_a4_2=a4(2,:,:)  cs2b_a4_3=a4(3,:,:)  cs2b_a4_4=a4(4,:,:) 
    !$ser verbatim endif
 !-------------------------------------
@@ -2661,7 +2672,7 @@ endif
      if ( iv==0 ) call cs_limiters(im, extm(i1,k), a4(1,i1,k), 0)
 
   enddo      ! k-loop
-  !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==1) then 
+  !$ser verbatim if( present(j) .and. j == 1 .and. mod(i2-i1+1, 2)==0) then 
    !$ser data huy_a4_1=a4(1,:,:)  huy_a4_2=a4(2,:,:)  huy_a4_3=a4(3,:,:)  huy_a4_4=a4(4,:,:) 
    !$ser verbatim endif
 !----------------------------------
