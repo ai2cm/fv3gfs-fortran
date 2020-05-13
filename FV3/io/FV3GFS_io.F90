@@ -2443,39 +2443,38 @@ module FV3GFS_io_mod
 !           if(trim(Diag(idx)%name) == 'totprcp_ave' ) print *,'in gfs_io, totprcp=',Diag(idx)%data(1)%var2(1:3), &
 !             ' lcnvfac=', lcnvfac
          elseif (Diag(idx)%axes == 3) then
-         !---
-         !--- skipping other 3D variables with the following else statement
-         !---
-
-         if (trim(Diag(idx)%name) .ne. 'delp_phys') then
-            if(mpp_pe()==mpp_root_pe())print *,'in,fv3gfs_io. 3D fields, idx=',idx,'varname=',trim(diag(idx)%name), &
-                 'lcnvfac=',lcnvfac, 'levo=',levo,'nx=',nx,'ny=',ny
-            do k=1, levo
-               do j = 1, ny
-                  jj = j + jsc -1
-                  do i = 1, nx
-                     ii = i + isc -1
-                     nb = Atm_block%blkno(ii,jj)
-                     ix = Atm_block%ixp(ii,jj)
+            !---
+            !--- skipping other 3D variables with the following else statement
+            !---
+            if (trim(Diag(idx)%name) .eq. 'delp_phys') then
+               if (Diag(idx)%id > 0) then
+                  call store_data3D(Diag(idx)%id, delp, Time, idx, Diag(idx)%intpl_method, Diag(idx)%name)
+               endif
+            else
+               if(mpp_pe()==mpp_root_pe())print *,'in,fv3gfs_io. 3D fields, idx=',idx,'varname=',trim(diag(idx)%name), &
+                    'lcnvfac=',lcnvfac, 'levo=',levo,'nx=',nx,'ny=',ny
+               do k=1, levo
+                  do j = 1, ny
+                     jj = j + jsc -1
+                     do i = 1, nx
+                        ii = i + isc -1
+                        nb = Atm_block%blkno(ii,jj)
+                        ix = Atm_block%ixp(ii,jj)
 !         if(mpp_pe()==mpp_root_pe())print *,'in,fv3gfs_io,sze(Diag(idx)%data(nb)%var3)=',  &
 !             size(Diag(idx)%data(nb)%var3,1),size(Diag(idx)%data(nb)%var3,2)
-                     var3(i,j,k) = Diag(idx)%data(nb)%var3(ix,levo-k+1)*lcnvfac
+                        var3(i,j,k) = Diag(idx)%data(nb)%var3(ix,levo-k+1)*lcnvfac
+                     enddo
                   enddo
                enddo
-            enddo
-            if (Diag(idx)%id > 0) then
-               call store_data3D(Diag(idx)%id, var3, Time, idx, Diag(idx)%intpl_method, Diag(idx)%name)
+               if (Diag(idx)%id > 0) then
+                  call store_data3D(Diag(idx)%id, var3, Time, idx, Diag(idx)%intpl_method, Diag(idx)%name)
+               endif
+               if (Diag_coarse(idx)%id > 0) then
+                  call store_data3D_coarse(Diag_coarse(idx)%id, Diag_coarse(idx)%name, &
+                       Diag_coarse(idx)%coarse_graining_method, &
+                       nx, ny, levo, var3, area, mass, Time)
+               endif
             endif
-            if (Diag_coarse(idx)%id > 0) then
-               call store_data3D_coarse(Diag_coarse(idx)%id, Diag_coarse(idx)%name, &
-                    Diag_coarse(idx)%coarse_graining_method, &
-                    nx, ny, levo, var3, area, mass, Time)
-            endif
-         else
-            if (Diag(idx)%id > 0) then
-               call store_data3D(Diag(idx)%id, delp, Time, idx, Diag(idx)%intpl_method, Diag(idx)%name)
-            endif
-         endif
 #ifdef JUNK
          else
            !--- dt3dt variables
