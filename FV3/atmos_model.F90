@@ -460,7 +460,7 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
   integer              :: bdat(8), cdat(8)
   integer              :: ntracers, maxhf, maxh
   character(len=32), allocatable, target :: tracer_names(:)
-  integer :: nthrds
+  integer :: nthrds, nb
   integer :: coarse_diagnostic_axes(4)
 
 !-----------------------------------------------------------------------
@@ -682,7 +682,7 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
 
    call atmosphere_nggps_diag (Time, init=.true.)
    call FV3GFS_diag_register (IPD_Diag, Time, Atm_block, IPD_Control, Atmos%lon, Atmos%lat, Atmos%axes)
-   if (Atm(mytile)%flagstruct%write_coarse_diagnostics) then
+   if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
       call atmosphere_coarse_diag_axes(coarse_diagnostic_axes)
       call FV3GFS_diag_register_coarse(IPD_Diag, Time, coarse_diagnostic_axes, IPD_Diag_coarse)
    endif
@@ -692,6 +692,12 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
 #else
    call FV3GFS_restart_read (IPD_Data, IPD_Restart, Atm_block, IPD_Control, Atmos%domain)
 #endif
+
+   if (dycore_only) then
+     do nb = 1, Atm_block%nblks
+       IPD_Data(nb)%Sfcprop%tprcp(:) = 0.0
+     end do
+   endif
 
    !--- set the initial diagnostic timestamp
    diag_time = Time 
@@ -900,8 +906,8 @@ subroutine update_atmos_model_state (Atmos)
       call FV3GFS_diag_output(Atmos%Time, IPD_DIag, Atm_block, IPD_Data, IPD_Control%nx, IPD_Control%ny, &
                             IPD_Control%levs, 1, 1, 1.d0, time_int, time_intfull,              &
                             IPD_Control%fhswr, IPD_Control%fhlwr, &
-                            Atm(mytile)%flagstruct%write_coarse_diagnostics, &
-                            IPD_Diag_coarse, Atm(mytile)%coarse_graining%bd, &
+                            Atm(mytile)%coarse_graining%write_coarse_diagnostics, &
+                            IPD_Diag_coarse, &
                             Atm(mytile)%delp(Atm(mytile)%bd%is:Atm(mytile)%bd%ie, &
                             Atm(mytile)%bd%js:Atm(mytile)%bd%je,1:Atm(mytile)%npz))
       if (nint(IPD_Control%fhzero) > 0) then 

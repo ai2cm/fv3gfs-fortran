@@ -55,7 +55,6 @@ module FV3GFS_io_mod
   use IPD_typedefs,       only: IPD_control_type, IPD_data_type, &
                                 IPD_restart_type, IPD_diag_type, &
                                 kind_phys => IPD_kind_phys
-  use fv_arrays_mod, only: fv_coarse_grid_bounds_type
   use coarse_graining_mod, only: get_coarse_array_bounds, weighted_block_average
 !
 !-----------------------------------------------------------------------
@@ -2261,7 +2260,7 @@ module FV3GFS_io_mod
   subroutine fv3gfs_diag_output(time, diag, atm_block, IPD_Data, nx, ny, levs, ntcw, ntoz, &
                                 dt, time_int, time_intfull, time_radsw, &
                                 time_radlw, write_coarse_diagnostics,&
-                                diag_coarse, coarse_bd, delp)
+                                diag_coarse, delp)
 !--- subroutine interface variable definitions
     type(time_type),           intent(in) :: time
     type(IPD_diag_type),       intent(in) :: diag(:)
@@ -2275,7 +2274,6 @@ module FV3GFS_io_mod
     real(kind=kind_phys),      intent(in) :: time_radlw
     logical, intent(in) :: write_coarse_diagnostics
     type(IPD_diag_type), intent(in) :: diag_coarse(:)
-    type(fv_coarse_grid_bounds_type), intent(in) :: coarse_bd
     real(kind=kind_phys),      intent(in) :: delp(isco:ieco,jsco:jeco,1:levo)
 !--- local variables
     integer :: i, j, k, idx, nblks, nb, ix, ii, jj
@@ -2440,8 +2438,7 @@ module FV3GFS_io_mod
            endif
            if (Diag_coarse(idx)%id > 0) then
               call store_data2D_coarse(Diag_coarse(idx)%id, Diag_coarse(idx)%name, &
-                   Diag_coarse(idx)%coarse_graining_method, &
-                   nx, ny, var2, area, Time, coarse_bd)
+                   Diag_coarse(idx)%coarse_graining_method, nx, ny, var2, area, Time)
            endif
 !           if(trim(Diag(idx)%name) == 'totprcp_ave' ) print *,'in gfs_io, totprcp=',Diag(idx)%data(1)%var2(1:3), &
 !             ' lcnvfac=', lcnvfac
@@ -2472,7 +2469,7 @@ module FV3GFS_io_mod
             if (Diag_coarse(idx)%id > 0) then
                call store_data3D_coarse(Diag_coarse(idx)%id, Diag_coarse(idx)%name, &
                     Diag_coarse(idx)%coarse_graining_method, &
-                  nx, ny, levo, var3, area, mass, Time, coarse_bd)
+                    nx, ny, levo, var3, area, mass, Time)
             endif
          else
             if (Diag(idx)%id > 0) then
@@ -2692,8 +2689,7 @@ module FV3GFS_io_mod
    enddo
  end subroutine get_mass
 
- subroutine store_data2D_coarse(id, name, method, nx, ny, full_resolution_field, &
-      area, Time, coarse_bd)
+ subroutine store_data2D_coarse(id, name, method, nx, ny, full_resolution_field, area, Time)
    integer, intent(in) :: id
    character(len=64), intent(in) :: name
    character(len=64), intent(in) :: method
@@ -2701,14 +2697,13 @@ module FV3GFS_io_mod
    real(kind=kind_phys), intent(in) :: full_resolution_field(1:nx,1:ny)
    real(kind=kind_phys), intent(in) :: area(1:nx,1:ny)
    type(time_type), intent(in) :: Time
-   type(fv_coarse_grid_bounds_type) :: coarse_bd
 
    real(kind=kind_phys), allocatable :: coarse(:,:)
    character(len=128) :: message
    integer :: is_coarse, ie_coarse, js_coarse, je_coarse, nx_coarse, ny_coarse
    logical :: used
 
-   call get_coarse_array_bounds(coarse_bd, is_coarse, ie_coarse, js_coarse, je_coarse)
+   call get_coarse_array_bounds(is_coarse, ie_coarse, js_coarse, je_coarse)
    nx_coarse = ie_coarse - is_coarse + 1
    ny_coarse = je_coarse - js_coarse + 1
 
@@ -2829,7 +2824,7 @@ module FV3GFS_io_mod
  end subroutine store_data3D
 
  subroutine store_data3D_coarse(id, name, method, nx, ny, nz, full_resolution_field, &
-      area, mass, Time, coarse_bd)
+      area, mass, Time)
    integer, intent(in) :: id
    character(len=64), intent(in) :: name
    character(len=64), intent(in) :: method
@@ -2838,14 +2833,13 @@ module FV3GFS_io_mod
    real(kind=kind_phys), intent(in) :: area(1:nx,1:ny)
    real(kind=kind_phys), intent(in) :: mass(1:nx,1:ny,1:nz)
    type(time_type), intent(in) :: Time
-   type(fv_coarse_grid_bounds_type) :: coarse_bd
 
    real(kind=kind_phys), allocatable :: coarse(:,:,:)
    character(len=128) :: message
    integer :: is_coarse, ie_coarse, js_coarse, je_coarse, nx_coarse, ny_coarse
    logical :: used
 
-   call get_coarse_array_bounds(coarse_bd, is_coarse, ie_coarse, js_coarse, je_coarse)
+   call get_coarse_array_bounds(is_coarse, ie_coarse, js_coarse, je_coarse)
    nx_coarse = ie_coarse - is_coarse + 1
    ny_coarse = je_coarse - js_coarse + 1
 
