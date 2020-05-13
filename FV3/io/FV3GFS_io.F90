@@ -2215,17 +2215,17 @@ module FV3GFS_io_mod
     type(IPD_diag_type), intent(in) :: diagnostic
     type(IPD_diag_type), intent(inout) :: coarse_diagnostic
 
-   ! We leave the data attribute empty for these, because we will coarsen it
-   ! directly from the data attribute in the full resolution version of each
-   ! diagnostic. 
-   coarse_diagnostic%axes = diagnostic%axes
-   coarse_diagnostic%time_avg = diagnostic%time_avg
-   coarse_diagnostic%mod_name = diagnostic%mod_name
-   coarse_diagnostic%name = trim(diagnostic%name) // '_coarse'
-   coarse_diagnostic%desc = diagnostic%desc
-   coarse_diagnostic%unit = diagnostic%unit
-   coarse_diagnostic%cnvfac = diagnostic%cnvfac
-   coarse_diagnostic%coarse_graining_method = diagnostic%coarse_graining_method
+    ! We leave the data attribute empty for these, because we will coarsen it
+    ! directly from the data attribute in the full resolution version of each
+    ! diagnostic. 
+    coarse_diagnostic%axes = diagnostic%axes
+    coarse_diagnostic%time_avg = diagnostic%time_avg
+    coarse_diagnostic%mod_name = diagnostic%mod_name
+    coarse_diagnostic%name = trim(diagnostic%name) // '_coarse'
+    coarse_diagnostic%desc = diagnostic%desc
+    coarse_diagnostic%unit = diagnostic%unit
+    coarse_diagnostic%cnvfac = diagnostic%cnvfac
+    coarse_diagnostic%coarse_graining_method = diagnostic%coarse_graining_method
   end subroutine populate_coarse_diag_type
   
   subroutine fv3gfs_diag_register_coarse(Diag, Time, coarse_axes, Diag_coarse)
