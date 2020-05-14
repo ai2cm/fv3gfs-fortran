@@ -686,7 +686,8 @@ contains
              if (Atm%flagstruct%grid_type>=0) call gnomonic_grids(Atm%flagstruct%grid_type, npx-1, xs, ys)
           !$ser savepoint Gnomonic_Grids-Out
           !$ser data lon=xs lat=ys
-
+          !$ser savepoint Mirror_Grid-In
+          !$ser data grid_global=grid_global ng=ng npx=npx npy=npy ndims=ndims_mirror nregions=nregions_mirror
             if (is_master()) then
              if (Atm%flagstruct%grid_type>=0) then
                 do j=1,npy
@@ -695,12 +696,11 @@ contains
                       grid_global(i,j,2,1) = ys(i,j)
                    enddo
                 enddo
-          !$ser savepoint Mirror_Grid-In
-          !$ser data grid_global=grid_global ng=ng npx=npx npy=npy ndims=ndims_mirror nregions=nregions_mirror
+        
 ! mirror_grid assumes that the tile=1 is centered on equator and greenwich meridian Lon[-pi,pi] 
                 call mirror_grid(grid_global, ng, npx, npy, 2, 6)
-          !$ser savepoint Mirror_Grid-Out
-          !$ser data grid_global=grid_global 
+         !$ser savepoint Mirror_Grid-Out
+         !$ser data grid_global=grid_global 
                 do n=1,nregions
                    do j=1,npy
                       do i=1,npx
@@ -750,7 +750,11 @@ contains
                                       n, grid_global(1:npx,1:npy,1,n), grid_global(1:npx,1:npy,2,n))
              enddo
              endif
-        endif !is master
+          endif !is master
+          !$ser verbatim   if (.not.is_master()) then
+           !$ser savepoint Mirror_Grid-Out
+          !$ser data grid_global=grid_global
+          !$ser verbatim endif
              call mpp_broadcast(grid_global, size(grid_global), mpp_root_pe())
 !--- copy grid to compute domain
        do n=1,ndims
