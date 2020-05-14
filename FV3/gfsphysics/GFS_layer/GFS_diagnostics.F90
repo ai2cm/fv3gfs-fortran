@@ -1080,8 +1080,7 @@ module GFS_diagnostics
     ExtDiag(idx)%mod_name = 'gfs_phys'
     ExtDiag(idx)%intpl_method = 'bilinear'
     allocate (ExtDiag(idx)%data(nblks))
-        ExtDiag(idx)%coarse_graining_method = 'area_weighted'
-
+    ExtDiag(idx)%coarse_graining_method = 'area_weighted'
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%ulwsfc(:)
     enddo
