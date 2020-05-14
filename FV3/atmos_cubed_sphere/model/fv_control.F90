@@ -384,7 +384,8 @@ module fv_control_mod
 
    integer :: isc_p, iec_p, jsc_p, jec_p, isg, ieg, jsg, jeg, upoff, jind
    integer :: ic, jc
-
+   !$ser verbatim integer:: ngint
+   !$ser verbatim ngint=ng
    gid = mpp_pe()
    call init_nesting(Atm, grids_on_this_pe, p_split)
 
@@ -450,13 +451,13 @@ module fv_control_mod
             Atm(n)%gridstruct%regional  => Atm(n)%flagstruct%regional
             !$ser on
             !$ser savepoint InitGrid-In
-            !$ser data grid_file=grid_file ndims=ndims nregions=ntiles grid_name=grid_name  sw_corner=Atm(n)%gridstruct%sw_corner  se_corner=Atm(n)%gridstruct%se_corner ne_corner=Atm(n)%gridstruct%ne_corner  nw_corner=Atm(n)%gridstruct%nw_corner
+            !$ser data grid_file=grid_file ndims=ndims nregions=ntiles grid_name=grid_name  sw_corner=Atm(n)%gridstruct%sw_corner  se_corner=Atm(n)%gridstruct%se_corner ne_corner=Atm(n)%gridstruct%ne_corner  nw_corner=Atm(n)%gridstruct%nw_corner npx=npx npy=npy npz=npz ng=ngint
             call init_grid(Atm(n), grid_name, grid_file, npx, npy, npz, ndims, ntiles, ng)
             !$ser savepoint InitGrid-Out
             !$ser data iinta=Atm(n)%gridstruct%iinta iintb=Atm(n)%gridstruct%iintb jinta=Atm(n)%gridstruct%jinta jintb=Atm(n)%gridstruct%jintb gridvar=Atm(n)%gridstruct%grid_64 agrid=Atm(n)%gridstruct%agrid_64 area=Atm(n)%gridstruct%area_64 area_c=Atm(n)%gridstruct%area_c_64 rarea=Atm(n)%gridstruct%rarea rarea_c=Atm(n)%gridstruct%rarea_c dx=Atm(n)%gridstruct%dx_64  dy=Atm(n)%gridstruct%dy_64  dxc=Atm(n)%gridstruct%dxc_64  dyc=Atm(n)%gridstruct%dyc_64  dxa=Atm(n)%gridstruct%dxa_64 dya=Atm(n)%gridstruct%dya_64  rdx=Atm(n)%gridstruct%rdx  rdy=Atm(n)%gridstruct%rdy  rdxc=Atm(n)%gridstruct%rdxc  rdyc=Atm(n)%gridstruct%rdyc  rdxa=Atm(n)%gridstruct%rdxa  rdya=Atm(n)%gridstruct%rdya latlon=Atm(n)%gridstruct%latlon cubedsphere=Atm(n)%gridstruct%latlon
 
             !$ser savepoint GridUtils_Init-In
-            !$ser data  gridvar=Atm(n)%gridstruct%grid_64 agrid=Atm(n)%gridstruct%agrid_64 area=Atm(n)%gridstruct%area_64 area_c=Atm(n)%gridstruct%area_c_64 rarea=Atm(n)%gridstruct%rarea rarea_c=Atm(n)%gridstruct%rarea_c dx=Atm(n)%gridstruct%dx_64  dy=Atm(n)%gridstruct%dy_64  dxc=Atm(n)%gridstruct%dxc_64  dyc=Atm(n)%gridstruct%dyc_64  dxa=Atm(n)%gridstruct%dxa_64 dya=Atm(n)%gridstruct%dya_64 
+            !$ser data  gridvar=Atm(n)%gridstruct%grid_64 agrid=Atm(n)%gridstruct%agrid_64 area=Atm(n)%gridstruct%area_64 area_c=Atm(n)%gridstruct%area_c_64 rarea=Atm(n)%gridstruct%rarea rarea_c=Atm(n)%gridstruct%rarea_c dx=Atm(n)%gridstruct%dx_64  dy=Atm(n)%gridstruct%dy_64  dxc=Atm(n)%gridstruct%dxc_64  dyc=Atm(n)%gridstruct%dyc_64  dxa=Atm(n)%gridstruct%dxa_64 dya=Atm(n)%gridstruct%dya_64 npx=npx npy=npy npz=npz
             ! Initialize the SW (2D) part of the model
             !!!CLEANUP: this call could definitely use some cleaning up
             call grid_utils_init(Atm(n), npx, npy, npz, non_ortho, grid_type, c2l_ord)

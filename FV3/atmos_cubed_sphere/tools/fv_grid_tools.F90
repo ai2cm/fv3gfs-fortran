@@ -590,7 +590,9 @@ contains
     integer :: is,  ie,  js,  je
     integer :: isd, ied, jsd, jed
     integer :: istart, iend, jstart, jend
-
+    !$ser verbatim integer ::ndims_mirror, nregions_mirror
+    !$ser verbatim ndims_mirror=2
+    !$ser verbatim nregions_mirror=6
     is  = Atm%bd%is
     ie  = Atm%bd%ie
     js  = Atm%bd%js
@@ -677,8 +679,14 @@ contains
           else
            if(trim(grid_file) == 'INPUT/grid_spec.nc') then  
              call read_grid(Atm, grid_file, ndims, nregions, ng)
-           else
-            if (Atm%flagstruct%grid_type>=0) call gnomonic_grids(Atm%flagstruct%grid_type, npx-1, xs, ys)
+          else
+          !$ser savepoint Gnomonic_Grids-In
+          !$ser data lon=xs lat=ys im=npx-1
+
+             if (Atm%flagstruct%grid_type>=0) call gnomonic_grids(Atm%flagstruct%grid_type, npx-1, xs, ys)
+          !$ser savepoint Gnomonic_Grids-Out
+          !$ser data lon=xs lat=ys
+
             if (is_master()) then
              if (Atm%flagstruct%grid_type>=0) then
                 do j=1,npy
@@ -687,8 +695,12 @@ contains
                       grid_global(i,j,2,1) = ys(i,j)
                    enddo
                 enddo
+          !$ser savepoint Mirror_Grid-In
+          !$ser data grid_global=grid_global ng=ng npx=npx npy=npy ndims=ndims_mirror nregions=nregions_mirror
 ! mirror_grid assumes that the tile=1 is centered on equator and greenwich meridian Lon[-pi,pi] 
                 call mirror_grid(grid_global, ng, npx, npy, 2, 6)
+          !$ser savepoint Mirror_Grid-Out
+          !$ser data grid_global=grid_global 
                 do n=1,nregions
                    do j=1,npy
                       do i=1,npx
@@ -976,7 +988,7 @@ contains
              dyc(i,j) = 2.*great_circle_dist( p1, p2, radius )
           enddo
        endif
-
+       
        if ( sw_corner ) then
              i=1; j=1
              p1(1:2) = grid(i,j,1:2)
