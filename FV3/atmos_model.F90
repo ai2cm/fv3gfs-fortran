@@ -115,7 +115,7 @@ use FV3GFS_io_mod,      only: FV3GFS_restart_read, FV3GFS_restart_write, &
                               DIAG_SIZE, FV3GFS_diag_register_coarse
 use fv_iau_mod,         only: iau_external_data_type,getiauforcing,iau_initialize
 use module_fv3_config,  only: output_1st_tstep_rst, first_kdt, nsout
-
+use coarse_graining_mod, only: get_fine_array_bounds
 !-----------------------------------------------------------------------
 
 implicit none
@@ -863,6 +863,7 @@ subroutine update_atmos_model_state (Atmos)
   integer :: isec, seconds, isec_fhzero
   integer :: rc
   real(kind=IPD_kind_phys) :: time_int, time_intfull
+  integer :: is, ie, js, je, npz
 !
     call set_atmosphere_pelist()
     call mpp_clock_begin(fv3Clock)
@@ -903,13 +904,13 @@ subroutine update_atmos_model_state (Atmos)
       endif
       if (mpp_pe() == mpp_root_pe()) write(6,*) ' gfs diags time since last bucket empty: ',time_int/3600.,'hrs'
       call atmosphere_nggps_diag(Atmos%Time)
+      call get_fine_array_bounds(is, ie, js, je)
       call FV3GFS_diag_output(Atmos%Time, IPD_DIag, Atm_block, IPD_Data, IPD_Control%nx, IPD_Control%ny, &
                             IPD_Control%levs, 1, 1, 1.d0, time_int, time_intfull,              &
                             IPD_Control%fhswr, IPD_Control%fhlwr, &
                             Atm(mytile)%coarse_graining%write_coarse_diagnostics, &
                             IPD_Diag_coarse, &
-                            Atm(mytile)%delp(Atm(mytile)%bd%is:Atm(mytile)%bd%ie, &
-                            Atm(mytile)%bd%js:Atm(mytile)%bd%je,1:Atm(mytile)%npz))
+                            Atm(mytile)%delp(is:ie,js:je,:))
       if (nint(IPD_Control%fhzero) > 0) then 
         if (mod(isec,3600*nint(IPD_Control%fhzero)) == 0) diag_time = Atmos%Time
       else
