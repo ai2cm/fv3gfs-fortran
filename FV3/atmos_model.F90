@@ -863,7 +863,7 @@ subroutine update_atmos_model_state (Atmos)
   integer :: isec, seconds, isec_fhzero
   integer :: rc
   real(kind=IPD_kind_phys) :: time_int, time_intfull
-  integer :: is, ie, js, je, npz
+  integer :: is, ie, js, je
 !
     call set_atmosphere_pelist()
     call mpp_clock_begin(fv3Clock)
