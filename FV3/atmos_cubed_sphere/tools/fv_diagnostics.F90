@@ -212,7 +212,7 @@ contains
     real              :: hyam(npz), hybm(npz)
 
     !These id_* are not needed later since they are for static data which is not used elsewhere
-    integer :: id_bk, id_pk, id_area, id_lon, id_lat, id_lont, id_latt, id_phalf, id_pfull
+    integer :: id_bk, id_pk, id_area, id_dx, id_dy, id_lon, id_lat, id_lont, id_latt, id_phalf, id_pfull
     integer :: id_hyam, id_hybm
     integer :: id_plev
     integer :: i, j, k, n, ntileMe, id_xt, id_yt, id_x, id_y, id_xe, id_ye, id_xn, id_yn
@@ -405,6 +405,10 @@ contains
                                          'latitude', 'degrees_N' )
        id_area = register_static_field ( trim(field), 'area', axes(1:2),  &
                                          'cell area', 'm**2' )
+       id_dx = register_static_field ( trim(field), 'dx', (/id_xt, id_y/),  &
+                                         'cell width in x-direction', 'm' )
+       id_dy = register_static_field ( trim(field), 'dy', (/id_x, id_yt/),  &
+                                         'cell width in y-direction', 'm' )
 #ifndef DYNAMICS_ZS
        idiag%id_zsurf = register_static_field ( trim(field), 'zsurf', axes(1:2),  &
                                          'surface height', 'm' )
@@ -462,6 +466,8 @@ contains
        if (id_lont > 0) used = send_data(id_lont, rad2deg*Atm(n)%gridstruct%agrid(isc:iec,jsc:jec,1), Time)
        if (id_latt > 0) used = send_data(id_latt, rad2deg*Atm(n)%gridstruct%agrid(isc:iec,jsc:jec,2), Time)
        if (id_area > 0) used = send_data(id_area, Atm(n)%gridstruct%area(isc:iec,jsc:jec), Time)
+       if (id_dx > 0) used = send_data(id_dx, Atm(n)%gridstruct%dx(isc:iec,jsc:jec+1), Time)
+       if (id_dy > 0) used = send_data(id_dy, Atm(n)%gridstruct%dy(isc:iec+1,jsc:jec), Time)
 #ifndef DYNAMICS_ZS
        if (idiag%id_zsurf > 0) used = send_data(idiag%id_zsurf, idiag%zsurf, Time)
 #endif
@@ -1016,6 +1022,61 @@ contains
 #ifndef GFS_PHYS
     if(idiag%id_theta_e >0 ) call qsmith_init
 #endif
+
+    idiag%id_t_dt_nudge = register_diag_field('dynamics', &
+          't_dt_nudge', axes(1:3), Time, &
+          'temperature tendency from nudging', &
+          'K/s', missing_value=missing_value)
+    if (idiag%id_t_dt_nudge > 0) then
+        allocate(Atm(n)%nudge_diag%nudge_t_dt(isc:iec,jsc:jec,npz))
+        Atm(n)%nudge_diag%nudge_t_dt(isc:iec,jsc:jec,npz) = 0.0
+    endif
+
+    idiag%id_ps_dt_nudge = register_diag_field('dynamics', &
+          'ps_dt_nudge', axes(1:2), Time, &
+          'surface pressure tendency from nudging', &
+          'Pa/s', missing_value=missing_value)
+    if (idiag%id_ps_dt_nudge > 0) then
+        allocate(Atm(n)%nudge_diag%nudge_ps_dt(isc:iec,jsc:jec))
+        Atm(n)%nudge_diag%nudge_ps_dt(isc:iec,jsc:jec) = 0.0
+    endif
+
+    idiag%id_delp_dt_nudge = register_diag_field('dynamics', &
+          'delp_dt_nudge', axes(1:3), Time, &
+          'pressure thickness tendency from nudging', &
+          'Pa/s', missing_value=missing_value)
+    if (idiag%id_delp_dt_nudge > 0) then
+        allocate(Atm(n)%nudge_diag%nudge_delp_dt(isc:iec,jsc:jec,npz))
+        Atm(n)%nudge_diag%nudge_delp_dt(isc:iec,jsc:jec,npz) = 0.0
+    endif
+
+    idiag%id_q_dt_nudge = register_diag_field('dynamics', &
+          'q_dt_nudge', axes(1:3), Time, &
+          'specific humidity tendency from nudging', &
+          'kg/kg/s', missing_value=missing_value)
+    if (idiag%id_q_dt_nudge > 0) then
+        allocate(Atm(n)%nudge_diag%nudge_q_dt(isc:iec,jsc:jec,npz))
+        Atm(n)%nudge_diag%nudge_q_dt(isc:iec,jsc:jec,npz) = 0.0
+    endif
+
+    idiag%id_u_dt_nudge = register_diag_field('dynamics', &
+          'u_dt_nudge', axes(1:3), Time, &
+          'zonal wind tendency from nudging', &
+          'm/s/s', missing_value=missing_value)
+    if (idiag%id_u_dt_nudge > 0) then
+        allocate(Atm(n)%nudge_diag%nudge_u_dt(isc:iec,jsc:jec,npz))
+        Atm(n)%nudge_diag%nudge_u_dt(isc:iec,jsc:jec,npz) = 0.0
+    endif
+
+    idiag%id_v_dt_nudge = register_diag_field('dynamics', &
+          'v_dt_nudge', axes(1:3), Time, &
+          'meridional wind tendency from nudging', &
+          'm/s/s', missing_value=missing_value)
+    if (idiag%id_v_dt_nudge > 0) then
+        allocate(Atm(n)%nudge_diag%nudge_v_dt(isc:iec,jsc:jec,npz))
+        Atm(n)%nudge_diag%nudge_v_dt(isc:iec,jsc:jec,npz) = 0.0
+    endif
+
  end subroutine fv_diag_init
 
 
@@ -3021,7 +3082,24 @@ contains
       endif
 
 #endif
-
+     if (idiag%id_t_dt_nudge > 0) then
+        used = send_data(idiag%id_t_dt_nudge, Atm(n)%nudge_diag%nudge_t_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+     if (idiag%id_ps_dt_nudge > 0) then
+        used = send_data(idiag%id_ps_dt_nudge, Atm(n)%nudge_diag%nudge_ps_dt(isc:iec,jsc:jec), Time)
+     endif
+     if (idiag%id_delp_dt_nudge > 0) then
+        used = send_data(idiag%id_delp_dt_nudge, Atm(n)%nudge_diag%nudge_delp_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+     if (idiag%id_q_dt_nudge > 0) then
+        used = send_data(idiag%id_q_dt_nudge, Atm(n)%nudge_diag%nudge_q_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+     if (idiag%id_u_dt_nudge > 0) then
+        used = send_data(idiag%id_u_dt_nudge, Atm(n)%nudge_diag%nudge_u_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+     if (idiag%id_v_dt_nudge > 0) then
+        used = send_data(idiag%id_v_dt_nudge, Atm(n)%nudge_diag%nudge_v_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
    ! enddo  ! end ntileMe do-loop
 
     deallocate ( a2 )

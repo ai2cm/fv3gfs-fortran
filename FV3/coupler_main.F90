@@ -122,7 +122,7 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
 ! ----- local variables -----
    character(len=32) :: timestamp
    logical :: intrm_rst
-   !$ser verbatim integer :: tile_id,ier
+   !$ser verbatim integer :: mpi_rank,ier
    
 !#######################################################################
 
@@ -134,8 +134,8 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
  call fms_init
  call constants_init
  call sat_vapor_pres_init
- !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, tile_id,ier)
- !$ser init directory='.' prefix='Generator' mpi_rank=tile_id unique_id=.true.
+ !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, mpi_rank,ier)
+ !$ser init directory='.' prefix='Generator' mpi_rank=mpi_rank unique_id=.true.
  !$ser mode write
  !$ser off
  call coupler_init

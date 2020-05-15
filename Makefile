@@ -68,7 +68,6 @@ build_debug: build_environment
 build_coverage: build_environment
 	COMPILED_TAG_NAME=coverage COMPILE_OPTION="REPRO=\\\nDEBUG=Y\nCOVERAGE=Y" $(MAKE) build
 
-
 enter:
 	docker run --rm $(MOUNTS) -w /FV3 -it $(COMPILED_IMAGE) bash
 

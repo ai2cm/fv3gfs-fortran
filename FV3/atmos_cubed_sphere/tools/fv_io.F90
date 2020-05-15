@@ -99,17 +99,18 @@ module fv_io_mod
   use mpp_domains_mod,         only: domain2d, EAST, WEST, NORTH, CENTER, SOUTH, CORNER, &
                                      mpp_get_compute_domain, mpp_get_data_domain, & 
                                      mpp_get_layout, mpp_get_ntile_count, &
-                                     mpp_get_global_domain
+                                     mpp_get_global_domain, mpp_update_domains
   use tracer_manager_mod,      only: tr_get_tracer_names=>get_tracer_names, &
                                      get_tracer_names, get_number_tracers, &
                                      set_tracer_profile, &
                                      get_tracer_index
   use field_manager_mod,       only: MODEL_ATMOS  
   use external_sst_mod,        only: sst_ncep, sst_anom, use_ncep_sst
-  use fv_arrays_mod,           only: fv_atmos_type, fv_nest_BC_type_3D
+  use fv_arrays_mod,           only: fv_atmos_type, fv_nest_BC_type_3D, R_GRID, fv_grid_bounds_type, fv_grid_type
   use fv_eta_mod,              only: set_external_eta
 
   use fv_mp_mod,               only: ng, mp_gather, is_master
+  use mpp_parameter_mod, only: DGRID_NE
   implicit none
   private
 
@@ -117,6 +118,7 @@ module fv_io_mod
   public :: fv_io_read_tracers, fv_io_register_restart, fv_io_register_nudge_restart
   public :: fv_io_register_restart_BCs, fv_io_register_restart_BCs_NH
   public :: fv_io_write_BCs, fv_io_read_BCs
+  public :: cubed_a2d
 
   logical                       :: module_is_initialized = .FALSE.
 
@@ -175,6 +177,12 @@ contains
  
     do n = 1, ntileMe
        call restore_state(Atm(n)%Fv_tile_restart)
+       if (Atm(n)%flagstruct%restart_from_agrid_winds) then
+          call cubed_a2d(Atm(n)%npx, Atm(n)%npy, Atm(n)%npz, &
+               Atm(n)%ua, Atm(n)%va, Atm(n)%u, Atm(n)%v, &
+               Atm(n)%gridstruct, Atm(n)%domain, Atm(n)%bd)
+          call mpp_update_domains(Atm(n)%u, Atm(n)%v, Atm(n)%domain, gridtype=DGRID_NE, complete=.true.)
+       endif
 
 !--- restore data for fv_tracer - if it exists
        fname = 'INPUT/fv_tracer.res'//trim(stile_name)//'.nc'
@@ -506,10 +514,27 @@ contains
 
     do n = 1, ntileMe
        fname = 'fv_core.res'//trim(stile_name)//'.nc'
-       id_restart =  register_restart_field(Atm(n)%Fv_tile_restart, fname, 'u', Atm(n)%u, &
-                     domain=fv_domain, position=NORTH,tile_count=n)
-       id_restart =  register_restart_field(Atm(n)%Fv_tile_restart, fname, 'v', Atm(n)%v, &
-                     domain=fv_domain, position=EAST,tile_count=n)
+
+       !--- optionally include D-grid winds even if restarting from A-grid winds
+       if (Atm(n)%flagstruct%write_optional_dgrid_vel_rst .and. Atm(n)%flagstruct%restart_from_agrid_winds) then
+          id_restart =  register_restart_field(Atm(n)%Fv_tile_restart, fname, 'u', Atm(n)%u, &
+               domain=fv_domain, position=NORTH, mandatory=.false., tile_count=n)
+          id_restart =  register_restart_field(Atm(n)%Fv_tile_restart, fname, 'v', Atm(n)%v, &
+               domain=fv_domain, position=EAST, mandatory=.false., tile_count=n)          
+       endif
+       
+       if (Atm(n)%flagstruct%restart_from_agrid_winds) then
+         id_restart =  register_restart_field(Atm(n)%Fv_tile_restart, fname, 'ua', Atm(n)%ua, &
+                       domain=fv_domain, tile_count=n)
+         id_restart =  register_restart_field(Atm(n)%Fv_tile_restart, fname, 'va', Atm(n)%va, &
+                       domain=fv_domain, tile_count=n)
+       else
+          id_restart =  register_restart_field(Atm(n)%Fv_tile_restart, fname, 'u', Atm(n)%u, &
+               domain=fv_domain, position=NORTH,tile_count=n)
+          id_restart =  register_restart_field(Atm(n)%Fv_tile_restart, fname, 'v', Atm(n)%v, &
+               domain=fv_domain, position=EAST,tile_count=n)
+       endif
+       
        if (.not.Atm(n)%flagstruct%hydrostatic) then
           id_restart =  register_restart_field(Atm(n)%Fv_tile_restart, fname, 'W', Atm(n)%w, &
                         domain=fv_domain, mandatory=.false., tile_count=n)
@@ -528,7 +553,7 @@ contains
                      domain=fv_domain, tile_count=n)
 
        !--- include agrid winds in restarts for use in data assimilation 
-       if (Atm(n)%flagstruct%agrid_vel_rst) then
+       if (Atm(n)%flagstruct%agrid_vel_rst .and. .not. Atm(n)%flagstruct%restart_from_agrid_winds) then
          id_restart =  register_restart_field(Atm(n)%Fv_tile_restart, fname, 'ua', Atm(n)%ua, &
                        domain=fv_domain, tile_count=n, mandatory=.false.)
          id_restart =  register_restart_field(Atm(n)%Fv_tile_restart, fname, 'va', Atm(n)%va, &
@@ -596,7 +621,8 @@ contains
        if (.not. grids_on_this_pe(n)) cycle
 
        if ( (use_ncep_sst .or. Atm(n)%flagstruct%nudge) .and. .not. Atm(n)%gridstruct%nested ) then
-          call save_restart(Atm(n)%SST_restart, timestamp)
+          call mpp_error(NOTE, 'READING FROM SST_RESTART DISABLED')
+          !call save_restart(Atm(n)%SST_restart, timestamp)
        endif
  
        call save_restart(Atm(n)%Fv_restart, timestamp)
@@ -1014,5 +1040,189 @@ contains
 
     return
   end subroutine fv_io_read_BCs
+
+!>@brief The subroutine 'cubed_a2d' transforms the wind from the A Grid to the D Grid.
+! Vendored from external_ic.F90 to overcome a circular dependency.
+ subroutine cubed_a2d( npx, npy, npz, ua, va, u, v, gridstruct, fv_domain, bd )
+
+  type(fv_grid_bounds_type), intent(IN) :: bd
+  integer, intent(in):: npx, npy, npz
+  real, intent(inout), dimension(bd%isd:bd%ied,bd%jsd:bd%jed,npz):: ua, va
+  real, intent(out):: u(bd%isd:bd%ied,  bd%jsd:bd%jed+1,npz)
+  real, intent(out):: v(bd%isd:bd%ied+1,bd%jsd:bd%jed  ,npz)
+  type(fv_grid_type), intent(IN), target :: gridstruct
+  type(domain2d), intent(INOUT) :: fv_domain
+! local:
+  real v3(3,bd%is-1:bd%ie+1,bd%js-1:bd%je+1)
+  real ue(3,bd%is-1:bd%ie+1,bd%js:bd%je+1)    !< 3D winds at edges
+  real ve(3,bd%is:bd%ie+1,bd%js-1:bd%je+1)    !< 3D winds at edges
+  real, dimension(bd%is:bd%ie):: ut1, ut2, ut3
+  real, dimension(bd%js:bd%je):: vt1, vt2, vt3
+  integer i, j, k, im2, jm2
+
+  real(kind=R_GRID), pointer, dimension(:,:,:)   :: vlon, vlat
+  real(kind=R_GRID), pointer, dimension(:)       :: edge_vect_w, edge_vect_e, edge_vect_s, edge_vect_n
+  real(kind=R_GRID), pointer, dimension(:,:,:,:) :: ew, es
+
+  integer :: is,  ie,  js,  je
+  integer :: isd, ied, jsd, jed
+
+  is  = bd%is
+  ie  = bd%ie
+  js  = bd%js
+  je  = bd%je
+  isd = bd%isd
+  ied = bd%ied
+  jsd = bd%jsd
+  jed = bd%jed
+
+  vlon => gridstruct%vlon
+  vlat => gridstruct%vlat
+
+  edge_vect_w => gridstruct%edge_vect_w
+  edge_vect_e => gridstruct%edge_vect_e
+  edge_vect_s => gridstruct%edge_vect_s
+  edge_vect_n => gridstruct%edge_vect_n
+
+  ew => gridstruct%ew
+  es => gridstruct%es
+
+  call mpp_update_domains(ua, fv_domain, complete=.false.)
+  call mpp_update_domains(va, fv_domain, complete=.true.)
+
+    im2 = (npx-1)/2
+    jm2 = (npy-1)/2
+
+    do k=1, npz
+! Compute 3D wind on A grid
+       do j=js-1,je+1
+          do i=is-1,ie+1
+             v3(1,i,j) = ua(i,j,k)*vlon(i,j,1) + va(i,j,k)*vlat(i,j,1)
+             v3(2,i,j) = ua(i,j,k)*vlon(i,j,2) + va(i,j,k)*vlat(i,j,2)
+             v3(3,i,j) = ua(i,j,k)*vlon(i,j,3) + va(i,j,k)*vlat(i,j,3)
+          enddo
+       enddo
+
+! A --> D
+! Interpolate to cell edges
+       do j=js,je+1
+          do i=is-1,ie+1
+             ue(1,i,j) = 0.5*(v3(1,i,j-1) + v3(1,i,j))
+             ue(2,i,j) = 0.5*(v3(2,i,j-1) + v3(2,i,j))
+             ue(3,i,j) = 0.5*(v3(3,i,j-1) + v3(3,i,j))
+          enddo
+       enddo
+
+       do j=js-1,je+1
+          do i=is,ie+1
+             ve(1,i,j) = 0.5*(v3(1,i-1,j) + v3(1,i,j))
+             ve(2,i,j) = 0.5*(v3(2,i-1,j) + v3(2,i,j))
+             ve(3,i,j) = 0.5*(v3(3,i-1,j) + v3(3,i,j))
+          enddo
+       enddo
+
+! --- E_W edges (for v-wind):
+     if (.not. gridstruct%nested) then
+     if ( is==1) then
+       i = 1
+       do j=js,je
+        if ( j>jm2 ) then
+             vt1(j) = edge_vect_w(j)*ve(1,i,j-1)+(1.-edge_vect_w(j))*ve(1,i,j)
+             vt2(j) = edge_vect_w(j)*ve(2,i,j-1)+(1.-edge_vect_w(j))*ve(2,i,j)
+             vt3(j) = edge_vect_w(j)*ve(3,i,j-1)+(1.-edge_vect_w(j))*ve(3,i,j)
+        else
+             vt1(j) = edge_vect_w(j)*ve(1,i,j+1)+(1.-edge_vect_w(j))*ve(1,i,j)
+             vt2(j) = edge_vect_w(j)*ve(2,i,j+1)+(1.-edge_vect_w(j))*ve(2,i,j)
+             vt3(j) = edge_vect_w(j)*ve(3,i,j+1)+(1.-edge_vect_w(j))*ve(3,i,j)
+        endif
+       enddo
+       do j=js,je
+          ve(1,i,j) = vt1(j)
+          ve(2,i,j) = vt2(j)
+          ve(3,i,j) = vt3(j)
+       enddo
+     endif
+
+     if ( (ie+1)==npx ) then
+       i = npx
+       do j=js,je
+        if ( j>jm2 ) then
+             vt1(j) = edge_vect_e(j)*ve(1,i,j-1)+(1.-edge_vect_e(j))*ve(1,i,j)
+             vt2(j) = edge_vect_e(j)*ve(2,i,j-1)+(1.-edge_vect_e(j))*ve(2,i,j)
+             vt3(j) = edge_vect_e(j)*ve(3,i,j-1)+(1.-edge_vect_e(j))*ve(3,i,j)
+        else
+             vt1(j) = edge_vect_e(j)*ve(1,i,j+1)+(1.-edge_vect_e(j))*ve(1,i,j)
+             vt2(j) = edge_vect_e(j)*ve(2,i,j+1)+(1.-edge_vect_e(j))*ve(2,i,j)
+             vt3(j) = edge_vect_e(j)*ve(3,i,j+1)+(1.-edge_vect_e(j))*ve(3,i,j)
+        endif
+       enddo
+       do j=js,je
+          ve(1,i,j) = vt1(j)
+          ve(2,i,j) = vt2(j)
+          ve(3,i,j) = vt3(j)
+       enddo
+     endif
+
+! N-S edges (for u-wind):
+     if ( js==1 ) then
+       j = 1
+       do i=is,ie
+        if ( i>im2 ) then
+             ut1(i) = edge_vect_s(i)*ue(1,i-1,j)+(1.-edge_vect_s(i))*ue(1,i,j)
+             ut2(i) = edge_vect_s(i)*ue(2,i-1,j)+(1.-edge_vect_s(i))*ue(2,i,j)
+             ut3(i) = edge_vect_s(i)*ue(3,i-1,j)+(1.-edge_vect_s(i))*ue(3,i,j)
+        else
+             ut1(i) = edge_vect_s(i)*ue(1,i+1,j)+(1.-edge_vect_s(i))*ue(1,i,j)
+             ut2(i) = edge_vect_s(i)*ue(2,i+1,j)+(1.-edge_vect_s(i))*ue(2,i,j)
+             ut3(i) = edge_vect_s(i)*ue(3,i+1,j)+(1.-edge_vect_s(i))*ue(3,i,j)
+        endif
+       enddo
+       do i=is,ie
+          ue(1,i,j) = ut1(i)
+          ue(2,i,j) = ut2(i)
+          ue(3,i,j) = ut3(i)
+       enddo
+     endif
+
+     if ( (je+1)==npy ) then
+       j = npy
+       do i=is,ie
+        if ( i>im2 ) then
+             ut1(i) = edge_vect_n(i)*ue(1,i-1,j)+(1.-edge_vect_n(i))*ue(1,i,j)
+             ut2(i) = edge_vect_n(i)*ue(2,i-1,j)+(1.-edge_vect_n(i))*ue(2,i,j)
+             ut3(i) = edge_vect_n(i)*ue(3,i-1,j)+(1.-edge_vect_n(i))*ue(3,i,j)
+        else
+             ut1(i) = edge_vect_n(i)*ue(1,i+1,j)+(1.-edge_vect_n(i))*ue(1,i,j)
+             ut2(i) = edge_vect_n(i)*ue(2,i+1,j)+(1.-edge_vect_n(i))*ue(2,i,j)
+             ut3(i) = edge_vect_n(i)*ue(3,i+1,j)+(1.-edge_vect_n(i))*ue(3,i,j)
+        endif
+       enddo
+       do i=is,ie
+          ue(1,i,j) = ut1(i)
+          ue(2,i,j) = ut2(i)
+          ue(3,i,j) = ut3(i)
+       enddo
+     endif
+
+     endif ! .not. nested
+
+     do j=js,je+1
+        do i=is,ie
+           u(i,j,k) =  ue(1,i,j)*es(1,i,j,1) +  &
+                       ue(2,i,j)*es(2,i,j,1) +  &
+                       ue(3,i,j)*es(3,i,j,1)
+        enddo
+     enddo
+     do j=js,je
+        do i=is,ie+1
+           v(i,j,k) = ve(1,i,j)*ew(1,i,j,2) +  &
+                      ve(2,i,j)*ew(2,i,j,2) +  &
+                      ve(3,i,j)*ew(3,i,j,2)
+        enddo
+     enddo
+
+   enddo         ! k-loop
+
+ end subroutine cubed_a2d
 
 end module fv_io_mod

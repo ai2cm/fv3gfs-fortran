@@ -23,11 +23,7 @@ endif
 
 LIBRARY  = libfv3core.a
 
-FFLAGS   += -I$(FMS_DIR) -I../gfsphysics -I../ipd -I../io -I../namphysics
-
-ifdef SERIALBOX_FLAGS
-    FFLAGS += $(SERIALBOX_FLAGS)
-endif
+FFLAGS   += -I$(FMS_DIR) -I../coarse_graining -I../gfsphysics -I../ipd -I../io -I../namphysics
 
 SRCS_f   =
 
@@ -59,6 +55,8 @@ SRCS_F90 = \
 		   ./model/nh_utils.F90                           \
 		   ./tools/external_ic.F90                        \
 		   ./tools/external_sst.F90                       \
+                   ./tools/coarse_grained_diagnostics.F90         \
+                   ./tools/coarse_grained_restart_files.F90       \
 		   ./tools/fv_diagnostics.F90                     \
 		   ./tools/fv_eta.F90                             \
 		   ./tools/fv_grid_tools.F90                      \

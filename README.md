@@ -90,3 +90,35 @@ continuous integration by inspecting `.circleci/config.yml`. Regression tests ar
 performed for a set of reference configurations included in `tests/pytest/config`.
 Please read the README in `tests/pytest` for more information about these regression
 tests and how to update the reference checksums.
+
+# Interactive development of serialized model in Docker
+
+To enter the docker container with the FV3 sources tree mounted to `/FV3/original`,
+run:
+
+    make enter_serialize
+
+When in the docker container, you can reprocess the sources and recompile the model with:
+
+    cd /FV3 && make -C original serialize_preprocess && make libs fv3.exe
+
+If you need to be able to see the preprocessed `atmos_cubed_sphere` sources on your
+host filesystem, you can do that with:
+
+    MOUNTS_SERIALIZE="-v $(pwd)/FV3:/FV3/original -v <local dir>:/FV3/atmos_cubed_sphere" make enter_serialize
+
+Where `<local_dir>` is replaced with the directory on your host filesystem where you
+want to see the preprocessed sources.
+
+This workflow does not support viewing preprocessed sources in the root `/FV3` directory
+on the host filesystem, because `/FV3` has a bind-mounted subdirectory `original` and
+it is not possible to contain a bind-mounted subdirectory in a separately bind-mounted
+directory. You could see these sources by setting `SERIALBOX_OUTDIR` to a different
+directory (it is `/FV3` by default) that you have bind-mounted in to the container.
+
+# Docker buildkit
+
+If you are using a version of docker that supports it, you can enable buildkit by
+setting `DOCKER_BUILDKIT=1` as an environment variable. This can be useful when building
+docker targets in this repo, because it will avoid building mulit-stage targets that
+are not required for the final image.

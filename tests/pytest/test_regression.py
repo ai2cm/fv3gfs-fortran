@@ -15,27 +15,23 @@ CONFIG_DIR = os.path.join(TEST_DIR, 'config')
 SUBMIT_JOB_FILENAME = os.path.join(TEST_DIR, 'run_files/submit_job.sh')
 STDOUT_FILENAME = 'stdout.log'
 STDERR_FILENAME = 'stderr.log'
-MODEL_IMAGE = 'us.gcr.io/vcm-ml/fv3gfs-compiled'
 MD5SUM_FILENAME = "md5.txt"
+SERIALIZE_MD5SUM_FILENAME = "md5_serialize.txt"
 
 USE_LOCAL_ARCHIVE = True
 
 config_filenames = os.listdir(CONFIG_DIR)
 
 
-@pytest.fixture
+@pytest.fixture(params=["{version}", "{version}-serialize"])
 def model_image_tag(request):
-    return request.config.getoption("--image_tag")
+    return request.param.format(version=request.config.getoption("--image_version"))
 
 
 @pytest.fixture
-def code_root(request):
-    return request.config.getoption("--code_root")
-
-
-@pytest.fixture
-def model_image(model_image_tag):
-    return MODEL_IMAGE + ':' + model_image_tag
+def model_image(request, model_image_tag):
+    model_image = request.config.getoption("--image")
+    return model_image + ':' + model_image_tag
 
 
 @pytest.fixture
@@ -45,34 +41,49 @@ def reference_dir(request):
 
 @pytest.fixture(params=config_filenames)
 def config(request):
-    print('Testing config', request.param)
     config_filename = os.path.join(CONFIG_DIR, request.param)
     with open(config_filename, 'r') as config_file:
         return yaml.safe_load(config_file)
 
 
-def test_regression(config, model_image, model_image_tag, code_root, reference_dir):
+@pytest.fixture
+def run_dir(model_image_tag, config):
+    run_name = config['experiment_name']
+    return os.path.join(OUTPUT_DIR, model_image_tag, run_name)
+
+
+def test_regression(config, model_image, reference_dir, run_dir):
     run_name = config['experiment_name']
     run_reference_dir = os.path.join(reference_dir, run_name)
-    run_dir = os.path.join(OUTPUT_DIR, run_name)
     if os.path.isdir(run_dir):
         shutil.rmtree(run_dir)
     os.makedirs(run_dir)
     write_run_directory(config, run_dir)
-    run_model(run_dir, model_image, model_image_tag, code_root)
+    run_model(run_dir, model_image)
     md5sum_filename = os.path.join(run_reference_dir, MD5SUM_FILENAME)
-    if not os.path.isfile(md5sum_filename):
-        assert False, (f"reference md5sum does not exist at " + md5sum_filename + ","
-                       f"you can create it with `bash set_reference.sh {reference_dir}`"
-                       " after running the model and generating the output directories."
-                       )
-    else:
-        print('Checking',  run_dir, 'and',  md5sum_filename)
-        check_md5sum(run_dir, md5sum_filename)
+    check_rundir_md5sum(run_dir, md5sum_filename)
+    if 'serialize' in model_image:
+        serialize_md5sum_filename = os.path.join(
+            run_reference_dir, SERIALIZE_MD5SUM_FILENAME
+        )
+        check_rundir_md5sum(run_dir, serialize_md5sum_filename)
     shutil.rmtree(run_dir)
 
 
-def run_model(rundir, model_image, model_image_tag, code_root):
+def check_rundir_md5sum(run_dir, md5sum_filename):
+    ensure_reference_exists(md5sum_filename)
+    subprocess.check_call(["md5sum", "-c", md5sum_filename], cwd=run_dir)
+
+
+def ensure_reference_exists(filename):
+    if not os.path.isfile(filename):
+        raise AssertionError(
+            f"reference md5sum does not exist at " + filename + ","
+            f" you can create it with `set_reference.sh` -- refer to README.md"
+        )
+
+
+def run_model(rundir, model_image):
     if USE_LOCAL_ARCHIVE:
         archive = fv3config.get_cache_dir()
         archive_mount = ['-v', f'{archive}:{archive}']
@@ -86,7 +97,7 @@ def run_model(rundir, model_image, model_image_tag, code_root):
     fv3err_filename = join(rundir, 'stderr.log')
     with open(fv3out_filename, 'w') as fv3out_f, open(fv3err_filename, 'w') as fv3err_f:
         subprocess.check_call(
-            docker_run + rundir_mount + archive_mount + [model_image] + ["bash", "/rundir/submit_job.sh", code_root],
+            docker_run + rundir_mount + archive_mount + [model_image] + ["bash", "/rundir/submit_job.sh"],
             stdout=fv3out_f,
             stderr=fv3err_f
         )

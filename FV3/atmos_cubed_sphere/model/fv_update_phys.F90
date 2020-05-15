@@ -99,7 +99,7 @@ module fv_update_phys_mod
   use tracer_manager_mod, only: get_tracer_index, adjust_mass, get_tracer_names
   use fv_mp_mod,          only: start_group_halo_update, complete_group_halo_update
   use fv_mp_mod,          only: group_halo_update_type
-  use fv_arrays_mod,      only: fv_flags_type, fv_nest_type, R_GRID
+  use fv_arrays_mod,      only: fv_flags_type, fv_nest_type, R_GRID, nudge_diag_type
   use boundary_mod,       only: nested_grid_BC
   use boundary_mod,       only: extrapolation_BC
   use fv_eta_mod,         only: get_eta_level
@@ -137,7 +137,7 @@ module fv_update_phys_mod
                               ak, bk, phis, u_srf, v_srf, ts, delz, hydrostatic,  &
                               u_dt, v_dt, t_dt, moist_phys, Time, nudge,    &
                               gridstruct, lona, lata, npx, npy, npz, flagstruct,  &
-                              neststruct, bd, domain, ptop, q_dt)
+                              neststruct, bd, domain, ptop, nudge_diag, q_dt)
     real, intent(in)   :: dt, ptop
     integer, intent(in):: is,  ie,  js,  je, ng
     integer, intent(in):: isd, ied, jsd, jed
@@ -195,6 +195,8 @@ module fv_update_phys_mod
     type(fv_nest_type) :: neststruct
 
     integer, intent(IN) :: npx, npy, npz
+
+    type(nudge_diag_type), intent(inout) :: nudge_diag
 
 !***********
 ! Haloe Data
@@ -545,9 +547,26 @@ module fv_update_phys_mod
             ps(i,j) = pe(i,npz+1,j)
           enddo
         enddo
-        call fv_nwp_nudge ( Time, dt, npx, npy, npz,  ps_dt, u_dt, v_dt, t_dt, q_dt,   &
+
+        if (allocated(nudge_diag%nudge_t_dt)) nudge_diag%nudge_t_dt = pt(is:ie,js:je,:)
+        if (allocated(nudge_diag%nudge_ps_dt)) nudge_diag%nudge_ps_dt = ps(is:ie,js:je)
+        if (allocated(nudge_diag%nudge_delp_dt)) nudge_diag%nudge_delp_dt = delp(is:ie,js:je,:)
+        if (allocated(nudge_diag%nudge_q_dt)) nudge_diag%nudge_q_dt = q(is:ie,js:je,:,sphum)
+        if (allocated(nudge_diag%nudge_u_dt)) nudge_diag%nudge_u_dt = u_dt(is:ie,js:je,:)
+        if (allocated(nudge_diag%nudge_v_dt)) nudge_diag%nudge_v_dt = v_dt(is:ie,js:je,:)
+
+        call fv_nwp_nudge ( Time, dt, npx, npy, npz,  ps_dt, u_dt, v_dt, t_dt,   &
                             zvir, ptop, ak, bk, ts, ps, delp, ua, va, pt,    &
                             nwat, q,  phis, gridstruct, bd, domain )
+
+         if (allocated(nudge_diag%nudge_t_dt)) nudge_diag%nudge_t_dt = (pt(is:ie,js:je,:) - nudge_diag%nudge_t_dt) / dt
+         if (allocated(nudge_diag%nudge_ps_dt)) nudge_diag%nudge_ps_dt = (ps(is:ie,js:je) - nudge_diag%nudge_ps_dt) / dt
+         if (allocated(nudge_diag%nudge_delp_dt)) nudge_diag%nudge_delp_dt = (delp(is:ie,js:je,:) - nudge_diag%nudge_delp_dt) / dt
+         if (allocated(nudge_diag%nudge_q_dt)) nudge_diag%nudge_q_dt = (q(is:ie,js:je,:,sphum) - nudge_diag%nudge_q_dt) / dt
+
+          ! Note that u_dt and v_dt are already tendencies, so we do not need to divide by dt.
+         if (allocated(nudge_diag%nudge_u_dt)) nudge_diag%nudge_u_dt = (u_dt(is:ie,js:je,:) - nudge_diag%nudge_u_dt)
+         if (allocated(nudge_diag%nudge_v_dt)) nudge_diag%nudge_v_dt = (v_dt(is:ie,js:je,:) - nudge_diag%nudge_v_dt)
 #endif
   endif         ! end nudging       
 

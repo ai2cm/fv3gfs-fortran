@@ -151,6 +151,7 @@ module fv_control_mod
    use mpp_domains_mod,     only: CENTER, CORNER, NORTH, EAST, WEST, SOUTH
    use mpp_mod,             only: mpp_send, mpp_sync, mpp_transmit, mpp_set_current_pelist, mpp_declare_pelist, mpp_root_pe, mpp_recv, mpp_sync_self, mpp_broadcast, read_input_nml
    use fv_diagnostics_mod,  only: fv_diag_init_gn
+   use coarse_grained_restart_files_mod, only: deallocate_coarse_restart_type
 
 #ifdef MULTI_GASES
    use constants_mod,       only: rvgas, cp_air
@@ -335,7 +336,14 @@ module fv_control_mod
   real, pointer :: s_weight, update_blend
 
   integer, pointer :: layout(:), io_layout(:)
-
+  logical, pointer :: write_coarse_restart_files
+  logical, pointer :: write_coarse_diagnostics
+  logical, pointer :: write_only_coarse_intermediate_restarts
+  logical, pointer :: restart_from_agrid_winds
+  logical, pointer :: write_optional_dgrid_vel_rst
+  logical, pointer :: write_coarse_dgrid_vel_rst
+  logical, pointer :: write_coarse_agrid_vel_rst
+  
    integer :: ntilesMe                ! Number of tiles on this process =1 for now
 
 #ifdef OVERLOAD_R4
@@ -612,6 +620,7 @@ module fv_control_mod
 
     do n = 1, ntilesMe
        call deallocate_fv_atmos_type(Atm(n))
+       call deallocate_coarse_restart_type(Atm(n)%coarse_graining%restart)
     end do
 
 
@@ -669,7 +678,12 @@ module fv_control_mod
                          nested, twowaynest, parent_grid_num, parent_tile, nudge_qv, &
                          refinement, nestbctype, nestupdate, nsponge, s_weight, &
                          ioffset, joffset, check_negative, nudge_ic, halo_update_type, gfs_phil, agrid_vel_rst,     &
-                         do_uni_zfull, adj_mass_vmr, fac_n_spl, fhouri, regional, bc_update_interval
+                         do_uni_zfull, adj_mass_vmr, fac_n_spl, fhouri, &
+                         regional, bc_update_interval,&
+                         write_coarse_restart_files, write_coarse_diagnostics,&
+                         write_only_coarse_intermediate_restarts,&
+                         restart_from_agrid_winds, write_optional_dgrid_vel_rst,&
+                         write_coarse_dgrid_vel_rst, write_coarse_agrid_vel_rst
 
    namelist /test_case_nml/test_case, bubble_do, alpha, nsolitons, soliton_Umax, soliton_size
 #ifdef MULTI_GASES
@@ -1340,7 +1354,14 @@ module fv_control_mod
 
      layout                        => Atm%layout
      io_layout                     => Atm%io_layout
-  end subroutine setup_pointers
 
+     write_coarse_restart_files    => Atm%coarse_graining%write_coarse_restart_files
+     write_coarse_diagnostics      => Atm%coarse_graining%write_coarse_diagnostics
+     write_only_coarse_intermediate_restarts => Atm%coarse_graining%write_only_coarse_intermediate_restarts
+     restart_from_agrid_winds      => Atm%flagstruct%restart_from_agrid_winds
+     write_optional_dgrid_vel_rst  => Atm%flagstruct%write_optional_dgrid_vel_rst
+     write_coarse_dgrid_vel_rst    => Atm%coarse_graining%write_coarse_dgrid_vel_rst
+     write_coarse_agrid_vel_rst    => Atm%coarse_graining%write_coarse_agrid_vel_rst
+ end subroutine setup_pointers
        
 end module fv_control_mod

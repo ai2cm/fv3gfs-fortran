@@ -111,8 +111,17 @@ module fv_arrays_mod
      real :: efx(max_step), efx_sum, efx_nest(max_step), efx_sum_nest, mtq(max_step), mtq_sum
      integer :: steps
 
+     integer :: id_t_dt_nudge, id_ps_dt_nudge, id_delp_dt_nudge
+     integer :: id_u_dt_nudge, id_v_dt_nudge, id_q_dt_nudge
+
   end type fv_diag_type
 
+  type fv_coarse_diag_type
+
+     integer :: id_omega_coarse
+     integer :: n_3d_diagnostics = 1
+     
+  end type fv_coarse_diag_type
 
 !>@brief The type 'fv_grid_type' is made up of grid-dependent information from fv_grid_tools and fv_grid_utils.
 !>@details It should not contain any user options (that goes in a different structure) nor data which
@@ -1012,10 +1021,10 @@ module fv_arrays_mod
    !f1p
    logical  :: adj_mass_vmr = .false. !TER: This is to reproduce answers for verona patch.  This default can be changed
                                      !     to .true. in the next city release if desired
-  
+   logical :: restart_from_agrid_winds = .false.  ! Whether to restart from A-grid winds
+   logical :: write_optional_dgrid_vel_rst = .false.  ! Whether to write out optional D-grid winds when restart_from_agrid_winds is active
   !integer, pointer :: test_case
   !real,    pointer :: alpha
-
   end type fv_flags_type
 
   type fv_nest_BC_type_3D
@@ -1119,6 +1128,17 @@ module fv_arrays_mod
 
   end type fv_nest_type
 
+  type nudge_diag_type
+
+      real, allocatable :: nudge_t_dt(:,:,:)
+      real, allocatable :: nudge_ps_dt(:,:)
+      real, allocatable :: nudge_delp_dt(:,:,:)
+      real, allocatable :: nudge_u_dt(:,:,:)
+      real, allocatable :: nudge_v_dt(:,:,:)
+      real, allocatable :: nudge_q_dt(:,:,:)
+
+   end type nudge_diag_type
+
 !>@brief 'allocate_fv_nest_BC_type' is an interface to subroutines
 !! that allocate the 'fv_nest_BC_type' structure that holds the nested-grid BCs.
 !>@details The subroutines can pass the array bounds explicitly or not.
@@ -1143,6 +1163,54 @@ module fv_arrays_mod
      integer :: ng
 
   end type fv_grid_bounds_type
+
+  type coarse_restart_type
+
+     real, _ALLOCATABLE :: u(:,:,:)
+     real, _ALLOCATABLE :: v(:,:,:)
+     real, _ALLOCATABLE :: w(:,:,:)
+     real, _ALLOCATABLE :: pt(:,:,:)
+     real, _ALLOCATABLE :: q(:,:,:,:)
+     real, _ALLOCATABLE :: qdiag(:,:,:,:)
+     real, _ALLOCATABLE :: delz(:,:,:)
+     real, _ALLOCATABLE :: phis(:,:)
+     real, _ALLOCATABLE :: delp(:,:,:)
+     real, _ALLOCATABLE :: ua(:,:,:)
+     real, _ALLOCATABLE :: va(:,:,:)
+     real, _ALLOCATABLE :: u_srf(:,:)
+     real, _ALLOCATABLE :: v_srf(:,:)
+     real, _ALLOCATABLE :: sgh(:,:)
+     real, _ALLOCATABLE :: oro(:,:)
+     real, _ALLOCATABLE :: ze0(:,:,:)
+     type(restart_file_type) :: fv_core_coarse
+     type(restart_file_type) :: fv_tracer_coarse
+     type(restart_file_type) :: fv_srf_wnd_coarse
+     type(restart_file_type) :: mg_drag_coarse
+     type(restart_file_type) :: fv_land_coarse
+
+  end type coarse_restart_type
+  
+  type fv_coarse_graining_type
+
+     type(domain2d) :: domain
+     integer :: factor
+     integer :: nx_coarse
+     integer :: id_x_coarse  ! diagnostic x-axis id for data on x-edges
+     integer :: id_y_coarse  ! diagnostic y-axis id for data on y-edges
+     integer :: id_xt_coarse  ! diagnostic x-axis id for data on x-centers
+     integer :: id_yt_coarse  ! diagnostic y-axis id for data on y-centers
+     integer :: id_pfull  ! diagnostic vertical axis id for data on z-centers
+     integer :: id_phalf  ! diagnostic vertical axis id for data on z-edges
+     character(len=64) :: strategy  ! Current valid values are: 'model_level'
+     logical :: write_coarse_restart_files = .false.  ! Whether to write coarse restart files
+     logical :: write_coarse_diagnostics = .false.  ! Whether to enable writing coarse diagnostics
+     logical :: write_only_coarse_intermediate_restarts = .false.  ! Whether to write only coarse intermediate restart files (if write_coarse_restart_files is .true.)
+     type(fv_coarse_diag_type) :: idiag  ! container for coarse diagnostic ids
+     type(coarse_restart_type) :: restart  ! container for coarse restart data
+     logical :: write_coarse_dgrid_vel_rst = .true.  ! Whether to write D-grid winds to coarse restart files
+     logical :: write_coarse_agrid_vel_rst = .false.  ! Whether to write A-grid winds to coarse restart files
+
+  end type fv_coarse_graining_type
 
   type fv_regional_bc_bounds_type
 
@@ -1311,6 +1379,10 @@ module fv_arrays_mod
      real(kind=R_GRID), allocatable, dimension(:,:,:,:) :: grid_global
  
   integer :: atmos_axes(4)
+
+  type(nudge_diag_type) :: nudge_diag
+
+  type(fv_coarse_graining_type) :: coarse_graining
 
   end type fv_atmos_type
 
@@ -1974,7 +2046,7 @@ contains
     if (Atm%flagstruct%grid_type < 4) then
        if(allocated(Atm%grid_global)) deallocate(Atm%grid_global)
     end if
-    
+
     Atm%allocated = .false.
 
   end subroutine deallocate_fv_atmos_type
