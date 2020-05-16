@@ -66,7 +66,7 @@ build_debug: build_environment
 	COMPILED_TAG_NAME=debug COMPILE_OPTION="REPRO=\\\nDEBUG=Y" $(MAKE) build
 
 build_coverage: build_environment
-	COMPILED_TAG_NAME=coverage COMPILE_OPTION="REPRO=\\\nDEBUG=Y\nCOVERAGE=Y" $(MAKE) build
+	COMPILED_TAG_NAME=gcov COMPILED_IMAGE=$(COMPILE_TARGET):gcov COMPILE_OPTION="OPENMP=\\\nREPRO=\\\nDEBUG=Y\\\nGCOV=Y" $(MAKE) build
 
 enter:
 	docker run --rm $(MOUNTS) -w /FV3 -it $(COMPILED_IMAGE) bash
