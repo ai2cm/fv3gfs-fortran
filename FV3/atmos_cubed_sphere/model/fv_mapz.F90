@@ -1502,7 +1502,7 @@ endif        ! end last_step check
       !$ser savepoint CS_Profile_2d-Out
        !$ser data  q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:)
         !$ser verbatim else
-      !$ser savepoint CS_Profile_2d-2-In
+      !$ser savepoint CS_Profile_2d-2-Out
        !$ser data  q4_1_2=q4(1,:,:) q4_2_2=q4(2,:,:) q4_3_2=q4(3,:,:) q4_4_2=q4(4,:,:)
         !$ser verbatim endif
        
@@ -1584,7 +1584,7 @@ endif        ! end last_step check
       real:: qs(i1:i2)
       real:: pl, pr, dp, esl, fac1, fac2
       integer:: i, k, l, m, k0, iq
-      !$ser verbatim integer:: kord_iq, iv
+      !$ser verbatim integer:: kord_iq, iv, im
       do k=1,km
          do i=i1,i2
             dp1(i,k) = pe1(i,k+1) - pe1(i,k)
@@ -1671,10 +1671,17 @@ endif        ! end last_step check
       enddo
 555   continue
 1000  continue
-
-  if (fill) call fillz(i2-i1+1, km, nq, q2, dp2)
-
-  do iq=1,nq
+ !$ser verbatim if(j == jsd + 3 ) then
+       !$ser verbatim im = i2-i1+1
+      !$ser savepoint Fillz-In
+      !$ser data im=im km=km nq=nq dp2=dp2 q2vapor_js=q2(:,:,1) q2liquid_js=q2(:,:,2) q2ice_js=q2(:,:,3) q2rain_js=q2(:,:,4) q2snow_js=q2(:,:,5) q2graupel_js=q2(:,:,6) q2cld_js=q2(:,:,7)
+      !$ser verbatim endif
+      if (fill) call fillz(i2-i1+1, km, nq, q2, dp2)
+       !$ser verbatim if(j == jsd + 3 ) then
+  !$ser savepoint Fillz-Out
+  !$ser data  q2vapor_js=q2(:,:,1) q2liquid_js=q2(:,:,2) q2ice_js=q2(:,:,3) q2rain_js=q2(:,:,4) q2snow_js=q2(:,:,5) q2graupel_js=q2(:,:,6) q2cld_js=q2(:,:,7)
+  !$ser verbatim endif
+ do iq=1,nq
 !    if (fill) call fillz(i2-i1+1, km, 1, q2(i1,1,iq), dp2)
      do k=1,km
         do i=i1,i2
