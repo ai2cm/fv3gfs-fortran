@@ -70,13 +70,13 @@ ENV CC=mpicc
 ENV FC=mpifort
 ENV LDFLAGS="-L/usr/lib"
 ENV LOG_DRIVER_FLAGS="--comments"
-ENV CPPFLAGS="-I/usr/include -Duse_LARGEFILE -DMAXFIELDMETHODS_=500"
+ENV CPPFLAGS="-I/usr/include -Duse_LARGEFILE -DMAXFIELDMETHODS_=500 -DGFS_PHYS"
 ENV FCFLAGS="-fcray-pointer -Waliasing -ffree-line-length-none -fno-range-check -fdefault-real-8 -fdefault-double-8 -fopenmp"
 
 COPY FMS /FMS
-RUN cd /FMS && autoreconf --install && ./configure 
-RUN cd /FMS && make -j8
-RUN mv /FMS/*/*.mod /FMS/*/*.o /FMS/*/*.h FMS/
+RUN cd /FMS && autoreconf --install && ./configure && \
+    cd /FMS && make -j8 && \
+    mv /FMS/*/*.mod /FMS/*/*.o /FMS/*/*.h /FMS/
 
 ## Build ESMF
 ##---------------------------------------------------------------------------------
@@ -88,12 +88,18 @@ ENV ESMF_NETCDF_INCLUDE=/usr/include
 ENV ESMF_NETCDF_LIBS="-lnetcdf -lnetcdff"
 ENV ESMF_BOPT=O3
 
-RUN git clone -b ESMF_8_0_0 --depth 1 https://git.code.sf.net/p/esmf/esmf $ESMF_DIR
-RUN cd $ESMF_DIR && make lib -j8 && make install && make installcheck
+RUN git clone -b ESMF_8_0_0 --depth 1 https://git.code.sf.net/p/esmf/esmf $ESMF_DIR && \
+    cd $ESMF_DIR && \
+    make lib -j8 && \
+    make install && \
+    make installcheck
 
 ## Copy FV3GFS sources for non-serialize image
 ##---------------------------------------------------------------------------------
 FROM ubuntu:19.10 AS fv3gfs-src-serialize-false
+
+ARG compile_option
+ARG configure_file=configure.fv3.gnu_docker
 
 COPY stochastic_physics /stochastic_physics
 COPY FV3/conf /FV3/conf
@@ -107,9 +113,6 @@ COPY FV3/makefile FV3/mkDepends.pl FV3/atmos_model.F90 FV3/LICENSE.md \
     FV3/coupler_main.F90 FV3/fv3_cap.F90 FV3/module_fcst_grid_comp.F90 \
     FV3/module_fv3_config.F90 FV3/time_utils.F90 /FV3/
 
-ARG compile_option
-ARG configure_file=configure.fv3.gnu_docker
-
 # copy appropriate configuration file to configure.fv3
 RUN cp /FV3/conf/$configure_file \
         /FV3/conf/configure.fv3 && \
@@ -122,23 +125,22 @@ COPY FV3/atmos_cubed_sphere /FV3/atmos_cubed_sphere
 ##---------------------------------------------------------------------------------
 FROM $SERIALBOX_IMAGE AS fv3gfs-src-serialize-true
 
-ENV FV3_BASE=/FV3/original
-COPY --from=fv3gfs-src-serialize-false /FV3 $FV3_BASE
-COPY --from=fv3gfs-src-serialize-false /stochastic_physics $(FV3_BASE)/../stochastic_physics 
-
 ARG compile_option
 ARG configure_file=configure.fv3.gnu_docker_serialize
+
+ENV SERIALBOX_OUTDIR=/FV3
+ENV FV3_BASE=/FV3/original
+
+COPY --from=fv3gfs-src-serialize-false /FV3 $FV3_BASE
+COPY --from=fv3gfs-src-serialize-false /stochastic_physics $(FV3_BASE)/../stochastic_physics 
 
 # copy appropriate configuration file to configure.fv3
 RUN cp $FV3_BASE/conf/$configure_file \
         $FV3_BASE/conf/configure.fv3 && \
     if [ ! -z $compile_option ]; then sed -i "33i $compile_option" \
-        $FV3_BASE/conf/configure.fv3; fi
-
-ENV SERIALBOX_OUTDIR=/FV3
-
-# build model with serialization
-RUN cd $FV3_BASE && make serialize_preprocess
+        $FV3_BASE/conf/configure.fv3; fi && \
+    cd $FV3_BASE && \
+    make serialize_preprocess
 
 FROM fv3gfs-src-serialize-$serialize AS fv3gfs-sources
 
@@ -178,10 +180,8 @@ FROM fv3gfs-build AS fv3gfs-compiled
 
 RUN apt-get update && apt-get install -y \
     python3 \
-    python3-pip
-
-# enable python/pip (as opposed to python3/pip3)
-RUN ln -s /bin/python3 /bin/python && \
+    python3-pip && \
+    ln -s /bin/python3 /bin/python && \
     ln -s /bin/pip3 /bin/pip && \
     pip install --no-cache-dir pyyaml
 

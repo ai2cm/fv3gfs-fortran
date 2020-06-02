@@ -838,7 +838,7 @@ contains
      !$ser data dx=dx dy=dy
 
      !$ser savepoint Grid_Agrid-In
-     !$ser data agrid=agrid gridvar=grid cubed_sphere=cubed_sphere 
+     !$ser data agrid=agrid gridvar=grid cubed_sphere=cubed_sphere dxc=dxc dyc=dyc dxa=dxa dya=dya
        if( .not. stretched_grid )         &
            call sorted_inta(isd, ied, jsd, jed, cubed_sphere, grid, iinta, jinta)
 
