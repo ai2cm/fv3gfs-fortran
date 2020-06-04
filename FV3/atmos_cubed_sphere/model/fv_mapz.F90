@@ -1597,20 +1597,22 @@ endif        ! end last_step check
                q4(1,i,k,iq) = q1(i,j,k,iq)
             enddo
          enddo
-         !$ser verbatim if(j == jsd + 3 ) then
-         !$ser verbatim kord_iq = kord(iq)
-         !$ser verbatim iv = 0
-         !$ser savepoint Scalar_Profile_2d-In
-         !$ser data qs_column_scalar=qs q4_1s=q4(1,:,:,iq)  dp1_2d_scalar=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord_iq q_min=q_min
-         !$ser verbatim endif
+         !_$ser verbatim if(j == jsd + 3 ) then
+         !_$ser verbatim kord_iq = kord(iq)
+         !_$ser verbatim iv = 0
+         !_$ser savepoint Scalar_Profile_2d-In
+         !_$ser data qs_column_scalar=qs q4_1s=q4(1,:,:,iq)  dp1_2d_scalar=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord_iq q_min=q_min
+         !_$ser verbatim endif
       
          call scalar_profile( qs, q4(1,i1,1,iq), dp1, km, i1, i2, 0, kord(iq), q_min )
-         !$ser verbatim if(j == jsd + 3 ) then
-         !$ser savepoint Scalar_Profile_2d-Out
-         !$ser data  q4_1s=q4(1,:,:,iq) 
-         !$ser verbatim endif
+         !_$ser verbatim if(j == jsd + 3 ) then
+         !_$ser savepoint Scalar_Profile_2d-Out
+         !_$ser data  q4_1s=q4(1,:,:,iq) 
+         !_$ser verbatim endif
       enddo
-
+  !$ser verbatim if(j == jsd + 3 ) then
+  !$ser data q4_postscalar=q4
+  !$ser verbatim endif
 ! Mapping
       do 1000 i=i1,i2
          k0 = 1
@@ -1671,7 +1673,9 @@ endif        ! end last_step check
       enddo
 555   continue
 1000  continue
- !$ser verbatim if(j == jsd + 3 ) then
+ 
+      !$ser verbatim if(j == jsd + 3 ) then
+       !$ser data q2_prefillz=q2 dp2_prefillz=dp2 
        !$ser verbatim im = i2-i1+1
       !$ser savepoint Fillz-In
       !$ser data im=im km=km nq=nq dp2=dp2 q2vapor_js=q2(:,:,1) q2liquid_js=q2(:,:,2) q2ice_js=q2(:,:,3) q2rain_js=q2(:,:,4) q2snow_js=q2(:,:,5) q2graupel_js=q2(:,:,6) q2cld_js=q2(:,:,7)
