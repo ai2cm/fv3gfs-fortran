@@ -195,9 +195,11 @@ subroutine tracer_2d_1L(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, domain, npx, n
           enddo
      endif
   enddo  ! k-loop
-
+#ifdef GT4PY_DEV
+   cmax(:)=2.
+#else
   call mp_reduce_max(cmax,npz)
-
+#endif
 !$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx, &
 !$OMP                                  cy,yfx,mfx,mfy,cmax)   &
 !$OMP                          private(nsplt, frac)

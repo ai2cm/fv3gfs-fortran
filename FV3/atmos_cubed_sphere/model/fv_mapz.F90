@@ -712,7 +712,7 @@ contains
 !$ser savepoint Remapping_Part1-Out
 !$ser data pe=pe ptop=ptop pkz=pkz pk=pk akap=akap peln=peln pt=pt  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) cappa=cappa delp=delp delz=delz q_con=q_con  te=te u=u v=v ps=ps w=w wsd=ws omga=omga  ua=ua gz1d=gz cvm=cvm
 !$ser savepoint Remapping_Part2-In
-!$ser data pe=pe ptop=ptop pkz=pkz pk=pk akap=akap peln=peln pt=pt  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) cappa=cappa delp=delp delz=delz q_con=q_con r_vir=r_vir te=te te_2d=te_2d u=u v=v last_step=last_step hs=hs w=w  rrg=rrg ua=ua consv=consv te0_2d=te0_2d zsum1=zsum1 zsum0=zsum0 pdt=pdt dtmp=dtmp mdt=mdt cld_amt=cld_amt out_dt=out_dt gz1d=gz cvm=cvm
+!$ser data pe=pe ptop=ptop pkz=pkz pk=pk akap=akap peln=peln pt=pt  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) cappa=cappa delp=delp delz=delz q_con=q_con r_vir=r_vir te=te te_2d=te_2d u=u v=v last_step=last_step hs=hs w=w  rrg=rrg ua=ua consv=consv te0_2d=te0_2d zsum1=zsum1 zsum0=zsum0 pdt=pdt dtmp=dtmp mdt=mdt cld_amt=cld_amt out_dt=out_dt gz1d=gz cvm=cvm kmp=kmp do_adiabatic_init=do_adiabatic_init pfull=pfull
 #if defined(CCPP) && defined(__GFORTRAN__)
 !$OMP parallel default(none) shared(is,ie,js,je,km,ptop,u,v,pe,ua,isd,ied,jsd,jed,kord_mt,     &
 !$OMP                               te_2d,te,delp,hydrostatic,hs,rg,pt,peln, adiabatic,        &
@@ -1502,7 +1502,7 @@ endif        ! end last_step check
       !$ser savepoint CS_Profile_2d-Out
        !$ser data  q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:)
         !$ser verbatim else
-      !$ser savepoint CS_Profile_2d-2-In
+      !$ser savepoint CS_Profile_2d-2-Out
        !$ser data  q4_1_2=q4(1,:,:) q4_2_2=q4(2,:,:) q4_3_2=q4(3,:,:) q4_4_2=q4(4,:,:)
         !$ser verbatim endif
        

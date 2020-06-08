@@ -898,7 +898,7 @@ contains
                                 q(isd,jsd,1,graupel), check_negative=flagstruct%check_negative)
      endif
       !$ser savepoint Neg_Adj3-Out
-      !$ser data  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt)
+      !$ser data  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) pt=pt
      if ( flagstruct%fv_debug ) then
        call prt_mxm('T_dyn_a3',    pt, is, ie, js, je, ng, npz, 1., gridstruct%area_64, domain)
        call prt_mxm('SPHUM_dyn',   q(isd,jsd,1,sphum  ), is, ie, js, je, ng, npz, 1.,gridstruct%area_64, domain)
@@ -1032,7 +1032,7 @@ contains
             call range_check('W_dyn', w, is, ie, js, je, ng, npz, gridstruct%agrid,   &
                          -50., 100., bad_range)
   endif
- !$ser off
+ 
 #ifdef CCPP
   end associate ccpp_associate
 #endif
