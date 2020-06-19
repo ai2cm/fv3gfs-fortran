@@ -62,7 +62,6 @@
 ! </table>
 
 module fv_tracer2d_mod
-   !$ser verbatim USE m_serialize, ONLY: fs_is_serialization_on
    use tp_core_mod,       only: fv_tp_2d, copy_corners
    use fv_mp_mod,         only: mp_reduce_max
    use fv_mp_mod,         only: ng, mp_gather, is_master
@@ -134,7 +133,6 @@ subroutine tracer_2d_1L(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, domain, npx, n
 
       integer :: is,  ie,  js,  je
       integer :: isd, ied, jsd, jed
-      !$ser verbatim logical :: ser_on
       is  = bd%is
       ie  = bd%ie
       js  = bd%js
@@ -152,12 +150,6 @@ subroutine tracer_2d_1L(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, domain, npx, n
       dya    => gridstruct%dya 
       dx     => gridstruct%dx  
       dy     => gridstruct%dy  
-!$ser verbatim if (fs_is_serialization_on()) then
-!$ser verbatim ser_on = .true.
-!$ser verbatim else
-!$ser verbatim ser_on = .false.
-!$ser verbatim endif
-!$ser off
 !$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &
 !$OMP                                  sin_sg,cy,yfx,dya,dx,cmax)
   do k=1,npz
@@ -316,9 +308,6 @@ subroutine tracer_2d_1L(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, domain, npx, n
         endif
      enddo  ! time-split loop
   enddo    ! k-loop
-!$ser verbatim if (ser_on) then
-!$ser on
-!$ser verbatim endif
 end subroutine tracer_2d_1L
 
 !>@brief The subroutine 'tracer_2d' is the standard routine for sub-cycled tracer advection.
