@@ -8,22 +8,22 @@ BUILD_ARGS ?=
 BUILD_FROM_INTERMEDIATE ?= n
 ENVIRONMENT_TARGET ?= fv3gfs-environment
 COMPILED_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)
-SERIALIZE_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)-serialize
-ENVIRONMENT_IMAGE=$(GCR_URL)/$(ENVIRONMENT_TARGET):$(ENVIRONMENT_TAG_NAME)
+ENVIRONMENT_IMAGE = $(GCR_URL)/$(ENVIRONMENT_TARGET):$(ENVIRONMENT_TAG_NAME)
 IMAGE ?= $(ENVIRONMENT_IMAGE)
 
 FMS_IMAGE = $(GCR_URL)/fms-build
 ESMF_IMAGE = $(GCR_URL)/esmf-build
 SERIALBOX_IMAGE = $(GCR_URL)/serialbox-build
 
-MOUNTS?=-v $(shell pwd)/FV3:/FV3 \
-	-v $(shell pwd)/FV3/conf/configure.fv3.gnu_docker:/FV3/conf/configure.fv3
+MOUNTS ?= -v $(shell pwd)/FV3:/FV3 \
+	  -v $(shell pwd)/FV3/conf/configure.fv3.gnu_docker:/FV3/conf/configure.fv3
 
-MOUNTS_SERIALIZE?=-v $(shell pwd)/FV3:/FV3/original
+SERIALIZE_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)-serialize
+MOUNTS_SERIALIZE? = -v $(shell pwd)/FV3:/FV3/original
 
 EXPERIMENT ?= new
-RUNDIR_CONTAINER=/rundir
-RUNDIR_HOST=$(shell pwd)/rundir
+RUNDIR_CONTAINER = /rundir
+RUNDIR_HOST = $(shell pwd)/rundir
 
 
 ifeq ($(BUILD_FROM_INTERMEDIATE),y)
@@ -43,9 +43,6 @@ build_compiled:
 		-f $(DOCKERFILE) \
 		-t $(COMPILED_IMAGE) \
 		--target $(COMPILE_TARGET) .
-
-build_serialize:
-	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" COMPILED_IMAGE=$(SERIALIZE_IMAGE) $(MAKE) build_compiled
 
 build_deps:
 	docker build -f $(DOCKERFILE) -t $(FMS_IMAGE) --target fv3gfs-fms .
@@ -71,17 +68,11 @@ build_coverage: build_environment
 enter:
 	docker run --rm $(MOUNTS) -w /FV3 -it $(COMPILED_IMAGE) bash
 
-enter_serialize:
-	MOUNTS="$(MOUNTS_SERIALIZE)" COMPILED_IMAGE="$(SERIALIZE_IMAGE)" $(MAKE) enter
-
 compile_dev: build_compiled
 	docker run --rm $(MOUNTS) -w /FV3 -it $(COMPILED_IMAGE) bash -c "make libs && make fv3.exe"
 
 test:
 	pytest tests/pytest --capture=no --verbose --refdir $(shell pwd)/tests/pytest/reference/circleci --image_version $(COMPILED_TAG_NAME)
-
-update_circleci_reference: test
-	cd tests/pytest && bash set_reference.sh $(COMPILED_TAG_NAME)-serialize $(shell pwd)/reference/circleci
 
 # 32bit options don't currently build, fix these when issue #4 is fixed.
 #test_32bit:
@@ -90,18 +81,32 @@ update_circleci_reference: test
 #build_32bit: build_environment
 #	COMPILED_TAG_NAME=32bit COMPILE_OPTION=32BIT=Y $(MAKE) build
 
+build_serialize:
+	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=-serialize" COMPILED_IMAGE=$(SERIALIZE_IMAGE) $(MAKE) build_compiled
+
+enter_serialize:
+	MOUNTS="$(MOUNTS_SERIALIZE)" COMPILED_IMAGE="$(SERIALIZE_IMAGE)" $(MAKE) enter
+
+update_circleci_reference: test
+	cd tests/pytest && bash set_reference.sh $(COMPILED_TAG_NAME)-serialize $(shell pwd)/reference/circleci
+
 dev_serialize: # TODO: use run_docker -- string form of command is not translating correctly
 	docker run -w=/FV3 \
 		-v $(RUNDIR_HOST):/rundir \
 		-v $(FV3CONFIG_CACHE_DIR):$(FV3CONFIG_CACHE_DIR) \
-		-it $(GCR_URL)/$(COMPILE_TARGET):serialize /bin/bash -c 'cd /FV3;make serialize_preprocess && cd /Serialize/FV3 && make build_serializer && cd /rundir && rm -f Gen*.dat && rm -f *.json &&  /rundir/submit_job.sh /Serialize/'
+		-it $(GCR_URL)/$(COMPILE_TARGET):serialize /bin/bash -c 'cd /FV3;make serialize_preprocess && \
+		cd /Serialize/FV3 && \
+		make build_serializer && \
+		cd /rundir && \
+		rm -f Gen*.dat && \
+		rm -f *.json && \
+		/rundir/submit_job.sh /Serialize/'
 
 clean:
 	(cd FV3 && make clean)
 	$(RM) -f inputdata
 	$(RM) -rf tests/pytest/output/*
 
+.PHONY: build build_environment build_compiled enter run test test_32bit clean \
+	build_serialize dev_serialize enter_serialize
 
-.PHONY: build build_environment build_compiled enter enter_serialize run test test_32bit clean \
-	run_serialize test_serialize test_serialize_image dev_serialize build_serialize \
-	build_environment_serialize
