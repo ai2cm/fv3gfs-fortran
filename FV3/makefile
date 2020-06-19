@@ -16,10 +16,6 @@ else
 endif
 
 CWD      := $(shell pwd)
-SERIALBOX_OUTDIR?=
-SERIALBOX_APP?=/serialbox2
-PPSER_PY?=$(SERIALBOX_APP)/install/python/pp_ser/pp_ser.py
-PPSER_FLAGS = --verbose --ignore-identical -m utils_ppser_kbuff
 
 FV3_EXE  = fv3.exe
 FV3CAP_LIB  = libfv3cap.a
@@ -156,31 +152,7 @@ nemsinstall: nems
 	@echo Installation into \"$(DESTDIR)/$(INSTDIR)\" complete!
 	@echo
 
-serialize: serialize_outdir_check
-	@make serialize_preprocess
-	$(MAKE) -C $(SERIALBOX_OUTDIR) clean
-	$(MAKE) -C $(SERIALBOX_OUTDIR) build_serializer
-
-serialize_outdir_check:
-ifeq ($(strip $(SERIALBOX_OUTDIR)),)
-	$(error ERROR: SERIALBOX_OUTDIR is unset)
-endif
-
-serialize_preprocess: serialize_outdir_check
-	@echo "preprocessing for serialization"
-	@mkdir -p $(SERIALBOX_OUTDIR)/atmos_cubed_sphere/model
-	@mkdir -p $(SERIALBOX_OUTDIR)/atmos_cubed_sphere/driver/fvGFS
-	@make pp_ser_calls
-	@cp -r -u  $(CWD)/* $(SERIALBOX_OUTDIR)
-
-
-pp_ser_calls: serialize_outdir_check
-	@echo "preprocessing for serialization, just the pp_ser.py calls"
-	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/ $(CWD)/*.F90
-	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/atmos_cubed_sphere/model $(CWD)/atmos_cubed_sphere/model/*.F90
-	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/atmos_cubed_sphere/driver/fvGFS $(CWD)/atmos_cubed_sphere/driver/fvGFS/*.F90
-
-.PHONY: clean cleanall serialize serialize_preprocess fms_check serialize_outdir_check
+.PHONY: clean cleanall fms_check
 clean:
 	@echo "Cleaning ... "
 	@echo
