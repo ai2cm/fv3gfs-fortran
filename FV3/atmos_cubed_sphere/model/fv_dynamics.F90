@@ -289,8 +289,8 @@ contains
 #ifdef CCPP
       integer :: ierr
 #endif
-      !$ser verbatim integer:: id_mdt, mode, n_map_step
-      !$ser verbatim id_mdt=idiag%id_mdt
+      !$ser verbatim integer:: mode, n_map_step
+      !$ser verbatim real :: ph1v(npz), ph2v(npz)
 #ifdef CCPP
       ccpp_associate: associate( cappa     => CCPP_interstitial%cappa,     &
                                  dp1       => CCPP_interstitial%te0,       &
@@ -421,7 +421,8 @@ contains
       endif
 
       theta_d = get_tracer_index (MODEL_ATMOS, 'theta_d')
-
+      !$ser savepoint FVDynamics_Preamble-In
+      !$ser data  ak=ak bk=bk pfull=pfull ph1=ph1v ph2=ph2v bdt=bdt ptop=ptop te_2d=te_2d dp1=dp1 cvm=cvm consv_te=consv_te do_adiabatic_init=do_adiabatic_init u=u v=v w=w delz=delz pt=pt zvir=zvir delp=delp qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) pe=pe peln=peln pkz=pkz phis=phis q_con=q_con ua=ua va=va cappa=cappa
 #ifdef SW_DYNAMICS
       akap  = 1.
       pfull(1) = 0.5*flagstruct%p_ref
@@ -654,13 +655,17 @@ contains
        enddo
   endif
 #endif
-
+  !$ser savepoint FVDynamics_Preamble-Out
+  !$ser data  u=u v=v w=w delz=delz pt=pt delp=delp qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) pe=pe peln=peln pkz=pkz phis=phis q_con=q_con ua=ua va=va pfull=pfull dp1=dp1 cappa=cappa
                                                   call timing_on('FV_DYN_LOOP')
   do n_map=1, k_split   ! first level of time-split
-     k_step = n_map
      !$ser verbatim n_map_step=n_map
+     !$ser savepoint FVDynamics_KLoopDyn-In
+     !$ser data nq=nq mdt=mdt ptop=ptop n_split=n_split zvir=zvir  akap=akap cappa=cappa u=u v=v w=w delz=delz pt=pt delp=delp qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) pe=pe pk=pk peln=peln pkz=pkz phis=phis wsd=ws q_con=q_con omga=omga ua=ua va=va uc=uc vc=vc mfxd=mfx mfyd=mfy cxd=cx cyd=cy diss_estd=diss_est ak=ak bk=bk ks=ks n_map=n_map_step dp1=dp1
+     k_step = n_map
+    
       !$ser savepoint DynCore-In
-      !$ser data nq=nq mdt=mdt n_split=n_split zvir=zvir  akap=akap cappa=cappa u=u v=v w=w delz=delz pt=pt  delp=delp pe=pe pk=pk phis=phis wsd=ws omga=omga ptop=ptop pfull=pfull ua=ua va=va uc=uc vc=vc mfxd=mfx mfyd=mfy cxd=cx cyd=cy pkz=pkz peln=peln q_con=q_con ak=ak bk=bk ks=ks diss_estd=diss_est n_map_step=n_map_step 
+      !$ser data nq=nq mdt=mdt n_split=n_split zvir=zvir  akap=akap cappa=cappa u=u v=v w=w delz=delz pt=pt  delp=delp pe=pe pk=pk phis=phis wsd=ws omga=omga ptop=ptop pfull=pfull ua=ua va=va uc=uc vc=vc mfxd=mfx mfyd=mfy cxd=cx cyd=cy pkz=pkz peln=peln q_con=q_con ak=ak bk=bk ks=ks diss_estd=diss_est n_map=n_map_step
                                            call timing_on('COMM_TOTAL')
 #ifdef USE_COND
       call start_group_halo_update(i_pack(11), q_con, domain)
@@ -718,7 +723,7 @@ contains
                                          call timing_off('DYN_CORE')
       !$ser savepoint DynCore-Out
       !$ser data cappa=cappa u=u v=v w=w delz=delz pt=pt delp=delp pe=pe pk=pk phis=phis wsd=ws omga=omga ptop=ptop pfull=pfull ua=ua va=va uc=uc vc=vc mfxd=mfx mfyd=mfy cxd=cx cyd=cy pkz=pkz peln=peln q_con=q_con diss_estd=diss_est  
-    
+
 #ifdef SW_DYNAMICS
 !!$OMP parallel do default(none) shared(is,ie,js,je,ps,delp,agrav)
       do j=js,je
@@ -777,7 +782,8 @@ contains
              if(flagstruct%fv_debug) call prt_mxm('divg',  dp1, is, ie, js, je, 0, npz, 1.,gridstruct%area_64, domain)
          endif
       endif
-
+      !$ser savepoint FVDynamics_KLoopDyn-Out
+      !$ser data  u=u v=v w=w delz=delz pt=pt delp=delp qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) pe=pe pk=pk peln=peln pkz=pkz phis=phis wsd=ws q_con=q_con omga=omga ua=ua va=va uc=uc vc=vc mfxd=mfx mfyd=mfy cxd=cx cyd=cy diss_estd=diss_est dp1=dp1 cappa=cappa
       if ( npz > 4 ) then
 !------------------------------------------------------------------------
 ! Perform vertical remapping from Lagrangian control-volume to
@@ -795,9 +801,11 @@ contains
                                                   call timing_on('Remapping')
 #ifdef AVEC_TIMERS
                                                   call avec_timer_start(6)
+
 #endif
+
          !$ser savepoint Remapping-In
-         !$ser data iq=iq last_step=last_step consv_te=consv_te ps=ps pe=pe delp=delp pkz=pkz pk=pk mdt=mdt bdt=bdt sphum=sphum q_con=q_con u=u v=v w=w delz=delz pt=pt  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) phis=phis zvir=zvir akap=akap cappa=cappa kord_tracer=kord_tracer peln=peln te_2d=te_2d ua=ua va=va omga=omga dp1=dp1 wsd=ws  reproduce_sum=reproduce_sum id_mdt=id_mdt ptop=ptop ak=ak bk=bk pfull=pfull hybrid_z=hybrid_z do_adiabatic_init=do_adiabatic_init
+         !$ser data iq=iq last_step=last_step consv_te=consv_te ps=ps pe=pe delp=delp pkz=pkz pk=pk mdt=mdt bdt=bdt sphum=sphum q_con=q_con u=u v=v w=w delz=delz pt=pt  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) phis=phis zvir=zvir akap=akap cappa=cappa kord_tracer=kord_tracer peln=peln te_2d=te_2d ua=ua va=va omga=omga dp1=dp1 wsd=ws  reproduce_sum=reproduce_sum ptop=ptop ak=ak bk=bk pfull=pfull hybrid_z=hybrid_z do_adiabatic_init=do_adiabatic_init
          call Lagrangian_to_Eulerian(last_step, consv_te, ps, pe, delp,                 &
                      pkz, pk, mdt, bdt, npz, is,ie,js,je, isd,ied,jsd,jed,              &
                      nq, nwat, sphum, q_con, u,  v, w, delz, pt, q, phis,               &
@@ -809,6 +817,9 @@ contains
                      flagstruct%adiabatic, do_adiabatic_init)
          !$ser savepoint Remapping-Out
          !$ser data te_2d=te_2d pk=pk  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) delp=delp pe=pe ps=ps u=u v=v w=w pt=pt delz=delz q_con=q_con cappa=cappa ua=ua va=va omga=omga peln=peln pkz=pkz dp1=dp1
+
+       !$ser savepoint FVDynamics_KLoopPostRemap-In
+       !$ser data w=w delz=delz delp=delp omga=omga cappa=cappa n_map=n_map_step 
 #ifdef AVEC_TIMERS
                                                   call avec_timer_stop(6)
 #endif
@@ -847,10 +858,15 @@ contains
             if(flagstruct%nf_omega>0)    &
             call del2_cubed(omga, 0.18*gridstruct%da_min, gridstruct, domain, npx, npy, npz, flagstruct%nf_omega, bd)
          endif
+       !$ser savepoint FVDynamics_KLoopPostRemap-Out
+       !$ser data omga=omga cappa=cappa
       end if
+      
 #endif
   enddo    ! n_map loop
                                                   call timing_off('FV_DYN_LOOP')
+  !$ser savepoint FVDynamics_Wrapup-In
+  !$ser data  u=u v=v delz=delz pt=pt delp=delp qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) peln=peln ua=ua va=va nq=nq
   if ( idiag%id_mdt > 0 .and. (.not.do_adiabatic_init) ) then
 ! Output temperature tendency due to inline moist physics:
 #if defined(CCPP) && defined(__GFORTRAN__)
@@ -983,6 +999,7 @@ contains
             m_fac(i,j) = u0*cos(gridstruct%agrid(i,j,2))
          enddo
       enddo
+
 !$OMP parallel do default(none) shared(is,ie,js,je,npz,hydrostatic,pt,m_fac,ua,cp_air, &
 !$OMP                                  u,u0,gridstruct,v )
       do k=1,npz
@@ -999,13 +1016,15 @@ contains
       enddo
     endif   !  consv_am
   endif
+ 
 !$ser savepoint CubedToLatLon-In
 !$ser verbatim mode=1
 !$ser data u=u v=v ua=ua va=va mode=mode
 911  call cubed_to_latlon(u, v, ua, va, gridstruct, &
           npx, npy, npz, 1, gridstruct%grid_type, domain, gridstruct%nested, flagstruct%c2l_ord, bd)
 !$ser savepoint CubedToLatLon-Out
-!$ser data u=u v=v ua=ua va=va 
+!$ser data u=u v=v ua=ua va=va
+  
 #ifdef MULTI_GASES
   deallocate(kapad)
 #endif
@@ -1033,6 +1052,8 @@ contains
                          -50., 100., bad_range)
   endif
  
+    !$ser savepoint FVDynamics_Wrapup-Out
+    !$ser data  u=u v=v delz=delz pt=pt delp=delp qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) peln=peln ua=ua va=va
 #ifdef CCPP
   end associate ccpp_associate
 #endif

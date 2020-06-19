@@ -219,7 +219,7 @@
 !----------------
 ! Xdir:
       !$ser savepoint TransportDelp-In
-      !$ser data_kbuff k=k k_size=nz delp=delp pt=pt w=w utc=ut vtc=vt
+      !$ser data_kbuff k=k k_size=nz delp=delp pt=pt w=w utc=ut vtc=vt wc=wc
       !$ser verbatim dir=1
       !$ser verbatim if (flagstruct%grid_type < 3 .and. .not. (nested .or. regional)) then
       !$ser savepoint Fill2_4Corners-In
