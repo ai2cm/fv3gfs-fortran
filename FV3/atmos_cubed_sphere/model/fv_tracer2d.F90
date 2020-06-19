@@ -150,6 +150,7 @@ subroutine tracer_2d_1L(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, domain, npx, n
       dya    => gridstruct%dya 
       dx     => gridstruct%dx  
       dy     => gridstruct%dy  
+
 !$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &
 !$OMP                                  sin_sg,cy,yfx,dya,dx,cmax)
   do k=1,npz

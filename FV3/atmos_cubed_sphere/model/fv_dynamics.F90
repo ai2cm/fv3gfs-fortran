@@ -716,7 +716,6 @@ contains
                                          call timing_off('DYN_CORE')
      call mpp_clock_end(id_dyn_core)
      call mpp_clock_begin(id_tracer_adv)
-
 #ifdef SW_DYNAMICS
 !!$OMP parallel do default(none) shared(is,ie,js,je,ps,delp,agrav)
       do j=js,je
