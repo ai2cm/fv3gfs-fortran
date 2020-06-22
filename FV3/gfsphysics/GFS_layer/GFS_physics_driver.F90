@@ -670,6 +670,10 @@ module module_physics_driver
       real    :: pshltr,QCQ,rh02
       real(kind=kind_phys), allocatable, dimension(:,:) :: den
 
+!$ser verbatim integer, save :: ser_count = 0
+!$ser verbatim character(len=10) :: ser_count_str
+!$ser verbatim write(ser_count_str, '(i6.6)') ser_count
+
       !! Initialize local variables (mainly for debugging purposes, because the
       !! corresponding variables Interstitial(nt)%... are reset to zero every time);
       !! these variables are only modified over parts of the entire domain (related
@@ -1849,9 +1853,36 @@ module module_physics_driver
             stress3(:,2))
         endif
 
-!
+!$ser verbatim print *,'>> serializing sfc_sic()', ser_count, iter
+
+!$ser verbatim if (iter == 1) then
+!$ser savepoint "sfc_sice-in-iter1-"//trim(ser_count_str)
+!$ser verbatim else
+!$ser savepoint "sfc_sice-in-iter2-"//trim(ser_count_str)
+!$ser verbatim end if
+!$ser data im=im km=lsoil ps=Statein%pgr t1=Statein%tgrs(:,1) q1=Statein%qgrs(:,1,1)
+!$ser data delt=dtf sfcemis=semis3(:,2) dlwflx=gabsbdlw3(:,2) sfcnsw=adjsfcnsw
+!$ser data sfcdsw=adjsfcdsw srflag=Sfcprop%srflag cm=cd3(:,2) ch=cdq3(:,2)
+!$ser data prsl1=Statein%prsl(:,1) prslki=work3 islimsk=islmsk wind=wind flag_iter=flag_iter
+!$ser data lprnt=lprnt ipr=ipr cimin=Model%min_lakeice
+!$ser data hice=zice fice=fice tice=tice weasd=weasd3(:,2) tskin=tsfc3(:,2) tprcp=tprcp3(:,2)
+!$ser data stc=stsoil ep=ep1d3(:,2)
+!$ser data snwdph=snowd3(:,2) qsurf=qss3(:,2) snowmt=snowmt gflux=gflx3(:,2) cmm=cmm3(:,2)
+!$ser data chh=chh3(:,2) evap=evap3(:,2) hflx=hflx3(:,2)
+
+! subroutine sfc_sice
+!     !  ---  inputs:
+!             &     ( im, km, ps, t1, q1, delt,
+!             &       sfcemis, dlwflx, sfcnsw, sfcdsw, srflag,
+!             &       cm, ch, prsl1, prslki, islimsk, wind,
+!             &       flag_iter, lprnt, ipr, cimin,
+!     !  ---  input/outputs:
+!             &       hice, fice, tice, weasd, tskin, tprcp, stc, ep,
+!     !  ---  outputs:
+!             &       snwdph, qsurf, snowmt, gflux, cmm, chh, evap, hflx
+!             &     )
+
 ! call sfc_sice for lake ice and for the uncoupled case, sea ice (i.e. islmsk=2)
-!
         call sfc_sice                                                            &
 !  ---  inputs:
            (im, lsoil, Statein%pgr,                                             &
@@ -1867,6 +1898,16 @@ module module_physics_driver
 !  ---  outputs:
             snowd3(:,2), qss3(:,2), snowmt, gflx3(:,2), cmm3(:,2), chh3(:,2),    &
             evap3(:,2),  hflx3(:,2))
+            
+!$ser verbatim if (iter == 1) then
+!$ser savepoint "sfc_sice-out-iter1-"//trim(ser_count_str)
+!$ser verbatim else
+!$ser savepoint "sfc_sice-out-iter2-"//trim(ser_count_str)
+!$ser verbatim end if
+!$ser data hice=zice fice=fice tice=tice weasd=weasd3(:,2) tskin=tsfc3(:,2) tprcp=tprcp3(:,2)
+!$ser data stc=stsoil ep=ep1d3(:,2)
+!$ser data snwdph=snowd3(:,2) qsurf=qss3(:,2) snowmt=snowmt gflux=gflx3(:,2) cmm=cmm3(:,2)
+!$ser data chh=chh3(:,2) evap=evap3(:,2) hflx=hflx3(:,2)
 
         if (Model%cplflx) then
           do i = 1, im
@@ -4792,6 +4833,17 @@ module module_physics_driver
           enddo
 
           if ( Model%do_gfdl_mp_in_physics ) then
+
+!$ser verbatim print *,'>> serializing gfdl_cloud_microphys_driver()', ser_count
+
+!$ser savepoint "cloud_mp-in-"//trim(ser_count_str)
+!$ser data qv=qv1 ql=ql1 qr=qr1 qi=qi1 qs=qs1 qg=qg1 qa=qa1 qn=qn1 qv_dt=qv_dt
+!$ser data ql_dt=ql_dt qr_dt=qr_dt qi_dt=qi_dt qs_dt=qs_dt qg_dt=qg_dt qa_dt=qa_dt
+!$ser data pt_dt=pt_dt pt=pt w=w uin=uin vin=vin udt=udt vdt=vdt dz=dz delp=delp
+!$ser data area=area dt_in=dtp land=land rain=rain0 snow=snow0 ice=ice0 graupel=graupel0
+!$ser data iie=im kke=levs kbot=levs seconds=seconds p=p123 lradar=Model%lradar
+!$ser data refl_10cm=refl reset=reset
+
             call gfdl_cloud_microphys_driver(qv1, ql1, qr1, qi1, qs1, qg1, qa1, &
                                              qn1, qv_dt, ql_dt, qr_dt, qi_dt,   &
                                              qs_dt, qg_dt, qa_dt, pt_dt, pt, w, &
@@ -4801,6 +4853,14 @@ module module_physics_driver
                                              1, im, 1, 1, 1, levs, 1, levs,     &
                                              seconds,p123,Model%lradar,refl,    &
                                              reset)
+
+!$ser savepoint "cloud_mp-out-"//trim(ser_count_str)
+!$ser data qi=qi1 qs=qs1 qv_dt=qv_dt
+!$ser data ql_dt=ql_dt qr_dt=qr_dt qi_dt=qi_dt qs_dt=qs_dt qg_dt=qg_dt qa_dt=qa_dt
+!$ser data pt_dt=pt_dt w=w udt=udt vdt=vdt
+!$ser data rain=rain0 snow=snow0 ice=ice0 graupel=graupel0
+!$ser data refl_10cm=refl
+
           endif
 
           tem = dtp * con_p001 / con_day
@@ -5331,6 +5391,7 @@ module module_physics_driver
       enddo
 
 !     if (kdt > 2 ) stop
+!$ser verbatim ser_count = ser_count + 1
       return
 !...................................
       end subroutine GFS_physics_driver

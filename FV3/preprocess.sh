@@ -14,8 +14,8 @@
 # Oliver Fuhrer, 6/19/20, Vulcan In.
 
 if [ -z "$1" ] ; then
-    echo "Exiting since $0 has been called without arguments"
-    exit 0
+  echo "Exiting since $0 has been called without arguments"
+  exit 0
 fi
 
 process_dir="./"
@@ -25,12 +25,12 @@ ppser_flags="--verbose --ignore-identical -m utils_ppser_kbuff"
 
 # check for pp_ser.py
 if [ ! -d "${serialbox_dir}" ] ; then
-    echo "ERROR: serialbox2 installation not found in ${serialbox_dir}"
-    exit 1
+  echo "ERROR: serialbox2 installation not found in ${serialbox_dir}"
+  exit 1
 fi
 if [ ! -f "${ppser_exe}" ] ; then
-    echo "ERROR: pp_ser.py installation not found in ${serialbox_dir}"
-    exit 1
+  echo "ERROR: pp_ser.py installation not found in ${serialbox_dir}"
+  exit 1
 fi
 
 # we need python3
@@ -40,11 +40,11 @@ fi
 
 # do the pre-processing
 for d in `find ${process_dir} -type d`; do
-    for f in `grep -sil '^ *!$ser' ${d}/*.[fF]{,90}` ; do
-        echo "Preprocessing for serialization: ${f}"
-	/bin/mv ${f} ${f}.orig
-	python3 ${ppser_exe} ${ppser_flags} --output=${f} ${f}.orig
-    done
+  for f in `grep -sil '^ *!$ser' ${d}/*.[fF]{,90}` ; do
+    echo "Preprocessing for serialization: ${f}"
+    /bin/mv ${f} ${f}.orig
+    python3 ${ppser_exe} ${ppser_flags} --output=${f} ${f}.orig
+  done
 done
 
 exit 0

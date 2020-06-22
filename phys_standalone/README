@@ -1,0 +1,21 @@
+Steps to make this work...
+
+1) ./build.sh # to build the Docker container
+
+2) # extract original serialized data
+   git clone git@github.com:VulcanClimateModeling/fv3ser.git
+   cd fv3ser
+   make extract_test_data
+   cd -
+
+3) # copy required serialized data to work/ directory
+   cd fv3ser/test_data
+   cp *MetaData*rank0.json *rank0_i1.dat *rank0_i2.dat *rank0_km.dat *rank0_iv.dat *rank0_kord.dat *rank0_qs_column.dat *rank0_q4_[1-4].dat *rank0_dp1_2d.dat ../../work/data
+   cd -
+
+3) code work/  # to launch editor to work with code
+
+4) ./enter.sh  # to enter into container
+
+5) ./run_fortran_test.sh
+
