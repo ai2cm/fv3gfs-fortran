@@ -7,3 +7,5 @@ physics_standalone
 fv3.exe
 *.tmp.f90
 coverage_*
+rundir
+phys_standalone

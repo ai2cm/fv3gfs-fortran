@@ -1918,6 +1918,16 @@ module module_physics_driver
 !  ---  outputs:
             snowd3(:,2), qss3(:,2), snowmt, gflx3(:,2), cmm3(:,2), chh3(:,2),    &
             evap3(:,2),  hflx3(:,2))
+            
+!$ser verbatim if (iter == 1) then
+!$ser savepoint "sfc_sice-out-iter1-"//trim(ser_count_str)
+!$ser verbatim else
+!$ser savepoint "sfc_sice-out-iter2-"//trim(ser_count_str)
+!$ser verbatim end if
+!$ser data hice=zice fice=fice tice=tice weasd=weasd3(:,2) tskin=tsfc3(:,2) tprcp=tprcp3(:,2)
+!$ser data stc=stsoil ep=ep1d3(:,2)
+!$ser data snwdph=snowd3(:,2) qsurf=qss3(:,2) snowmt=snowmt gflux=gflx3(:,2) cmm=cmm3(:,2)
+!$ser data chh=chh3(:,2) evap=evap3(:,2) hflx=hflx3(:,2)
 
 !$ser verbatim if (do_ser) then
 
@@ -4946,14 +4956,12 @@ module module_physics_driver
                                              reset)
 
 !$ser verbatim if (do_ser) then
-
 !$ser savepoint "cloud_mp-out-"//trim(ser_count_str)
 !$ser data qi=qi1 qs=qs1 qv_dt=qv_dt
 !$ser data ql_dt=ql_dt qr_dt=qr_dt qi_dt=qi_dt qs_dt=qs_dt qg_dt=qg_dt qa_dt=qa_dt
 !$ser data pt_dt=pt_dt w=w udt=udt vdt=vdt
 !$ser data rain=rain0 snow=snow0 ice=ice0 graupel=graupel0
 !$ser data refl_10cm=refl
-
 !$ser verbatim end if
 
           endif
