@@ -453,13 +453,13 @@ contains
       if( nq > 5 ) then
       !$ser verbatim if(j == js2d) then 
       !$ser savepoint MapN_Tracer_2d-In
-      !$ser data j_2d=js2d nq=nq  qvapor_js=q(:,j,:,sphum) qliquid_js=q(:,j,:,liq_wat) qice_js=q(:,j,:,ice_wat) qrain_js=q(:,j,:,rainwat) qsnow_js=q(:,j,:,snowwat) qgraupel_js=q(:,j,:,graupel) qcld_js=q(:,j,:,cld_amt) pe1=pe1 pe2=pe2 dp2=dp2 q_min=qmin
+      !$ser data j_2d=js2d nq=nq  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) pe1=pe1 pe2=pe2 dp2=dp2 q_min=qmin
       !$ser verbatim endif
            call mapn_tracer(nq, km, pe1, pe2, q, dp2, kord_tr, j,     &
                             is, ie, isd, ied, jsd, jed, 0., fill)
       !$ser verbatim if(j == js2d) then 
       !$ser savepoint MapN_Tracer_2d-Out
-      !$ser data  qvapor_js=q(:,j,:,sphum) qliquid_js=q(:,j,:,liq_wat) qice_js=q(:,j,:,ice_wat) qrain_js=q(:,j,:,rainwat) qsnow_js=q(:,j,:,snowwat) qgraupel_js=q(:,j,:,graupel) qcld_js=q(:,j,:,cld_amt)
+      !$ser data  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt)
       !$ser verbatim endif
       elseif ( nq > 0 ) then
 ! Remap one tracer at a time
@@ -1387,11 +1387,10 @@ endif        ! end last_step check
 
 ! Compute vertical subgrid distribution
    if ( kord >7 ) then
-        call scalar_profile( qs, q4, dp1, km, i1, i2, iv, kord, q_min )
+        call scalar_profile( qs, q4, dp1, km, i1, i2, iv, kord, q_min)
    else
         call ppm_profile( q4, dp1, km, i1, i2, iv, kord )
    endif
-
   do i=i1,i2
      k0 = 1
      do 555 k=1,kn
@@ -1597,7 +1596,7 @@ endif        ! end last_step check
          !$ser data qs_column_scalar=qs q4_1s=q4(1,:,:,iq)  dp1_2d_scalar=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord_iq q_min=q_min
          !$ser verbatim endif
       
-         call scalar_profile( qs, q4(1,i1,1,iq), dp1, km, i1, i2, 0, kord(iq), q_min )
+         call scalar_profile( qs, q4(1,i1,1,iq), dp1, km, i1, i2, 0, kord(iq), q_min)
          !$ser verbatim if(j == js2d) then
          !$ser savepoint Scalar_Profile_2d-Out
          !$ser data  q4_1s=q4(1,:,:,iq) 
@@ -1615,24 +1614,39 @@ endif        ! end last_step check
          if(pe2(i,k+1) <= pe1(i,l+1)) then
 ! entire new grid is within the original grid
             pr = (pe2(i,k+1)-pe1(i,l)) / dp1(i,l)
+#ifndef GT4PY_DEV
             fac1 = pr + pl
             fac2 = r3*(pr*fac1 + pl*pl) 
             fac1 = 0.5*fac1
+#endif
             do iq=1,nq
-               q2(i,k,iq) = q4(2,i,l,iq) + (q4(4,i,l,iq)+q4(3,i,l,iq)-q4(2,i,l,iq))*fac1  &
+#ifdef GT4PY_DEV
+                q2(i,k,iq) = q4(2,i,l,iq) + 0.5*(q4(4,i,l,iq)+q4(3,i,l,iq)-q4(2,i,l,iq))  &
+                       *(pr+pl)-q4(4,i,l,iq)*r3*(pr*(pr+pl)+pl**2)
+#else
+                q2(i,k,iq) = q4(2,i,l,iq) + (q4(4,i,l,iq)+q4(3,i,l,iq)-q4(2,i,l,iq))*fac1  &
                                          -  q4(4,i,l,iq)*fac2
+#endif
             enddo
             k0 = l
             goto 555
           else
 ! Fractional area...
+#ifndef GT4PY_DEV
             dp = pe1(i,l+1) - pe2(i,k)
             fac1 = 1. + pl
             fac2 = r3*(1.+pl*fac1)
             fac1 = 0.5*fac1
+#endif
             do iq=1,nq
+#ifdef GT4PY_DEV
+              qsum(iq) = (pe1(i,l+1)-pe2(i,k))*(q4(2,i,l,iq)+0.5*(q4(4,i,l,iq)+   &
+                    q4(3,i,l,iq)-q4(2,i,l,iq))*(1.+pl)-q4(4,i,l,iq)*           &
+                     (r3*(1.+pl*(1.+pl))))
+#else
                qsum(iq) = dp*(q4(2,i,l,iq) + (q4(4,i,l,iq)+   &
                               q4(3,i,l,iq) - q4(2,i,l,iq))*fac1 - q4(4,i,l,iq)*fac2)
+#endif
             enddo
             do m=l+1,km
 ! locate the bottom edge: pe2(i,k+1)
@@ -1644,11 +1658,18 @@ endif        ! end last_step check
                else
                   dp = pe2(i,k+1)-pe1(i,m)
                   esl = dp / dp1(i,m)
+#ifndef GT4PY_DEV
                   fac1 = 0.5*esl
                   fac2 = 1.-r23*esl
+#endif
                   do iq=1,nq
+#ifdef GT4PY_DEV
+                     qsum(iq) = qsum(iq) + dp*(q4(2,i,m,iq)+0.5*esl*               &
+                           (q4(3,i,m,iq)-q4(2,i,m,iq)+q4(4,i,m,iq)*(1.-r23*esl)))
+#else
                      qsum(iq) = qsum(iq) + dp*( q4(2,i,m,iq) + fac1*(         &
                                 q4(3,i,m,iq)-q4(2,i,m,iq)+q4(4,i,m,iq)*fac2 ) )
+#endif
                   enddo
                   k0 = m
                   goto 123
@@ -1725,7 +1746,7 @@ endif        ! end last_step check
 
 ! Compute vertical subgrid distribution
    if ( kord >7 ) then
-        call  scalar_profile( qs, q4, dp1, km, i1, i2, iv, kord, q_min )
+        call  scalar_profile( qs, q4, dp1, km, i1, i2, iv, kord, q_min)
    else
         call ppm_profile( q4, dp1, km, i1, i2, iv, kord )
    endif
@@ -2061,7 +2082,7 @@ endif        ! end last_step check
 
 !-------------------------------------
 ! Huynh's 2nd constraint for interior:
-!-------------------------------------
+!------------------------------------- 
   do k=3,km-2
      if ( abs(kord)<9 ) then
        do i=i1,i2
@@ -2096,8 +2117,12 @@ endif        ! end last_step check
                a4(2,i,k) = a4(1,i,k)
                a4(3,i,k) = a4(1,i,k)
                a4(4,i,k) = 0.
-          else
-            a4(4,i,k) = 3.*(2.*a4(1,i,k) - (a4(2,i,k)+a4(3,i,k)))
+           else
+#ifdef GT4PY_DEV
+              a4(4,i,k) = 6.*a4(1,i,k) - 3.*(a4(2,i,k)+a4(3,i,k))
+#else
+              a4(4,i,k) = 3.*(2.*a4(1,i,k) - (a4(2,i,k)+a4(3,i,k)))
+#endif   
 ! Check within the smooth region if subgrid profile is non-monotonic
             if( abs(a4(4,i,k)) > abs(a4(2,i,k)-a4(3,i,k)) ) then
                   pmp_1 = a4(1,i,k) - 2.*gam(i,k+1)
@@ -2108,8 +2133,12 @@ endif        ! end last_step check
                   lac_2 = pmp_2 - 1.5*gam(i,k-1)
               a4(3,i,k) = min(max(a4(3,i,k), min(a4(1,i,k), pmp_2, lac_2)),  &
                                              max(a4(1,i,k), pmp_2, lac_2) )
+#ifdef GT4PY_DEV
+              a4(4,i,k) = 6.*a4(1,i,k) - 3.*(a4(2,i,k)+a4(3,i,k))
+#else
               a4(4,i,k) = 3.*(2.*a4(1,i,k) - (a4(2,i,k)+a4(3,i,k)))
-            endif
+#endif
+           endif
           endif
        enddo
      elseif ( abs(kord)==10 ) then
