@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# This script preproceses all Fortran files in the FV3 directory
+# for serialization. It looks for the !$ser directive and only
+# processes files which contain it. The original file is moved
+# to *.orig
+
+# Note: This script is setup to run inside a container with a
+# serialbox2 installation under /serialbox2/
+
+# Note 2: This script needs to be called with a non-empty string
+# as an argument to actually do something
+
+# Oliver Fuhrer, 6/19/20, Vulcan In.
+
+if [ -z "$1" ] ; then
+    echo "Exiting since $0 has been called without arguments"
+    exit 0
+fi
+
+if [ -z "$2" ] ; then
+    echo "Exiting since $0 has been called without twoarguments"
+    exit 0
+fi
+
+process_dir=$1
+output_dir=$2
+
+# check for pp_ser.py
+if [ ! -d "${SERIALBOX_DIR}" ] ; then
+    echo "ERROR: serialbox2 installation not found in ${SERIALBOX_DIR} or SERIALBOX_DIR is unset"
+    exit 1
+fi
+if [ ! -f "${PPSER_PY}" ] ; then
+    echo "ERROR: pp_ser.py installation not found at ${PPSER_PY} or PPSER_PY is unset"
+    exit 1
+fi
+
+# we need python3
+if [ -z "`which python3`" ] ; then
+    echo "ERROR: python3 not found"
+    exit 1
+fi
+
+for d in `find ${process_dir} -type d`; do
+    for f in `grep -sil '^ *!$ser' ${d}/*.[fF]{,90}` ; do
+        echo "Preprocessing for serialization: ${f}"
+        mkdir -p $(dirname ${f})
+        python3 ${PPSER_PY} ${PPSER_FLAGS} --output=${output_dir}/$(basename ${f}) ${f}
+    done
+done
+
+exit 0
