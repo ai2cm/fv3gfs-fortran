@@ -6,12 +6,12 @@
 # to *.orig
 
 # Note: This script is setup to run inside a container with a
-# serialbox2 installation under /serialbox2/
+# serialbox2 installation under /serialbox2/, as part of the Dockerfile build process.
+# Do not run this script manually unless you know what you are doing!
 
-# Note 2: This script needs to be called with a non-empty string
-# as an argument to actually do something
+# Note 2: This script needs to be called with an input and output directory
 
-# Oliver Fuhrer, 6/19/20, Vulcan In.
+# Oliver Fuhrer, 6/19/20, Vulcan Technologies LLC
 
 if [ -z "$1" ] ; then
     echo "Exiting since $0 has been called without arguments"
@@ -44,9 +44,9 @@ fi
 
 for d in `find ${process_dir} -type d`; do
     for f in `grep -sil '^ *!$ser' ${d}/*.[fF]{,90}` ; do
-        echo "Preprocessing for serialization: ${f}"
+        echo "Preprocessing for serialization: ${f} to ${output_dir}/${f#${process_dir}}"
         mkdir -p $(dirname ${f})
-        python3 ${PPSER_PY} ${PPSER_FLAGS} --output=${output_dir}/$(basename ${f}) ${f}
+        python3 ${PPSER_PY} ${PPSER_FLAGS} --output=${output_dir}/${f#${process_dir}} ${f}
     done
 done
 

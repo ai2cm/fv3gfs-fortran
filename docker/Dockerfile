@@ -122,6 +122,7 @@ RUN cp /FV3/conf/$configure_file \
 
 COPY FV3/atmos_cubed_sphere /FV3/atmos_cubed_sphere
 
+
 ## Convert FV3GFS sources for serialize image
 ##---------------------------------------------------------------------------------
 FROM $SERIALBOX_IMAGE AS fv3gfs-src-serialize-true
@@ -140,9 +141,41 @@ COPY --from=fv3gfs-src-serialize-false /stochastic_physics $(FV3_BASE)/../stocha
 RUN cp $FV3_BASE/conf/$configure_file \
         $FV3_BASE/conf/configure.fv3 && \
     if [ ! -z $compile_option ]; then sed -i "33i $compile_option" \
-        $FV3_BASE/conf/configure.fv3; fi && \
-    cd $SERIALBOX_OUTDIR && \
-    make serialize_preprocess
+        $FV3_BASE/conf/configure.fv3; fi
+
+RUN if [ "$serialize" = "true" ] ; then cd /FV3 && make serialize_preprocess ; fi
+
+## Convert FV3GFS sources for serialize image
+##---------------------------------------------------------------------------------
+FROM $SERIALBOX_IMAGE AS fv3gfs-src-serialize-new
+
+ARG compile_option
+ARG configure_file=configure.fv3.gnu_docker
+ENV SERIALBOX_OUTDIR=/FV3
+ENV FV3_BASE=/FV3_original
+
+COPY stochastic_physics /stochastic_physics
+COPY FV3/coarse_graining /FV3/coarse_graining
+COPY FV3/conf /FV3/conf
+COPY FV3/ccpp /FV3/ccpp
+COPY FV3/cpl /FV3/cpl
+COPY FV3/gfsphysics /FV3/gfsphysics
+COPY FV3/io /FV3/io
+COPY FV3/ipd /FV3/ipd
+COPY FV3/stochastic_physics /FV3/stochastic_physics
+COPY FV3/makefile FV3/mkDepends.pl FV3/atmos_model.F90 FV3/LICENSE.md \
+    FV3/coupler_main.F90 FV3/fv3_cap.F90 FV3/module_fcst_grid_comp.F90 \
+    FV3/module_fv3_config.F90 FV3/time_utils.F90 FV3/serialize_preprocess.sh /FV3/
+
+# copy appropriate configuration file to configure.fv3
+RUN cp /FV3/conf/$configure_file \
+        /FV3/conf/configure.fv3 && \
+    if [ ! -z $compile_option ]; then sed -i "33i $compile_option" \
+        /FV3/conf/configure.fv3; fi
+
+COPY FV3/atmos_cubed_sphere /FV3/atmos_cubed_sphere
+
+RUN if [ -n "$serialize"] ; then cp -r /FV3 $FV3_BASE && cd /FV3 && make serialize_preprocess ; fi
 
 FROM fv3gfs-src-serialize-$serialize AS fv3gfs-sources
 
