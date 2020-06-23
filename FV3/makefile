@@ -17,8 +17,8 @@ endif
 
 CWD      := $(shell pwd)
 SERIALBOX_OUTDIR?=
-SERIALBOX_DIR?=/serialbox2
-PPSER_PY?=$(SERIALBOX_DIR)/install/python/pp_ser/pp_ser.py
+SERIALBOX_APP?=/serialbox2
+PPSER_PY?=$(SERIALBOX_APP)/install/python/pp_ser/pp_ser.py
 PPSER_FLAGS = --verbose --ignore-identical -m utils_ppser_kbuff
 
 FV3_EXE  = fv3.exe
@@ -167,7 +167,7 @@ ifeq ($(strip $(SERIALBOX_OUTDIR)),)
 endif
 
 serialize_preprocess: serialize_outdir_check
-	SERIALBOX_DIR=$(SERIALBOX_DIR) PPSER_PY=$(PPSER_PY) bash ./serialize_preprocess.sh $(PWD) $(SERIALBOX_OUTDIR)
+	PPSER_PY=$(PPSER_PY) bash ./serialize_preprocess.sh $(PWD) $(SERIALBOX_OUTDIR)
 
 .PHONY: clean cleanall clean_no_dycore serialize serialize_preprocess fms_check serialize_outdir_check
 clean:

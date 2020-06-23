@@ -138,10 +138,10 @@ COPY --from=fv3gfs-src-serialize-false /FV3 $SERIALBOX_OUTDIR
 COPY --from=fv3gfs-src-serialize-false /stochastic_physics $(FV3_BASE)/../stochastic_physics 
 
 # copy appropriate configuration file to configure.fv3
-RUN cp $FV3_BASE/conf/$configure_file \
-        $FV3_BASE/conf/configure.fv3 && \
+RUN cp /FV3/conf/$configure_file \
+        /FV3/conf/configure.fv3 && \
     if [ ! -z $compile_option ]; then sed -i "33i $compile_option" \
-        $FV3_BASE/conf/configure.fv3; fi
+        /FV3/conf/configure.fv3; fi
 
 RUN if [ "$serialize" = "true" ] ; then cd /FV3 && make serialize_preprocess ; fi
 

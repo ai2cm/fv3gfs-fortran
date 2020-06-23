@@ -26,11 +26,6 @@ fi
 process_dir=$1
 output_dir=$2
 
-# check for pp_ser.py
-if [ ! -d "${SERIALBOX_DIR}" ] ; then
-    echo "ERROR: serialbox2 installation not found in ${SERIALBOX_DIR} or SERIALBOX_DIR is unset"
-    exit 1
-fi
 if [ ! -f "${PPSER_PY}" ] ; then
     echo "ERROR: pp_ser.py installation not found at ${PPSER_PY} or PPSER_PY is unset"
     exit 1
