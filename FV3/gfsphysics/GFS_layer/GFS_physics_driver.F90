@@ -670,7 +670,9 @@ module module_physics_driver
       real    :: pshltr,QCQ,rh02
       real(kind=kind_phys), allocatable, dimension(:,:) :: den
 
-!$ser verbatim integer, save :: ser_count = 0
+!$ser verbatim character(len=256) :: ser_env
+!$ser verbatim logical :: do_ser
+      !$ser verbatim integer, save :: ser_count = 0
 !$ser verbatim character(len=10) :: ser_count_str
 !$ser verbatim write(ser_count_str, '(i6.6)') ser_count
 
@@ -1853,6 +1855,9 @@ module module_physics_driver
             stress3(:,2))
         endif
 
+!$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+!$ser verbatim do_ser = (index(ser_env, "SEAICE") /= 0)
+!$ser verbatim if (do_ser) then
 !$ser verbatim print *,'>> serializing sfc_sic()', ser_count, iter
 
 !$ser verbatim if (iter == 1) then
@@ -1869,6 +1874,8 @@ module module_physics_driver
 !$ser data stc=stsoil ep=ep1d3(:,2)
 !$ser data snwdph=snowd3(:,2) qsurf=qss3(:,2) snowmt=snowmt gflux=gflx3(:,2) cmm=cmm3(:,2)
 !$ser data chh=chh3(:,2) evap=evap3(:,2) hflx=hflx3(:,2)
+
+!$ser verbatim end if
 
 ! subroutine sfc_sice
 !     !  ---  inputs:
@@ -1898,7 +1905,9 @@ module module_physics_driver
 !  ---  outputs:
             snowd3(:,2), qss3(:,2), snowmt, gflx3(:,2), cmm3(:,2), chh3(:,2),    &
             evap3(:,2),  hflx3(:,2))
-            
+
+!$ser verbatim if (do_ser) then
+
 !$ser verbatim if (iter == 1) then
 !$ser savepoint "sfc_sice-out-iter1-"//trim(ser_count_str)
 !$ser verbatim else
@@ -1908,6 +1917,8 @@ module module_physics_driver
 !$ser data stc=stsoil ep=ep1d3(:,2)
 !$ser data snwdph=snowd3(:,2) qsurf=qss3(:,2) snowmt=snowmt gflux=gflx3(:,2) cmm=cmm3(:,2)
 !$ser data chh=chh3(:,2) evap=evap3(:,2) hflx=hflx3(:,2)
+
+!$ser verbatim end if
 
         if (Model%cplflx) then
           do i = 1, im
@@ -2534,6 +2545,26 @@ module module_physics_driver
         else
           if (Model%satmedmf) then
              if (Model%isatmedmf == 0) then   ! initial version of satmedmfvdif (Nov 2018)
+
+!$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+!$ser verbatim do_ser = (index(ser_env, "TURB") /= 0)
+!$ser verbatim if (do_ser) then
+!$ser verbatim print *,'>> serializing satmedmfvdif()', ser_count
+
+!$ser savepoint "satmedmfvdif-in-"//trim(ser_count_str)
+!$ser data ix=ix im=im km=levs ntrac=nvdiff ntcw=ntcw ntiw=ntiw ntke=ntke
+!$ser data dv=dvdt du=dudt tdt=dtdt rtg=dqdt(:,:,1:nvdiff)
+!$ser data u1=Statein%ugrs v1=Statein%vgrs t1=Statein%tgrs q1=Statein%qgrs(:,:,1:nvdiff)
+!$ser data swh=Radtend%htrsw hlw=Radtend%htrlw xmu=xmu garea=garea
+!$ser data psk=Statein%prsik(1:ix,1) rbsoil=rb zorl=Sfcprop%zorl u10m=Diag%u10m v10m=Diag%v10m
+!$ser data fm=Sfcprop%ffmm fh=Sfcprop%ffhh tsea=Sfcprop%tsfc heat=hflx evap=evap
+!$ser data stress=stress spd1=wind kpbl=kpbl prsi=Statein%prsi del=del prsl=Statein%prsl
+!$ser data prslk=Statein%prslk phii=Statein%phii phil=Statein%phil delt=dtp
+!$ser data dspheat=Model%dspheat dusfc=dusfc1 dvsfc=dvsfc1 dtsfc=dtsfc1 dqsfc=dqsfc1 hpbl=Diag%hpbl
+!$ser data kinver=kinver xkzm_m=Model%xkzm_m xkzm_h=Model%xkzm_h xkzm_s=Model%xkzm_s
+
+!$ser verbatim end if
+
                 call satmedmfvdif(ix, im, levs, nvdiff, ntcw, ntiwx, ntkev,           &
                          dvdt, dudt, dtdt, dvdftra,                                   &
                          Statein%ugrs, Statein%vgrs, Statein%tgrs, vdftra,            &
@@ -2544,7 +2575,18 @@ module module_physics_driver
                          Statein%prslk, Statein%phii, Statein%phil, dtp,              &
                          Model%dspheat, dusfc1, dvsfc1, dtsfc1, dqsfc1, Diag%hpbl,    &
                          kinver, Model%xkzm_m, Model%xkzm_h, Model%xkzm_s)
-             elseif (Model%isatmedmf == 1) then   ! updated version of satmedmfvdif (May 2019)
+
+!$ser verbatim if (do_ser) then
+
+!$ser savepoint "satmedmfvdif-out-"//trim(ser_count_str)
+!$ser data dv=dvdt du=dudt tdt=dtdt rtg=dqdt(:,:,1:nvdiff)
+!$ser data kpbl=kpbl
+!$ser data dusfc=dusfc1 dvsfc=dvsfc1 dtsfc=dtsfc1 dqsfc=dqsfc1 hpbl=Diag%hpbl
+!$ser data xkzm_m=Model%xkzm_m xkzm_h=Model%xkzm_h
+
+!$ser verbatim end if
+
+           elseif (Model%isatmedmf == 1) then   ! updated version of satmedmfvdif (May 2019)
                 call satmedmfvdifq(ix, im, levs, nvdiff, ntcw, ntiwx, ntkev,          &
                          dvdt, dudt, dtdt, dvdftra,                                   &
                          Statein%ugrs, Statein%vgrs, Statein%tgrs, vdftra,            &
@@ -4115,6 +4157,28 @@ module module_physics_driver
             else
                nsamftrac = tottracer
             endif
+
+!$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+!$ser verbatim do_ser = (index(ser_env, "SHALCONV") /= 0)
+!$ser verbatim if (do_ser) then
+!$ser verbatim print *,'>> serializing samfshalcnv()', ser_count
+
+! NOTE: required since serializing pointers to 0-sized arrays is not really a great idea
+!$ser verbatim if ((.not. associated(Model%fscav)) .or. (Model%ntchm==0)) then
+!$ser verbatim   allocate(Model%fscav(max(Model%ntchm, 1)))
+!$ser verbatim end if
+
+!$ser savepoint "samfshalcnv-in-"//trim(ser_count_str)
+!$ser data im=im ix=ix km=levs delt=dtp itc=itc ntc=Model%ntchm ntk=ntk
+!$ser data ntr=nsamftrac delp=del prslp=Statein%prsl psp=Statein%pgr phil=Statein%phil
+!$ser data qtr=clw q1=Stateout%gq0(:,:,1) t1=Stateout%gt0 u1=Stateout%gu0
+!$ser data v1=Stateout%gv0 fscav=Model%fscav rn=rain1 kbot=kbot ktop=ktop kcnv=kcnv
+!$ser data islimsk=islmsk garea=garea dot=Statein%vvl ncloud=ncld hpbl=Diag%hpbl
+!$ser data ud_mf=ud_mf dt_mf=dt_mf cnvw=cnvw cnvc=cnvc clam=Model%clam_shal
+!$ser data c0s=Model%c0s_shal c1=Model%c1_shal pgcon=Model%pgcon_shal asolfac=Model%asolfac_shal
+
+!$ser verbatim end if
+
             call samfshalcnv (im, ix, levs, dtp, itc, Model%ntchm, ntk, nsamftrac, &
                               del, Statein%prsl, Statein%pgr, Statein%phil, clw,   &
                               Stateout%gq0(:,:,1), Stateout%gt0,                   &
@@ -4124,6 +4188,15 @@ module module_physics_driver
                               dt_mf, cnvw, cnvc,                                   &
                               Model%clam_shal,  Model%c0s_shal, Model%c1_shal,     &
                               Model%pgcon_shal, Model%asolfac_shal)
+
+!$ser verbatim if (do_ser) then
+
+!$ser savepoint "samfshalcnv-out-"//trim(ser_count_str)
+!$ser data qtr=clw q1=Stateout%gq0(:,:,1) t1=Stateout%gt0 u1=Stateout%gu0
+!$ser data v1=Stateout%gv0 rn=rain1 kbot=kbot ktop=ktop kcnv=kcnv
+!$ser data ud_mf=ud_mf dt_mf=dt_mf cnvw=cnvw cnvc=cnvc
+
+!$ser verbatim end if
 
             do i=1,im
               Diag%rainc(i) = Diag%rainc(i) + frain * rain1(i)
@@ -4834,6 +4907,9 @@ module module_physics_driver
 
           if ( Model%do_gfdl_mp_in_physics ) then
 
+!$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+!$ser verbatim do_ser = (index(ser_env, "MICROPH") /= 0)
+!$ser verbatim if (do_ser) then
 !$ser verbatim print *,'>> serializing gfdl_cloud_microphys_driver()', ser_count
 
 !$ser savepoint "cloud_mp-in-"//trim(ser_count_str)
@@ -4843,6 +4919,8 @@ module module_physics_driver
 !$ser data area=area dt_in=dtp land=land rain=rain0 snow=snow0 ice=ice0 graupel=graupel0
 !$ser data iie=im kke=levs kbot=levs seconds=seconds p=p123 lradar=Model%lradar
 !$ser data refl_10cm=refl reset=reset
+
+!$ser verbatim end if
 
             call gfdl_cloud_microphys_driver(qv1, ql1, qr1, qi1, qs1, qg1, qa1, &
                                              qn1, qv_dt, ql_dt, qr_dt, qi_dt,   &
@@ -4854,12 +4932,16 @@ module module_physics_driver
                                              seconds,p123,Model%lradar,refl,    &
                                              reset)
 
+!$ser verbatim if (do_ser) then
+
 !$ser savepoint "cloud_mp-out-"//trim(ser_count_str)
 !$ser data qi=qi1 qs=qs1 qv_dt=qv_dt
 !$ser data ql_dt=ql_dt qr_dt=qr_dt qi_dt=qi_dt qs_dt=qs_dt qg_dt=qg_dt qa_dt=qa_dt
 !$ser data pt_dt=pt_dt w=w udt=udt vdt=vdt
 !$ser data rain=rain0 snow=snow0 ice=ice0 graupel=graupel0
 !$ser data refl_10cm=refl
+
+!$ser verbatim end if
 
           endif
 
