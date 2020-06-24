@@ -1890,6 +1890,8 @@ module module_physics_driver
 !$ser data chh=chh3(:,2) evap=evap3(:,2) hflx=hflx3(:,2)
 !$ser verbatim end if
 
+!$ser verbatim end if
+
 ! subroutine sfc_sice
 !     !  ---  inputs:
 !             &     ( im, km, ps, t1, q1, delt,
@@ -1918,16 +1920,6 @@ module module_physics_driver
 !  ---  outputs:
             snowd3(:,2), qss3(:,2), snowmt, gflx3(:,2), cmm3(:,2), chh3(:,2),    &
             evap3(:,2),  hflx3(:,2))
-            
-!$ser verbatim if (iter == 1) then
-!$ser savepoint "sfc_sice-out-iter1-"//trim(ser_count_str)
-!$ser verbatim else
-!$ser savepoint "sfc_sice-out-iter2-"//trim(ser_count_str)
-!$ser verbatim end if
-!$ser data hice=zice fice=fice tice=tice weasd=weasd3(:,2) tskin=tsfc3(:,2) tprcp=tprcp3(:,2)
-!$ser data stc=stsoil ep=ep1d3(:,2)
-!$ser data snwdph=snowd3(:,2) qsurf=qss3(:,2) snowmt=snowmt gflux=gflx3(:,2) cmm=cmm3(:,2)
-!$ser data chh=chh3(:,2) evap=evap3(:,2) hflx=hflx3(:,2)
 
 !$ser verbatim if (do_ser) then
 
@@ -2575,9 +2567,9 @@ module module_physics_driver
 !$ser verbatim print *,'>> serializing satmedmfvdif()', ser_count
 
 !$ser savepoint "satmedmfvdif-in-"//trim(ser_count_str)
-!$ser data ix=ix im=im km=levs ntrac=nvdiff ntcw=ntcw ntiw=ntiwx ntke=ntkev
-!$ser data dv=dvdt du=dudt tdt=dtdt rtg=dvdftra
-!$ser data u1=Statein%ugrs v1=Statein%vgrs t1=Statein%tgrs q1=vdftra
+!$ser data ix=ix im=im km=levs ntrac=nvdiff ntcw=ntcw ntiw=ntiw ntke=ntke
+!$ser data dv=dvdt du=dudt tdt=dtdt rtg=dqdt(:,:,1:nvdiff)
+!$ser data u1=Statein%ugrs v1=Statein%vgrs t1=Statein%tgrs q1=Statein%qgrs(:,:,1:nvdiff)
 !$ser data swh=Radtend%htrsw hlw=Radtend%htrlw xmu=xmu garea=garea
 !$ser data psk=Statein%prsik(1:ix,1) rbsoil=rb zorl=Sfcprop%zorl u10m=Diag%u10m v10m=Diag%v10m
 !$ser data fm=Sfcprop%ffmm fh=Sfcprop%ffhh tsea=Sfcprop%tsfc heat=hflx evap=evap
@@ -2605,6 +2597,7 @@ module module_physics_driver
 !$ser data dv=dvdt du=dudt tdt=dtdt rtg=dvdftra
 !$ser data kpbl=kpbl
 !$ser data dusfc=dusfc1 dvsfc=dvsfc1 dtsfc=dtsfc1 dqsfc=dqsfc1 hpbl=Diag%hpbl
+!$ser data xkzm_m=Model%xkzm_m xkzm_h=Model%xkzm_h
 
 !$ser verbatim end if
 
@@ -4962,6 +4955,8 @@ module module_physics_driver
 !$ser data pt_dt=pt_dt w=w udt=udt vdt=vdt
 !$ser data rain=rain0 snow=snow0 ice=ice0 graupel=graupel0
 !$ser data refl_10cm=refl
+!$ser verbatim end if
+
 !$ser verbatim end if
 
           endif

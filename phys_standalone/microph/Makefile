@@ -3,6 +3,7 @@ SERBOX=/usr/local/serialbox
 TARGET = main.x
 
 SRC = \
+  m_countdown.F \
   machine.F \
   module_mp_radar.F \
   gfdl_cloud_microphys.F \

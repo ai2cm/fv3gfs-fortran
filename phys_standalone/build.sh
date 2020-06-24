@@ -1,7 +1,8 @@
 if [ ! -d serialbox ]; then
-  git clone -b master https://github.com/GridTools/serialbox.git serialbox
+  git clone -b master https://github.com/VulcanClimateModeling/serialbox2.git serialbox
   cd serialbox
-  git checkout f6faa58
+  git pull
+  git checkout savepoint_as_string
   cd -
 fi
 
