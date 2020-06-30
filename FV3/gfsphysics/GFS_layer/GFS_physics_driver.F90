@@ -2567,9 +2567,9 @@ module module_physics_driver
 !$ser verbatim print *,'>> serializing satmedmfvdif()', ser_count
 
 !$ser savepoint "satmedmfvdif-in-"//trim(ser_count_str)
-!$ser data ix=ix im=im km=levs ntrac=nvdiff ntcw=ntcw ntiw=ntiw ntke=ntke
-!$ser data dv=dvdt du=dudt tdt=dtdt rtg=dqdt(:,:,1:nvdiff)
-!$ser data u1=Statein%ugrs v1=Statein%vgrs t1=Statein%tgrs q1=Statein%qgrs(:,:,1:nvdiff)
+!$ser data ix=ix im=im km=levs ntrac=nvdiff ntcw=ntcw ntiw=ntiwx ntke=ntkev
+!$ser data dv=dvdt du=dudt tdt=dtdt rtg=dvdftra
+!$ser data u1=Statein%ugrs v1=Statein%vgrs t1=Statein%tgrs q1=vdftra
 !$ser data swh=Radtend%htrsw hlw=Radtend%htrlw xmu=xmu garea=garea
 !$ser data psk=Statein%prsik(1:ix,1) rbsoil=rb zorl=Sfcprop%zorl u10m=Diag%u10m v10m=Diag%v10m
 !$ser data fm=Sfcprop%ffmm fh=Sfcprop%ffhh tsea=Sfcprop%tsfc heat=hflx evap=evap
@@ -2597,7 +2597,6 @@ module module_physics_driver
 !$ser data dv=dvdt du=dudt tdt=dtdt rtg=dvdftra
 !$ser data kpbl=kpbl
 !$ser data dusfc=dusfc1 dvsfc=dvsfc1 dtsfc=dtsfc1 dqsfc=dqsfc1 hpbl=Diag%hpbl
-!$ser data xkzm_m=Model%xkzm_m xkzm_h=Model%xkzm_h
 
 !$ser verbatim end if
 
