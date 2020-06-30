@@ -2313,7 +2313,7 @@ module module_physics_driver
                        stress, wind, kpbl, Statein%prsi, del, Statein%prsl,         &
                        Statein%prslk, Statein%phii, Statein%phil, dtp,              &
                        Model%dspheat, dusfc1, dvsfc1, dtsfc1, dqsfc1, Diag%hpbl,    &
-                       kinver, Model%xkzm_m, Model%xkzm_h, Model%xkzm_s)
+                       kinver, Model%xkzm_m, Model%xkzm_h, Model%xkzm_s, ser_count_str)
              elseif (Model%isatmedmf == 1) then   ! updated version of satmedmfvdif (May 2019)
                 call satmedmfvdifq(ix, im, levs, nvdiff, ntcw, ntiw, ntke,          &
                        dvdt, dudt, dtdt, dqdt,                                      &
@@ -2552,9 +2552,9 @@ module module_physics_driver
 !$ser verbatim print *,'>> serializing satmedmfvdif()', ser_count
 
 !$ser savepoint "satmedmfvdif-in-"//trim(ser_count_str)
-!$ser data ix=ix im=im km=levs ntrac=nvdiff ntcw=ntcw ntiw=ntiw ntke=ntke
-!$ser data dv=dvdt du=dudt tdt=dtdt rtg=dqdt(:,:,1:nvdiff)
-!$ser data u1=Statein%ugrs v1=Statein%vgrs t1=Statein%tgrs q1=Statein%qgrs(:,:,1:nvdiff)
+!$ser data ix=ix im=im km=levs ntrac=nvdiff ntcw=ntcw ntiw=ntiwx ntke=ntkev
+!$ser data dv=dvdt du=dudt tdt=dtdt rtg=dvdftra
+!$ser data u1=Statein%ugrs v1=Statein%vgrs t1=Statein%tgrs q1=vdftra
 !$ser data swh=Radtend%htrsw hlw=Radtend%htrlw xmu=xmu garea=garea
 !$ser data psk=Statein%prsik(1:ix,1) rbsoil=rb zorl=Sfcprop%zorl u10m=Diag%u10m v10m=Diag%v10m
 !$ser data fm=Sfcprop%ffmm fh=Sfcprop%ffhh tsea=Sfcprop%tsfc heat=hflx evap=evap
@@ -2579,10 +2579,9 @@ module module_physics_driver
 !$ser verbatim if (do_ser) then
 
 !$ser savepoint "satmedmfvdif-out-"//trim(ser_count_str)
-!$ser data dv=dvdt du=dudt tdt=dtdt rtg=dqdt(:,:,1:nvdiff)
+!$ser data dv=dvdt du=dudt tdt=dtdt rtg=dvdftra
 !$ser data kpbl=kpbl
 !$ser data dusfc=dusfc1 dvsfc=dvsfc1 dtsfc=dtsfc1 dqsfc=dqsfc1 hpbl=Diag%hpbl
-!$ser data xkzm_m=Model%xkzm_m xkzm_h=Model%xkzm_h
 
 !$ser verbatim end if
 

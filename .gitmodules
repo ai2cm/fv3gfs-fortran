@@ -4,3 +4,6 @@
 [submodule "serialbox2"]
 	path = serialbox2
 	url = git@github.com:VulcanClimateModeling/serialbox2.git
+[submodule "physics_standalone"]
+	path = physics_standalone
+	url = https://github.com/VulcanClimateModeling/physics_standalone.git
