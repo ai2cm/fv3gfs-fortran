@@ -229,7 +229,7 @@ contains
   integer :: ierr
 #else
   integer:: nt, liq_wat, ice_wat, rainwat, snowwat, cld_amt, graupel, iq, n, kmp, kp, k_next
-  !$ser verbatim integer:: mode, abskord, iep1, iedp1, jedp1, js2d
+  !$ser verbatim integer:: mode, abskord, iep1, iedp1, jedp1, js2d, o3mr, sgs_tke
   !$ser verbatim real :: qmin
   !$ser verbatim qmin = 0.0
   !$ser verbatim iep1=ie+1
@@ -254,7 +254,8 @@ contains
        snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
        graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
        cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
-
+       !$ser verbatim o3mr = get_tracer_index (MODEL_ATMOS, 'o3mr')
+       !$ser verbatim sgs_tke = get_tracer_index (MODEL_ATMOS, 'sgs_tke')
        if ( do_sat_adj ) then
             fast_mp_consv = (.not.do_adiabatic_init) .and. consv>consv_min
 #ifndef CCPP
@@ -266,12 +267,12 @@ contains
 #endif
        endif
 !$ser savepoint Remapping_Part1-In
-       !$ser data pe=pe ptop=ptop pkz=pkz pk=pk akap=akap peln=peln pt=pt qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) cappa=cappa delp=delp delz=delz q_con=q_con r_vir=r_vir te=te u=u v=v ps=ps last_step=last_step bk=bk ak=ak hs=hs w=w wsd=ws omga=omga rrg=rrg ua=ua gz1d=gz cvm=cvm
+       !$ser data pe=pe ptop=ptop pkz=pkz pk=pk akap=akap peln=peln pt=pt qtracers=q(:,:,:,1:nq) qcld=q(:,:,:,cld_amt) cappa=cappa delp=delp delz=delz q_con=q_con r_vir=r_vir te=te u=u v=v ps=ps last_step=last_step bk=bk ak=ak hs=hs w=w wsd=ws omga=omga rrg=rrg ua=ua gz1d=gz cvm=cvm nq=nq
  
 !$OMP parallel do default(none) shared(is,ie,js,je,km,pe,ptop,kord_tm,hydrostatic, &
 !$OMP                                  pt,pk,rg,peln,q,nwat,liq_wat,rainwat,ice_wat,snowwat,    &
 #ifdef SERIALIZE
-!$OMP  ppser_savepoint, ppser_serializer, ppser_serializer_ref, ppser_zrperturb, cld_amt, mode,qmin, abskord,iep1, iedp1, jedp1, js2d, &
+!$OMP  ppser_savepoint, ppser_serializer, ppser_serializer_ref, ppser_zrperturb, cld_amt, mode,qmin, abskord,iep1, iedp1, jedp1, js2d, o3mr, sgs_tke, &
 #endif
 !$OMP                                  graupel,q_con,sphum,cappa,r_vir,rcp,k1k,delp, &
 !$OMP                                  delz,akap,pkz,te,u,v,ps, gridstruct, last_step, &
@@ -453,13 +454,13 @@ contains
       if( nq > 5 ) then
       !$ser verbatim if(j == js2d) then 
       !$ser savepoint MapN_Tracer_2d-In
-      !$ser data j_2d=js2d nq=nq  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) pe1=pe1 pe2=pe2 dp2=dp2 q_min=qmin
+      !$ser data j_2d=js2d nq=nq  qtracers=q(:,:,:,1:nq) pe1=pe1 pe2=pe2 dp2=dp2 q_min=qmin
       !$ser verbatim endif
            call mapn_tracer(nq, km, pe1, pe2, q, dp2, kord_tr, j,     &
                             is, ie, isd, ied, jsd, jed, 0., fill)
       !$ser verbatim if(j == js2d) then 
       !$ser savepoint MapN_Tracer_2d-Out
-      !$ser data  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt)
+      !$ser data qtracers=q(:,:,:,1:nq)
       !$ser verbatim endif
       elseif ( nq > 0 ) then
 ! Remap one tracer at a time
@@ -702,7 +703,7 @@ contains
 
 1000  continue
 !$ser savepoint Remapping_Part1-Out
-!$ser data pe=pe ptop=ptop pkz=pkz pk=pk akap=akap peln=peln pt=pt  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) cappa=cappa delp=delp delz=delz q_con=q_con  te=te u=u v=v ps=ps w=w wsd=ws omga=omga  ua=ua gz1d=gz cvm=cvm
+!$ser data pe=pe ptop=ptop pkz=pkz pk=pk akap=akap peln=peln pt=pt qtracers=q(:,:,:,1:nq) qcld=q(:,:,:,cld_amt)  cappa=cappa delp=delp delz=delz q_con=q_con  te=te u=u v=v ps=ps w=w wsd=ws omga=omga  ua=ua gz1d=gz cvm=cvm
 !$ser savepoint Remapping_Part2-In
 !$ser data pe=pe ptop=ptop pkz=pkz pk=pk akap=akap peln=peln pt=pt  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) cappa=cappa delp=delp delz=delz q_con=q_con r_vir=r_vir te=te te_2d=te_2d u=u v=v last_step=last_step hs=hs w=w  rrg=rrg ua=ua consv=consv te0_2d=te0_2d zsum1=zsum1 zsum0=zsum0 pdt=pdt dtmp=dtmp mdt=mdt cld_amt=cld_amt out_dt=out_dt gz1d=gz cvm=cvm kmp=kmp do_adiabatic_init=do_adiabatic_init pfull=pfull
 #if defined(CCPP) && defined(__GFORTRAN__)
@@ -1688,12 +1689,12 @@ endif        ! end last_step check
       !$ser verbatim if(j == js2d ) then
        !$ser verbatim im = i2-i1+1
        !$ser savepoint Fillz-In
-      !$ser data im=im km=km nq=nq dp2=dp2 q2vapor_js=q2(:,:,1) q2liquid_js=q2(:,:,2) q2ice_js=q2(:,:,3) q2rain_js=q2(:,:,4) q2snow_js=q2(:,:,5) q2graupel_js=q2(:,:,6) q2cld_js=q2(:,:,7)
+      !$ser data im=im km=km nq=nq dp2=dp2  q2tracers=q2(:,:,1:nq)
       !$ser verbatim endif
   if (fill) call fillz(i2-i1+1, km, nq, q2, dp2)
   !$ser verbatim if(j == js2d ) then
   !$ser savepoint Fillz-Out
-  !$ser data  q2vapor_js=q2(:,:,1) q2liquid_js=q2(:,:,2) q2ice_js=q2(:,:,3) q2rain_js=q2(:,:,4) q2snow_js=q2(:,:,5) q2graupel_js=q2(:,:,6) q2cld_js=q2(:,:,7)
+  !$ser data  q2tracers=q2(:,:,1:nq)
   !$ser verbatim endif
   do iq=1,nq
 !    if (fill) call fillz(i2-i1+1, km, 1, q2(i1,1,iq), dp2)
