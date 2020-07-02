@@ -11,6 +11,7 @@
  blocksize = 24
  chksum_debug = .false.
  dycore_only = .F.
+ disable_phys_restart_write = .F.
  fdiag = 1.
 /
 
@@ -42,6 +43,7 @@
  npz    = 63
  make_nh = .T.
  fv_debug = .F.
+ disable_fv_restart_write = .F.
  fv_testsuite_output = .T.
  perturbation_type = 0
  range_warn = .T.
