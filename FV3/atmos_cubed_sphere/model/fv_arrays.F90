@@ -835,6 +835,8 @@ module fv_arrays_mod
  
    logical :: fv_debug = .false.   !< Whether to turn on additional diagnostics in fv_dynamics. 
                                    !< The default is .false.
+   logical :: disable_fv_restart_write = .false.   !< Whether to disable saving fv_* restart files during a run.
+                                                   !< The default is .false.
    logical :: srf_init = .false.
    logical :: mountain = .true.   !< Takes topography into account when initializing the
                                   !< model. Set this to .true. to apply the terrain filter (if n_zs_filter = 2
