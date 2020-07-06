@@ -1890,8 +1890,6 @@ module module_physics_driver
 !$ser data chh=chh3(:,2) evap=evap3(:,2) hflx=hflx3(:,2)
 !$ser verbatim end if
 
-!$ser verbatim end if
-
 ! subroutine sfc_sice
 !     !  ---  inputs:
 !             &     ( im, km, ps, t1, q1, delt,
