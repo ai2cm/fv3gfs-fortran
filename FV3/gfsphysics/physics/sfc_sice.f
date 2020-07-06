@@ -19,7 +19,7 @@
 !!  @{
       module module_sfc_sice
       use machine , only : kind_phys
-      use funcphys, only : fpvs
+      use funcphys, only : fpvs => fpvsx
       use physcons, only :    sbc => con_sbc,  hvap => con_hvap,        &
      &                      tgice => con_tice,   cp => con_cp,          &
      &                        eps => con_eps, epsm1 => con_epsm1,       &

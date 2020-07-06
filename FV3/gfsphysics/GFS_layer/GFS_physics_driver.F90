@@ -672,7 +672,7 @@ module module_physics_driver
 
 !$ser verbatim character(len=256) :: ser_env
 !$ser verbatim logical :: do_ser
-      !$ser verbatim integer, save :: ser_count = 0
+!$ser verbatim integer, save :: ser_count = 0
 !$ser verbatim character(len=10) :: ser_count_str
 !$ser verbatim write(ser_count_str, '(i6.6)') ser_count
 
@@ -1874,7 +1874,6 @@ module module_physics_driver
 !$ser data stc=stsoil ep=ep1d3(:,2)
 !$ser data snwdph=snowd3(:,2) qsurf=qss3(:,2) snowmt=snowmt gflux=gflx3(:,2) cmm=cmm3(:,2)
 !$ser data chh=chh3(:,2) evap=evap3(:,2) hflx=hflx3(:,2)
-
 !$ser verbatim end if
 
 ! subroutine sfc_sice

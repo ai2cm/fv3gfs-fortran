@@ -72,7 +72,7 @@
      &     clam,c0s,c1,pgcon,asolfac)
 !
       use machine , only : kind_phys
-      use funcphys , only : fpvs
+      use funcphys , only : fpvs => fpvsx
       use physcons, grav => con_g, cp => con_cp, hvap => con_hvap
      &,             rv => con_rv, fv => con_fvirt, t0c => con_t0c
      &,             rd => con_rd, cvap => con_cvap, cliq => con_cliq
