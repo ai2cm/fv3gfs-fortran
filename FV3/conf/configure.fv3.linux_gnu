@@ -1,4 +1,3 @@
-
 ############
 # commands #
 ############
@@ -29,7 +28,7 @@ ifneq ($(need),$(ok))
 $(error Need at least make version $(need).  Load module gmake/3.81)
 endif
 
-INCLUDE = -I$(NETCDF_DIR)/include
+INCLUDE = -I$(NETCDF_DIR)/include -I${FMS_DIR}/include -I${ESMF_DIR}/include
 
 FPPFLAGS := -cpp -Wp,-w $(INCLUDE) -fPIC
 CFLAGS := $(INCLUDE) -fPIC
@@ -37,7 +36,7 @@ CFLAGS := $(INCLUDE) -fPIC
 FFLAGS := $(INCLUDE) -fcray-pointer -ffree-line-length-none -fno-range-check -fPIC 
 
 CPPDEFS += -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO -DUSE_GFSL63 -DGFS_PHYS 
-CPPDEFS += -DNEW_TAUCTMAX -DINTERNAL_FILE_NML
+CPPDEFS += -DNEW_TAUCTMAX -DINTERNAL_FILE_NML -DNO_INLINE_POST
 
 ifneq ($(HYDRO),Y)
 CPPDEFS += -DMOIST_CAPPA -DUSE_COND
@@ -66,14 +65,14 @@ CFLAGS += -D__IFC
 CFLAGS_OPT = -O2 
 CFLAGS_REPRO = -O2 
 CFLAGS_OPENMP = -fopenmp
-CFLAGS_DEBUG = -O0 -g 
+CFLAGS_DEBUG = -O0 -g
 
-LDFLAGS :=
+LDFLAGS := -L${FMS_DIR}/lib -L${ESMF_DIR}/lib
 LDFLAGS_OPENMP := -fopenmp
 LDFLAGS_VERBOSE := -Wl,-V,--verbose,-cref,-M
 
 # start with blank LIBS
-LIBS := -lgfortran
+LIBS := -lgfortran -lFMS -lesmf
 
 FAST :=
 ifneq ($(REPRO),)
@@ -108,4 +107,4 @@ else
   LIBS += -lnetcdff -lnetcdf
 endif
 
-LDFLAGS += $(LIBS) -llapack -lblas
+LDFLAGS += $(LIBS) -llapack -lblas 
