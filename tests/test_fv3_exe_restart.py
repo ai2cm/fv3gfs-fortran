@@ -100,14 +100,8 @@ def get_default_config():
 
 
 def get_restart_config():
-    config = get_default_config()
-    config['initial_conditions'] = 'restart_example'
-    config['namelist']['fv_core_nml']['external_ic'] = False
-    config['namelist']['fv_core_nml']['nggps_ic'] = False
-    config['namelist']['fv_core_nml']['make_nh'] = False
-    config['namelist']['fv_core_nml']['mountain'] = True
-    config['namelist']['fv_core_nml']['warm_start'] = True
-    config['namelist']['fv_core_nml']['na_init'] = 0
+    with open(os.path.join(TEST_DIR, 'pytest/config/restart.yml'), 'r') as f:
+        config = yaml.safe_load(f)
     return config
 
 
