@@ -424,7 +424,7 @@ contains
 
       theta_d = get_tracer_index (MODEL_ATMOS, 'theta_d')
       !$ser savepoint FVDynamics_Preamble-In
-      !$ser data  ak=ak bk=bk pfull=pfull ph1=ph1v ph2=ph2v bdt=bdt ptop=ptop te_2d=te_2d dp1=dp1 cvm=cvm consv_te=consv_te do_adiabatic_init=do_adiabatic_init u=u v=v w=w delz=delz pt=pt zvir=zvir delp=delp qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) qo3mr=q(:,:,:,o3mr) qsgs_tke=q(:,:,:,sgs_tke) pe=pe peln=peln pkz=pkz phis=phis q_con=q_con ua=ua va=va cappa=cappa
+      !$ser data  ak=ak bk=bk pfull=pfull ph1=ph1v ph2=ph2v bdt=bdt ptop=ptop te_2d=te_2d dp1=dp1 cvm=cvm consv_te=consv_te do_adiabatic_init=do_adiabatic_init u=u v=v w=w delz=delz pt=pt zvir=zvir delp=delp qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) pe=pe peln=peln pkz=pkz phis=phis q_con=q_con ua=ua va=va cappa=cappa
 #ifdef SW_DYNAMICS
       akap  = 1.
       pfull(1) = 0.5*flagstruct%p_ref
@@ -658,7 +658,7 @@ contains
   endif
 #endif
   !$ser savepoint FVDynamics_Preamble-Out
-  !$ser data  u=u v=v w=w delz=delz pt=pt delp=delp qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) qo3mr=q(:,:,:,o3mr) qsgs_tke=q(:,:,:,sgs_tke) pe=pe peln=peln pkz=pkz phis=phis q_con=q_con ua=ua va=va pfull=pfull dp1=dp1 cappa=cappa
+  !$ser data  u=u v=v w=w delz=delz pt=pt delp=delp qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) pe=pe peln=peln pkz=pkz phis=phis q_con=q_con ua=ua va=va pfull=pfull dp1=dp1 cappa=cappa
                                                   call timing_on('FV_DYN_LOOP')
   do n_map=1, k_split   ! first level of time-split
      !$ser verbatim n_map_step=n_map

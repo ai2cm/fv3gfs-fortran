@@ -869,10 +869,6 @@ if( last_step .and. (.not.do_adiabatic_init)  ) then
 !$OMP end single
 
   elseif ( consv < -consv_min ) then
- 
-!$ser savepoint ZsumGsum-In
-!$ser verbatim mode=0
-!$ser data pkz=pkz delp=delp zsum1=zsum1 pdt=pdt ptop=ptop mode=mode 
               
 !$OMP do
       do j=js,je
@@ -902,8 +898,6 @@ if( last_step .and. (.not.do_adiabatic_init)  ) then
       endif
 
 !$OMP end single
-      !$ser savepoint ZsumGsum-Out
-      !$ser data zsum1=zsum1 dtmp=dtmp
   endif        ! end consv check
 endif        ! end last_step check
 
@@ -1590,18 +1584,7 @@ endif        ! end last_step check
                q4(1,i,k,iq) = q1(i,j,k,iq)
             enddo
          enddo
-         !$ser verbatim if(j == js2d ) then
-         !$ser verbatim kord_iq = kord(iq)
-         !$ser verbatim iv = 0
-         !$ser savepoint Scalar_Profile_2d-In
-         !$ser data qs_column_scalar=qs q4_1s=q4(1,:,:,iq)  dp1_2d_scalar=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord_iq q_min=q_min
-         !$ser verbatim endif
-      
          call scalar_profile( qs, q4(1,i1,1,iq), dp1, km, i1, i2, 0, kord(iq), q_min)
-         !$ser verbatim if(j == js2d) then
-         !$ser savepoint Scalar_Profile_2d-Out
-         !$ser data  q4_1s=q4(1,:,:,iq) 
-         !$ser verbatim endif
       enddo
 
 ! Mapping
