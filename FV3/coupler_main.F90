@@ -135,7 +135,7 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
  call constants_init
  call sat_vapor_pres_init
  !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, mpi_rank,ier)
- !$ser init directory='.' prefix='Generator' mpi_rank=mpi_rank unique_id=.true.
+ !$ser init directory='../test_data/' prefix='Generator' mpi_rank=mpi_rank unique_id=.true.
  !$ser mode write
  !$ser off
  call coupler_init
