@@ -3131,7 +3131,7 @@ end subroutine ytp_v
      ! edges:
      !----------
      if (grid_type < 3) then
-#ifndef GT4PY_DEV
+#ifdef GT4PY_DEV
         if ( js==1 ) then
 #else
         if ( js==1 .or. jsd<npt) then
@@ -3143,7 +3143,7 @@ end subroutine ytp_v
               enddo
            enddo
         endif
-#ifndef GT4PY_DEV
+#ifdef GT4PY_DEV
         if ( (je+1)==npy ) then
 #else
         if ( (je+1)==npy .or. jed>=(npy-npt)) then
@@ -3155,7 +3155,7 @@ end subroutine ytp_v
               enddo
            enddo
         endif
-#ifndef GT4PY_DEV
+#ifdef GT4PY_DEV
         if ( is==1 ) then
 #else
         if ( is==1 .or. isd<npt ) then
@@ -3167,7 +3167,7 @@ end subroutine ytp_v
               enddo
            enddo
         endif
-#ifndef GT4PY_DEV
+#ifdef GT4PY_DEV
         if ( (ie+1)==npx ) then
 #else
         if ( (ie+1)==npx .or. ied>=(npx-npt)) then
