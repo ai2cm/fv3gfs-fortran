@@ -635,7 +635,7 @@ module FV3GFS_io_mod
             i = Atm_block%index(nb)%ii(ix) - isc + 1
             j = Atm_block%index(nb)%jj(ix) - jsc + 1
             !--- stddev
-            Sfcprop(nb)%hprim(ix)      = 0.0
+            !Sfcprop(nb)%hprim(ix)      = 0.0
             !--- hprime(1:14)
             Sfcprop(nb)%hprime(ix,1:14)  = 0.0
             !--- oro
