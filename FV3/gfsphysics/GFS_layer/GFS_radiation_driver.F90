@@ -1845,6 +1845,15 @@
 ! mg, sfc-perts
 
 
+      if (Model%do_only_clearsky_rad) then
+        clouds(:,:,1) = 0.0  ! layer total cloud fraction
+        clouds(:,:,2) = 0.0  ! layer cloud liq water path
+        clouds(:,:,4) = 0.0  ! layer cloud ice water path
+        clouds(:,:,6) = 0.0  ! layer rain water path
+        clouds(:,:,8) = 0.0  ! layer snow water path
+        cldsa(:,:) = 0.0  ! fraction of clouds for low, mid, hi, tot, bl
+      endif
+
 
 !> -# Start SW radiation calculations
       if (Model%lsswr) then

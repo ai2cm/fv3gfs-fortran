@@ -1060,7 +1060,7 @@ contains
        else
 #ifndef SW_DYNAMICS
     !$ser savepoint UpdateDzD-In
-    !$ser data ndif=nord_v damp_vtd=damp_vt dp0=dp_ref zs=zs zh=zh crx=crx cry=cry xfx=xfx yfx=yfx delz=delz wsd=ws
+    !$ser data ndif=nord_v damp_vtd=damp_vt dp0=dp_ref zs=zs zh=zh crx=crx cry=cry xfx=xfx yfx=yfx delz=delz wsd=ws dt=dt
    
                                             call timing_on('UPDATE_DZ')
         call update_dz_d(nord_v, damp_vt, flagstruct%hord_tm, is, ie, js, je, npz, ng, npx, npy, gridstruct%area,  &
@@ -1108,7 +1108,7 @@ contains
                                        call timing_off('COMM_TOTAL')
         !$ser verbatim if ( remap_step ) then
         !$ser savepoint PE_Halo-In
-        !$ser data ptop=ptop pe=pe delp=delp
+        !$ser data ptop=ptop pe=pe delp=delp remap_step=remap_step
         if ( remap_step )  &
         call pe_halo(is, ie, js, je, isd, ied, jsd, jed, npz, ptop, pe, delp)
         !$ser savepoint PE_Halo-Out
@@ -1212,7 +1212,7 @@ contains
          call one_grad_p(u, v, pkc, gz, divg2, delp, dt, ng, gridstruct, bd, npx, npy, npz, ptop, hydrostatic, flagstruct%a2b_ord, flagstruct%d_ext)
        else
          !$ser savepoint NH_P_Grad-In
-         !$ser data u=u v=v pp=pkc gz=gz pk3=pk3 delp=delp dt=dt
+         !$ser data u=u v=v pp=pkc gz=gz pk3=pk3 delp=delp dt=dt ptop=ptop akap=akap
          call nh_p_grad(u, v, pkc, gz, delp, pk3, dt, ng, gridstruct, bd, npx, npy, npz, flagstruct%use_logp)
          !$ser savepoint NH_P_Grad-Out
          !$ser data  u=u v=v pp=pkc gz=gz pk3=pk3 delp=delp
@@ -1284,8 +1284,14 @@ contains
                                                      call timing_on('COMM_TOTAL')
     if( it==n_split .and. gridstruct%grid_type<4 .and. .not. (gridstruct%nested .or. gridstruct%regional)) then
 ! Prevent accumulation of rounding errors at overlapped domain edges:
+       !$ser savepoint MPPBoundaryAdjust-In
+       !$ser data u=u v=v ebuffer=ebuffer nbuffer=nbuffer
+       !$ser savepoint MPPGetBoundary-In
+       !$ser data u=u v=v ebuffer=ebuffer nbuffer=nbuffer
        call mpp_get_boundary(u, v, domain, ebuffery=ebuffer,  &
                              nbufferx=nbuffer, gridtype=DGRID_NE )
+       !$ser savepoint MPPGetBoundary-Out
+       !$ser data ebuffer=ebuffer nbuffer=nbuffer
 !$OMP parallel do default(none) shared(is,ie,js,je,npz,u,nbuffer,v,ebuffer)
           do k=1,npz
              do i=is,ie
@@ -1295,7 +1301,8 @@ contains
                 v(ie+1,j,k) = ebuffer(j-js+1,k)
              enddo
           enddo
-
+       !$ser savepoint MPPBoundaryAdjust-Out
+       !$ser data u=u v=v ebuffer=ebuffer nbuffer=nbuffer
     endif
 
 #ifndef ROT3
@@ -1328,8 +1335,6 @@ contains
 !------------------------------
          call adv_pe(ua, va, pem, omga, gridstruct, bd, npx, npy,  npz, ng)
       else
-         !$ser savepoint OmegaLayer-In
-         !$ser data omga=omga
 !$OMP parallel do default(none) shared(is,ie,js,je,npz,omga) private(om2d)
          do j=js,je
             do k=1,npz
@@ -1348,8 +1353,7 @@ contains
                enddo
             enddo
          enddo
-         !$ser savepoint OmegaLayer-Out
-         !$ser data omga=omga
+        
       endif
       if (idiag%id_ws>0 .and. hydrostatic) then
 !$OMP parallel do default(none) shared(is,ie,js,je,npz,ws,delz,delp,omga)
@@ -1453,7 +1457,7 @@ contains
        enddo
     else
        !$ser savepoint PressureAdjustedTemperature_NonHydrostatic-In
-       !$ser data cappa=cappa bdt=bdt n_con=n_con delp=delp delz=delz pt=pt cv_air=cv_air heat_source_dyn=heat_source rdg=rdg k1k=k1k pkz
+       !$ser data cappa=cappa bdt=bdt n_con=n_con delp=delp delz=delz pt=pt cv_air=cv_air heat_source_dyn=heat_source rdg=rdg k1k=k1k pkz=pkz
 !$OMP parallel do default(none) shared(flagstruct,is,ie,js,je,n_con,pkz,cappa,rdg,delp,delz,pt, &
 !$OMP                                  heat_source,k1k,cv_air,bdt) &
 !$OMP                          private(dtmp, delt)
@@ -1478,7 +1482,8 @@ contains
              enddo
           enddo
        enddo
-        !$ser savepoint PressureAdjustedTemperature_NonHydrostatic-Out
+       !$ser savepoint PressureAdjustedTemperature_NonHydrostatic-Out
+       !$ser data pkz=pkz pt=pt
     endif
 
   endif

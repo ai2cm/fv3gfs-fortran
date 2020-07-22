@@ -71,6 +71,7 @@ endif
 FFLAGS_OPT = -O2 
 FFLAGS_REPRO = -O2 -g -fbacktrace
 FFLAGS_DEBUG = -O0 -g -fbacktrace -fno-fast-math -ffree-line-length-none -fno-backslash -pedantic -Waliasing -Wampersand -Wline-truncation -Wsurprising -Wtabs -Wunderflow -fdump-core -ffpe-trap=invalid,zero,overflow -fbounds-check -finit-real=nan -finit-integer=9999999 -finit-logical=true -finit-character=35
+FFLAGS_GCOV = --coverage
 
 TRANSCENDENTALS := -fast-transcendentals
 FFLAGS_OPENMP = -fopenmp
@@ -82,6 +83,7 @@ CFLAGS_OPT = -O2
 CFLAGS_REPRO = -O2 
 CFLAGS_OPENMP = -fopenmp
 CFLAGS_DEBUG = -O0 -g 
+CFLAGS_GCOV = --coverage
 
 # Optional Testing compile flags.  Mutually exclusive from DEBUG, REPRO, and OPT
 # *_TEST will match the production if no new option(s) is(are) to be tested.
@@ -91,6 +93,7 @@ CFLAGS_TEST = -O2
 LDFLAGS := -L${ESMF_DIR}/lib/libO3/Linux.gfortran.64.mpiuni.default/ -L${FMS_DIR}/libFMS/.libs/
 LDFLAGS_OPENMP := -fopenmp
 LDFLAGS_VERBOSE := -Wl,-V,--verbose,-cref,-M
+LDFLAGS_GCOV = --coverage
 
 # start with blank LIBS
 LIBS :=
@@ -113,6 +116,12 @@ else
 CFLAGS += $(CFLAGS_OPT)
 FFLAGS += $(FFLAGS_OPT)
 FAST := $(TRANSCENDENTALS)
+endif
+
+ifneq ($(GCOV),)
+CFLAGS += $(CFLAGS_GCOV)
+FFLAGS += $(FFLAGS_GCOV)
+LDFLAGS += $(LDFLAGS_GCOV)
 endif
 
 ifneq ($(OPENMP),)

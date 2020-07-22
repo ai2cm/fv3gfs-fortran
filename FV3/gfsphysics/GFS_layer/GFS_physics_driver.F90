@@ -2046,6 +2046,18 @@ module module_physics_driver
 
 !     if (lprnt) write(0,*) 'tisfc=',Sfcprop%tisfc(ipr),'tice=',tice(ipr),' kdt=',kdt
 
+! force SST to be equal to dynamical core surface temperature, which will be the same as
+! analysis SST when nudging is active
+      if (Model%use_analysis_sst) then
+        do i = 1, im
+          if (islmsk(i) == 0 ) then
+            Sfcprop%tsfc(i) = Statein%atm_ts(i)
+            Sfcprop%tsfco(i) = Statein%atm_ts(i)
+            tsfc3(i,3) = Statein%atm_ts(i)
+          endif
+        enddo
+      endif
+
       do i=1,im
         Diag%epi(i)     = ep1d(i)
         Diag%dlwsfci(i) = adjsfcdlw(i)
@@ -4779,16 +4791,18 @@ module module_physics_driver
             enddo
           enddo
 
+          if ( Model%do_gfdl_mp_in_physics ) then
+            call gfdl_cloud_microphys_driver(qv1, ql1, qr1, qi1, qs1, qg1, qa1, &
+                                             qn1, qv_dt, ql_dt, qr_dt, qi_dt,   &
+                                             qs_dt, qg_dt, qa_dt, pt_dt, pt, w, &
+                                             uin, vin, udt, vdt, dz, delp,      &
+                                             area, dtp, land, rain0, snow0,     &
+                                             ice0, graupel0, .false., .true.,   &
+                                             1, im, 1, 1, 1, levs, 1, levs,     &
+                                             seconds,p123,Model%lradar,refl,    &
+                                             reset)
+          endif
 
-          call gfdl_cloud_microphys_driver(qv1, ql1, qr1, qi1, qs1, qg1, qa1, &
-                                           qn1, qv_dt, ql_dt, qr_dt, qi_dt,   &
-                                           qs_dt, qg_dt, qa_dt, pt_dt, pt, w, &
-                                           uin, vin, udt, vdt, dz, delp,      &
-                                           area, dtp, land, rain0, snow0,     &
-                                           ice0, graupel0, .false., .true.,   &
-                                           1, im, 1, 1, 1, levs, 1, levs,     &
-                                           seconds,p123,Model%lradar,refl,    &
-                                           reset)
           tem = dtp * con_p001 / con_day
           do i = 1, im
 !            rain0(i,1) = max(con_d00, rain0(i,1))

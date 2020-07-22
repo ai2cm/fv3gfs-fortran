@@ -571,7 +571,7 @@ module GFS_driver
     !--- determine if diagnostics buckets need to be cleared
     sec_zero = nint(Model%fhzero*con_hr)
     if (sec_zero >= nint(max(Model%fhswr,Model%fhlwr))) then
-      if (mod(Model%kdt,Model%nszero) == 1) then
+      if (mod(Model%kdt,Model%nszero) == 1 .or. Model%nszero == 1) then
         do nb = 1,nblks
           call Diag(nb)%rad_zero  (Model)
           call Diag(nb)%phys_zero (Model)
@@ -579,14 +579,14 @@ module GFS_driver
         enddo
       endif
     else
-      if (mod(Model%kdt,Model%nszero) == 1) then
+      if (mod(Model%kdt,Model%nszero) == 1 .or. Model%nszero == 1) then
         do nb = 1,nblks
           call Diag(nb)%phys_zero (Model)
     !!!!  THIS IS THE POINT AT WHICH DIAG%ZHOUR NEEDS TO BE UPDATED
         enddo
       endif
       kdt_rad = nint(min(Model%fhswr,Model%fhlwr)/Model%dtp)
-      if (mod(Model%kdt, kdt_rad) == 1) then
+      if (mod(Model%kdt, kdt_rad) == 1 .or. kdt_rad == 1) then
         do nb = 1,nblks
           call Diag(nb)%rad_zero  (Model)
     !!!!  THIS IS THE POINT AT WHICH DIAG%ZHOUR NEEDS TO BE UPDATED

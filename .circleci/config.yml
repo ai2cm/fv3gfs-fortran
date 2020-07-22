@@ -56,8 +56,8 @@ jobs:
       - run:
           name: "Delete data files"
           command: |
-            rm ./tests/pytest/output/*/INPUT/*.nc
-            rm ./tests/pytest/output/*/*/*.grb
+            rm ./tests/pytest/output/*/*/INPUT/*.nc
+            rm ./tests/pytest/output/*/*/*/*.grb
           when: on_fail
       - store_artifacts:
           path: ./tests/pytest/output

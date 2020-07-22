@@ -5,7 +5,7 @@ include conf/configure.fv3
 FMS_DIR?=
 fms_exist=$(wildcard $(FMS_DIR))
 
-FFLAGS   += -I$(FMS_DIR) -Igfsphysics -Iipd -Icpl -Iio -Iatmos_cubed_sphere -Iccpp/driver -I../stochastic_physics
+FFLAGS   += -I$(FMS_DIR) -Icoarse_graining -Igfsphysics -Iipd -Icpl -Iio -Iatmos_cubed_sphere -Iccpp/driver -I../stochastic_physics
 CPPDEFS  += -DESMF_VERSION_MAJOR=$(ESMF_VERSION_MAJOR)
 
 # Flag to CCPP build for 32bit dynamics
@@ -38,6 +38,7 @@ endif
 
 ifneq (,$(findstring CCPP,$(CPPDEFS)))
 libs: fms_check
+	$(MAKE) -C coarse_graining       $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C cpl                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C gfsphysics            $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  DYN32=$(DYN32) # force gfs physics to 64bit, flag to CCPP build for 32bit dynamics
 	$(MAKE) -C ccpp/driver           $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  DYN32=$(DYN32) # force gfs physics to 64bit, flag to CCPP build for 32bit dynamics
@@ -47,6 +48,7 @@ libs: fms_check
 	$(MAKE) -C ../stochastic_physics $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 
 libs_no_dycore: fms_check
+	$(MAKE) -C coarse_graining       $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C cpl                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C gfsphysics            $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  DYN32=$(DYN32) # force gfs physics to 64bit, flag to CCPP build for 32bit dynamics
 	$(MAKE) -C ccpp/driver           $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  DYN32=$(DYN32) # force gfs physics to 64bit, flag to CCPP build for 32bit dynamics
@@ -58,6 +60,7 @@ $(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o ccpp/driver/libccpp
 
 else
 libs: fms_check
+	$(MAKE) -C coarse_graining       $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C cpl                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C gfsphysics            $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 	$(MAKE) -C ipd                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
@@ -66,12 +69,13 @@ libs: fms_check
 	$(MAKE) -C ../stochastic_physics $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 
 libs_no_dycore: fms_check
+	$(MAKE) -C coarse_graining       $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C cpl                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C gfsphysics            $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  DYN32=$(DYN32) # force gfs physics to 64bit, flag to CCPP build for 32bit dynamics
 	$(MAKE) -C ipd                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 	$(MAKE) -C io                    $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 
-$(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a
+$(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a coarse_graining/libfv3coarse_graining.a
 	$(LD) -o $@ $^ $(NCEPLIBS) $(LDFLAGS)
 endif
 
@@ -187,6 +191,7 @@ clean:
 	(cd io                    && make clean)
 	(cd atmos_cubed_sphere    && make clean)
 	(cd cpl                   && make clean)
+	(cd coarse_graining       && make clean)
 	$(RM) -f $(FV3_EXE) $(FV3CAP_LIB) *.o *.mod *.i90 *.lst depend
 
 clean_no_dycore:
@@ -198,6 +203,7 @@ clean_no_dycore:
 	(cd ../stochastic_physics && make clean)
 	(cd io                    && make clean)
 	(cd cpl                   && make clean)
+	(cd coarse_graining       && make clean)
 	$(RM) -f $(FV3_EXE) $(FV3CAP_LIB) *.o *.mod *.i90 *.lst depend
 
 cleanall: clean

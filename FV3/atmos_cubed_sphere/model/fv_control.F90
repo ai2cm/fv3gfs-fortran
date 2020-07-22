@@ -151,6 +151,7 @@ module fv_control_mod
    use mpp_domains_mod,     only: CENTER, CORNER, NORTH, EAST, WEST, SOUTH
    use mpp_mod,             only: mpp_send, mpp_sync, mpp_transmit, mpp_set_current_pelist, mpp_declare_pelist, mpp_root_pe, mpp_recv, mpp_sync_self, mpp_broadcast, read_input_nml
    use fv_diagnostics_mod,  only: fv_diag_init_gn
+   use coarse_grained_restart_files_mod, only: deallocate_coarse_restart_type
 
 #ifdef MULTI_GASES
    use constants_mod,       only: rvgas, cp_air
@@ -283,7 +284,8 @@ module fv_control_mod
    logical , pointer :: reed_cond_only
    logical , pointer :: reproduce_sum 
    logical , pointer :: adjust_dry_mass 
-   logical , pointer :: fv_debug  
+   logical , pointer :: fv_debug 
+   logical , pointer :: disable_fv_restart_write 
    logical , pointer :: srf_init  
    logical , pointer :: mountain  
    logical , pointer :: remap_t  
@@ -335,7 +337,14 @@ module fv_control_mod
   real, pointer :: s_weight, update_blend
 
   integer, pointer :: layout(:), io_layout(:)
-
+  logical, pointer :: write_coarse_restart_files
+  logical, pointer :: write_coarse_diagnostics
+  logical, pointer :: write_only_coarse_intermediate_restarts
+  logical, pointer :: restart_from_agrid_winds
+  logical, pointer :: write_optional_dgrid_vel_rst
+  logical, pointer :: write_coarse_dgrid_vel_rst
+  logical, pointer :: write_coarse_agrid_vel_rst
+  
    integer :: ntilesMe                ! Number of tiles on this process =1 for now
 
 #ifdef OVERLOAD_R4
@@ -601,8 +610,7 @@ module fv_control_mod
 
     call timing_off('TOTAL')
     call timing_prt( gid )
-
-    call fv_restart_end(Atm, grids_on_this_pe)
+    if (.NOT. disable_fv_restart_write) call fv_restart_end(Atm, grids_on_this_pe)
     call fv_io_exit()
 
   ! Free temporary memory from sw_core routines
@@ -612,6 +620,7 @@ module fv_control_mod
 
     do n = 1, ntilesMe
        call deallocate_fv_atmos_type(Atm(n))
+       call deallocate_coarse_restart_type(Atm(n)%coarse_graining%restart)
     end do
 
 
@@ -652,7 +661,7 @@ module fv_control_mod
    namelist /fv_core_nml/npx, npy, ntiles, npz, npz_rst, layout, io_layout, ncnst, nwat,  &
                          use_logp, p_fac, a_imp, k_split, n_split, m_split, q_split, print_freq, write_3d_diags, do_schmidt,  &
                          hord_mt, hord_vt, hord_tm, hord_dp, hord_tr, shift_fac, stretch_fac, target_lat, target_lon, &
-                         kord_mt, kord_wz, kord_tm, kord_tr, fv_debug, fv_land, nudge, do_sat_adj, do_f3d, &
+                         kord_mt, kord_wz, kord_tm, kord_tr, fv_debug, disable_fv_restart_write, fv_land, nudge, do_sat_adj, do_f3d, &
                          external_ic, read_increment, ncep_ic, nggps_ic, ecmwf_ic, use_new_ncep, use_ncep_phy, fv_diag_ic, &
                          external_eta, res_latlon_dynamics, res_latlon_tracers, scale_z, w_max, z_min, lim_fac, &
                          dddmp, d2_bg, d4_bg, vtdm4, trdm2, d_ext, delt_max, beta, non_ortho, n_sponge, &
@@ -669,7 +678,12 @@ module fv_control_mod
                          nested, twowaynest, parent_grid_num, parent_tile, nudge_qv, &
                          refinement, nestbctype, nestupdate, nsponge, s_weight, &
                          ioffset, joffset, check_negative, nudge_ic, halo_update_type, gfs_phil, agrid_vel_rst,     &
-                         do_uni_zfull, adj_mass_vmr, fac_n_spl, fhouri, regional, bc_update_interval
+                         do_uni_zfull, adj_mass_vmr, fac_n_spl, fhouri, &
+                         regional, bc_update_interval,&
+                         write_coarse_restart_files, write_coarse_diagnostics,&
+                         write_only_coarse_intermediate_restarts,&
+                         restart_from_agrid_winds, write_optional_dgrid_vel_rst,&
+                         write_coarse_dgrid_vel_rst, write_coarse_agrid_vel_rst
 
    namelist /test_case_nml/test_case, bubble_do, alpha, nsolitons, soliton_Umax, soliton_size
 #ifdef MULTI_GASES
@@ -1284,6 +1298,7 @@ module fv_control_mod
      reproduce_sum                 => Atm%flagstruct%reproduce_sum
      adjust_dry_mass               => Atm%flagstruct%adjust_dry_mass
      fv_debug                      => Atm%flagstruct%fv_debug
+     disable_fv_restart_write      => Atm%flagstruct%disable_fv_restart_write
      srf_init                      => Atm%flagstruct%srf_init
      mountain                      => Atm%flagstruct%mountain
      remap_t                       => Atm%flagstruct%remap_t
@@ -1340,7 +1355,14 @@ module fv_control_mod
 
      layout                        => Atm%layout
      io_layout                     => Atm%io_layout
-  end subroutine setup_pointers
 
+     write_coarse_restart_files    => Atm%coarse_graining%write_coarse_restart_files
+     write_coarse_diagnostics      => Atm%coarse_graining%write_coarse_diagnostics
+     write_only_coarse_intermediate_restarts => Atm%coarse_graining%write_only_coarse_intermediate_restarts
+     restart_from_agrid_winds      => Atm%flagstruct%restart_from_agrid_winds
+     write_optional_dgrid_vel_rst  => Atm%flagstruct%write_optional_dgrid_vel_rst
+     write_coarse_dgrid_vel_rst    => Atm%coarse_graining%write_coarse_dgrid_vel_rst
+     write_coarse_agrid_vel_rst    => Atm%coarse_graining%write_coarse_agrid_vel_rst
+ end subroutine setup_pointers
        
 end module fv_control_mod

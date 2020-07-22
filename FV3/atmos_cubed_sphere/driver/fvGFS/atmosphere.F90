@@ -195,6 +195,9 @@ use fv_regional_mod,    only: start_regional_restart, read_new_bc_data, &
                               a_step, p_step, current_time_in_seconds
 
 use mpp_domains_mod,    only:  mpp_get_data_domain, mpp_get_compute_domain
+use coarse_graining_mod, only: coarse_graining_init
+use coarse_grained_diagnostics_mod, only: fv_coarse_diag_init, fv_coarse_diag
+use coarse_grained_restart_files_mod, only: fv_coarse_restart_init
 !$ser verbatim use k_checkpoint, only: set_nz
 
 implicit none
@@ -245,6 +248,8 @@ character(len=20)   :: mod_name = 'fvGFS/atmosphere_mod'
   integer :: sphum, liq_wat, rainwat, ice_wat, snowwat, graupel  ! condensate species tracer indices
 #ifdef CCPP
   integer :: cld_amt
+#else
+  !$ser verbatim integer::cld_amt
 #endif
 
   integer :: mytile  = 1
@@ -335,6 +340,16 @@ contains
       if (grids_on_this_pe(n)) mytile = n
    enddo
 
+   if (Atm(mytile)%coarse_graining%write_coarse_restart_files .or. &
+        Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
+      call coarse_graining_init(Atm(mytile)%flagstruct%npx, Atm(mytile)%npz, &
+           Atm(mytile)%layout, Atm(mytile)%bd%is, Atm(mytile)%bd%ie, &
+           Atm(mytile)%bd%js, Atm(mytile)%bd%je, Atm(mytile)%coarse_graining%factor, &
+           Atm(mytile)%coarse_graining%nx_coarse, &
+           Atm(mytile)%coarse_graining%strategy, &
+           Atm(mytile)%coarse_graining%domain)
+   endif
+
    Atm(mytile)%Time_init = Time_init
 
    a_step = 0
@@ -370,8 +385,11 @@ contains
    rainwat = get_tracer_index (MODEL_ATMOS, 'rainwat' )
    snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat' )
    graupel = get_tracer_index (MODEL_ATMOS, 'graupel' )
+  
 #ifdef CCPP
    cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
+#else
+    !$ser verbatim cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
 #endif
 
    if (max(sphum,liq_wat,ice_wat,rainwat,snowwat,graupel) > Atm(mytile)%flagstruct%nwat) then
@@ -426,6 +444,19 @@ contains
        !I've had trouble getting this to work with multiple grids at a time; worth revisiting?
    call fv_diag_init(Atm(mytile:mytile), Atm(mytile)%atmos_axes, Time, npx, npy, npz, Atm(mytile)%flagstruct%p_ref)
 
+   if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
+      call fv_coarse_diag_init(Time, Atm(mytile)%atmos_axes(3), &
+           Atm(mytile)%atmos_axes(4), Atm(mytile)%coarse_graining)
+   endif
+   if (Atm(mytile)%coarse_graining%write_coarse_restart_files) then
+      call fv_coarse_restart_init(mytile, Atm(mytile)%npz, Atm(mytile)%flagstruct%nt_prog, &
+           Atm(mytile)%flagstruct%nt_phys, Atm(mytile)%flagstruct%hydrostatic, &
+           Atm(mytile)%flagstruct%hybrid_z, Atm(mytile)%flagstruct%fv_land, &
+           Atm(mytile)%coarse_graining%write_coarse_dgrid_vel_rst, &
+           Atm(mytile)%coarse_graining%write_coarse_agrid_vel_rst, &
+           Atm(mytile)%coarse_graining%domain, &
+           Atm(mytile)%coarse_graining%restart)
+   endif
 !---------- reference profile -----------
     ps1 = 101325.
     ps2 =  81060.
@@ -616,6 +647,7 @@ contains
 
    type(time_type) :: atmos_time
    !$ser verbatim integer :: mpi_rank,ier
+   !$ser verbatim real :: bdt
    !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, mpi_rank,ier)
    
 !---- Call FV dynamics -----
@@ -650,7 +682,7 @@ contains
      !$ser verbatim if (psc == abs(p_split) .and. a_step == 1) then                    
      !$ser on
      !$ser savepoint Grid-Info
-     !$ser data is_=Atm(n)%bd%is ie=Atm(n)%bd%ie isd=Atm(n)%bd%isd ied=Atm(n)%bd%ied js=Atm(n)%bd%js je=Atm(n)%bd%je jsd=Atm(n)%bd%jsd jed=Atm(n)%bd%jed npx=npx npy=npy npz=npz nested=Atm(n)%gridstruct%nested grid_type=Atm(n)%gridstruct%grid_type dya=Atm(n)%gridstruct%dya  dxa=Atm(n)%gridstruct%dxa dxc=Atm(n)%gridstruct%dxc dyc=Atm(n)%gridstruct%dyc rdxc=Atm(n)%gridstruct%rdxc rdx=Atm(n)%gridstruct%rdx rdyc=Atm(n)%gridstruct%rdyc  rdxa=Atm(n)%gridstruct%rdxa  rdya=Atm(n)%gridstruct%rdya rdy=Atm(n)%gridstruct%rdy cosa_u=Atm(n)%gridstruct%cosa_u cosa_v=Atm(n)%gridstruct%cosa_v  cosa_s=Atm(n)%gridstruct%cosa_s sina_v=Atm(n)%gridstruct%sina_v  sina_u=Atm(n)%gridstruct%sina_u rsin_u=Atm(n)%gridstruct%rsin_u rsin_v=Atm(n)%gridstruct%rsin_v rsin2=Atm(n)%gridstruct%rsin2 sin_sg=Atm(n)%gridstruct%sin_sg cos_sg=Atm(n)%gridstruct%cos_sg area=Atm(n)%gridstruct%area dy=Atm(n)%gridstruct%dy rarea=Atm(n)%gridstruct%rarea  rarea_c=Atm(n)%gridstruct%rarea_c rsina=Atm(n)%gridstruct%rsina cosa=Atm(n)%gridstruct%cosa  dx=Atm(n)%gridstruct%dx fC=Atm(n)%gridstruct%fC da_min=Atm(n)%gridstruct%da_min da_min_c=Atm(n)%gridstruct%da_min_c del6_u=Atm(n)%gridstruct%del6_u del6_v=Atm(n)%gridstruct%del6_v f0=Atm(n)%gridstruct%f0 divg_u=Atm(n)%gridstruct%divg_u divg_v=Atm(n)%gridstruct%divg_v stretched_grid=Atm(n)%gridstruct%stretched_grid agrid1=Atm(n)%gridstruct%agrid(:,:,1) agrid2=Atm(n)%gridstruct%agrid(:,:,2) bgrid1=Atm(n)%gridstruct%grid(:,:,1) bgrid2=Atm(n)%gridstruct%grid(:,:,2) edge_w=Atm(n)%gridstruct%edge_w edge_e=Atm(n)%gridstruct%edge_e edge_s=Atm(n)%gridstruct%edge_s edge_n=Atm(n)%gridstruct%edge_n
+     !$ser data is_=Atm(n)%bd%is ie=Atm(n)%bd%ie isd=Atm(n)%bd%isd ied=Atm(n)%bd%ied js=Atm(n)%bd%js je=Atm(n)%bd%je jsd=Atm(n)%bd%jsd jed=Atm(n)%bd%jed npx=npx npy=npy npz=npz nested=Atm(n)%gridstruct%nested grid_type=Atm(n)%gridstruct%grid_type dya=Atm(n)%gridstruct%dya  dxa=Atm(n)%gridstruct%dxa dxc=Atm(n)%gridstruct%dxc dyc=Atm(n)%gridstruct%dyc rdxc=Atm(n)%gridstruct%rdxc rdx=Atm(n)%gridstruct%rdx rdyc=Atm(n)%gridstruct%rdyc  rdxa=Atm(n)%gridstruct%rdxa  rdya=Atm(n)%gridstruct%rdya rdy=Atm(n)%gridstruct%rdy cosa_u=Atm(n)%gridstruct%cosa_u cosa_v=Atm(n)%gridstruct%cosa_v  cosa_s=Atm(n)%gridstruct%cosa_s sina_v=Atm(n)%gridstruct%sina_v  sina_u=Atm(n)%gridstruct%sina_u rsin_u=Atm(n)%gridstruct%rsin_u rsin_v=Atm(n)%gridstruct%rsin_v rsin2=Atm(n)%gridstruct%rsin2 sin_sg=Atm(n)%gridstruct%sin_sg cos_sg=Atm(n)%gridstruct%cos_sg area=Atm(n)%gridstruct%area dy=Atm(n)%gridstruct%dy rarea=Atm(n)%gridstruct%rarea  rarea_c=Atm(n)%gridstruct%rarea_c area_64=Atm(n)%gridstruct%area_64 rsina=Atm(n)%gridstruct%rsina cosa=Atm(n)%gridstruct%cosa  dx=Atm(n)%gridstruct%dx fC=Atm(n)%gridstruct%fC da_min=Atm(n)%gridstruct%da_min da_min_c=Atm(n)%gridstruct%da_min_c del6_u=Atm(n)%gridstruct%del6_u del6_v=Atm(n)%gridstruct%del6_v f0=Atm(n)%gridstruct%f0 divg_u=Atm(n)%gridstruct%divg_u divg_v=Atm(n)%gridstruct%divg_v stretched_grid=Atm(n)%gridstruct%stretched_grid agrid1=Atm(n)%gridstruct%agrid(:,:,1) agrid2=Atm(n)%gridstruct%agrid(:,:,2) bgrid1=Atm(n)%gridstruct%grid(:,:,1) bgrid2=Atm(n)%gridstruct%grid(:,:,2) edge_w=Atm(n)%gridstruct%edge_w edge_e=Atm(n)%gridstruct%edge_e edge_s=Atm(n)%gridstruct%edge_s edge_n=Atm(n)%gridstruct%edge_n a11=Atm(n)%gridstruct%a11  a12=Atm(n)%gridstruct%a12  a21=Atm(n)%gridstruct%a21  a22=Atm(n)%gridstruct%a22
      !$ser verbatim call set_nz(npz)
      !$ser verbatim else
      !$ser off
@@ -658,6 +690,9 @@ contains
       p_step = psc
                     call timing_on('fv_dynamics')
 !uc/vc only need be same on coarse grid? However BCs do need to be the same
+     !$ser savepoint FVDynamics-In
+     !$ser verbatim bdt=dt_atmos/real(abs(p_split))
+     !$ser data  bdt=bdt nq_tot=nq zvir=zvir ptop=Atm(n)%ptop ks=Atm(n)%ks ncnst=nq n_split=n_split_loc u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp  qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc ak=Atm(n)%ak bk=Atm(n)%bk mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
       call fv_dynamics(npx, npy, npz, nq, Atm(n)%ng, dt_atmos/real(abs(p_split)),&
                        Atm(n)%flagstruct%consv_te, Atm(n)%flagstruct%fill,       &
                        Atm(n)%flagstruct%reproduce_sum, kappa, cp_air, zvir,     &
@@ -676,7 +711,8 @@ contains
                        Atm(n)%gridstruct,  Atm(n)%flagstruct,                    &
                        Atm(n)%neststruct,  Atm(n)%idiag, Atm(n)%bd,              &
                        Atm(n)%parent_grid, Atm(n)%domain,Atm(n)%diss_est)
-
+     !$ser savepoint FVDynamics-Out
+     !$ser data  u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
       call timing_off('fv_dynamics')
 
       if (ngrids > 1 .and. (psc < p_split .or. p_split < 0)) then
@@ -703,6 +739,8 @@ contains
       if ( w_diff /= NO_TRACER ) then
         nt_dyn = nq - 1
       endif
+     !$ser savepoint FVSubgridZ-In
+     !$ser data nt_dyn=nt_dyn dt_atmos=dt_atmos delp=Atm(n)%delp pe=Atm(n)%pe peln=Atm(n)%peln pkz=Atm(n)%pkz pt=Atm(n)%pt q4d=Atm(n)%q ua=Atm(n)%ua va=Atm(n)%va w=Atm(n)%w delz=Atm(n)%delz u_dt=u_dt d_dt=v_dt t_dt=t_dt 
       call fv_subgrid_z(isd, ied, jsd, jed, isc, iec, jsc, jec, Atm(n)%npz, &
                         nt_dyn, dt_atmos, Atm(n)%flagstruct%fv_sg_adj,      &
                         Atm(n)%flagstruct%nwat, Atm(n)%delp, Atm(n)%pe,     &
@@ -710,6 +748,8 @@ contains
                         Atm(n)%ua, Atm(n)%va, Atm(n)%flagstruct%hydrostatic,&
                         Atm(n)%w, Atm(n)%delz, u_dt, v_dt, t_dt,            &
                         Atm(n)%flagstruct%n_sponge)
+      !$ser savepoint FVSubgridZ-Out
+      !$ser data  pt=Atm(n)%pt q4d=Atm(n)%q ua=Atm(n)%ua va=Atm(n)%va w=Atm(n)%w u_dt=u_dt d_dt=v_dt t_dt=t_dt 
     endif
 
 #ifdef USE_Q_DT
@@ -770,6 +810,9 @@ contains
       call timing_on('FV_DIAG')
       call fv_diag(Atm(mytile:mytile), zvir, fv_time, Atm(mytile)%flagstruct%print_freq)
       call fv_nggps_diag(Atm(mytile:mytile), zvir, fv_time)
+      if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
+         call fv_coarse_diag(Atm(mytile:mytile), fv_time)
+      endif
       first_diag = .false.
       call timing_off('FV_DIAG')
    endif
@@ -789,7 +832,7 @@ contains
   subroutine atmosphere_restart(timestamp)
     character(len=*),  intent(in) :: timestamp
 
-    call fv_write_restart(Atm, grids_on_this_pe, timestamp)
+    if (.not. Atm(mytile)%flagstruct%disable_fv_restart_write) call fv_write_restart(Atm, grids_on_this_pe, timestamp)
 
   end subroutine atmosphere_restart
  
@@ -1618,6 +1661,9 @@ contains
      call nullify_domain()
      call timing_on('FV_DIAG')
      call fv_diag(Atm(mytile:mytile), zvir, fv_time, Atm(mytile)%flagstruct%print_freq)
+     if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
+        call fv_coarse_diag(Atm(mytile:mytile), fv_time)
+     endif
      first_diag = .false.
      call timing_off('FV_DIAG')
 
@@ -1965,6 +2011,12 @@ contains
        IPD_Data(nb)%Statein%phii(:,npz+1) = 0.0_kind_phys
      endif
      IPD_Data(nb)%Statein%prsik(:,:) = 1.e25_kind_phys
+
+     do ix = 1, blen
+       i = Atm_block%index(nb)%ii(ix)
+       j = Atm_block%index(nb)%jj(ix)
+       IPD_Data(nb)%Statein%atm_ts(ix) = _DBL_(_RL_(Atm(mytile)%ts(i,j)))
+     enddo
 
      do k = 1, npz
        !Indices for FV's vertical coordinate, for which 1 = top
