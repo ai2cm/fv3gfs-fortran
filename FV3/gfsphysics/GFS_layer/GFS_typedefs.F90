@@ -1034,6 +1034,7 @@ module GFS_typedefs
 !--- debug flag
     logical              :: debug         
     logical              :: pre_rad         !< flag for testing purpose
+    logical              :: do_ocean        !< flag for slab ocean model
 
 !--- variables modified at each time step
     integer              :: ipt             !< index for diagnostic printout point
