@@ -999,8 +999,8 @@ module FV3GFS_io_mod
              Sfcprop(nb)%smc(ix,:) = 1.0 
              !--- slc
              Sfcprop(nb)%slc(ix,:) = 1.0 
-       enddo
-    enddo
+          enddo
+        enddo
     else !read from file
       call mpp_error(NOTE,'reading surface properties data from INPUT/sfc_data.tile*.nc')
       call restore_state(Sfc_restart)
@@ -1079,7 +1079,7 @@ module FV3GFS_io_mod
             Sfcprop(nb)%dt_cool(ix) = sfc_var2(i,j,nvar_s2m+17) !--- nsstm dt_cool
             Sfcprop(nb)%qrain(ix)   = sfc_var2(i,j,nvar_s2m+18) !--- nsstm qrain
           endif
-  #ifdef CCPP
+#ifdef CCPP
           if (Model%lsm == Model%lsm_ruc .and. warm_start) then
             !--- Extra RUC variables
             Sfcprop(nb)%wetness(ix)    = sfc_var2(i,j,nvar_s2m+19)
@@ -1090,11 +1090,11 @@ module FV3GFS_io_mod
             Sfcprop(nb)%acsnow(ix)     = sfc_var2(i,j,nvar_s2m+24)
           elseif (Model%lsm == Model%lsm_noahmp) then
             !--- Extra Noah MP variables
-  #else
-  ! Noah MP
-  ! -------
+#else
+! Noah MP
+! -------
           if (Model%lsm == Model%lsm_noahmp) then
-  #endif
+#endif
             Sfcprop(nb)%snowxy(ix)     = sfc_var2(i,j,nvar_s2m+19)
             Sfcprop(nb)%tvxy(ix)       = sfc_var2(i,j,nvar_s2m+20)
             Sfcprop(nb)%tgxy(ix)       = sfc_var2(i,j,nvar_s2m+21)
@@ -1126,7 +1126,7 @@ module FV3GFS_io_mod
             Sfcprop(nb)%rechxy(ix)     = sfc_var2(i,j,nvar_s2m+47)
           endif
 
-  #ifdef CCPP
+#ifdef CCPP
           if (Model%lsm == Model%lsm_noah .or. Model%lsm == Model%lsm_noahmp .or. (.not.warm_start)) then
             !--- 3D variables
             do lsoil = 1,Model%lsoil
@@ -1161,7 +1161,7 @@ module FV3GFS_io_mod
               Sfcprop(nb)%flag_frsoil(ix,lsoil) = sfc_var3(i,j,lsoil,5) !--- flag_frsoil
             enddo
           end if
-  #else
+#else
           !--- 3D variables
           do lsoil = 1,Model%lsoil
             Sfcprop(nb)%stc(ix,lsoil) = sfc_var3(i,j,lsoil,1)   !--- stc
@@ -1184,7 +1184,7 @@ module FV3GFS_io_mod
               Sfcprop(nb)%zsnsoxy(ix,lsoil)  = sfc_var3zn(i,j,lsoil,8)
             enddo 
           endif
-  #endif
+#endif
 
         enddo   !ix
       enddo    !nb
@@ -1201,11 +1201,11 @@ module FV3GFS_io_mod
   !         It has to be done after the weasd is available
   !         sfc_var2(1,1,32) is the first; we need this to allocate snow related fields
 
-  #ifdef CCPP
+#ifdef CCPP
       ! Calculating sncovr does NOT belong into an I/O routine!
       ! TODO: move to physics and stop building namelist_soilveg/set_soilveg
       ! in the FV3/non-CCPP physics when the CCPP-enabled executable is built.
-  #endif
+#endif
   !#ifndef CCPP
       !--- if sncovr does not exist in the restart, need to create it
       if (nint(sfc_var2(1,1,32)) == -9999) then
