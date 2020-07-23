@@ -49,7 +49,7 @@ module FV3GFS_io_mod
 !--- GFS_typedefs
 !rab  use GFS_typedefs,       only: GFS_sfcprop_type, GFS_diag_type, &
 !rab                                GFS_cldprop_type, GFS_grid_type
-  use GFS_typedefs,       only: GFS_sfcprop_type
+  use GFS_typedefs,       only: GFS_sfcprop_type, GFS_grid_type
 !
 !--- IPD typdefs
   use IPD_typedefs,       only: IPD_control_type, IPD_data_type, &
