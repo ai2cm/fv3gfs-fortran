@@ -10,7 +10,7 @@ with import <nixpkgs> {};
 # }:
 # 
 stdenv.mkDerivation rec {
-  pname = "nceplibs";
+  pname = "esmf";
   version = "0.0.0";
 
   src = fetchgit {

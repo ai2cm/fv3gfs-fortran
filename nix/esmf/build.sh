@@ -13,6 +13,7 @@ export ESMF_INSTALL_PREFIX=$out
 export ESMF_NETCDF_INCLUDE=$netcdffortran/include
 export ESMF_NETCDF_LIBS="-lnetcdf -lnetcdff"
 export ESMF_BOPT=O3
+export ESMF_CXXCOMPILEOPTS="$ESMF_CXXCOMPILEOPTS -Wno-format-security"
 
 # compile
 make lib -j8
