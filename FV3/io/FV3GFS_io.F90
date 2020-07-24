@@ -627,23 +627,25 @@ module FV3GFS_io_mod
         enddo
       enddo
     else ! cold_start (no way yet to create orography on-the-fly)
-      call mpp_error(NOTE,'No INPUT/oro_data.tile*.nc orographic data found; setting to 0')
-      !--- copy data into GFS containers
-      do nb = 1, Atm_block%nblks
-         !--- 2D variables
-         do ix = 1, Atm_block%blksz(nb)
-            i = Atm_block%index(nb)%ii(ix) - isc + 1
-            j = Atm_block%index(nb)%jj(ix) - jsc + 1
-            !--- stddev
-            !Sfcprop(nb)%hprim(ix)      = 0.0
-            !--- hprime(1:14)
-            Sfcprop(nb)%hprime(ix,1:14)  = 0.0
-            !--- oro
-            Sfcprop(nb)%oro(ix)        = 0.0
-            !--- oro_uf
-            Sfcprop(nb)%oro_uf(ix)     = 0.0
-         enddo
-      enddo
+      if(Model%sfc_override) then
+        call mpp_error(NOTE,'No INPUT/oro_data.tile*.nc orographic data found; setting to 0')
+        !--- copy data into GFS containers
+        do nb = 1, Atm_block%nblks
+          !--- 2D variables
+          do ix = 1, Atm_block%blksz(nb)
+              i = Atm_block%index(nb)%ii(ix) - isc + 1
+              j = Atm_block%index(nb)%jj(ix) - jsc + 1
+              !--- stddev
+              !Sfcprop(nb)%hprim(ix)      = 0.0
+              !--- hprime(1:14)
+              Sfcprop(nb)%hprime(ix,1:14)  = 0.0
+              !--- oro
+              Sfcprop(nb)%oro(ix)        = 0.0
+              !--- oro_uf
+              Sfcprop(nb)%oro_uf(ix)     = 0.0
+          enddo
+        enddo
+      endif
    endif
  
     if (nint(oro_var2(1,1,18)) == -9999._kind_phys) then ! lakefrac doesn't exist in the restart, need to create it
@@ -905,102 +907,104 @@ module FV3GFS_io_mod
 
     fname = 'INPUT/'//trim(fn_srf)
     if (.not. file_exist(fname)) then ! cold start
-      call mpp_error(NOTE,'No INPUT/sfc_data.tile*.nc surface data found; cold-starting land surface')
-       !Need a namelist for options:
-       ! 1. choice of sst (uniform, profiles) --- ML0 should relax to this
-       ! 2. Choice of veg, soil type with certain soil T,q,ql
-       ! How to fix day of year (for astronomy)?
-       !--- place the data into the block GFS containers
-       do nb = 1, Atm_block%nblks
-          do ix = 1, Atm_block%blksz(nb)
-             i = Atm_block%index(nb)%ii(ix) - isc + 1
-             j = Atm_block%index(nb)%jj(ix) - jsc + 1
-             !--- 2D variables
-             !--- slmsk
-             Sfcprop(nb)%slmsk(ix)  = 0.
-             !--- tsfc (tsea in sfc file)
-             Sfcprop(nb)%tsfc(ix)   = 300. ! should specify some latitudinal profile
-             !--- weasd (sheleg in sfc file)
-             Sfcprop(nb)%weasd(ix)  = 0.0
-             !--- tg3
-             Sfcprop(nb)%tg3(ix)    = 290. !generic value, probably not good; real value latitude-dependent
-             !--- zorl
-             Sfcprop(nb)%zorl(ix)   = 0.1 ! typical ocean value; different values for different land surfaces (use a lookup table?)
-             !--- alvsf
-             Sfcprop(nb)%alvsf(ix)  = 0.06
-             !--- alvwf
-             Sfcprop(nb)%alvwf(ix)  = 0.06
-             !--- alnsf
-             Sfcprop(nb)%alnsf(ix)  = 0.06
-             !--- alnwf
-             Sfcprop(nb)%alnwf(ix)  = 0.06
-             !--- facsf
-             Sfcprop(nb)%facsf(ix)  = 0.0
-             !--- facwf
-             Sfcprop(nb)%facwf(ix)  = 0.0
-             !--- vfrac
-             Sfcprop(nb)%vfrac(ix)  = 0.0
-             !--- canopy
-             Sfcprop(nb)%canopy(ix) = 0.0
-             !--- f10m
-             Sfcprop(nb)%f10m(ix)   = 0.9
-             !--- t2m
-             Sfcprop(nb)%t2m(ix)    = Sfcprop(nb)%tsfc(ix)
-             !--- q2m
-             Sfcprop(nb)%q2m(ix)    = 0.0 ! initially dry atmosphere?
-             !--- vtype
-             Sfcprop(nb)%vtype(ix)  = 0.0 
-             !--- stype
-             Sfcprop(nb)%stype(ix)  = 0.0 
-             !--- uustar
-             Sfcprop(nb)%uustar(ix) = 0.5
-             !--- ffmm
-             Sfcprop(nb)%ffmm(ix)   = 10.
-             !--- ffhh
-             Sfcprop(nb)%ffhh(ix)   = 10.
-             !--- hice
-             Sfcprop(nb)%hice(ix)   = 0.0
-             !--- fice
-             Sfcprop(nb)%fice(ix)   = 0.0
-             !--- tisfc
-             Sfcprop(nb)%tisfc(ix)  = Sfcprop(nb)%tsfc(ix)
-             !--- tprcp
-             Sfcprop(nb)%tprcp(ix)  = 0.0
-             !--- srflag
-             Sfcprop(nb)%srflag(ix) = 0.0
-             !--- snowd (snwdph in the file)
-             Sfcprop(nb)%snowd(ix)  = 0.0
-             !--- shdmin
-             Sfcprop(nb)%shdmin(ix) = 0.0 !this and the next depend on the surface type
-             !--- shdmax
-             Sfcprop(nb)%shdmax(ix) = 0.0
-             !--- slope
-             Sfcprop(nb)%slope(ix)  = 0.0 ! also land-surface dependent
-             !--- snoalb
-             Sfcprop(nb)%snoalb(ix) = 0.0
-             !--- sncovr
-             Sfcprop(nb)%sncovr(ix) = 0.0
-             !
-             !--- NSSTM variables
-             if ((Model%nstf_name(1) > 0) .and. (Model%nstf_name(2) == 1)) then
-                !--- nsstm tref
-                Sfcprop(nb)%tref(ix)    = Sfcprop(nb)%tsfc(ix)
-                Sfcprop(nb)%xz(ix)      = 30.0d0
-             endif
-             if ((Model%nstf_name(1) > 0) .and. (Model%nstf_name(2) == 0)) then
-                !return an error
-                call mpp_error(FATAL, 'cold-starting does not support NSST.')
-             endif
-             !--- 3D variables
-             ! these are all set to ocean values.
-                !--- stc
-             Sfcprop(nb)%stc(ix,:) = Sfcprop(nb)%tsfc(ix)
-             !--- smc
-             Sfcprop(nb)%smc(ix,:) = 1.0 
-             !--- slc
-             Sfcprop(nb)%slc(ix,:) = 1.0 
+      if(Model%sfc_override) then
+        call mpp_error(NOTE,'No INPUT/sfc_data.tile*.nc surface data found; cold-starting land surface')
+        !Need a namelist for options:
+        ! 1. choice of sst (uniform, profiles) --- ML0 should relax to this
+        ! 2. Choice of veg, soil type with certain soil T,q,ql
+        ! How to fix day of year (for astronomy)?
+        !--- place the data into the block GFS containers
+        do nb = 1, Atm_block%nblks
+            do ix = 1, Atm_block%blksz(nb)
+              i = Atm_block%index(nb)%ii(ix) - isc + 1
+              j = Atm_block%index(nb)%jj(ix) - jsc + 1
+              !--- 2D variables
+              !--- slmsk
+              Sfcprop(nb)%slmsk(ix)  = 0.
+              !--- tsfc (tsea in sfc file)
+              Sfcprop(nb)%tsfc(ix)   = 300. ! should specify some latitudinal profile
+              !--- weasd (sheleg in sfc file)
+              Sfcprop(nb)%weasd(ix)  = 0.0
+              !--- tg3
+              Sfcprop(nb)%tg3(ix)    = 290. !generic value, probably not good; real value latitude-dependent
+              !--- zorl
+              Sfcprop(nb)%zorl(ix)   = 0.1 ! typical ocean value; different values for different land surfaces (use a lookup table?)
+              !--- alvsf
+              Sfcprop(nb)%alvsf(ix)  = 0.06
+              !--- alvwf
+              Sfcprop(nb)%alvwf(ix)  = 0.06
+              !--- alnsf
+              Sfcprop(nb)%alnsf(ix)  = 0.06
+              !--- alnwf
+              Sfcprop(nb)%alnwf(ix)  = 0.06
+              !--- facsf
+              Sfcprop(nb)%facsf(ix)  = 0.0
+              !--- facwf
+              Sfcprop(nb)%facwf(ix)  = 0.0
+              !--- vfrac
+              Sfcprop(nb)%vfrac(ix)  = 0.0
+              !--- canopy
+              Sfcprop(nb)%canopy(ix) = 0.0
+              !--- f10m
+              Sfcprop(nb)%f10m(ix)   = 0.9
+              !--- t2m
+              Sfcprop(nb)%t2m(ix)    = Sfcprop(nb)%tsfc(ix)
+              !--- q2m
+              Sfcprop(nb)%q2m(ix)    = 0.0 ! initially dry atmosphere?
+              !--- vtype
+              Sfcprop(nb)%vtype(ix)  = 0.0 
+              !--- stype
+              Sfcprop(nb)%stype(ix)  = 0.0 
+              !--- uustar
+              Sfcprop(nb)%uustar(ix) = 0.5
+              !--- ffmm
+              Sfcprop(nb)%ffmm(ix)   = 10.
+              !--- ffhh
+              Sfcprop(nb)%ffhh(ix)   = 10.
+              !--- hice
+              Sfcprop(nb)%hice(ix)   = 0.0
+              !--- fice
+              Sfcprop(nb)%fice(ix)   = 0.0
+              !--- tisfc
+              Sfcprop(nb)%tisfc(ix)  = Sfcprop(nb)%tsfc(ix)
+              !--- tprcp
+              Sfcprop(nb)%tprcp(ix)  = 0.0
+              !--- srflag
+              Sfcprop(nb)%srflag(ix) = 0.0
+              !--- snowd (snwdph in the file)
+              Sfcprop(nb)%snowd(ix)  = 0.0
+              !--- shdmin
+              Sfcprop(nb)%shdmin(ix) = 0.0 !this and the next depend on the surface type
+              !--- shdmax
+              Sfcprop(nb)%shdmax(ix) = 0.0
+              !--- slope
+              Sfcprop(nb)%slope(ix)  = 0.0 ! also land-surface dependent
+              !--- snoalb
+              Sfcprop(nb)%snoalb(ix) = 0.0
+              !--- sncovr
+              Sfcprop(nb)%sncovr(ix) = 0.0
+              !
+              !--- NSSTM variables
+              if ((Model%nstf_name(1) > 0) .and. (Model%nstf_name(2) == 1)) then
+                  !--- nsstm tref
+                  Sfcprop(nb)%tref(ix)    = Sfcprop(nb)%tsfc(ix)
+                  Sfcprop(nb)%xz(ix)      = 30.0d0
+              endif
+              if ((Model%nstf_name(1) > 0) .and. (Model%nstf_name(2) == 0)) then
+                  !return an error
+                  call mpp_error(FATAL, 'cold-starting does not support NSST.')
+              endif
+              !--- 3D variables
+              ! these are all set to ocean values.
+                  !--- stc
+              Sfcprop(nb)%stc(ix,:) = Sfcprop(nb)%tsfc(ix)
+              !--- smc
+              Sfcprop(nb)%smc(ix,:) = 1.0 
+              !--- slc
+              Sfcprop(nb)%slc(ix,:) = 1.0 
+            enddo
           enddo
-        enddo
+      endif
     else !read from file
       call mpp_error(NOTE,'reading surface properties data from INPUT/sfc_data.tile*.nc')
       call restore_state(Sfc_restart)
