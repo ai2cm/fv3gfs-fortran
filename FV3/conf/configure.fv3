@@ -2,6 +2,7 @@
 ############
 # commands #
 ############
+SHELL = bash
 FC = FC=gfortran mpifort
 CC = CC=gcc mpicc
 CXX = g++

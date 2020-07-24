@@ -6,7 +6,7 @@ let
 in
 with import <nixpkgs> {}; {
   qpidEnv = stdenv.mkDerivation {
-    name = "my-gcc8-environment";
+    name = "fv3";
     buildInputs = [
         fms
         esmf
@@ -18,7 +18,6 @@ with import <nixpkgs> {}; {
         openmpi
         perl
         gfortran
-        gfortran.cc
         # python
         python37Packages.cython
         python37Packages.setuptools
@@ -28,21 +27,30 @@ with import <nixpkgs> {}; {
 
   src = builtins.fetchGit {
     url = "git@github.com:VulcanClimateModeling/fv3gfs-fortran.git";
-    rev = "c0d11c6a66f76835ae0e9bc791d7cda6d68e504b";
   };
 
   config = ./FV3/conf/configure.fv3;
 
   buildPhase = ''
-      ls
-      ls FV3
+     
       cp $config FV3/conf/configure.fv3
-      make -C FV3 libs_no_dycore
-      make -C FV3/atmos_cubed_sphere
-      make -C FV3
+
+      # need to call this since usr/bin/env isn't 
+      # installed in sandboxed build environment
+      # there goes 1 hr...
+      patchShebangs FV3/mkDepends.pl
+
+      make -C FV3 -j 4
+  '';
+
+  installPhase = ''
+    mkdir -p $out/bin $out/lib 
+    cp FV3/*.exe $out/bin
+    cp FV3/*.o $out/lib
   '';
 
 
+    SHELL = "${bash}/bin/bash";
     FMS_DIR="${fms}/include";
     ESMF_DIR="${esmf}";
     #LD_LIBRARY_PATH="${esmf}/lib/libO3/Linux.gfortran.64.mpiuni.default/:${fms}/libFMS/.libs/:$${SERIALBOX_DIR}/lib";
