@@ -13,12 +13,9 @@ stdenv.mkDerivation rec {
   pname = "esmf";
   version = "0.0.0";
 
-  src = fetchgit {
+  src = builtins.fetchGit {
     url = "https://git.code.sf.net/p/esmf/esmf";
     rev = "f5d862d2ec066e76647f53c239b8c58c7af28e45";
-    sha256 = "011mqx5pm0ffnp19fcmyijagshdi5yxlmj59szj0w20kp9vlvqis";
-    fetchSubmodules = false;
-    leaveDotGit = true;
   };
 
 
@@ -26,7 +23,7 @@ stdenv.mkDerivation rec {
 
   # nativeBuildInputs = [ m4 ];
   # buildInputs = [ hdf5 curl mpi ];
-  buildInputs = [ netcdffortran gfortran openmpi gcc ];
+  buildInputs = [ netcdffortran gfortran openmpi gfortran.cc ];
   inherit netcdffortran;
 
 
