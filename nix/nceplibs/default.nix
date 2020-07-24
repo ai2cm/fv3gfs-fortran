@@ -9,7 +9,7 @@ with import <nixpkgs> {};
 # , fetchgit
 # }:
 # 
-stdenv.mkDerivation rec {
+stdenvNoCC.mkDerivation rec {
   pname = "nceplibs";
   version = "0.0.0";
 
@@ -26,7 +26,9 @@ stdenv.mkDerivation rec {
 
   # nativeBuildInputs = [ m4 ];
   # buildInputs = [ hdf5 curl mpi ];
-  buildInputs = [ bash rsync gfortran openmpi ];
+  buildInputs = [ bash rsync gfortran openmpi coreutils ];
+  FFLAGS="-I${gfortran.libc}/include";
+  arch = if system == "x86_64-darwin" then "macosx" else "linux";
 
 
 

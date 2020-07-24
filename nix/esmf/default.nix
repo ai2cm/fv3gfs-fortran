@@ -9,7 +9,7 @@ with import <nixpkgs> {};
 # , fetchgit
 # }:
 # 
-stdenv.mkDerivation rec {
+stdenvNoCC.mkDerivation rec {
   pname = "esmf";
   version = "0.0.0";
 
@@ -23,8 +23,12 @@ stdenv.mkDerivation rec {
 
   # nativeBuildInputs = [ m4 ];
   # buildInputs = [ hdf5 curl mpi ];
-  buildInputs = [ netcdffortran gfortran openmpi gfortran.cc ];
+  buildInputs = [ netcdffortran gfortran openmpi gfortran.cc coreutils ];
   inherit netcdffortran;
+  CXX="${gfortran}/bin/g++";
+  CC="${gfortran}/bin/gcc";
+  ESMF_CXXCOMPILER="${CXX}";
+  ESMF_CCOMPILER="${CC}";
 
 
 
