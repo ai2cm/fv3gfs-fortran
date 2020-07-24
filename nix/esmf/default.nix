@@ -23,8 +23,10 @@ stdenvNoCC.mkDerivation rec {
 
   # nativeBuildInputs = [ m4 ];
   # buildInputs = [ hdf5 curl mpi ];
-  buildInputs = [ netcdffortran gfortran openmpi gfortran.cc coreutils ];
-  inherit netcdffortran;
+  buildInputs = [ netcdffortran gfortran openmpi gfortran.cc coreutils which 
+    (lib.optional stdenv.isDarwin llvmPackages.openmp)
+  ] ;
+  inherit netcdffortran gfortran;
   CXX="${gfortran}/bin/g++";
   CC="${gfortran}/bin/gcc";
   ESMF_CXXCOMPILER="${CXX}";
