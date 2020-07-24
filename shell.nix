@@ -14,14 +14,23 @@ with import <nixpkgs> {}; {
         esmf
         nceplibs
         gfortran
+        netcdf
         netcdffortran
+        lapack
+        blas
         openmpi
+        perl
+        # python
+        python37Packages.cython
+        python37Packages.setuptools
+        python37Packages.numpy
     ];
 
     FMS_DIR="${fms}/include";
     ESMF_DIR="${esmf}";
     #LD_LIBRARY_PATH="$${LD_LIBRARY_PATH}:${esmf}/lib/libO3/Linux.gfortran.64.mpiuni.default/:${fms}/libFMS/.libs/:$${SERIALBOX_DIR}/lib";
     INCLUDE="-I${fms}/include -I${netcdffortran}/include -I${esmf}/mod/modO3/Linux.gfortran.64.mpiuni.default/";
+    NCEPLIBS_DIR="${nceplibs}/lib";
     OMPI_CC="${cc}/bin/gcc";
 };
 }
