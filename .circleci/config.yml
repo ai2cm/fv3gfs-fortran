@@ -21,11 +21,10 @@ jobs:
           then 
             nix-store --import < derivations.nar
           fi
-      - run: nix-shell
+      - run: nix-build
       - run: |
           drv=$(nix-instantiate default.nix)
           nix-store --export $(nix-query -qR $drv) > derivations.nar
-          echo $drv hash
       - save_cache:
           paths:
             - derivations.nar
