@@ -13,16 +13,23 @@ jobs:
           command: |
             git submodule init
             git submodule update
-      - run: |
-          nix-instantiate default.nix > derivation
       - restore_cache:
           keys: 
-            - key-{{ checksum "derivation" }}
+            - key
+      - run: |
+          if [[ -f derivations.nar ]]
+          then 
+            nix-store --import < derivations.nar
+          fi
       - run: nix-build
+      - run: |
+          drv=$(nix-instantiate default.nix)
+          nix-store --export $(nix-query -qR $drv) > derivations.nar
+          echo $drv hash
       - save_cache:
           paths:
-            - /nix/store
-          key: key-{{ checksum "derivation" }}
+            - derivations.nar
+          key: key
   build_default:
     machine:
       docker_layer_caching: true
