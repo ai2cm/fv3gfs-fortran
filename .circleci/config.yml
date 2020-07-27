@@ -6,7 +6,7 @@ jobs:
     docker:
       - image: nixos/nix
     steps:
-      - run: nix-env -i git
+      - run: nix-env -i git openssh
       - checkout
       - run:
           name: "Pull Submodules"
