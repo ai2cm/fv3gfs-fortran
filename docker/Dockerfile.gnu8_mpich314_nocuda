@@ -2,7 +2,7 @@
 ### Stage 0: Build MPI
 ###
 
-FROM ubuntu:19.10 AS mpich-bld
+FROM ubuntu:18.04 AS mpich-bld
 
 RUN apt-get update && \
     apt-get install -y wget \
@@ -24,7 +24,7 @@ ENV OMP_NUM_THREADS=1
 
 FROM mpich-bld AS ncep-bld 
 
-RUN apt-get update && apt-get install -y git && \ 
+RUN apt-get update && apt-get install -y git && \
     git config --global http.sslverify false && \
     git clone https://github.com/NCAR/NCEPlibs.git && \
     cd NCEPlibs && \
