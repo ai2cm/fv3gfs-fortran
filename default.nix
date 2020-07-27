@@ -1,8 +1,7 @@
-with import <nixpkgs> {}; {
-  qpidEnv = stdenv.mkDerivation {
+with import <nixpkgs> {};
+  pkgs.mkShell{
     name = "fv3";
     buildInputs = [
         netcdf
     ];
 }
-
