@@ -23,7 +23,9 @@ stdenv.mkDerivation rec {
 
   # nativeBuildInputs = [ m4 ];
   # buildInputs = [ hdf5 curl mpi ];
-  buildInputs = [ bash rsync gfortran openmpi automake autoconf m4 libtool bats netcdffortran netcdf ];
+  buildInputs = [ bash rsync gfortran openmpi automake autoconf m4 libtool bats netcdffortran netcdf 
+    (lib.optional stdenv.isDarwin llvmPackages.openmp)
+  ];
   inherit netcdffortran;
 
 
