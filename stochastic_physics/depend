@@ -1,0 +1,30 @@
+./cellular_automata.o : ./cellular_automata.f90 ./update_ca.o  
+./compns_stochy.o : ./compns_stochy.F90 ./stochy_namelist_def.o  
+./dezouv_stochy.o : ./dezouv_stochy.f ./stochy_resol_def.o ./spectral_layout.o  
+./dozeuv_stochy.o : ./dozeuv_stochy.f ./spectral_layout.o ./stochy_resol_def.o  
+./epslon_stochy.o : ./epslon_stochy.f ./stochy_resol_def.o ./spectral_layout.o  
+./four_to_grid_stochy.o : ./four_to_grid_stochy.f ./spectral_layout.o  
+./get_lats_node_a_stochy.o : ./get_lats_node_a_stochy.f ./spectral_layout.o ./stochy_resol_def.o  
+./get_ls_node_stochy.o : ./get_ls_node_stochy.f ./stochy_resol_def.o ./spectral_layout.o  
+./get_stochy_pattern.o : ./get_stochy_pattern.F90 ./four_to_grid_stochy.o ./stochy_namelist_def.o ./spectral_layout.o ./dozeuv_stochy.o ./sumfln_stochy.o ./stochy_patterngenerator.o ./stochy_internal_state_mod.o ./stochy_resol_def.o ./stochy_data_mod.o ./dezouv_stochy.o ./stochy_gg_def.o  
+./getcon_lag_stochy.o : ./getcon_lag_stochy.f ./setlats_lag_stochy.o ./stochy_layout_lag.o ./spectral_layout.o ./stochy_resol_def.o ./stochy_gg_def.o  
+./getcon_spectral.o : ./getcon_spectral.F90 ./stochy_resol_def.o ./stochy_internal_state_mod.o ./glats_stochy.o ./pln2eo_stochy.o ./epslon_stochy.o ./get_ls_node_stochy.o ./gozrineo_stochy.o ./stochy_gg_def.o ./setlats_a_stochy.o ./get_lats_node_a_stochy.o ./spectral_layout.o  
+./glats_stochy.o : ./glats_stochy.f  
+./gozrineo_stochy.o : ./gozrineo_stochy.f ./stochy_resol_def.o ./spectral_layout.o  
+./initialize_spectral_mod.o : ./initialize_spectral_mod.F90 ./stochy_internal_state_mod.o ./stochy_resol_def.o ./stochy_layout_lag.o ./getcon_lag_stochy.o ./stochy_namelist_def.o ./stochy_gg_def.o ./getcon_spectral.o ./get_ls_node_stochy.o ./spectral_layout.o  
+./num_parthds_stochy.o : ./num_parthds_stochy.f  
+./pln2eo_stochy.o : ./pln2eo_stochy.f ./stochy_resol_def.o ./spectral_layout.o  
+./plumes.o : ./plumes.f90  
+./setlats_a_stochy.o : ./setlats_a_stochy.f ./stochy_resol_def.o ./spectral_layout.o  
+./setlats_lag_stochy.o : ./setlats_lag_stochy.f ./spectral_layout.o ./stochy_resol_def.o  
+./spectral_layout.o : ./spectral_layout.F90  
+./stochastic_physics.o : ./stochastic_physics.F90 ./spectral_layout.o ./stochy_gg_def.o ./stochy_namelist_def.o ./stochy_data_mod.o ./get_stochy_pattern.o ./stochy_internal_state_mod.o ./stochy_resol_def.o  
+./stochy_data_mod.o : ./stochy_data_mod.F90 ./spectral_layout.o ./compns_stochy.o ./stochy_namelist_def.o ./stochy_internal_state_mod.o ./stochy_resol_def.o ./initialize_spectral_mod.o ./stochy_patterngenerator.o  
+./stochy_gg_def.o : ./stochy_gg_def.f  
+./stochy_internal_state_mod.o : ./stochy_internal_state_mod.F90 ./spectral_layout.o ./stochy_gg_def.o ./stochy_resol_def.o  
+./stochy_layout_lag.o : ./stochy_layout_lag.f  
+./stochy_namelist_def.o : ./stochy_namelist_def.F90  
+./stochy_patterngenerator.o : ./stochy_patterngenerator.F90 ./spectral_layout.o  
+./stochy_resol_def.o : ./stochy_resol_def.f  
+./sumfln_stochy.o : ./sumfln_stochy.f ./spectral_layout.o ./stochy_resol_def.o  
+./update_ca.o : ./update_ca.f90  

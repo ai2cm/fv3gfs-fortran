@@ -1,0 +1,43 @@
+./driver/fvGFS/DYCORE_typedefs.o : ./driver/fvGFS/DYCORE_typedefs.F90  
+./driver/fvGFS/atmosphere.o : ./driver/fvGFS/atmosphere.F90 ./tools/fv_eta.o ./tools/coarse_grained_diagnostics.o ./tools/fv_restart.o ./model/fv_arrays.o ./model/fv_regional_bc.o ./tools/fv_nudge.o ./driver/fvGFS/DYCORE_typedefs.o ./model/fv_sg.o ./tools/fv_io.o ./model/multi_gases.o ./model/fv_update_phys.o ./model/fv_dynamics.o ./tools/coarse_grained_restart_files.o ./tools/fv_iau_mod.o ./model/dyn_core.o ./driver/fvGFS/fv_nggps_diag.o ./tools/fv_timing.o ./tools/fv_mp_mod.o ./model/fv_fill.o ./model/fv_nesting.o ./tools/fv_diagnostics.o ./model/fv_control.o  
+./driver/fvGFS/fv_nggps_diag.o : ./driver/fvGFS/fv_nggps_diag.F90 ./model/fv_arrays.o ./model/multi_gases.o ./tools/fv_diagnostics.o  
+./model/a2b_edge.o : ./model/a2b_edge.F90 ./model/fv_arrays.o ./model/fv_grid_utils.o  
+./model/boundary.o : ./model/boundary.F90 ./model/fv_arrays.o ./tools/fv_mp_mod.o ./tools/fv_timing.o  
+./model/dyn_core.o : ./model/dyn_core.F90 ./model/sw_core.o ./tools/test_cases.o ./model/nh_core.o ./model/boundary.o ./model/fv_arrays.o ./model/fv_regional_bc.o ./tools/fv_nudge.o ./model/a2b_edge.o ./model/fv_update_phys.o ./model/multi_gases.o ./tools/fv_diagnostics.o ./tools/fv_timing.o ./tools/fv_mp_mod.o ./model/tp_core.o  
+./model/fv_arrays.o : ./model/fv_arrays.F90  
+./model/fv_cmp.o : ./model/fv_cmp.F90 ./model/fv_arrays.o ./tools/fv_mp_mod.o ./model/multi_gases.o  
+./model/fv_control.o : ./model/fv_control.F90 ./tools/fv_diagnostics.o ./tools/fv_grid_tools.o ./tools/fv_mp_mod.o ./tools/fv_timing.o ./tools/coarse_grained_restart_files.o ./model/multi_gases.o ./model/fv_grid_utils.o ./tools/fv_io.o ./tools/test_cases.o ./model/fv_arrays.o ./tools/fv_restart.o ./tools/fv_eta.o  
+./model/fv_dynamics.o : ./model/fv_dynamics.F90 ./tools/fv_timing.o ./tools/fv_mp_mod.o ./model/fv_fill.o ./tools/fv_diagnostics.o ./model/fv_nesting.o ./model/multi_gases.o ./model/fv_grid_utils.o ./model/fv_tracer2d.o ./model/dyn_core.o ./model/fv_mapz.o ./model/boundary.o ./model/fv_regional_bc.o ./tools/fv_nudge.o ./model/fv_arrays.o ./model/fv_sg.o  
+./model/fv_fill.o : ./model/fv_fill.F90  
+./model/fv_grid_utils.o : ./model/fv_grid_utils.F90 ./tools/fv_mp_mod.o ./tools/fv_timing.o ./model/fv_arrays.o ./tools/fv_eta.o ./tools/external_sst.o  
+./model/fv_mapz.o : ./model/fv_mapz.F90 ./tools/fv_mp_mod.o ./tools/fv_timing.o ./model/fv_fill.o ./model/fv_cmp.o ./model/multi_gases.o ./model/fv_grid_utils.o ./model/fv_arrays.o  
+./model/fv_nesting.o : ./model/fv_nesting.F90 ./tools/fv_diagnostics.o ./tools/fv_timing.o ./tools/fv_mp_mod.o ./model/fv_mapz.o ./tools/init_hydro.o ./model/fv_grid_utils.o ./model/fv_sg.o ./model/boundary.o ./model/fv_arrays.o ./model/sw_core.o ./tools/fv_restart.o  
+./model/fv_regional_bc.o : ./model/fv_regional_bc.F90 ./tools/fv_mp_mod.o ./model/fv_fill.o ./tools/fv_diagnostics.o ./model/fv_grid_utils.o ./model/fv_mapz.o ./model/fv_arrays.o ./tools/fv_eta.o  
+./model/fv_sg.o : ./model/fv_sg.F90 ./tools/fv_mp_mod.o ./model/multi_gases.o  
+./model/fv_tracer2d.o : ./model/fv_tracer2d.F90 ./model/tp_core.o ./tools/fv_timing.o ./tools/fv_mp_mod.o ./model/fv_regional_bc.o ./model/fv_arrays.o ./model/boundary.o  
+./model/fv_update_phys.o : ./model/fv_update_phys.F90 ./model/fv_arrays.o ./tools/fv_nudge.o ./model/boundary.o ./tools/fv_eta.o ./tools/fv_timing.o ./tools/fv_mp_mod.o ./tools/fv_diagnostics.o ./model/fv_grid_utils.o ./model/multi_gases.o ./model/fv_mapz.o  
+./model/k_checkpoint.o : ./model/k_checkpoint.F90  
+./model/multi_gases.o : ./model/multi_gases.F90 ./tools/fv_mp_mod.o  
+./model/nh_core.o : ./model/nh_core.F90 ./model/nh_utils.o ./model/tp_core.o  
+./model/nh_utils.o : ./model/nh_utils.F90 ./model/fv_arrays.o ./model/sw_core.o ./model/tp_core.o ./model/multi_gases.o  
+./model/sw_core.o : ./model/sw_core.F90 ./model/tp_core.o ./tools/fv_mp_mod.o ./model/fv_arrays.o ./model/a2b_edge.o ./tools/test_cases.o  
+./model/tp_core.o : ./model/tp_core.F90 ./model/fv_grid_utils.o ./tools/fv_mp_mod.o ./model/fv_arrays.o  
+./tools/coarse_grained_diagnostics.o : ./tools/coarse_grained_diagnostics.F90 ./model/fv_arrays.o  
+./tools/coarse_grained_restart_files.o : ./tools/coarse_grained_restart_files.F90 ./model/fv_arrays.o  
+./tools/external_ic.o : ./tools/external_ic.F90 ./tools/external_sst.o ./tools/fv_eta.o ./model/boundary.o ./model/fv_regional_bc.o ./tools/fv_nudge.o ./model/fv_arrays.o ./tools/test_cases.o ./tools/fv_io.o ./model/multi_gases.o ./tools/init_hydro.o ./model/fv_grid_utils.o ./model/fv_mapz.o ./tools/sim_nc_mod.o ./tools/fv_timing.o ./model/fv_fill.o ./tools/fv_mp_mod.o ./tools/fv_surf_map.o ./tools/fv_diagnostics.o  
+./tools/external_sst.o : ./tools/external_sst.F90  
+./tools/fv_diagnostics.o : ./tools/fv_diagnostics.F90 ./model/fv_sg.o ./model/fv_arrays.o ./model/a2b_edge.o ./tools/fv_eta.o ./tools/fv_surf_map.o ./tools/fv_mp_mod.o ./model/fv_mapz.o ./model/multi_gases.o ./model/fv_grid_utils.o  
+./tools/fv_eta.o : ./tools/fv_eta.F90 ./tools/fv_mp_mod.o  
+./tools/fv_grid_tools.o : ./tools/fv_grid_tools.F90 ./model/fv_arrays.o ./tools/sorted_index.o ./model/fv_grid_utils.o ./tools/fv_timing.o ./tools/fv_mp_mod.o  
+./tools/fv_iau_mod.o : ./tools/fv_iau_mod.F90 ./tools/sim_nc_mod.o ./tools/fv_mp_mod.o ./tools/fv_treat_da_inc.o ./model/fv_arrays.o  
+./tools/fv_io.o : ./tools/fv_io.F90 ./model/fv_mapz.o ./tools/fv_mp_mod.o ./tools/external_sst.o ./tools/fv_eta.o ./model/fv_arrays.o  
+./tools/fv_mp_mod.o : ./tools/fv_mp_mod.F90 ./model/fv_arrays.o  
+./tools/fv_nudge.o : ./tools/fv_nudge.F90 ./tools/fv_timing.o ./tools/fv_mp_mod.o ./model/tp_core.o ./tools/fv_diagnostics.o ./model/multi_gases.o ./model/fv_grid_utils.o ./model/fv_mapz.o ./tools/sim_nc_mod.o ./model/fv_arrays.o ./tools/external_sst.o  
+./tools/fv_restart.o : ./tools/fv_restart.F90 ./tools/coarse_grained_restart_files.o ./tools/init_hydro.o ./model/multi_gases.o ./model/fv_grid_utils.o ./tools/fv_diagnostics.o ./tools/fv_surf_map.o ./tools/fv_timing.o ./tools/fv_mp_mod.o ./tools/external_ic.o ./tools/fv_eta.o ./tools/fv_io.o ./tools/test_cases.o ./model/fv_arrays.o ./model/boundary.o ./tools/fv_treat_da_inc.o  
+./tools/fv_surf_map.o : ./tools/fv_surf_map.F90 ./model/fv_arrays.o ./model/fv_grid_utils.o ./tools/fv_mp_mod.o ./tools/fv_timing.o  
+./tools/fv_timing.o : ./tools/fv_timing.F90 ./tools/fv_mp_mod.o  
+./tools/fv_treat_da_inc.o : ./tools/fv_treat_da_inc.F90 ./tools/sim_nc_mod.o ./model/fv_grid_utils.o ./tools/fv_mp_mod.o ./model/fv_arrays.o  
+./tools/init_hydro.o : ./tools/init_hydro.F90 ./model/fv_arrays.o ./model/fv_grid_utils.o ./model/multi_gases.o ./tools/fv_mp_mod.o  
+./tools/sim_nc_mod.o : ./tools/sim_nc_mod.F90  
+./tools/sorted_index.o : ./tools/sorted_index.F90 ./model/fv_arrays.o  
+./tools/test_cases.o : ./tools/test_cases.F90 ./tools/fv_grid_tools.o ./tools/fv_diagnostics.o ./tools/fv_surf_map.o ./tools/fv_mp_mod.o ./model/fv_grid_utils.o ./tools/init_hydro.o ./model/fv_sg.o ./model/fv_arrays.o ./tools/fv_eta.o  

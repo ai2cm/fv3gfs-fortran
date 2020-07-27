@@ -1,0 +1,2 @@
+./IPD_driver.o : ./IPD_driver.F90 ./IPD_typedefs.o  
+./IPD_typedefs.o : ./IPD_typedefs.F90  

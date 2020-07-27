@@ -1,0 +1,3 @@
+./FV3GFS_io.o : ./FV3GFS_io.F90  
+./ffsync.o : ./ffsync.F90  
+./post_gfs_stub.o : ./post_gfs_stub.F90  
