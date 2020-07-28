@@ -1,14 +1,13 @@
-with import <nixpkgs> {};
-# { stdenv
-# , netcdffortran
-# , perl
-# , gfortran
-# , lapack
-# , blas
-# , openmpi
-# , fetchgit
-# }:
-# 
+{
+  stdenvNoCC
+  ,bash
+  ,fetchgit
+  ,system
+  ,rsync
+  ,gfortran
+  ,openmpi
+  ,coreutils
+} :
 stdenvNoCC.mkDerivation rec {
   pname = "nceplibs";
   version = "0.0.0";
@@ -32,12 +31,4 @@ stdenvNoCC.mkDerivation rec {
 
 
 
-  meta = {
-      description = "Libraries for the Unidata network Common Data Format";
-      platforms = stdenv.lib.platforms.unix;
-      homepage = "https://www.unidata.ucar.edu/software/netcdf/";
-      license = {
-        url = "https://www.unidata.ucar.edu/software/netcdf/docs/copyright.html";
-      };
-  };
 }

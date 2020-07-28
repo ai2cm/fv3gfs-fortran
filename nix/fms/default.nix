@@ -9,6 +9,20 @@ with import <nixpkgs> {};
 # , fetchgit
 # }:
 # 
+{
+  stdenv
+  ,bash
+  ,rsync
+  ,gfortran
+  ,openmpi
+  ,automake
+  ,autoconf
+  ,m4
+  ,libtool
+  ,bats
+  ,netcdffortran
+  ,netcdf
+} :
 stdenv.mkDerivation rec {
   pname = "fms";
   version = "0.0.0";

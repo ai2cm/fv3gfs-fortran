@@ -9,6 +9,15 @@ with import <nixpkgs> {};
 # , fetchgit
 # }:
 # 
+{
+  stdenvNoCC
+  ,netcdffortran
+  ,gfortran
+  ,openmpi
+  ,coreutils
+  ,which
+  ,llvmPackages
+}:
 stdenvNoCC.mkDerivation rec {
   pname = "esmf";
   version = "0.0.0";
