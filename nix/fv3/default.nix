@@ -1,8 +1,8 @@
 let
   pkgs = import <nixpkgs> {};
-  fms=  import ./nix/fms;
-  nceplibs=  import ./nix/nceplibs;
-  esmf=  import ./nix/esmf;
+  fms=  import ../fms;
+  nceplibs=  import ../nceplibs;
+  esmf=  import ../esmf;
 in
 with import <nixpkgs> {}; {
   qpidEnv = stdenv.mkDerivation {
