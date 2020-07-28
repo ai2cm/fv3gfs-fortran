@@ -29,7 +29,7 @@ with import <nixpkgs> {}; {
     url = "git@github.com:VulcanClimateModeling/fv3gfs-fortran.git";
   };
 
-  config = ./FV3/conf/configure.fv3;
+  config = ./configure.fv3;
 
   buildPhase = ''
      
