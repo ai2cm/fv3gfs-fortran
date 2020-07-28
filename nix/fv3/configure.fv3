@@ -24,12 +24,12 @@ HYDRO = N
 
 NEMSIOINC = -I$(NEMSIO_INC)
 
-NCEPLIBS_DIR ?= /opt/NCEPlibs/lib
-NEMSIO_LIB = $(NCEPLIBS_DIR)/libnemsio_d.a
-BACIO_LIB4 = $(NCEPLIBS_DIR)/libbacio_4.a
-SP_LIBd = $(NCEPLIBS_DIR)/libsp_v2.0.2_d.a
-W3EMC_LIBd = $(NCEPLIBS_DIR)/libw3emc_d.a
-W3NCO_LIBd = $(NCEPLIBS_DIR)/libw3nco_d.a
+NCEPLIBS_DIR ?= 
+NEMSIO_LIB = -lnemsio_d
+BACIO_LIB4 = -lbacio_4
+SP_LIBd = -lsp_v2.0.2_d
+W3EMC_LIBd = -lw3emc_d
+W3NCO_LIBd = -lw3nco_d
 NCEPLIBS = $(NEMSIO_LIB) $(BACIO_LIB4) $(SP_LIBd) $(W3EMC_LIBd) $(W3NCO_LIBd)
 
 ##############################################
@@ -89,7 +89,7 @@ CFLAGS_DEBUG = -O0 -g
 FFLAGS_TEST = -O3 -debug minimal -fp-model source -qoverride-limits
 CFLAGS_TEST = -O2
 
-LDFLAGS := -L${ESMF_DIR}/lib/libO3/Linux.gfortran.64.mpiuni.default/ -L${FMS_DIR}/libFMS/.libs/
+#LDFLAGS := -L${ESMF_DIR}/lib/libO3/Darwin.gfortran.64.mpiuni.default/ -L${FMS_DIR}/libFMS/.libs/
 LDFLAGS_OPENMP := -fopenmp
 LDFLAGS_VERBOSE := -Wl,-V,--verbose,-cref,-M
 
@@ -131,6 +131,8 @@ FFLAGS += $(FFLAGS_VERBOSE)
 LDFLAGS += $(LDFLAGS_VERBOSE)
 endif
 
-LIBS += -lFMS -lesmf -lnetcdff -lnetcdf -llapack -lblas -lc -lrt
+# static linking of esmf works on darwin
+#LIBS += -lFMS -lnetcdff -lnetcdf -llapack -lblas ${ESMF_DIR}/lib/libesmf.a -lstdc++ #-lc -lrt
+LIBS += -lFMS -lnetcdff -lnetcdf -llapack -lblas -lesmf #-lc -lrt
 
 LDFLAGS += $(LIBS)
