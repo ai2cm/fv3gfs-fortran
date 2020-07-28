@@ -7,6 +7,7 @@ mkShell {
       p.fms
       p.esmf
       p.nceplibs
+      p.fv3
       netcdf
       netcdffortran
       openssh # hidden dependency of openmpi
