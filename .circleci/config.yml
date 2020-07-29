@@ -2,6 +2,34 @@ version: 2.1
 orbs:
   gcp-gcr: circleci/gcp-gcr@0.6.1
 jobs:
+  nix-mac:
+    macos:
+      xcode: 11.3.0
+    steps:
+      - run: sudo curl -L https://nixos.org/nix/install | sh
+      - run: nix-env -i git openssh
+      - checkout
+      - run:
+          name: "Pull Submodules"
+          command: |
+            git submodule init
+            git submodule update
+      - restore_cache:
+          keys: 
+            - key
+      - run: |
+          if [[ -f derivations.nar ]]
+          then 
+            nix-store --import < derivations.nar
+          fi
+          drv=$(nix-instantiate nix -A fv3)
+      - run: nix-build -A fv3 nix
+      - run: |
+          nix-store --export $(nix-store -qR $drv) > derivations.nar
+      - save_cache:
+          paths:
+            - derivations.nar
+          key: key
   nix:
     docker:
       - image: nixos/nix
@@ -94,3 +122,4 @@ workflows:
     jobs:
       - build_default
       - nix
+      - nix-mac
