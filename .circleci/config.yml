@@ -6,7 +6,7 @@ jobs:
     macos:
       xcode: 11.3.0
     steps:
-      - run: sudo curl -L https://nixos.org/nix/install | sh
+      - run: sudo sh <(curl -L https://nixos.org/nix/install) --darwin-use-unencrypted-nix-store-volume
       - run: nix-env -i git openssh
       - checkout
       - run:
