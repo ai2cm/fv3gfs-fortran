@@ -3073,6 +3073,11 @@ end subroutine ytp_v
 
   if (grid_type < 3 .and. .not. (nested .or. regional)) then
      npt = 4
+#ifdef GT4PY_DEV
+     if (npt > (je - js) .or. npt > (ie - is)) then
+        npt = min(je-js, ie-is)
+     endif
+#endif
   else
      npt = -2
   endif
@@ -3131,11 +3136,8 @@ end subroutine ytp_v
      ! edges:
      !----------
      if (grid_type < 3) then
-#ifdef GT4PY_DEV
-        if ( js==1 ) then
-#else
+
         if ( js==1 .or. jsd<npt) then
-#endif
            do j=jsd,npt-1
               do i=isd,ied
                  utmp(i,j) = 0.5*(u(i,j) + u(i,j+1))
@@ -3143,11 +3145,8 @@ end subroutine ytp_v
               enddo
            enddo
         endif
-#ifdef GT4PY_DEV
-        if ( (je+1)==npy ) then
-#else
+
         if ( (je+1)==npy .or. jed>=(npy-npt)) then
-#endif
            do j=npy-npt+1,jed
               do i=isd,ied
                  utmp(i,j) = 0.5*(u(i,j) + u(i,j+1))
@@ -3155,11 +3154,7 @@ end subroutine ytp_v
               enddo
            enddo
         endif
-#ifdef GT4PY_DEV
-        if ( is==1 ) then
-#else
         if ( is==1 .or. isd<npt ) then
-#endif
            do j=max(npt,jsd),min(npy-npt,jed)
               do i=isd,npt-1
                  utmp(i,j) = 0.5*(u(i,j) + u(i,j+1))
@@ -3167,11 +3162,7 @@ end subroutine ytp_v
               enddo
            enddo
         endif
-#ifdef GT4PY_DEV
-        if ( (ie+1)==npx ) then
-#else
         if ( (ie+1)==npx .or. ied>=(npx-npt)) then
-#endif
            do j=max(npt,jsd),min(npy-npt,jed)
               do i=npx-npt+1,ied
                  utmp(i,j) = 0.5*(u(i,j) + u(i,j+1))
