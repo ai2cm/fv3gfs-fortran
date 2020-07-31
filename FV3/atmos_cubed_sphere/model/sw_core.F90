@@ -3145,7 +3145,6 @@ end subroutine ytp_v
               enddo
            enddo
         endif
-
         if ( (je+1)==npy .or. jed>=(npy-npt)) then
            do j=npy-npt+1,jed
               do i=isd,ied
@@ -3154,6 +3153,7 @@ end subroutine ytp_v
               enddo
            enddo
         endif
+
         if ( is==1 .or. isd<npt ) then
            do j=max(npt,jsd),min(npy-npt,jed)
               do i=isd,npt-1

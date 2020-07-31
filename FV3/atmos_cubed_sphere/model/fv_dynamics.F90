@@ -423,7 +423,7 @@ contains
       endif
 
       theta_d = get_tracer_index (MODEL_ATMOS, 'theta_d')
-      
+
 #ifdef SW_DYNAMICS
       akap  = 1.
       pfull(1) = 0.5*flagstruct%p_ref
@@ -519,7 +519,7 @@ contains
               enddo
            enddo
          endif
-       endd
+       enddo
 
     endif
       if ( flagstruct%fv_debug ) then

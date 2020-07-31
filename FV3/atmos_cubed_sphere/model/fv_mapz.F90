@@ -1730,7 +1730,7 @@ endif        ! end last_step check
 
 ! Compute vertical subgrid distribution
    if ( kord >7 ) then
-        call  scalar_profile( qs, q4, dp1, km, i1, i2, iv, kord, q_min)
+        call  scalar_profile( qs, q4, dp1, km, i1, i2, iv, kord, q_min )
    else
         call ppm_profile( q4, dp1, km, i1, i2, iv, kord )
    endif
@@ -2066,7 +2066,7 @@ endif        ! end last_step check
 
 !-------------------------------------
 ! Huynh's 2nd constraint for interior:
-!------------------------------------- 
+!-------------------------------------
   do k=3,km-2
      if ( abs(kord)<9 ) then
        do i=i1,i2
@@ -2122,7 +2122,7 @@ endif        ! end last_step check
 #else
               a4(4,i,k) = 3.*(2.*a4(1,i,k) - (a4(2,i,k)+a4(3,i,k)))
 #endif
-           endif
+            endif
           endif
        enddo
      elseif ( abs(kord)==10 ) then

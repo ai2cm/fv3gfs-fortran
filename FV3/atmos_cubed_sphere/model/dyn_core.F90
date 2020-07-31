@@ -1420,8 +1420,8 @@ contains
       endif
 
 !-----------------------------------------------------
-   enddo   ! time split loop
-   !$ser verbatim if (ser_on) then
+  enddo   ! time split loop
+  !$ser verbatim if (ser_on) then
   !$ser on
   !$ser verbatim endif
   first_call=.false.

@@ -9,7 +9,6 @@ BUILD_FROM_INTERMEDIATE ?= n
 ENVIRONMENT_TARGET ?= fv3gfs-environment
 COMPILED_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)
 SERIALIZE_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)-serialize
-SERIALIZE_IMAGE_GT4PYDEV ?= $(SERIALIZE_IMAGE)-gt4pydev
 ENVIRONMENT_IMAGE=$(GCR_URL)/$(ENVIRONMENT_TARGET):$(ENVIRONMENT_TAG_NAME)
 IMAGE ?= $(ENVIRONMENT_IMAGE)
 
@@ -49,7 +48,7 @@ build_serialize:
 	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" COMPILED_IMAGE=$(SERIALIZE_IMAGE) $(MAKE) build_compiled
 
 build_serialize_gt4pydev:
-	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true --build-arg configure_file=configure.fv3.gnu_docker_serialize_gt4pydev" COMPILED_IMAGE=$(SERIALIZE_IMAGE_GT4PYDEV) $(MAKE) build_compiled
+	 COMPILE_OPTION="GT4PY_DEV=Y" SERIALIZE_IMAGE=$(SERIALIZE_IMAGE)-gt4pydev $(MAKE) build_serialize
 
 build_deps:
 	docker build -f $(DOCKERFILE) -t $(FMS_IMAGE) --target fv3gfs-fms .
@@ -108,4 +107,4 @@ clean:
 
 .PHONY: build build_environment build_compiled enter enter_serialize run test test_32bit clean \
 	run_serialize test_serialize test_serialize_image dev_serialize build_serialize \
-	build_environment_serialize
+	build_environment_serialize build_serialize_gt4pydev
