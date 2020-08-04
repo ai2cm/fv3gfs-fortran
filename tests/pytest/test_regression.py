@@ -93,11 +93,13 @@ def run_model(rundir, model_image):
     docker_run = ['docker', 'run', '--rm']
     rundir_abs = os.path.abspath(rundir)
     rundir_mount = ['-v', f'{rundir_abs}:' + docker_runpath + '/rundir']
+    data_abs = os.path.abspath(os.path.join(rundir_abs, 'test_data'))
+    data_mount = ['-v', f'{data_abs}:' + docker_runpath + '/test_data']
     fv3out_filename = join(rundir, 'stdout.log')
     fv3err_filename = join(rundir, 'stderr.log')
     with open(fv3out_filename, 'w') as fv3out_f, open(fv3err_filename, 'w') as fv3err_f:
         subprocess.check_call(
-            docker_run + rundir_mount + archive_mount + [model_image] + ["bash", "/rundir/submit_job.sh"],
+            docker_run + rundir_mount + archive_mount + data_mount + [model_image] + ["bash", "/rundir/submit_job.sh"],
             stdout=fv3out_f,
             stderr=fv3err_f
         )
