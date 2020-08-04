@@ -834,7 +834,7 @@ contains
   subroutine atmosphere_restart(timestamp)
     character(len=*),  intent(in) :: timestamp
 
-    call fv_write_restart(Atm, grids_on_this_pe, timestamp)
+    if (.not. Atm(mytile)%flagstruct%disable_fv_restart_write) call fv_write_restart(Atm, grids_on_this_pe, timestamp)
 
   end subroutine atmosphere_restart
  
