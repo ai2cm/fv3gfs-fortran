@@ -293,11 +293,7 @@ contains
     !$ser verbatim boolean_false = .false.
     !$ser verbatim boolean_true = .true.
     !$ser verbatim call mpi_comm_rank(MPI_COMM_WORLD, mpi_rank,ier)
-    !$ser verbatim if (fs_is_serialization_on()) then
-    !$ser verbatim ser_on = .true.
-    !$ser verbatim else
-    !$ser verbatim ser_on = .false.
-    !$ser verbatim endif
+    !$ser verbatim ser_on=fs_is_serialization_on()
  
       is  = bd%is
       ie  = bd%ie

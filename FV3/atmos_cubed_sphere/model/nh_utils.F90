@@ -247,11 +247,7 @@ CONTAINS
   integer  i, j, k, isd, ied, jsd, jed
   logical:: uniform_grid
   !$ser verbatim logical :: ser_on
-  !$ser verbatim if (fs_is_serialization_on()) then
-  !$ser verbatim ser_on = .true.
-  !$ser verbatim else
-  !$ser verbatim ser_on = .false.
-  !$ser verbatim endif
+  !$ser verbatim ser_on=fs_is_serialization_on()
   uniform_grid = .false.
 
   damp(km+1) = damp(km)

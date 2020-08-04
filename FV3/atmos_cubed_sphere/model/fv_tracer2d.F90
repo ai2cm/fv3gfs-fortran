@@ -151,12 +151,9 @@ subroutine tracer_2d_1L(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, domain, npx, n
       dxa    => gridstruct%dxa 
       dya    => gridstruct%dya 
       dx     => gridstruct%dx  
-      dy     => gridstruct%dy  
-!$ser verbatim if (fs_is_serialization_on()) then
-!$ser verbatim ser_on = .true.
-!$ser verbatim else
-!$ser verbatim ser_on = .false.
-!$ser verbatim endif
+      dy     => gridstruct%dy
+      !$ser verbatim ser_on=fs_is_serialization_on()
+
 !$ser off
 !$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,cx,xfx,dxa,dy, &
 !$OMP                                  sin_sg,cy,yfx,dya,dx,cmax)
