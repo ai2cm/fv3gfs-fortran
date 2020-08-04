@@ -1048,6 +1048,11 @@ subroutine qs_init (kmp)
     allocate (desw (length))
     !$ser verbatim ser_on=fs_is_serialization_on()
     !$ser on
+    !$ser verbatim table(:)=0.0
+    !$ser verbatim tablew(:)=0.0
+    !$ser verbatim table2(:)=0.0
+    !$ser verbatim des2(:)=0.0
+    !$ser verbatim desw(:)=0.0
     !$ser savepoint QSInit-In
     !$ser data table=table table2=table2 tablew=tablew des2=des2 desw=desw
     call qs_table (length)
