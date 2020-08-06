@@ -251,7 +251,7 @@ character(len=20)   :: mod_name = 'fvGFS/atmosphere_mod'
 #else
   !$ser verbatim integer::cld_amt
 #endif
-  !$ser verbatim integer :: o3mr, sgs_tke
+  !$ser verbatim integer :: o3mr
   integer :: mytile  = 1
   integer :: p_split = 1
   integer, allocatable :: pelist(:)
@@ -386,7 +386,7 @@ contains
    snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat' )
    graupel = get_tracer_index (MODEL_ATMOS, 'graupel' )
   !$ser verbatim o3mr = get_tracer_index (MODEL_ATMOS, 'o3mr')
-  !$ser verbatim sgs_tke = get_tracer_index (MODEL_ATMOS, 'sgs_tke')
+
 #ifdef CCPP
    cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
 #else
@@ -693,7 +693,7 @@ contains
 !uc/vc only need be same on coarse grid? However BCs do need to be the same
      !$ser savepoint FVDynamics-In
      !$ser verbatim bdt=dt_atmos/real(abs(p_split))
-     !$ser data  bdt=bdt nq_tot=nq zvir=zvir ptop=Atm(n)%ptop ks=Atm(n)%ks ncnst=nq n_split=n_split_loc u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp  qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) qsgs_tke=Atm(n)%q(:,:,:,sgs_tke) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc ak=Atm(n)%ak bk=Atm(n)%bk mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est consv_te=Atm(n)%flagstruct%consv_te do_adiabatic_init=do_adiabatic_init
+     !$ser data  bdt=bdt nq_tot=nq zvir=zvir ptop=Atm(n)%ptop ks=Atm(n)%ks ncnst=nq n_split=n_split_loc u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp  qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr)  ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc ak=Atm(n)%ak bk=Atm(n)%bk mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est consv_te=Atm(n)%flagstruct%consv_te do_adiabatic_init=do_adiabatic_init
       call fv_dynamics(npx, npy, npz, nq, Atm(n)%ng, dt_atmos/real(abs(p_split)),&
                        Atm(n)%flagstruct%consv_te, Atm(n)%flagstruct%fill,       &
                        Atm(n)%flagstruct%reproduce_sum, kappa, cp_air, zvir,     &
@@ -714,7 +714,7 @@ contains
                        Atm(n)%parent_grid, Atm(n)%domain,Atm(n)%diss_est)
     
      !$ser savepoint FVDynamics-Out
-     !$ser data  u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) qsgs_tke=Atm(n)%q(:,:,:,sgs_tke) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
+     !$ser data  u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
       call timing_off('fv_dynamics')
 
       if (ngrids > 1 .and. (psc < p_split .or. p_split < 0)) then
@@ -742,7 +742,7 @@ contains
         nt_dyn = nq - 1
       endif
      !$ser savepoint FVSubgridZ-In
-     !$ser data nq=nt_dyn dt=dt_atmos delp=Atm(n)%delp pe=Atm(n)%pe peln=Atm(n)%peln pkz=Atm(n)%pkz pt=Atm(n)%pt  qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) qsgs_tke=Atm(n)%q(:,:,:,sgs_tke) ua=Atm(n)%ua va=Atm(n)%va w=Atm(n)%w delz=Atm(n)%delz u_dt=u_dt v_dt=v_dt t_dt=t_dt 
+     !$ser data nq=nt_dyn dt=dt_atmos delp=Atm(n)%delp pe=Atm(n)%pe peln=Atm(n)%peln pkz=Atm(n)%pkz pt=Atm(n)%pt  qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ua=Atm(n)%ua va=Atm(n)%va w=Atm(n)%w delz=Atm(n)%delz u_dt=u_dt v_dt=v_dt t_dt=t_dt 
       call fv_subgrid_z(isd, ied, jsd, jed, isc, iec, jsc, jec, Atm(n)%npz, &
                         nt_dyn, dt_atmos, Atm(n)%flagstruct%fv_sg_adj,      &
                         Atm(n)%flagstruct%nwat, Atm(n)%delp, Atm(n)%pe,     &
@@ -751,7 +751,7 @@ contains
                         Atm(n)%w, Atm(n)%delz, u_dt, v_dt, t_dt,            &
                         Atm(n)%flagstruct%n_sponge)
       !$ser savepoint FVSubgridZ-Out
-      !$ser data  pt=Atm(n)%pt qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) qsgs_tke=Atm(n)%q(:,:,:,sgs_tke) ua=Atm(n)%ua va=Atm(n)%va w=Atm(n)%w u_dt=u_dt v_dt=v_dt t_dt=t_dt 
+      !$ser data  pt=Atm(n)%pt qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ua=Atm(n)%ua va=Atm(n)%va w=Atm(n)%w u_dt=u_dt v_dt=v_dt t_dt=t_dt 
     endif
 
 #ifdef USE_Q_DT

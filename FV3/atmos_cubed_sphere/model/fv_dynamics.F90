@@ -289,7 +289,7 @@ contains
 #ifdef CCPP
       integer :: ierr
 #endif
-      !$ser verbatim integer:: mode, n_map_step, o3mr, sgs_tke
+      !$ser verbatim integer:: mode, n_map_step
       !$ser verbatim real :: ph1v(npz), ph2v(npz)
 #ifdef CCPP
       ccpp_associate: associate( cappa     => CCPP_interstitial%cappa,     &
@@ -418,8 +418,7 @@ contains
            snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
            graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
            cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
-           !$ser verbatim o3mr = get_tracer_index (MODEL_ATMOS, 'o3mr')
-           !$ser verbatim sgs_tke = get_tracer_index (MODEL_ATMOS, 'sgs_tke')
+        
       endif
 
       theta_d = get_tracer_index (MODEL_ATMOS, 'theta_d')
