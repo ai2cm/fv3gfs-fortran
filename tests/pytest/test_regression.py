@@ -95,7 +95,7 @@ def run_model(rundir, model_image):
     rundir_mount = ['-v', f'{rundir_abs}:' + docker_runpath + '/rundir']
     data_abs = os.path.abspath(os.path.join(rundir_abs, 'test_data'))
     os.makedirs(data_abs)
-    data_mount = ['-v', f'{data_abs}:' + docker_runpath + '/test_data']
+    data_mount = ['-v', f'{data_abs}:' + docker_runpath + '/rundir/test_data']
     fv3out_filename = join(rundir, 'stdout.log')
     fv3err_filename = join(rundir, 'stderr.log')
     with open(fv3out_filename, 'w') as fv3out_f, open(fv3err_filename, 'w') as fv3err_f:
