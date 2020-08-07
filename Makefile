@@ -47,6 +47,9 @@ build_compiled:
 build_serialize:
 	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" COMPILED_IMAGE=$(SERIALIZE_IMAGE) $(MAKE) build_compiled
 
+build_serialize_gt4pydev:
+	 COMPILE_OPTION="GT4PY_DEV=Y" SERIALIZE_IMAGE=$(SERIALIZE_IMAGE)-gt4pydev $(MAKE) build_serialize
+
 build_deps:
 	docker build -f $(DOCKERFILE) -t $(FMS_IMAGE) --target fv3gfs-fms .
 	docker build -f $(DOCKERFILE) -t $(ESMF_IMAGE) --target fv3gfs-esmf .
@@ -104,4 +107,4 @@ clean:
 
 .PHONY: build build_environment build_compiled enter enter_serialize run test test_32bit clean \
 	run_serialize test_serialize test_serialize_image dev_serialize build_serialize \
-	build_environment_serialize
+	build_environment_serialize build_serialize_gt4pydev

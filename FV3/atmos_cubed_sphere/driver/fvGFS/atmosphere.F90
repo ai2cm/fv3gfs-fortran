@@ -251,7 +251,7 @@ character(len=20)   :: mod_name = 'fvGFS/atmosphere_mod'
 #else
   !$ser verbatim integer::cld_amt
 #endif
-
+  !$ser verbatim integer :: o3mr, sgs_tke
   integer :: mytile  = 1
   integer :: p_split = 1
   integer, allocatable :: pelist(:)
@@ -385,6 +385,8 @@ contains
    rainwat = get_tracer_index (MODEL_ATMOS, 'rainwat' )
    snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat' )
    graupel = get_tracer_index (MODEL_ATMOS, 'graupel' )
+  !$ser verbatim o3mr = get_tracer_index (MODEL_ATMOS, 'o3mr')
+  !$ser verbatim sgs_tke = get_tracer_index (MODEL_ATMOS, 'sgs_tke')
   
 #ifdef CCPP
    cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
@@ -682,7 +684,7 @@ contains
      !$ser verbatim if (psc == abs(p_split) .and. a_step == 1) then                    
      !$ser on
      !$ser savepoint Grid-Info
-     !$ser data is_=Atm(n)%bd%is ie=Atm(n)%bd%ie isd=Atm(n)%bd%isd ied=Atm(n)%bd%ied js=Atm(n)%bd%js je=Atm(n)%bd%je jsd=Atm(n)%bd%jsd jed=Atm(n)%bd%jed npx=npx npy=npy npz=npz nested=Atm(n)%gridstruct%nested grid_type=Atm(n)%gridstruct%grid_type dya=Atm(n)%gridstruct%dya  dxa=Atm(n)%gridstruct%dxa dxc=Atm(n)%gridstruct%dxc dyc=Atm(n)%gridstruct%dyc rdxc=Atm(n)%gridstruct%rdxc rdx=Atm(n)%gridstruct%rdx rdyc=Atm(n)%gridstruct%rdyc  rdxa=Atm(n)%gridstruct%rdxa  rdya=Atm(n)%gridstruct%rdya rdy=Atm(n)%gridstruct%rdy cosa_u=Atm(n)%gridstruct%cosa_u cosa_v=Atm(n)%gridstruct%cosa_v  cosa_s=Atm(n)%gridstruct%cosa_s sina_v=Atm(n)%gridstruct%sina_v  sina_u=Atm(n)%gridstruct%sina_u rsin_u=Atm(n)%gridstruct%rsin_u rsin_v=Atm(n)%gridstruct%rsin_v rsin2=Atm(n)%gridstruct%rsin2 sin_sg=Atm(n)%gridstruct%sin_sg cos_sg=Atm(n)%gridstruct%cos_sg area=Atm(n)%gridstruct%area dy=Atm(n)%gridstruct%dy rarea=Atm(n)%gridstruct%rarea  rarea_c=Atm(n)%gridstruct%rarea_c area_64=Atm(n)%gridstruct%area_64 rsina=Atm(n)%gridstruct%rsina cosa=Atm(n)%gridstruct%cosa  dx=Atm(n)%gridstruct%dx fC=Atm(n)%gridstruct%fC da_min=Atm(n)%gridstruct%da_min da_min_c=Atm(n)%gridstruct%da_min_c del6_u=Atm(n)%gridstruct%del6_u del6_v=Atm(n)%gridstruct%del6_v f0=Atm(n)%gridstruct%f0 divg_u=Atm(n)%gridstruct%divg_u divg_v=Atm(n)%gridstruct%divg_v stretched_grid=Atm(n)%gridstruct%stretched_grid agrid1=Atm(n)%gridstruct%agrid(:,:,1) agrid2=Atm(n)%gridstruct%agrid(:,:,2) bgrid1=Atm(n)%gridstruct%grid(:,:,1) bgrid2=Atm(n)%gridstruct%grid(:,:,2) edge_w=Atm(n)%gridstruct%edge_w edge_e=Atm(n)%gridstruct%edge_e edge_s=Atm(n)%gridstruct%edge_s edge_n=Atm(n)%gridstruct%edge_n a11=Atm(n)%gridstruct%a11  a12=Atm(n)%gridstruct%a12  a21=Atm(n)%gridstruct%a21  a22=Atm(n)%gridstruct%a22
+     !$ser data is_=Atm(n)%bd%is ie=Atm(n)%bd%ie isd=Atm(n)%bd%isd ied=Atm(n)%bd%ied js=Atm(n)%bd%js je=Atm(n)%bd%je jsd=Atm(n)%bd%jsd jed=Atm(n)%bd%jed npx=npx npy=npy npz=npz nested=Atm(n)%gridstruct%nested grid_type=Atm(n)%gridstruct%grid_type dya=Atm(n)%gridstruct%dya  dxa=Atm(n)%gridstruct%dxa dxc=Atm(n)%gridstruct%dxc dyc=Atm(n)%gridstruct%dyc rdxc=Atm(n)%gridstruct%rdxc rdx=Atm(n)%gridstruct%rdx rdyc=Atm(n)%gridstruct%rdyc  rdxa=Atm(n)%gridstruct%rdxa  rdya=Atm(n)%gridstruct%rdya rdy=Atm(n)%gridstruct%rdy cosa_u=Atm(n)%gridstruct%cosa_u cosa_v=Atm(n)%gridstruct%cosa_v  cosa_s=Atm(n)%gridstruct%cosa_s sina_v=Atm(n)%gridstruct%sina_v  sina_u=Atm(n)%gridstruct%sina_u rsin_u=Atm(n)%gridstruct%rsin_u rsin_v=Atm(n)%gridstruct%rsin_v rsin2=Atm(n)%gridstruct%rsin2 sin_sg=Atm(n)%gridstruct%sin_sg cos_sg=Atm(n)%gridstruct%cos_sg area=Atm(n)%gridstruct%area dy=Atm(n)%gridstruct%dy rarea=Atm(n)%gridstruct%rarea  rarea_c=Atm(n)%gridstruct%rarea_c area_64=Atm(n)%gridstruct%area_64 rsina=Atm(n)%gridstruct%rsina cosa=Atm(n)%gridstruct%cosa  dx=Atm(n)%gridstruct%dx fC=Atm(n)%gridstruct%fC da_min=Atm(n)%gridstruct%da_min da_min_c=Atm(n)%gridstruct%da_min_c del6_u=Atm(n)%gridstruct%del6_u del6_v=Atm(n)%gridstruct%del6_v f0=Atm(n)%gridstruct%f0 divg_u=Atm(n)%gridstruct%divg_u divg_v=Atm(n)%gridstruct%divg_v stretched_grid=Atm(n)%gridstruct%stretched_grid agrid1=Atm(n)%gridstruct%agrid(:,:,1) agrid2=Atm(n)%gridstruct%agrid(:,:,2) bgrid1=Atm(n)%gridstruct%grid(:,:,1) bgrid2=Atm(n)%gridstruct%grid(:,:,2) edge_w=Atm(n)%gridstruct%edge_w edge_e=Atm(n)%gridstruct%edge_e edge_s=Atm(n)%gridstruct%edge_s edge_n=Atm(n)%gridstruct%edge_n a11=Atm(n)%gridstruct%a11  a12=Atm(n)%gridstruct%a12  a21=Atm(n)%gridstruct%a21  a22=Atm(n)%gridstruct%a22 
      !$ser verbatim call set_nz(npz)
      !$ser verbatim else
      !$ser off
@@ -692,7 +694,10 @@ contains
 !uc/vc only need be same on coarse grid? However BCs do need to be the same
      !$ser savepoint FVDynamics-In
      !$ser verbatim bdt=dt_atmos/real(abs(p_split))
-     !$ser data  bdt=bdt nq_tot=nq zvir=zvir ptop=Atm(n)%ptop ks=Atm(n)%ks ncnst=nq n_split=n_split_loc u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp  qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc ak=Atm(n)%ak bk=Atm(n)%bk mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
+                    !$ser data  bdt=bdt nq_tot=nq zvir=zvir ptop=Atm(n)%ptop ks=Atm(n)%ks ncnst=nq n_split=n_split_loc u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp  qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr)  ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc ak=Atm(n)%ak bk=Atm(n)%bk mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est consv_te=Atm(n)%flagstruct%consv_te do_adiabatic_init=do_adiabatic_init
+     !$ser verbatim if (sgs_tke > 0) then
+     !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
+     !$ser verbatim endif
       call fv_dynamics(npx, npy, npz, nq, Atm(n)%ng, dt_atmos/real(abs(p_split)),&
                        Atm(n)%flagstruct%consv_te, Atm(n)%flagstruct%fill,       &
                        Atm(n)%flagstruct%reproduce_sum, kappa, cp_air, zvir,     &
@@ -711,8 +716,12 @@ contains
                        Atm(n)%gridstruct,  Atm(n)%flagstruct,                    &
                        Atm(n)%neststruct,  Atm(n)%idiag, Atm(n)%bd,              &
                        Atm(n)%parent_grid, Atm(n)%domain,Atm(n)%diss_est)
+    
      !$ser savepoint FVDynamics-Out
-     !$ser data  u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
+     !$ser data  u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
+     !$ser verbatim if (sgs_tke > 0) then
+     !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
+     !$ser verbatim endif
       call timing_off('fv_dynamics')
 
       if (ngrids > 1 .and. (psc < p_split .or. p_split < 0)) then
@@ -740,7 +749,10 @@ contains
         nt_dyn = nq - 1
       endif
      !$ser savepoint FVSubgridZ-In
-     !$ser data nt_dyn=nt_dyn dt_atmos=dt_atmos delp=Atm(n)%delp pe=Atm(n)%pe peln=Atm(n)%peln pkz=Atm(n)%pkz pt=Atm(n)%pt q4d=Atm(n)%q ua=Atm(n)%ua va=Atm(n)%va w=Atm(n)%w delz=Atm(n)%delz u_dt=u_dt d_dt=v_dt t_dt=t_dt 
+     !$ser data nq=nt_dyn dt=dt_atmos delp=Atm(n)%delp pe=Atm(n)%pe peln=Atm(n)%peln pkz=Atm(n)%pkz pt=Atm(n)%pt  qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ua=Atm(n)%ua va=Atm(n)%va w=Atm(n)%w delz=Atm(n)%delz u_dt=u_dt v_dt=v_dt t_dt=t_dt
+     !$ser verbatim if (sgs_tke > 0) then
+     !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
+     !$ser verbatim endif
       call fv_subgrid_z(isd, ied, jsd, jed, isc, iec, jsc, jec, Atm(n)%npz, &
                         nt_dyn, dt_atmos, Atm(n)%flagstruct%fv_sg_adj,      &
                         Atm(n)%flagstruct%nwat, Atm(n)%delp, Atm(n)%pe,     &
@@ -749,7 +761,10 @@ contains
                         Atm(n)%w, Atm(n)%delz, u_dt, v_dt, t_dt,            &
                         Atm(n)%flagstruct%n_sponge)
       !$ser savepoint FVSubgridZ-Out
-      !$ser data  pt=Atm(n)%pt q4d=Atm(n)%q ua=Atm(n)%ua va=Atm(n)%va w=Atm(n)%w u_dt=u_dt d_dt=v_dt t_dt=t_dt 
+      !$ser data  pt=Atm(n)%pt qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ua=Atm(n)%ua va=Atm(n)%va w=Atm(n)%w u_dt=u_dt v_dt=v_dt t_dt=t_dt
+      !$ser verbatim if (sgs_tke > 0) then
+      !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
+      !$ser verbatim endif
     endif
 
 #ifdef USE_Q_DT
