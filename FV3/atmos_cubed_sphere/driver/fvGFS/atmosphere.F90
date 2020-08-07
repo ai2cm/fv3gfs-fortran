@@ -248,7 +248,7 @@ character(len=20)   :: mod_name = 'fvGFS/atmosphere_mod'
   integer :: cld_amt
 #else
 #endif
-
+  !$ser verbatim integer :: o3mr, sgs_tke
   integer :: mytile  = 1
   integer :: p_split = 1
   integer, allocatable :: pelist(:)
@@ -382,6 +382,8 @@ contains
    rainwat = get_tracer_index (MODEL_ATMOS, 'rainwat' )
    snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat' )
    graupel = get_tracer_index (MODEL_ATMOS, 'graupel' )
+  !$ser verbatim o3mr = get_tracer_index (MODEL_ATMOS, 'o3mr')
+  !$ser verbatim sgs_tke = get_tracer_index (MODEL_ATMOS, 'sgs_tke')
   
 #ifdef CCPP
    cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')

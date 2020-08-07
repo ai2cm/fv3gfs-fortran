@@ -1323,6 +1323,9 @@ contains
 
 !-----------------------------------------------------
   enddo   ! time split loop
+  !$ser verbatim if (ser_on) then
+  !$ser on
+  !$ser verbatim endif
   first_call=.false.
 !-----------------------------------------------------
     if ( nq > 0 .and. .not. flagstruct%inline_q ) then

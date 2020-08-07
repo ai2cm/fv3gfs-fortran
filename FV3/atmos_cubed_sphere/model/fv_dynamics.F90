@@ -416,6 +416,7 @@ contains
            snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
            graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
            cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
+        
       endif
 
       theta_d = get_tracer_index (MODEL_ATMOS, 'theta_d')
@@ -636,7 +637,6 @@ contains
        enddo
   endif
 #endif
-
                                                   call timing_on('FV_DYN_LOOP')
   do n_map=1, k_split   ! first level of time-split
      k_step = n_map
@@ -695,7 +695,6 @@ contains
                     gridstruct, flagstruct, neststruct, idiag, bd, &
                     domain, n_map==1, i_pack, last_step, diss_est,time_total)
                                          call timing_off('DYN_CORE')
-    
 #ifdef SW_DYNAMICS
 !!$OMP parallel do default(none) shared(is,ie,js,je,ps,delp,agrav)
       do j=js,je
@@ -750,7 +749,7 @@ contains
              if(flagstruct%fv_debug) call prt_mxm('divg',  dp1, is, ie, js, je, 0, npz, 1.,gridstruct%area_64, domain)
          endif
       endif
-
+     
       if ( npz > 4 ) then
 !------------------------------------------------------------------------
 ! Perform vertical remapping from Lagrangian control-volume to
@@ -768,6 +767,7 @@ contains
                                                   call timing_on('Remapping')
 #ifdef AVEC_TIMERS
                                                   call avec_timer_start(6)
+
 #endif
          call Lagrangian_to_Eulerian(last_step, consv_te, ps, pe, delp,                 &
                      pkz, pk, mdt, bdt, npz, is,ie,js,je, isd,ied,jsd,jed,              &
@@ -817,9 +817,11 @@ contains
             call del2_cubed(omga, 0.18*gridstruct%da_min, gridstruct, domain, npx, npy, npz, flagstruct%nf_omega, bd)
          endif
       end if
+      
 #endif
   enddo    ! n_map loop
                                                   call timing_off('FV_DYN_LOOP')
+ 
   if ( idiag%id_mdt > 0 .and. (.not.do_adiabatic_init) ) then
 ! Output temperature tendency due to inline moist physics:
 #if defined(CCPP) && defined(__GFORTRAN__)
@@ -948,6 +950,7 @@ contains
             m_fac(i,j) = u0*cos(gridstruct%agrid(i,j,2))
          enddo
       enddo
+
 !$OMP parallel do default(none) shared(is,ie,js,je,npz,hydrostatic,pt,m_fac,ua,cp_air, &
 !$OMP                                  u,u0,gridstruct,v )
       do k=1,npz

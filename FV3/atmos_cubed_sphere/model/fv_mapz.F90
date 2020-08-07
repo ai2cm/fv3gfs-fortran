@@ -1,4 +1,4 @@
-
+FV3/atmos_cubed_sphere/model/fv_mapz.F90
 !***********************************************************************
 !*                   GNU Lesser General Public License                 
 !*
@@ -246,7 +246,8 @@ contains
        snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
        graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
        cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
-
+       !$ser verbatim o3mr = get_tracer_index (MODEL_ATMOS, 'o3mr')
+       !$ser verbatim sgs_tke = get_tracer_index (MODEL_ATMOS, 'sgs_tke')
        if ( do_sat_adj ) then
             fast_mp_consv = (.not.do_adiabatic_init) .and. consv>consv_min
 #ifndef CCPP
@@ -257,7 +258,6 @@ contains
             call qs_init(kmp)
 #endif
        endif
- 
 !$OMP parallel do default(none) shared(is,ie,js,je,km,pe,ptop,kord_tm,hydrostatic, &
 !$OMP                                  pt,pk,rg,peln,q,nwat,liq_wat,rainwat,ice_wat,snowwat,    &
 !$OMP                                  graupel,q_con,sphum,cappa,r_vir,rcp,k1k,delp, &
@@ -302,7 +302,6 @@ contains
 ! Transform "density pt" to "density temp"
                do k=1,km
 #ifdef MOIST_CAPPA
-
                   call moist_cv(is,ie,isd,ied,jsd,jed, km, j, k, nwat, sphum, liq_wat, rainwat,    &
                                 ice_wat, snowwat, graupel, q, gz, cvm)
                   do i=is,ie
@@ -328,7 +327,6 @@ contains
 #endif
                enddo
             
-
              endif         ! hydro test
        elseif ( hydrostatic ) then
            call pkez(km, is, ie, js, je, j, pe, pk, akap, peln, pkz, ptop)
@@ -771,7 +769,6 @@ if( last_step .and. (.not.do_adiabatic_init)  ) then
 !$OMP end single
 
   elseif ( consv < -consv_min ) then
- 
               
 !$OMP do
       do j=js,je
@@ -1275,11 +1272,10 @@ endif        ! end last_step check
 
 ! Compute vertical subgrid distribution
    if ( kord >7 ) then
-        call scalar_profile( qs, q4, dp1, km, i1, i2, iv, kord, q_min )
+        call scalar_profile( qs, q4, dp1, km, i1, i2, iv, kord, q_min)
    else
         call ppm_profile( q4, dp1, km, i1, i2, iv, kord )
    endif
-
   do i=i1,i2
      k0 = 1
      do 555 k=1,kn
@@ -1364,11 +1360,7 @@ endif        ! end last_step check
 
 ! Compute vertical subgrid distribution
    if ( kord >7 ) then
-      
-      
       call  cs_profile( qs, q4, dp1, km, i1, i2, iv, kord )
-      
-       
    else
       call ppm_profile( q4, dp1, km, i1, i2, iv, kord )
    endif
@@ -1450,7 +1442,6 @@ endif        ! end last_step check
                q4(1,i,k,iq) = q1(i,j,k,iq)
             enddo
          enddo
-      
          call scalar_profile( qs, q4(1,i1,1,iq), dp1, km, i1, i2, 0, kord(iq), q_min )
       enddo
 
@@ -1465,24 +1456,39 @@ endif        ! end last_step check
          if(pe2(i,k+1) <= pe1(i,l+1)) then
 ! entire new grid is within the original grid
             pr = (pe2(i,k+1)-pe1(i,l)) / dp1(i,l)
+#ifndef GT4PY_DEV
             fac1 = pr + pl
             fac2 = r3*(pr*fac1 + pl*pl) 
             fac1 = 0.5*fac1
+#endif
             do iq=1,nq
-               q2(i,k,iq) = q4(2,i,l,iq) + (q4(4,i,l,iq)+q4(3,i,l,iq)-q4(2,i,l,iq))*fac1  &
+#ifdef GT4PY_DEV
+                q2(i,k,iq) = q4(2,i,l,iq) + 0.5*(q4(4,i,l,iq)+q4(3,i,l,iq)-q4(2,i,l,iq))  &
+                       *(pr+pl)-q4(4,i,l,iq)*r3*(pr*(pr+pl)+pl**2)
+#else
+                q2(i,k,iq) = q4(2,i,l,iq) + (q4(4,i,l,iq)+q4(3,i,l,iq)-q4(2,i,l,iq))*fac1  &
                                          -  q4(4,i,l,iq)*fac2
+#endif
             enddo
             k0 = l
             goto 555
           else
 ! Fractional area...
+#ifndef GT4PY_DEV
             dp = pe1(i,l+1) - pe2(i,k)
             fac1 = 1. + pl
             fac2 = r3*(1.+pl*fac1)
             fac1 = 0.5*fac1
+#endif
             do iq=1,nq
+#ifdef GT4PY_DEV
+              qsum(iq) = (pe1(i,l+1)-pe2(i,k))*(q4(2,i,l,iq)+0.5*(q4(4,i,l,iq)+   &
+                    q4(3,i,l,iq)-q4(2,i,l,iq))*(1.+pl)-q4(4,i,l,iq)*           &
+                     (r3*(1.+pl*(1.+pl))))
+#else
                qsum(iq) = dp*(q4(2,i,l,iq) + (q4(4,i,l,iq)+   &
                               q4(3,i,l,iq) - q4(2,i,l,iq))*fac1 - q4(4,i,l,iq)*fac2)
+#endif
             enddo
             do m=l+1,km
 ! locate the bottom edge: pe2(i,k+1)
@@ -1494,11 +1500,18 @@ endif        ! end last_step check
                else
                   dp = pe2(i,k+1)-pe1(i,m)
                   esl = dp / dp1(i,m)
+#ifndef GT4PY_DEV
                   fac1 = 0.5*esl
                   fac2 = 1.-r23*esl
+#endif
                   do iq=1,nq
+#ifdef GT4PY_DEV
+                     qsum(iq) = qsum(iq) + dp*(q4(2,i,m,iq)+0.5*esl*               &
+                           (q4(3,i,m,iq)-q4(2,i,m,iq)+q4(4,i,m,iq)*(1.-r23*esl)))
+#else
                      qsum(iq) = qsum(iq) + dp*( q4(2,i,m,iq) + fac1*(         &
                                 q4(3,i,m,iq)-q4(2,i,m,iq)+q4(4,i,m,iq)*fac2 ) )
+#endif
                   enddo
                   k0 = m
                   goto 123
@@ -1514,9 +1527,16 @@ endif        ! end last_step check
       enddo
 555   continue
 1000  continue
-
+      !$ser verbatim if(j == js2d ) then
+       !$ser verbatim im = i2-i1+1
+       !$ser savepoint Fillz-In
+      !$ser data im=im km=km nq=nq dp2=dp2  q2tracers=q2(:,:,1:nq)
+      !$ser verbatim endif
   if (fill) call fillz(i2-i1+1, km, nq, q2, dp2)
-
+  !$ser verbatim if(j == js2d ) then
+  !$ser savepoint Fillz-Out
+  !$ser data  q2tracers=q2(:,:,1:nq)
+  !$ser verbatim endif
   do iq=1,nq
 !    if (fill) call fillz(i2-i1+1, km, 1, q2(i1,1,iq), dp2)
      do k=1,km
@@ -1939,8 +1959,12 @@ endif        ! end last_step check
                a4(2,i,k) = a4(1,i,k)
                a4(3,i,k) = a4(1,i,k)
                a4(4,i,k) = 0.
-          else
-            a4(4,i,k) = 3.*(2.*a4(1,i,k) - (a4(2,i,k)+a4(3,i,k)))
+           else
+#ifdef GT4PY_DEV
+              a4(4,i,k) = 6.*a4(1,i,k) - 3.*(a4(2,i,k)+a4(3,i,k))
+#else
+              a4(4,i,k) = 3.*(2.*a4(1,i,k) - (a4(2,i,k)+a4(3,i,k)))
+#endif   
 ! Check within the smooth region if subgrid profile is non-monotonic
             if( abs(a4(4,i,k)) > abs(a4(2,i,k)-a4(3,i,k)) ) then
                   pmp_1 = a4(1,i,k) - 2.*gam(i,k+1)
@@ -1951,7 +1975,11 @@ endif        ! end last_step check
                   lac_2 = pmp_2 - 1.5*gam(i,k-1)
               a4(3,i,k) = min(max(a4(3,i,k), min(a4(1,i,k), pmp_2, lac_2)),  &
                                              max(a4(1,i,k), pmp_2, lac_2) )
+#ifdef GT4PY_DEV
+              a4(4,i,k) = 6.*a4(1,i,k) - 3.*(a4(2,i,k)+a4(3,i,k))
+#else
               a4(4,i,k) = 3.*(2.*a4(1,i,k) - (a4(2,i,k)+a4(3,i,k)))
+#endif
             endif
           endif
        enddo
