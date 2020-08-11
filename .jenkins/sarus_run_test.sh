@@ -10,7 +10,7 @@ module load cray-python gcloud
 # Create working directory using a Python virtual environment 
 python3 -m venv venv
 . ./venv/bin/activate
-pip3 install "git+https://github.com/VulcanClimateModeling/fv3config.git@more_hpc_examples#egg=fv3config"
+pip3 install "git+https://github.com/VulcanClimateModeling/fv3config.git"
 
 # Setup the working directory for a C48 FV3GFS run
 cp /project/d107/mcheese/yaml_files/fv3config_c48.yml .
