@@ -2,20 +2,19 @@
 set -e
 set -x
 
-# Set environment on Piz Daint for FV3config installation
+# Set environment on Piz Daint 
 module load daint-gpu
 module add /project/d107/install/modulefiles/
 module load cray-python gcloud
 
-# Create a new virtual environment in which FV3util will be installed
+# Create working directory using a Python virtual environment 
 python3 -m venv venv
 . ./venv/bin/activate
-pip3 install -r requirements_dev.txt
-pip3 install -e .
+pip3 install -e "https://github.com/GridTools/gt4py.git@more_hpc_examples"
 
 # Setup the working directory for a C48 FV3GFS run
-cd examples
-python create_rundir.py c48_config.yml "./c48_test"
+cp /project/d107/mcheese/yaml_files/fv3config_c48.yml .
+python create_rundir.py fv3config_c48.yml "./c48_test"
 deactivate
 
 # Copy over a SLURM job submission script to run the c48 test run
