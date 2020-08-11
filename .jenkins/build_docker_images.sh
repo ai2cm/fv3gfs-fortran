@@ -4,12 +4,12 @@
 export DOCKER_BUILDKIT=1
 
 # Get the dockerfiles for the images to be tested on Piz Daint
-dockerfiles=( $( ls ../docker/Dockerfile.gnu* ) )
+dockerfiles=( $( ls docker/Dockerfile.gnu* ) )
 
 for df in ${dockerfiles[@]}; do
 
    # Grab the architecture tag from the dockerfile filename
-   arch=${df:21}
+   arch=${df:18}
    container=us.gcr.io/vcm-ml/fv3gfs-compiled:$arch
    tar_file=fv3gfs-compiled_${arch}.tar
    
@@ -18,7 +18,7 @@ for df in ${dockerfiles[@]}; do
    echo " "
    
    # Build the docker image and push image to VCM's Google Container Repository
-   docker build -f docker/Dockerfile.$arch --target fv3-bld -t $container .
+   docker build -f $df --target fv3-bld -t $container .
    docker push $container
 
    # Copy an archived version of the image to a public Google Storage Bucket

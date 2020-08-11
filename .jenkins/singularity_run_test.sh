@@ -27,12 +27,12 @@ export SCRATCH_DIR=/scratch/snx3000/olifu/jenkins/workspace/fv3gfs/examples/c48_
 gcloud auth configure-docker
 
 # Get the dockerfiles for the images to be tested on Piz Daint
-dockerfiles=( $( ls ../docker/Dockerfile.gnu* ) )
+dockerfiles=( $( ls docker/Dockerfile.gnu* ) )
 
 for df in ${dockerfiles[@]}; do
 
    # Grab the architecture tag from the dockerfile filename
-   arch=${df:21}
+   arch=${df:18}
    export FV3_CONTAINER=fv3gfs-compiled:$arch
 
    # Download Docker image and convert it to Singularity Image Format (SIF)
