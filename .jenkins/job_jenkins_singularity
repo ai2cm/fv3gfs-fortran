@@ -1,0 +1,25 @@
+#!/bin/bash -l
+#SBATCH --job-name="FV3gfs_200km_resolution"
+#SBATCH --partition=cscsci
+#SBATCH --constraint=gpu
+#SBATCH --account=d107
+#SBATCH --time=00:05:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=6
+#SBATCH --hint=nomultithread
+
+##
+## Set the compute node environment
+##
+
+module load daint-gpu
+module load singularity/3.5.3-daint
+
+export OMP_NUM_THREADS=1
+ulimit -s unlimited
+
+##
+## Run FV3 
+##
+
+srun --mpi=pmi2 singularity run fv3gfs-fortran.sif /myapps/fv3/fv3.exe

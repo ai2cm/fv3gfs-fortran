@@ -8,26 +8,26 @@ module load cray-python gcloud
 
 python3 -m venv venv
 . ./venv/bin/activate
-pip3 install -r requirements_dev.txt
-pip3 install -e .
+pip3 install git+https://github.com/VulcanClimateModeling/fv3config.git@feature/more_hpc_examples#egg=fv3config
 
 cd examples
-python create_rundir.py c48_config.yml "./c48_test"
+python create_arbitrary_rundir.py c48_config.yml "./c48_test"
 deactivate
 
 cd ${PWD}/c48_test
-cp /project/d107/mcheese/jobscripts/job_jenkins_sarus .
+cp ../../.jenkins/job_jenkins_sarus .
 
-export SCRATCH_DIR=/scratch/snx3000/olifu/jenkins/workspace/fv3gfs/examples/c48_test
+export SCRATCH_DIR=${PWD}
 gcloud auth configure-docker
 
-declare -a archs=("gnu8_mpich314_nocuda" "gnu9_mpich314_nocuda" ) 
-for arch in ${archs[@]}; do
+dockerfiles=( $( ls ../../docker/Dockerfile.gnu* ) )
+for df in ${dockerfiles[@]}; do
+   arch=${df:24}
    export FV3_CONTAINER=fv3gfs-compiled:$arch
    export TAR_FILE=${FV3_CONTAINER/":"/"_"}.tar
    module load sarus
    gsutil copy gs://vcm-ml-public/jenkins-tmp/${TAR_FILE} .
    sarus load ./${TAR_FILE} ${FV3_CONTAINER}
-  module unload sarus
+   module unload sarus
    sbatch --wait job_jenkins_sarus
 done
