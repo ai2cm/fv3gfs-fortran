@@ -18,4 +18,4 @@ module load sarus
 export OMP_NUM_THREADS=1
 ulimit -s unlimited
 
-srun --mpi=pmi2 sarus run --mount=type=bind,source=${SCRATCH_DIR},destination=/scratch --workdir=/scratch ${FV3_CONTAINER} /myapps/fv3/fv3.exe
+srun sarus run --mpi --mount=type=bind,source=${SCRATCH_DIR},destination=/scratch --workdir=/scratch load/library/${FV3_CONTAINER} /myapps/fv3/fv3.exe
