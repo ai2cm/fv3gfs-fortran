@@ -8,7 +8,7 @@ module load cray-python gcloud
 
 python3 -m venv venv
 . ./venv/bin/activate
-pip3 install git+https://github.com/VulcanClimateModeling/fv3config.git@feature/more_hpc_examples#egg=fv3config
+pip3 install git+https://github.com/VulcanClimateModeling/fv3config.git
 
 cd examples
 python create_arbitrary_rundir.py c48_config.yml "./c48_test"
