@@ -14,13 +14,12 @@ pip3 install "git+https://github.com/VulcanClimateModeling/fv3config.git"
 
 # Setup the working directory for a C48 FV3GFS run
 cd examples
-cp /project/d107/mcheese/yaml_files/fv3config_c48.yml ./fv3config.yml
-python create_rundir.py
+cp /project/d107/mcheese/yaml_files/fv3config_c48.yml ./c48_config.yml
+python create_arbitrary_rundir.py c48_config.yml "./c48_test"
 deactivate
 
 # Copy over a SLURM job submission script to run the c48 test run
-#cd ${PWD}/c48_test
-cd rundir
+cd ${PWD}/c48_test
 cp /project/d107/mcheese/jobscripts/job_jenkins_sarus .
 
 # SCRATCH_DIR environment variable is required for the SLURM job to run
