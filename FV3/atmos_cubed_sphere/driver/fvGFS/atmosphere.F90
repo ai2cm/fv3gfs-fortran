@@ -188,6 +188,7 @@ use fv_sg_mod,          only: fv_subgrid_z
 use fv_update_phys_mod, only: fv_update_phys
 use fv_nwp_nudge_mod,   only: fv_nwp_nudge_init, fv_nwp_nudge_end, do_adiabatic_init
 use fv_io_mod,          only: fv_io_register_nudge_restart
+use fv_mapz_mod,        only: moist_cv
 #ifdef MULTI_GASES
 use multi_gases_mod,  only: virq, virq_max, num_gas, ri, cpi
 #endif

@@ -32,6 +32,7 @@ module module_physics_driver
   use module_sfc_cice,       only: sfc_cice
   use module_sfc_nst,        only: sfc_nst
   use module_sfc_diag,       only: sfc_diag
+  use mpp_mod,               only: mpp_error, NOTE
 !
 !vay-2018
 !
@@ -560,7 +561,7 @@ module module_physics_driver
 
       real(kind=kind_phys), dimension(size(Grid%xlon,1),Model%levs) ::  &
           del, rhc, dtdt, dudt, dvdt, dtdtc,                            &
-          ud_mf, dd_mf, dt_mf, prnum, dkt
+          ud_mf, dd_mf, dt_mf, prnum, dkt, cvm
 !         ud_mf, dd_mf, dt_mf, prnum, dkt, sigmatot, sigmafrac, txa
       real(kind=kind_phys), allocatable, dimension(:,:) :: sigmatot,    &
           gwdcu, gwdcv, rainp, sigmafrac, tke
@@ -3792,7 +3793,6 @@ module module_physics_driver
 !             Diag%dq3dt(i,k,2) = Diag%dq3dt(i,k,2) + (Stateout%gq0(i,k,1)-dqdt(i,k,1)) * frain
               Diag%du3dt(i,k,3) = Diag%du3dt(i,k,3) + (Stateout%gu0(i,k)-dudt(i,k)) * frain
               Diag%dv3dt(i,k,3) = Diag%dv3dt(i,k,3) + (Stateout%gv0(i,k)-dvdt(i,k)) * frain
-
 !             Diag%upd_mf(i,k)  = Diag%upd_mf(i,k)  + ud_mf(i,k) * (con_g*frain)
 !             Diag%dwn_mf(i,k)  = Diag%dwn_mf(i,k)  + dd_mf(i,k) * (con_g*frain)
 !             Diag%det_mf(i,k)  = Diag%det_mf(i,k)  + dt_mf(i,k) * (con_g*frain)
@@ -5330,6 +5330,16 @@ module module_physics_driver
         Diag%T02MIN(I)  = MIN(Diag%T02MIN(I), Sfcprop%t2m(i))  !<--- Hourly min 2m T
       enddo
 
+      ! Assign cp * dt3dt / cvm to t_dt to account for thermodynamic tendency adjustment
+      ! in dynamical core.
+      if (Model%ldiag3d) then
+        call moist_cv(Stateout%gq0, im, levs, ntrac, 1, Model%ntcw, Model%ntiw, Model%ntrw, Model%ntsw, Model%ntgl, cvm)
+        do i = 1, size(Diag%t_dt, 3)
+          Diag%t_dt(:,:,i) = con_cp * Diag%dt3dt(:,:,i) / cvm(:,:)
+        enddo
+        Diag%cvm(:,:) = Diag%cvm(:,:) + dtf * cvm(:,:)
+      endif
+
 !     if (kdt > 2 ) stop
       return
 !...................................
@@ -5526,6 +5536,45 @@ module module_physics_driver
 
       end subroutine moist_bud2
 
+      subroutine moist_cv(q, im, levs, ntrac, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, cvm)
+        ! Adapted from fv_mapz.F90.  The moist specific heat of air at constant volume
+        ! is computed as the mass-weighted average of the specific heats at constant
+        ! volume of the individual components: dry air, water vapor, liquid water,
+        ! and ice water.
+        integer, intent(in) :: im, levs, ntrac, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl
+        real(kind=kind_phys), intent(in) :: q(1:im,1:levs,1:ntrac)
+        real(kind=kind_phys), intent(out) :: cvm(1:im,1:levs)
+
+        real(kind=kind_phys) :: q_vapor(1:im,1:levs)
+        real(kind=kind_phys) :: q_dry_air(1:im,1:levs)
+        real(kind=kind_phys) :: q_liquid(1:im,1:levs)
+        real(kind=kind_phys) :: q_ice(1:im,1:levs)
+
+        real(kind=kind_phys) :: cv_air = con_cp - con_rd  ! From fv_mapz.F90
+        real(kind=kind_phys) :: cv_vap = 3.0 * con_rv  ! From fv_mapz.F90
+        real(kind=kind_phys) :: c_liq = 4.1885e3  ! Hard-coded in fv_mapz.F90
+        real(kind=kind_phys) :: c_ice = 1972.0  ! Hard-coded fv_mapz.F90
+        integer :: tracer_indexes(6)
+
+        tracer_indexes = (/ ntqv, ntcw, ntiw, ntrw, ntsw, ntgl /)
+
+#ifdef MULTI_GASES
+        call mpp_error (NOTE, 'GFS_physics_driver::moist_cv - moist_cv for tracer configuration not implemented; using default cv_air for t_dt diagnostics')
+        cvm = cv_air
+#else
+        if (any(tracer_indexes < 0)) then
+          call mpp_error (NOTE, 'GFS_physics_driver::moist_cv - moist_cv for tracer configuration not implemented; using default cv_air for t_dt diagnostics')
+          cvm = cv_air
+        else
+          q_vapor = q(:,:,ntqv)
+          q_dry_air = 1.0 - q_vapor
+          q_liquid = q(:,:,ntcw) + q(:,:,ntrw)
+          q_ice = q(:,:,ntiw) + q(:,:,ntsw) + q(:,:,ntgl)
+
+          cvm = (cv_air * q_dry_air + cv_vap * q_vapor + c_liq * q_liquid + c_ice * q_ice) / (q_dry_air + q_vapor + q_liquid + q_ice)
+        endif
+#endif
+      end subroutine moist_cv
 
 !> @}
 

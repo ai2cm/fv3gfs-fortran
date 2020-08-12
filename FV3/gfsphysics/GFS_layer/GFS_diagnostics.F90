@@ -2308,6 +2308,104 @@ module GFS_diagnostics
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%dt3dt(:,:,7)
     enddo
 
+! Add *time_avg* versions of the existing dt3dt diagnostics; this converts
+! them to tendencies.
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 't_dt_lw'
+    ExtDiag(idx)%desc = 'temperature tendency due to longwave radiation'
+    ExtDiag(idx)%unit = 'K/s'
+    ExtDiag(idx)%time_avg = .true.
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,1)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 't_dt_sw'
+    ExtDiag(idx)%desc = 'temperature tendency due to shortwave radiation'
+    ExtDiag(idx)%unit = 'K/s'
+    ExtDiag(idx)%time_avg = .true.
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,2)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 't_dt_pbl'
+    ExtDiag(idx)%desc = 'temperature tendency due to pbl'
+    ExtDiag(idx)%unit = 'K/s'
+    ExtDiag(idx)%time_avg = .true.
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,3)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 't_dt_deepcnv'
+    ExtDiag(idx)%desc = 'temperature tendency due to deep convection'
+    ExtDiag(idx)%unit = 'K/s'
+    ExtDiag(idx)%time_avg = .true.
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,4)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 't_dt_shlwcnv'
+    ExtDiag(idx)%desc = 'temperature tendency due to shallow convection'
+    ExtDiag(idx)%unit = 'K/s'
+    ExtDiag(idx)%time_avg = .true.
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,5)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 't_dt_microphy'
+    ExtDiag(idx)%desc = 'temperature tendency due to micro-physics'
+    ExtDiag(idx)%unit = 'K/s'
+    ExtDiag(idx)%time_avg = .true.
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,6)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 't_dt_orogwd'
+    ExtDiag(idx)%desc = 'temperature tendency due to orographic gravity wave drag'
+    ExtDiag(idx)%unit = 'K/s'
+    ExtDiag(idx)%time_avg = .true.
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,7)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'cvm_phys'
+    ExtDiag(idx)%desc = 'moist specific heat of air at constant volume'
+    ExtDiag(idx)%unit = 'J/kg/K'
+    ExtDiag(idx)%time_avg = .true.
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%cvm(:,:)
+    enddo
+
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'du3dt_pbl'
