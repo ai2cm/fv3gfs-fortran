@@ -1203,7 +1203,6 @@ contains
     logical, allocatable :: storm(:,:), cat_crt(:,:)
     real :: tmp2, pvsum, e2, einf, qm, mm, maxdbz, allmax, rgrav
     integer :: Cl, Cl2
-    integer :: ntracers, ntprog
     !!! CLEANUP: does it really make sense to have this routine loop over Atm% anymore? We assume n=1 below anyway
 
 ! cat15: SLP<1000; srf_wnd>ws_0; vort>vort_c0
@@ -3131,9 +3130,8 @@ contains
         used = send_data(idiag%id_qv_dt_phys, Atm(n)%phys_diag%qv_dt(isc:iec,jsc:jec,1:npz), Time)
      endif
      if (idiag%id_cvm > 0) then
-        call get_number_tracers(MODEL_ATMOS, num_tracers=ntracers, num_prog=ntprog)
-        call compute_cvm(Atm(n)%q(isc:iec,jsc:jec,1:npz,1:ntprog), Atm(n)%pt(isc:iec,jsc:jec,1:npz), &
-             isc, iec, jsc, jec, npz, isd, ied, jsd, jed, ntprog, Atm(n)%flagstruct%nwat, wk(isc:iec,jsc:jec,1:npz))
+        call compute_cvm(Atm(n)%q(isd:ied,jsd:jed,1:npz,1:Atm(n)%flagstruct%nwat), Atm(n)%pt(isd:ied,jsd:jed,1:npz), &
+             isc, iec, jsc, jec, npz, isd, ied, jsd, jed, Atm(n)%flagstruct%nwat, wk(isc:iec,jsc:jec,1:npz))
         used = send_data(idiag%id_cvm, wk(isc:iec,jsc:jec,1:npz), Time)
      endif
    ! enddo  ! end ntileMe do-loop
@@ -5717,10 +5715,10 @@ end subroutine eqv_pot
   end function getqvi
 !-----------------------------------------------------------------------
 
-  subroutine compute_cvm(q, pt, isc, iec, jsc, jec, npz, isd, ied, jsd, jed, ntprog, nwat, cvm)
-   integer :: isc, iec, jsc, jec, npz, isd, ied, jsd, jed, ntprog, nwat
-   real, dimension(isc:iec,jsc:jec,1:npz,1:ntprog), intent(in) :: q
-   real, dimension(isc:iec,jsc:jec,1:npz), intent(in) :: pt
+  subroutine compute_cvm(q, pt, isc, iec, jsc, jec, npz, isd, ied, jsd, jed, nwat, cvm)
+   integer :: isc, iec, jsc, jec, npz, isd, ied, jsd, jed, nwat
+   real, dimension(isd:ied,jsd:jed,1:npz,1:nwat), intent(in) :: q
+   real, dimension(isd:ied,jsd:jed,1:npz), intent(in) :: pt
    real, dimension(isc:iec,jsc:jec,1:npz), intent(out) :: cvm
    real, dimension(isc:iec) :: qc, cvm_tmp
    integer :: j, k, sphum, liq_wat, ice_wat, rainwat, snowwat, graupel

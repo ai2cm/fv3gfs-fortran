@@ -5553,11 +5553,14 @@ module module_physics_driver
         real(kind=kind_phys) :: cv_air = con_cp - con_rd  ! From fv_mapz.F90
         real(kind=kind_phys) :: cv_vap = 3.0 * con_rv  ! From fv_mapz.F90
         real(kind=kind_phys) :: c_liq = 4.1885e3  ! Hard-coded in fv_mapz.F90
-        real(kind=kind_phys) :: c_ice = 1972.0  ! Hard-coded fv_mapz.F90
+        real(kind=kind_phys) :: c_ice = 1972.0  ! Hard-coded in fv_mapz.F90
         integer :: tracer_indexes(6)
 
         tracer_indexes = (/ ntqv, ntcw, ntiw, ntrw, ntsw, ntgl /)
 
+        ! fv_mapz.moist_cv defines branches for using other moist tracer configurations.  For simplicity
+        ! we choose not to replicate that behavior here, since we have only run in one tracer configuration
+        ! so far.
 #ifdef MULTI_GASES
         call mpp_error (NOTE, 'GFS_physics_driver::moist_cv - moist_cv for tracer configuration not implemented; using default cv_air for t_dt diagnostics')
         cvm = cv_air
