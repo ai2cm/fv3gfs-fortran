@@ -23,5 +23,6 @@ for df in ${dockerfiles[@]}; do
 
    # Copy an archived version of the image to a public Google Storage Bucket
    docker save $container -o $tar_file
-   gsutil copy $tar_file gs://vcm-ml-public/jenkins-tmp/$tar_file
+   gzip $tar_file
+   gsutil copy ${tar_file}.gz gs://vcm-ml-public/jenkins-tmp/${tar_file}.gz
 done
