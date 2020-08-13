@@ -5339,10 +5339,10 @@ module module_physics_driver
               Statein%prsi(1:im,1:levs+1), im, levs, 6, 1, Model%ntcw, Model%ntiw, &
               Model%ntrw, Model%ntsw, Model%ntgl, cvm)
         do i = 1, size(Diag%t_dt, 3)
-          Diag%t_dt(:,:,i) = con_cp * Diag%dt3dt(:,:,i) / cvm(:,:)
+          Diag%t_dt(:,:,i) = Diag%t_dt(:,:,i) + con_cp * Diag%dt3dt(:,:,i) / cvm(:,:)
         enddo
         do i = 1, size(Diag%q_dt, 3)
-          Diag%q_dt(:,:,i) = Diag%dq3dt(:,:,i)  ! TODO: adjust these
+          Diag%q_dt(:,:,i) = Diag%q_dt(:,:,i) + Diag%dq3dt(:,:,i)  ! TODO: adjust these
         enddo
         Diag%cvm(:,:) = Diag%cvm(:,:) + dtf * cvm(:,:)
       endif
