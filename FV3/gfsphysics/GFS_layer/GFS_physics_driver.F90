@@ -665,6 +665,7 @@ module module_physics_driver
 !===============================================================================
 
       real, allocatable, dimension(:) :: refd, REFD263K
+      real(kind=kind_phys), allocatable, dimension(:,:,:) :: dt3dt_initial, dq3dt_initial
       integer :: kdtminus1
       logical :: reset
 ! For computing saturation vapor pressure and rh at 2m
@@ -704,6 +705,13 @@ module module_physics_driver
       ntrac  = Model%ntrac
       dtf    = Model%dtf
       dtp    = Model%dtp
+
+      if (Model%ldiag3d) then
+        allocate(dt3dt_initial(1:im,1:levs,7))
+        allocate(dq3dt_initial(1:im,1:levs,9))
+        dt3dt_initial = Diag%dt3dt
+        dq3dt_initial = Diag%dq3dt
+      endif
 
 !-------
 ! For COORDE-2019 averaging with fwindow, it was done before
@@ -5339,10 +5347,10 @@ module module_physics_driver
               Statein%prsi(1:im,1:levs+1), im, levs, 6, 1, Model%ntcw, Model%ntiw, &
               Model%ntrw, Model%ntsw, Model%ntgl, cvm)
         do i = 1, size(Diag%t_dt, 3)
-          Diag%t_dt(:,:,i) = Diag%t_dt(:,:,i) + con_cp * Diag%dt3dt(:,:,i) / cvm(:,:)
+          Diag%t_dt(:,:,i) = Diag%t_dt(:,:,i) + con_cp * (Diag%dt3dt(:,:,i) - dt3dt_initial(:,:,i)) / cvm(:,:)
         enddo
         do i = 1, size(Diag%q_dt, 3)
-          Diag%q_dt(:,:,i) = Diag%q_dt(:,:,i) + Diag%dq3dt(:,:,i)  ! TODO: adjust these
+          Diag%q_dt(:,:,i) = Diag%q_dt(:,:,i) + (Diag%dq3dt(:,:,i) - dq3dt_initial(:,:,i))  ! TODO: adjust these
         enddo
         Diag%cvm(:,:) = Diag%cvm(:,:) + dtf * cvm(:,:)
       endif
