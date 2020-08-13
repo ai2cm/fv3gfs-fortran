@@ -2777,6 +2777,7 @@ module module_physics_driver
               do i=1,im
                 tem  = dtdt(i,k) - (Radtend%htrlw(i,k)+Radtend%htrsw(i,k)*xmu(i))
                 Diag%dt3dt(i,k,3) = Diag%dt3dt(i,k,3) + tem*dtf
+                Diag%dq3dt(i,k,1) = Diag%dq3dt(i,k,1) + dqdt(i,k,1) * dtp
               enddo
             enddo
           endif
@@ -3790,7 +3791,7 @@ module module_physics_driver
           do k=1,levs
             do i=1,im
               Diag%dt3dt(i,k,4) = Diag%dt3dt(i,k,4) + (Stateout%gt0(i,k)-dtdt(i,k)) * frain
-!             Diag%dq3dt(i,k,2) = Diag%dq3dt(i,k,2) + (Stateout%gq0(i,k,1)-dqdt(i,k,1)) * frain
+              Diag%dq3dt(i,k,2) = Diag%dq3dt(i,k,2) + (Stateout%gq0(i,k,1)-dqdt(i,k,1)) * frain
               Diag%du3dt(i,k,3) = Diag%du3dt(i,k,3) + (Stateout%gu0(i,k)-dudt(i,k)) * frain
               Diag%dv3dt(i,k,3) = Diag%dv3dt(i,k,3) + (Stateout%gv0(i,k)-dvdt(i,k)) * frain
 !             Diag%upd_mf(i,k)  = Diag%upd_mf(i,k)  + ud_mf(i,k) * (con_g*frain)
@@ -4146,7 +4147,7 @@ module module_physics_driver
             do k=1,levs
               do i=1,im
                 Diag%dt3dt(i,k,5) = Diag%dt3dt(i,k,5) + (Stateout%gt0(i,k)  -dtdt(i,k))   * frain
-!               Diag%dq3dt(i,k,3) = Diag%dq3dt(i,k,3) + (Stateout%gq0(i,k,1)-dqdt(i,k,1)) * frain
+                Diag%dq3dt(i,k,3) = Diag%dq3dt(i,k,3) + (Stateout%gq0(i,k,1)-dqdt(i,k,1)) * frain
               enddo
             enddo
           endif
@@ -5057,7 +5058,7 @@ module module_physics_driver
           do k=1,levs
             do i=1,im
               Diag%dt3dt(i,k,6) = Diag%dt3dt(i,k,6) + (Stateout%gt0(i,k)-dtdt(i,k)) * frain
-!             Diag%dq3dt(i,k,4) = Diag%dq3dt(i,k,4) + (Stateout%gq0(i,k,1)-dqdt(i,k,1)) * frain
+              Diag%dq3dt(i,k,4) = Diag%dq3dt(i,k,4) + (Stateout%gq0(i,k,1)-dqdt(i,k,1)) * frain
             enddo
           enddo
         endif
@@ -5339,6 +5340,9 @@ module module_physics_driver
               Model%ntrw, Model%ntsw, Model%ntgl, cvm)
         do i = 1, size(Diag%t_dt, 3)
           Diag%t_dt(:,:,i) = con_cp * Diag%dt3dt(:,:,i) / cvm(:,:)
+        enddo
+        do i = 1, size(Diag%q_dt, 3)
+          Diag%q_dt(:,:,i) = Diag%dq3dt(:,:,i)  ! TODO: adjust these
         enddo
         Diag%cvm(:,:) = Diag%cvm(:,:) + dtf * cvm(:,:)
       endif
