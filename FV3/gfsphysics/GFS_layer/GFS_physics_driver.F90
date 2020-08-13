@@ -5333,7 +5333,10 @@ module module_physics_driver
       ! Assign cp * dt3dt / cvm to t_dt to account for thermodynamic tendency adjustment
       ! in dynamical core.
       if (Model%ldiag3d) then
-        call moist_cv(Stateout%gq0, im, levs, ntrac, 1, Model%ntcw, Model%ntiw, Model%ntrw, Model%ntsw, Model%ntgl, cvm)
+        ! TODO: don't hard-code nwat to 6
+        call moist_cv(Statein%qgrs(1:im,1:levs,1:6), Stateout%gq0(1:im,1:levs,1:6), &
+              Statein%prsi(1:im,1:levs+1), im, levs, 6, 1, Model%ntcw, Model%ntiw, &
+              Model%ntrw, Model%ntsw, Model%ntgl, cvm)
         do i = 1, size(Diag%t_dt, 3)
           Diag%t_dt(:,:,i) = con_cp * Diag%dt3dt(:,:,i) / cvm(:,:)
         enddo
@@ -5536,15 +5539,14 @@ module module_physics_driver
 
       end subroutine moist_bud2
 
-      subroutine moist_cv(q, im, levs, ntrac, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, cvm)
-        ! Adapted from fv_mapz.F90.  The moist specific heat of air at constant volume
-        ! is computed as the mass-weighted average of the specific heats at constant
-        ! volume of the individual components: dry air, water vapor, liquid water,
-        ! and ice water.
-        integer, intent(in) :: im, levs, ntrac, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl
-        real(kind=kind_phys), intent(in) :: q(1:im,1:levs,1:ntrac)
+      subroutine moist_cv(initial_dynamics_q, physics_q, pressure_on_interfaces, &
+            im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, cvm)
+        integer, intent(in) :: im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl
+        real(kind=kind_phys), dimension(1:im,1:levs,1:nwat), intent(in) :: initial_dynamics_q, physics_q
+        real(kind=kind_phys), intent(in) :: pressure_on_interfaces(1:im,1:levs+1)
         real(kind=kind_phys), intent(out) :: cvm(1:im,1:levs)
 
+        real(kind=kind_phys) :: new_dynamics_q(1:im,1:levs,1:nwat)
         real(kind=kind_phys) :: q_vapor(1:im,1:levs)
         real(kind=kind_phys) :: q_dry_air(1:im,1:levs)
         real(kind=kind_phys) :: q_liquid(1:im,1:levs)
@@ -5569,16 +5571,47 @@ module module_physics_driver
           call mpp_error (NOTE, 'GFS_physics_driver::moist_cv - moist_cv for tracer configuration not implemented; using default cv_air for t_dt diagnostics')
           cvm = cv_air
         else
-          q_vapor = q(:,:,ntqv)
-          q_dry_air = 1.0 - q_vapor
-          q_liquid = q(:,:,ntcw) + q(:,:,ntrw)
-          q_ice = q(:,:,ntiw) + q(:,:,ntsw) + q(:,:,ntgl)
+          call physics_to_dycore_mass_fraction(initial_dynamics_q, physics_q, &
+              pressure_on_interfaces, im, levs, nwat, new_dynamics_q)
 
-          cvm = (cv_air * q_dry_air + cv_vap * q_vapor + c_liq * q_liquid + c_ice * q_ice) / (q_dry_air + q_vapor + q_liquid + q_ice)
+          q_vapor = new_dynamics_q(:,:,ntqv)
+          q_liquid = new_dynamics_q(:,:,ntcw) + new_dynamics_q(:,:,ntrw)
+          q_ice = new_dynamics_q(:,:,ntiw) + new_dynamics_q(:,:,ntsw) + new_dynamics_q(:,:,ntgl)
+          q_dry_air = 1.0 - q_vapor - q_liquid - q_ice
+
+          ! By definition now, the weights sum to 1.0.
+          cvm = cv_air * q_dry_air + cv_vap * q_vapor + c_liq * q_liquid + c_ice * q_ice
         endif
 #endif
       end subroutine moist_cv
 
+      subroutine physics_to_dycore_mass_fraction(initial_dynamics_q, physics_q, &
+            pressure_on_interfaces, im, levs, nwat, new_dynamics_q)
+        integer, intent(in) :: im, levs, nwat
+        real(kind=kind_phys), intent(in) :: initial_dynamics_q(1:im,1:levs,1:nwat)
+        real(kind=kind_phys), intent(in) :: physics_q(1:im,1:levs,1:nwat)
+        real(kind=kind_phys), intent(in) :: pressure_on_interfaces(1:im,1:levs+1)
+        real(kind=kind_phys), intent(out) :: new_dynamics_q(1:im,1:levs,1:nwat)
+
+        real(kind=kind_phys) :: delp(1:im,1:levs)
+        real(kind=kind_phys) :: qwat(1:im,1:levs,1:nwat)
+        real(kind=kind_phys) :: qt(1:im,1:levs)
+        integer :: k, t
+
+        ! Follow the procedure used in atmosphere.atmosphere_state_update to convert
+        ! mass fractions in the physics driver to mass fractions in the dynamical core.
+        do k = 1, levs
+          delp(:,k) = pressure_on_interfaces(:,k) - pressure_on_interfaces(:,k+1)
+        enddo
+        do t = 1, nwat
+          qwat(:,:,t) = delp * physics_q(:,:,t)
+        enddo
+        qt = sum(qwat, 3)
+        delp = delp * (1.0 - sum(initial_dynamics_q(:,:,1:nwat), 3)) + qt
+        do t = 1, nwat
+          new_dynamics_q(:,:,t) = qwat(:,:,t) / delp
+        enddo
+      end subroutine physics_to_dycore_mass_fraction
 !> @}
 
 end module module_physics_driver
