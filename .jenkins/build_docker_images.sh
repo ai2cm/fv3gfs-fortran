@@ -4,7 +4,7 @@
 export DOCKER_BUILDKIT=1
 
 # Get the dockerfiles for the images to be tested on Piz Daint
-dockerfiles=( $( ls docker/Dockerfile.gnu* ) )
+dockerfiles=( $( ls docker/Dockerfile.* ) )
 
 for df in ${dockerfiles[@]}; do
 
