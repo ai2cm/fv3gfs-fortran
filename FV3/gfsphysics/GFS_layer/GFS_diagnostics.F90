@@ -2587,6 +2587,18 @@ module GFS_diagnostics
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,4)
     enddo
 
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'qv_dt_residual'
+    ExtDiag(idx)%desc = 'residual water vapor tendency'
+    ExtDiag(idx)%unit = 'kg/kg/s'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%time_avg = .true.
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,5)
+    enddo
+
 !rab
 !rab    do num = 1,5+Mdl_parms%pl_coeff
 !rab      write (xtra,'(I1)') num 

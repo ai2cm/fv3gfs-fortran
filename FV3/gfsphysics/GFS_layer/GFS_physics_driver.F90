@@ -671,6 +671,7 @@ module module_physics_driver
 ! For computing saturation vapor pressure and rh at 2m
       real    :: pshltr,QCQ,rh02
       real(kind=kind_phys), allocatable, dimension(:,:) :: den
+      real(kind=kind_phys), allocatable, dimension(:,:) :: dqdt_work
 
       !! Initialize local variables (mainly for debugging purposes, because the
       !! corresponding variables Interstitial(nt)%... are reset to zero every time);
@@ -709,6 +710,7 @@ module module_physics_driver
       if (Model%ldiag3d) then
         allocate(dt3dt_initial(1:im,1:levs,7))
         allocate(dq3dt_initial(1:im,1:levs,9))
+        allocate(dqdt_work(1:im,1:levs))
         dt3dt_initial = Diag%dt3dt
         dq3dt_initial = Diag%dq3dt
       endif
@@ -3496,6 +3498,14 @@ module module_physics_driver
 !  --- ...  calling convective parameterization
 !           -----------------------------------
       if (Model%do_deep) then
+
+        if (Model%ldiag3d) then
+          do i = 1, im
+            do k = 1, levs
+              dqdt_work(i,k) = Stateout%gq0(i,k,1)
+            enddo
+          enddo
+        endif
  
         if (Model%do_ca) then
           do k=1,levs
@@ -3799,7 +3809,7 @@ module module_physics_driver
           do k=1,levs
             do i=1,im
               Diag%dt3dt(i,k,4) = Diag%dt3dt(i,k,4) + (Stateout%gt0(i,k)-dtdt(i,k)) * frain
-              Diag%dq3dt(i,k,2) = Diag%dq3dt(i,k,2) + (Stateout%gq0(i,k,1)-dqdt(i,k,1)) * frain
+              Diag%dq3dt(i,k,2) = Diag%dq3dt(i,k,2) + (Stateout%gq0(i,k,1)-dqdt_work(i,k)) * frain
               Diag%du3dt(i,k,3) = Diag%du3dt(i,k,3) + (Stateout%gu0(i,k)-dudt(i,k)) * frain
               Diag%dv3dt(i,k,3) = Diag%dv3dt(i,k,3) + (Stateout%gv0(i,k)-dvdt(i,k)) * frain
 !             Diag%upd_mf(i,k)  = Diag%upd_mf(i,k)  + ud_mf(i,k) * (con_g*frain)
@@ -4048,6 +4058,13 @@ module module_physics_driver
 
         if (Model%shal_cnv) then               ! Shallow convection parameterizations
 !                                               --------------------------------------
+          if (Model%ldiag3d) then
+            do k=1,levs
+              do i=1,im
+                dqdt_work(i,k) = Stateout%gq0(i,k,1)
+              enddo
+            enddo
+          endif
           if (Model%imfshalcnv == 1) then      ! opr option now at 2014
                                                !-----------------------
             call shalcnv (im, ix, levs, Model%jcap, dtp, del, Statein%prsl, &
@@ -4155,7 +4172,7 @@ module module_physics_driver
             do k=1,levs
               do i=1,im
                 Diag%dt3dt(i,k,5) = Diag%dt3dt(i,k,5) + (Stateout%gt0(i,k)  -dtdt(i,k))   * frain
-                Diag%dq3dt(i,k,3) = Diag%dq3dt(i,k,3) + (Stateout%gq0(i,k,1)-dqdt(i,k,1)) * frain
+                Diag%dq3dt(i,k,3) = Diag%dq3dt(i,k,3) + (Stateout%gq0(i,k,1)-dqdt_work(i,k)) * frain
               enddo
             enddo
           endif
@@ -5349,9 +5366,10 @@ module module_physics_driver
         do i = 1, size(Diag%t_dt, 3)
           Diag%t_dt(:,:,i) = Diag%t_dt(:,:,i) + con_cp * (Diag%dt3dt(:,:,i) - dt3dt_initial(:,:,i)) / cvm(:,:)
         enddo
-        do i = 1, size(Diag%q_dt, 3)
-          Diag%q_dt(:,:,i) = Diag%q_dt(:,:,i) + (Diag%dq3dt(:,:,i) - dq3dt_initial(:,:,i))  ! TODO: adjust these
+        do i = 1, 4
+          Diag%q_dt(:,:,i) = Diag%q_dt(:,:,i) + (Diag%dq3dt(:,:,i) - dq3dt_initial(:,:,i)) / (1.0 + sum(Diag%dq3dt(:,:,1:4) - dq3dt_initial(:,:,1:4), 3) + sum(Stateout%gq0(:,:,2:6), 3))
         enddo
+        Diag%q_dt(:,:,5) = Diag%q_dt(:,:,5) + Statein%qgrs(:,:,1) * ((1.0 / (1.0 + sum(Diag%dq3dt(:,:,1:4) - dq3dt_initial(:,:,1:4), 3) + sum(Stateout%gq0(:,:,2:6), 3))) - (1.0 / (1.0 + sum(Statein%qgrs(:,:,2:6), 3))))
         Diag%cvm(:,:) = Diag%cvm(:,:) + dtf * cvm(:,:)
       endif
 

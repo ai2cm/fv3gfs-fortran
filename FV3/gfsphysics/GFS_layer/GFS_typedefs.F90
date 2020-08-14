@@ -5119,7 +5119,7 @@ module GFS_typedefs
       allocate (Diag%t_dt   (IM,Model%levs,7))
       allocate (Diag%cvm    (IM,Model%levs))
       allocate (Diag%dq3dt  (IM,Model%levs,9))
-      allocate (Diag%q_dt   (IM,Model%levs,4))
+      allocate (Diag%q_dt   (IM,Model%levs,5))
 !      allocate (Diag%dq3dt  (IM,Model%levs,oz_coeff+5))
 !--- needed to allocate GoCart coupling fields
 !      allocate (Diag%upd_mf (IM,Model%levs))
