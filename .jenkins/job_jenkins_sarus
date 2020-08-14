@@ -12,15 +12,23 @@
 ## Set the compute node environment
 ##
 
-module load daint-gpu
-module load sarus
+module load daint-gpu sarus
 
 export OMP_NUM_THREADS=1
 ulimit -s unlimited
 
-if [[ "$df" == *"intel"* ]]; then
+##
+## Choose whether to use native or hybrid MPI support via Sarus
+##
+
+if [[ "${FV3_CONTAINER}" == *"intel"* ]]; then
    prep="srun --mpi=pmi2 sarus run"
 else
    prep="srun sarus run --mpi"
 fi
+
+##
+## Perform the c48 test
+##
+
 ${prep} --mount=type=bind,source=${SCRATCH_DIR},destination=/scratch --workdir=/scratch load/library/${FV3_CONTAINER} /myapps/fv3/fv3.exe
