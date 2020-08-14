@@ -1458,7 +1458,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: dv3dt (:,:,:)  => null()   !< v momentum change due to physics
     real (kind=kind_phys), pointer :: dt3dt (:,:,:)  => null()   !< temperature change due to physics
     real (kind=kind_phys), pointer :: t_dt(:,:,:)    => null()   !< temperature change due to physics scaled by cp / cvm
-    real (kind=kind_phys), pointer :: cvm(:,:)       => null()      !< moist specific heat of air at constant volume
+    real (kind=kind_phys), pointer :: cvm(:,:)       => null()   !< moist specific heat of air at constant volume
     real (kind=kind_phys), pointer :: dq3dt (:,:,:)  => null()   !< moisture change due to physics
     real (kind=kind_phys), pointer :: q_dt  (:,:,:)  => null()   !< moisture tendency due to physics, adjusted to dycore mass fraction convention
     real (kind=kind_phys), pointer :: refdmax (:)    => null()   !< max hourly 1-km agl reflectivity

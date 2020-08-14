@@ -672,6 +672,7 @@ module module_physics_driver
       real    :: pshltr,QCQ,rh02
       real(kind=kind_phys), allocatable, dimension(:,:) :: den
       real(kind=kind_phys), allocatable, dimension(:,:) :: dqdt_work
+      integer :: nwat
 
       !! Initialize local variables (mainly for debugging purposes, because the
       !! corresponding variables Interstitial(nt)%... are reset to zero every time);
@@ -5359,18 +5360,16 @@ module module_physics_driver
       ! Assign cp * dt3dt / cvm to t_dt to account for thermodynamic tendency adjustment
       ! in dynamical core.
       if (Model%ldiag3d) then
-        ! TODO: don't hard-code nwat to 6
-        call moist_cv(Statein%qgrs(1:im,1:levs,1:6), Stateout%gq0(1:im,1:levs,1:6), &
-              Statein%prsi(1:im,1:levs+1), im, levs, 6, 1, Model%ntcw, Model%ntiw, &
-              Model%ntrw, Model%ntsw, Model%ntgl, cvm)
-        do i = 1, size(Diag%t_dt, 3)
-          Diag%t_dt(:,:,i) = Diag%t_dt(:,:,i) + con_cp * (Diag%dt3dt(:,:,i) - dt3dt_initial(:,:,i)) / cvm(:,:)
-        enddo
-        do i = 1, 4
-          Diag%q_dt(:,:,i) = Diag%q_dt(:,:,i) + (Diag%dq3dt(:,:,i) - dq3dt_initial(:,:,i)) / (1.0 + sum(Diag%dq3dt(:,:,1:4) - dq3dt_initial(:,:,1:4), 3) + sum(Stateout%gq0(:,:,2:6), 3))
-        enddo
-        Diag%q_dt(:,:,5) = Diag%q_dt(:,:,5) + Statein%qgrs(:,:,1) * ((1.0 / (1.0 + sum(Diag%dq3dt(:,:,1:4) - dq3dt_initial(:,:,1:4), 3) + sum(Stateout%gq0(:,:,2:6), 3))) - (1.0 / (1.0 + sum(Statein%qgrs(:,:,2:6), 3))))
+        call infer_nwat(1, Model%ntcw, Model%ntiw, Model%ntrw, Model%ntsw, Model%ntgl, nwat)
+        call moist_cv(Statein%qgrs(1:im,1:levs,1:nwat), Stateout%gq0(1:im,1:levs,1:nwat), &
+            Statein%prsi(1:im,1:levs+1), im, levs, nwat, 1, Model%ntcw, Model%ntiw, &
+            Model%ntrw, Model%ntsw, Model%ntgl, cvm)
         Diag%cvm(:,:) = Diag%cvm(:,:) + dtf * cvm(:,:)
+
+        call update_temperature_tendency_diagnostics(Diag%t_dt, dt3dt_initial, Diag%dt3dt, &
+            cvm, im, levs)
+        call update_water_vapor_tendency_diagnostics(Diag%q_dt, dq3dt_initial, Diag%dq3dt, &
+            Statein%qgrs(:,:,1:nwat), Stateout%gq0(:,:,1:nwat), im, levs, nwat)
       endif
 
 !     if (kdt > 2 ) stop
@@ -5584,7 +5583,7 @@ module module_physics_driver
 
         real(kind=kind_phys) :: cv_air = con_cp - con_rd  ! From fv_mapz.F90
         real(kind=kind_phys) :: cv_vap = 3.0 * con_rv  ! From fv_mapz.F90
-        real(kind=kind_phys) :: c_liq = 4.1855e3  ! Hard-coded in fv_mapz.F90
+        real(kind=kind_phys) :: c_liq = 4.1855e+3  ! Hard-coded in fv_mapz.F90
         real(kind=kind_phys) :: c_ice = 1972.0  ! Hard-coded in fv_mapz.F90
         integer :: tracer_indexes(6)
 
@@ -5642,6 +5641,55 @@ module module_physics_driver
           new_dynamics_q(:,:,t) = qwat(:,:,t) / delp
         enddo
       end subroutine physics_to_dycore_mass_fraction
+
+      subroutine infer_nwat(ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, nwat)
+        integer, intent(in) :: ntqv, ntcw, ntiw, ntrw, ntsw, ntgl
+        integer, intent(out) :: nwat
+
+        integer, dimension(6) :: tracer_indexes
+        integer, dimension(6) :: tracers_active
+
+        tracer_indexes = (/ ntqv, ntcw, ntiw, ntrw, ntsw, ntgl /)
+
+        where (tracer_indexes > 0)
+          tracers_active = 1
+        elsewhere
+          tracers_active = 0
+        endwhere
+        nwat = sum(tracers_active)
+      end subroutine infer_nwat
+
+      subroutine update_temperature_tendency_diagnostics(t_dt, dt3dt_initial, dt3dt_final, cvm, im, levs)
+        integer, intent(in) :: im, levs
+        real(kind=kind_phys), intent(in), dimension(1:im,1:levs,7) :: dt3dt_initial, dt3dt_final
+        real(kind=kind_phys), intent(inout) :: t_dt(1:im,1:levs,7)
+        real(kind=kind_phys), intent(in) :: cvm(1:im,1:levs)
+
+        integer :: i
+
+        do i = 1, 7
+          t_dt(:,:,i) = t_dt(:,:,i) + con_cp * (dt3dt_final(:,:,i) - dt3dt_initial(:,:,i)) / cvm(:,:)
+        enddo
+      end subroutine update_temperature_tendency_diagnostics
+
+      subroutine update_water_vapor_tendency_diagnostics(q_dt, dq3dt_initial, dq3dt_final, &
+        q_initial, q_final, im, levs, nwat)
+        integer, intent(in) :: im, levs, nwat
+        real(kind=kind_phys), intent(inout) :: q_dt(1:im,1:levs,5)
+        real(kind=kind_phys), intent(in), dimension(1:im,1:levs,1:9) :: dq3dt_initial, dq3dt_final
+        real(kind=kind_phys), intent(in), dimension(1:im,1:levs,1:nwat) :: q_initial, q_final
+
+        integer :: i
+        real(kind=kind_phys), dimension(1:im,1:levs) :: initial_dynamics_denominator, final_dynamics_denominator
+
+        initial_dynamics_denominator = 1.0 + sum(q_initial(:,:,2:nwat), 3)
+        final_dynamics_denominator = 1.0 + sum(dq3dt_final(:,:,1:4) - dq3dt_initial(:,:,1:4), 3) + sum(q_final(:,:,2:nwat), 3)
+
+        do i = 1, 4
+          q_dt(:,:,i) = q_dt(:,:,i) + (dq3dt_final(:,:,i) - dq3dt_initial(:,:,i)) / final_dynamics_denominator
+        enddo
+        q_dt(:,:,5) = q_dt(:,:,5) + q_initial(:,:,1) * ((1.0 / final_dynamics_denominator) - (1.0 / initial_dynamics_denominator))
+      end subroutine update_water_vapor_tendency_diagnostics
 !> @}
 
 end module module_physics_driver
