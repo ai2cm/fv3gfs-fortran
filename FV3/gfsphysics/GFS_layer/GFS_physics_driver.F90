@@ -5677,7 +5677,8 @@ module module_physics_driver
       end subroutine update_temperature_tendency_diagnostics
 
       ! Scale the water vapor mass fraction increment for each physics component by
-      ! (mass of dry air + mass of only water vapor) / (mass of dry air + mass of all hydrometeors).
+      ! (mass of dry air + mass of only water vapor at the start of the physics) / 
+      ! (mass of dry air + mass of all hydrometeors at the end of the physics).
       !
       ! This leaves a residual water vapor tendency that cannot be assigned to a single
       ! physical process (because the mass of dry air + mass of all hydrometeors changes

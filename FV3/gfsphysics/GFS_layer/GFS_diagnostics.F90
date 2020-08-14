@@ -2308,8 +2308,10 @@ module GFS_diagnostics
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%dt3dt(:,:,7)
     enddo
 
-! Add *time_avg* versions of the existing dt3dt diagnostics; this converts
-! them to tendencies.
+! Applying a time_avg converts these t_dt_* quantities to average tendencies, 
+! because it amounts to dividing the total increments (what are stored in the
+! diagnostics buckets) by the total time elapsed for the diagnostics interval
+! (in seconds).  
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 't_dt_lw'
@@ -2539,6 +2541,10 @@ module GFS_diagnostics
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%dq3dt(:,:,4)
     enddo
 
+! Applying a time_avg converts these qv_dt_* quantities to average tendencies, 
+! because it amounts to dividing the total increments (what are stored in the
+! diagnostics buckets) by the total time elapsed for the diagnostics interval
+! (in seconds). 
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'qv_dt_pbl'
