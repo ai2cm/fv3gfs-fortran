@@ -1,0 +1,34 @@
+#!/bin/bash -l
+#SBATCH --job-name="FV3gfs_200km_resolution"
+#SBATCH --partition=cscsci
+#SBATCH --constraint=gpu
+#SBATCH --account=d107
+#SBATCH --time=00:05:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=6
+#SBATCH --hint=nomultithread
+
+##
+## Set the compute node environment
+##
+
+module load daint-gpu sarus
+
+export OMP_NUM_THREADS=1
+ulimit -s unlimited
+
+##
+## Choose whether to use native or hybrid MPI support via Sarus
+##
+
+if [[ "${FV3_CONTAINER}" == *"intel"* ]]; then
+   prep="srun --mpi=pmi2 sarus run"
+else
+   prep="srun sarus run --mpi"
+fi
+
+##
+## Perform the c48 test
+##
+
+${prep} --mount=type=bind,source=${SCRATCH_DIR},destination=/scratch --workdir=/scratch load/library/${FV3_CONTAINER} /myapps/fv3/fv3.exe
