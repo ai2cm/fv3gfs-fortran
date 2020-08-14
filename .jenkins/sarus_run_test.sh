@@ -12,7 +12,7 @@ gcloud auth configure-docker
 # Set up the working directing for the c12 test
 cd examples
 . /project/d107/install/venv/sn_1.0/bin/activate
-python write_rundir.py ../tests/pytest/config/default.yaml "./c12_test"
+python write_rundir.py ../tests/pytest/config/default.yml "./c12_test"
 deactivate
 
 cd ${PWD}/c12_test
