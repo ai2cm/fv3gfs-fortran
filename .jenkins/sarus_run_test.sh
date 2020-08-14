@@ -7,7 +7,7 @@ module add /project/d107/install/modulefiles/
 module load cray-python gcloud
 
 cd examples
-. /project/d107/install/venv/bin/activate 
+. /project/d107/install/venv/sn_1.0/bin/activate 
 python create_arbitrary_rundir.py c48_config.yml "./c48_test"
 deactivate
 
