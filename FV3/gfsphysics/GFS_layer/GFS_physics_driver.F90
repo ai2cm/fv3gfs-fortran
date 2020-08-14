@@ -5357,13 +5357,15 @@ module module_physics_driver
         Diag%T02MIN(I)  = MIN(Diag%T02MIN(I), Sfcprop%t2m(i))  !<--- Hourly min 2m T
       enddo
 
-      ! Assign cp * dt3dt / cvm to t_dt to account for thermodynamic tendency adjustment
-      ! in dynamical core.
       if (Model%ldiag3d) then
+        ! Update t_dt_* and q_dt_* diagnostics such that they represent temperature
+        ! and water vapor tendencies contributed by each component of the physics,
+        ! consistent with how those tendencies are applied in the dynamical core.
         call infer_nwat(1, Model%ntcw, Model%ntiw, Model%ntrw, Model%ntsw, Model%ntgl, nwat)
         call moist_cv(Statein%qgrs(1:im,1:levs,1:nwat), Stateout%gq0(1:im,1:levs,1:nwat), &
             Statein%prsi(1:im,1:levs+1), im, levs, nwat, 1, Model%ntcw, Model%ntiw, &
             Model%ntrw, Model%ntsw, Model%ntgl, cvm)
+
         Diag%cvm(:,:) = Diag%cvm(:,:) + dtf * cvm(:,:)
 
         call update_temperature_tendency_diagnostics(Diag%t_dt, dt3dt_initial, Diag%dt3dt, &
@@ -5585,18 +5587,18 @@ module module_physics_driver
         real(kind=kind_phys) :: cv_vap = 3.0 * con_rv  ! From fv_mapz.F90
         real(kind=kind_phys) :: c_liq = 4.1855e+3  ! Hard-coded in fv_mapz.F90
         real(kind=kind_phys) :: c_ice = 1972.0  ! Hard-coded in fv_mapz.F90
-        integer :: tracer_indexes(6)
 
-        tracer_indexes = (/ ntqv, ntcw, ntiw, ntrw, ntsw, ntgl /)
-
-        ! fv_mapz.moist_cv defines branches for using other moist tracer configurations.  For simplicity
-        ! we choose not to replicate that behavior here, since we have only run in one tracer configuration
-        ! so far.
+        ! fv_mapz.moist_cv defines branches for using other moist tracer configurations.
+        ! For simplicity we choose not to replicate that behavior here, since we have
+        ! only run in one tracer configuration (nwat = 6) so far.  We also do not implement
+        ! the branch of code that is run if the compiler directive MULTI_GASES is defined.
+        ! In those cases we default to using the specific heat at constant volume for dry
+        ! air, and emit a warning.
 #ifdef MULTI_GASES
         call mpp_error (NOTE, 'GFS_physics_driver::moist_cv - moist_cv for tracer configuration not implemented; using default cv_air for t_dt diagnostics')
         cvm = cv_air
 #else
-        if (any(tracer_indexes < 0)) then
+        if (nwat /= 6) then
           call mpp_error (NOTE, 'GFS_physics_driver::moist_cv - moist_cv for tracer configuration not implemented; using default cv_air for t_dt diagnostics')
           cvm = cv_air
         else
@@ -5659,6 +5661,8 @@ module module_physics_driver
         nwat = sum(tracers_active)
       end subroutine infer_nwat
 
+      ! Scale the temperature increment for each physics component by cp / cvm to account
+      ! for how the temperature tendency is adjusted within the dynamical core.
       subroutine update_temperature_tendency_diagnostics(t_dt, dt3dt_initial, dt3dt_final, cvm, im, levs)
         integer, intent(in) :: im, levs
         real(kind=kind_phys), intent(in), dimension(1:im,1:levs,7) :: dt3dt_initial, dt3dt_final
@@ -5672,6 +5676,17 @@ module module_physics_driver
         enddo
       end subroutine update_temperature_tendency_diagnostics
 
+      ! Scale the water vapor mass fraction increment for each physics component by
+      ! (mass of dry air + mass of only water vapor) / (mass of dry air + mass of all hydrometeors).
+      !
+      ! This leaves a residual water vapor tendency that cannot be assigned to a single
+      ! physical process (because the mass of dry air + mass of all hydrometeors changes
+      ! during the physics).  This residual is equal to the initial mass of water vapor going
+      ! into the physics, multiplied by the difference between
+      ! 1 / (mass of dry air + mass of all hydrometeors at the end of the physics) and
+      ! 1 / (mass of dry air + mass of all hydrometeors at the beginning of the physics).
+      ! This residual is typically small compared to the tendencies induced by the
+      ! physics parameterizations themselves.
       subroutine update_water_vapor_tendency_diagnostics(q_dt, dq3dt_initial, dq3dt_final, &
         q_initial, q_final, im, levs, nwat)
         integer, intent(in) :: im, levs, nwat
@@ -5682,12 +5697,17 @@ module module_physics_driver
         integer :: i
         real(kind=kind_phys), dimension(1:im,1:levs) :: initial_dynamics_denominator, final_dynamics_denominator
 
+        ! Note a factor of delp = mass of dry air + mass of water vapor at the start of
+        ! the physics cancels in all of these calculations, so we can work with mass
+        ! fractions instead of masses for all of these scalings.
         initial_dynamics_denominator = 1.0 + sum(q_initial(:,:,2:nwat), 3)
         final_dynamics_denominator = 1.0 + sum(dq3dt_final(:,:,1:4) - dq3dt_initial(:,:,1:4), 3) + sum(q_final(:,:,2:nwat), 3)
 
         do i = 1, 4
           q_dt(:,:,i) = q_dt(:,:,i) + (dq3dt_final(:,:,i) - dq3dt_initial(:,:,i)) / final_dynamics_denominator
         enddo
+
+        ! Compute the residual tendency.
         q_dt(:,:,5) = q_dt(:,:,5) + q_initial(:,:,1) * ((1.0 / final_dynamics_denominator) - (1.0 / initial_dynamics_denominator))
       end subroutine update_water_vapor_tendency_diagnostics
 !> @}
