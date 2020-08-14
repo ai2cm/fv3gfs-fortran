@@ -9,15 +9,16 @@ module load cray-python gcloud sarus
 gcloud auth configure-docker
 
 
-# Set up the working directing for the c48 test
+# Set up the working directing for the c12 test
 cd examples
 . /project/d107/install/venv/sn_1.0/bin/activate
-python create_arbitrary_rundir.py c48_config.yml "./c48_test"
+python write_rundir.py ../tests/pytest/config/default.yaml "./c12_test"
 deactivate
 
-cd ${PWD}/c48_test
+cd ${PWD}/c12_test
 cp ../../.jenkins/job_jenkins_sarus .
 export SCRATCH_DIR=${PWD}
+
 
 # Import the Docker images to be tested on Daint
 dockerfiles=( $( ls ../../docker/Dockerfile.* ) )
@@ -31,7 +32,8 @@ for df in ${dockerfiles[@]}; do
 done
 module unload sarus
 
-# Perform the c48 test for each imported Docker image
+
+# Perform the c12 test for each imported Docker image
 for df in ${dockerfiles[@]}; do
    export FV3_CONTAINER=fv3gfs-compiled:${df:24}
    sbatch --wait job_jenkins_sarus

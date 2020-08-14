@@ -1,9 +1,9 @@
 #!/bin/bash -l
-#SBATCH --job-name="FV3gfs_200km_resolution"
+#SBATCH --job-name="FV3gfs_800km_resolution"
 #SBATCH --partition=cscsci
 #SBATCH --constraint=gpu
 #SBATCH --account=d107
-#SBATCH --time=00:05:00
+#SBATCH --time=00:04:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=6
 #SBATCH --hint=nomultithread
@@ -28,7 +28,7 @@ else
 fi
 
 ##
-## Perform the c48 test
+## Perform the c12 test
 ##
 
 ${prep} --mount=type=bind,source=${SCRATCH_DIR},destination=/scratch --workdir=/scratch load/library/${FV3_CONTAINER} /myapps/fv3/fv3.exe
