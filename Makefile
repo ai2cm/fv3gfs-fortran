@@ -81,7 +81,8 @@ compile_dev: build_compiled
 	docker run --rm $(MOUNTS) -w /FV3 -it $(COMPILED_IMAGE) bash -c "make libs && make fv3.exe"
 
 test:
-	pytest tests/pytest --capture=no --verbose --refdir $(shell pwd)/tests/pytest/reference/circleci --image_version $(COMPILED_TAG_NAME)
+	pytest tests/pytest --capture=no --verbose --refdir $(shell pwd)/tests/pytest/reference/circleci --image_version gnu8_mpich314_nocuda
+	#pytest tests/pytest --capture=no --verbose --refdir $(shell pwd)/tests/pytest/reference/circleci --image_version $(COMPILED_TAG_NAME)
 
 update_circleci_reference: test
 	cd tests/pytest && bash set_reference.sh $(COMPILED_TAG_NAME)-serialize $(shell pwd)/reference/circleci
