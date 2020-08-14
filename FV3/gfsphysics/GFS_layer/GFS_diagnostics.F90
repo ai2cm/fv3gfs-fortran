@@ -2532,7 +2532,7 @@ module GFS_diagnostics
 
     idx = idx + 1
     ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'dq3dt_microphys'
+    ExtDiag(idx)%name = 'dq3dt_microphy'
     ExtDiag(idx)%desc = 'water vapor change due to microphysics'
     ExtDiag(idx)%unit = 'kg/kg'
     ExtDiag(idx)%mod_name = 'gfs_phys'
@@ -2583,7 +2583,7 @@ module GFS_diagnostics
 
     idx = idx + 1
     ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'qv_dt_microphys'
+    ExtDiag(idx)%name = 'qv_dt_microphy'
     ExtDiag(idx)%desc = 'water vapor tendency due to microphysics'
     ExtDiag(idx)%unit = 'kg/kg/s'
     ExtDiag(idx)%mod_name = 'gfs_phys'
