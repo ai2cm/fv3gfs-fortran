@@ -5584,7 +5584,7 @@ module module_physics_driver
 
         real(kind=kind_phys) :: cv_air = con_cp - con_rd  ! From fv_mapz.F90
         real(kind=kind_phys) :: cv_vap = 3.0 * con_rv  ! From fv_mapz.F90
-        real(kind=kind_phys) :: c_liq = 4.1885e3  ! Hard-coded in fv_mapz.F90
+        real(kind=kind_phys) :: c_liq = 4.1855e3  ! Hard-coded in fv_mapz.F90
         real(kind=kind_phys) :: c_ice = 1972.0  ! Hard-coded in fv_mapz.F90
         integer :: tracer_indexes(6)
 
