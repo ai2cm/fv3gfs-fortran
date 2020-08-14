@@ -18,4 +18,9 @@ module load sarus
 export OMP_NUM_THREADS=1
 ulimit -s unlimited
 
-srun sarus run --mpi --mount=type=bind,source=${SCRATCH_DIR},destination=/scratch --workdir=/scratch load/library/${FV3_CONTAINER} /myapps/fv3/fv3.exe
+if [[ "$df" == *"intel"* ]]; then
+   prep="srun --mpi=pmi2 sarus run"
+else
+   prep="srun sarus run --mpi"
+fi
+${prep} --mount=type=bind,source=${SCRATCH_DIR},destination=/scratch --workdir=/scratch load/library/${FV3_CONTAINER} /myapps/fv3/fv3.exe
