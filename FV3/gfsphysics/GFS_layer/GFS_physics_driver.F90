@@ -3499,14 +3499,6 @@ module module_physics_driver
 !  --- ...  calling convective parameterization
 !           -----------------------------------
       if (Model%do_deep) then
-
-        if (Model%ldiag3d) then
-          do i = 1, im
-            do k = 1, levs
-              dqdt_work(i,k) = Stateout%gq0(i,k,1)
-            enddo
-          enddo
-        endif
  
         if (Model%do_ca) then
           do k=1,levs
@@ -3810,7 +3802,7 @@ module module_physics_driver
           do k=1,levs
             do i=1,im
               Diag%dt3dt(i,k,4) = Diag%dt3dt(i,k,4) + (Stateout%gt0(i,k)-dtdt(i,k)) * frain
-              Diag%dq3dt(i,k,2) = Diag%dq3dt(i,k,2) + (Stateout%gq0(i,k,1)-dqdt_work(i,k)) * frain
+              Diag%dq3dt(i,k,2) = Diag%dq3dt(i,k,2) + (Stateout%gq0(i,k,1)-dqdt(i,k,1)) * frain
               Diag%du3dt(i,k,3) = Diag%du3dt(i,k,3) + (Stateout%gu0(i,k)-dudt(i,k)) * frain
               Diag%dv3dt(i,k,3) = Diag%dv3dt(i,k,3) + (Stateout%gv0(i,k)-dvdt(i,k)) * frain
 !             Diag%upd_mf(i,k)  = Diag%upd_mf(i,k)  + ud_mf(i,k) * (con_g*frain)
@@ -4051,6 +4043,7 @@ module module_physics_driver
         do k=1,levs
           do i=1,im
             dtdt(i,k)   = Stateout%gt0(i,k)
+            dqdt_work(i,k) = Stateout%gq0(i,k,1)
           enddo
         enddo
       endif
@@ -4059,13 +4052,6 @@ module module_physics_driver
 
         if (Model%shal_cnv) then               ! Shallow convection parameterizations
 !                                               --------------------------------------
-          if (Model%ldiag3d) then
-            do k=1,levs
-              do i=1,im
-                dqdt_work(i,k) = Stateout%gq0(i,k,1)
-              enddo
-            enddo
-          endif
           if (Model%imfshalcnv == 1) then      ! opr option now at 2014
                                                !-----------------------
             call shalcnv (im, ix, levs, Model%jcap, dtp, del, Statein%prsl, &

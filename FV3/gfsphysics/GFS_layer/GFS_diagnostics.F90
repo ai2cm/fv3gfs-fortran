@@ -2497,50 +2497,6 @@ module GFS_diagnostics
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%dv3dt(:,:,4)
     enddo
 
-    idx = idx + 1
-    ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'dq3dt_pbl'
-    ExtDiag(idx)%desc = 'water vapor change due to turbulence scheme'
-    ExtDiag(idx)%unit = 'kg/kg'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
-    allocate (ExtDiag(idx)%data(nblks))
-    do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%dq3dt(:,:,1)
-    enddo
-
-    idx = idx + 1
-    ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'dq3dt_deepcnv'
-    ExtDiag(idx)%desc = 'water vapor change due to deep convection'
-    ExtDiag(idx)%unit = 'kg/kg'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
-    allocate (ExtDiag(idx)%data(nblks))
-    do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%dq3dt(:,:,2)
-    enddo
-
-    idx = idx + 1
-    ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'dq3dt_shlwcnv'
-    ExtDiag(idx)%desc = 'water vapor change due to shallow convection'
-    ExtDiag(idx)%unit = 'kg/kg'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
-    allocate (ExtDiag(idx)%data(nblks))
-    do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%dq3dt(:,:,3)
-    enddo
-
-    idx = idx + 1
-    ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'dq3dt_microphy'
-    ExtDiag(idx)%desc = 'water vapor change due to microphysics'
-    ExtDiag(idx)%unit = 'kg/kg'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
-    allocate (ExtDiag(idx)%data(nblks))
-    do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%dq3dt(:,:,4)
-    enddo
-
 ! Applying a time_avg converts these qv_dt_* quantities to average tendencies, 
 ! because it amounts to dividing the total increments (what are stored in the
 ! diagnostics buckets) by the total time elapsed for the diagnostics interval
