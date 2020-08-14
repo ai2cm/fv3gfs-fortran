@@ -2,6 +2,7 @@
 
 # Set variable to allow parallel building in the Docker image creation
 export DOCKER_BUILDKIT=1
+export BUILDKIT_PROGRESS=plain
 
 # Get the dockerfiles for the images to be tested on Piz Daint
 dockerfiles=( $( ls docker/Dockerfile.* ) )
