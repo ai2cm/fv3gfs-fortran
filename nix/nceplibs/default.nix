@@ -7,6 +7,7 @@
   ,gfortran
   ,openmpi
   ,coreutils
+  ,perl
 } :
 stdenvNoCC.mkDerivation rec {
   pname = "nceplibs";
@@ -20,12 +21,16 @@ stdenvNoCC.mkDerivation rec {
     leaveDotGit = true;
   };
 
+  buildPhase = ''
+    mkdir -p $out
+    echo "y" | bash make_ncep_libs.sh -s ${arch} -c gnu -d $out -o 1
+  '';
 
-  builder = ./build.sh;
+  dontInstall = true;
 
   # nativeBuildInputs = [ m4 ];
   # buildInputs = [ hdf5 curl mpi ];
-  buildInputs = [ bash rsync gfortran openmpi coreutils ];
+  buildInputs = [ bash rsync gfortran openmpi coreutils perl ];
   FFLAGS="-I${gfortran.libc}/include";
   arch = if system == "x86_64-darwin" then "macosx" else "linux";
 
