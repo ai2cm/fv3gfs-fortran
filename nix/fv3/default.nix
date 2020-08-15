@@ -27,21 +27,38 @@ stdenv.mkDerivation {
       gfortran
   ];
 
-src = builtins.fetchGit {
-  url = "git@github.com:VulcanClimateModeling/fv3gfs-fortran.git";
-};
+srcs = [
+  ../../FV3/.
+  ../../stochastic_physics/.
+];
+
+# need some fancy logic to unpack the two source directories
+# https://nixos.org/nixpkgs/manual/#sec-language-texlive-custom-packages
+unpackPhase = ''
+      runHook preUnpack
+
+      for _src in $srcs; do
+        cp -r "$_src" $(stripHash "$_src")
+      done
+
+      chmod -R +w .
+
+      runHook postUnpack
+'';
+
 
 config = ./configure.fv3;
 
-buildPhase = ''
-    
+configurePhase = ''
     cp $config FV3/conf/configure.fv3
 
     # need to call this since usr/bin/env isn't 
     # installed in sandboxed build environment
     # there goes 1 hr...
     patchShebangs FV3/mkDepends.pl
+'';
 
+buildPhase = ''
     make -C FV3 -j 4
 '';
 
