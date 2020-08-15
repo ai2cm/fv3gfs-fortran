@@ -27,13 +27,7 @@ stdenv.mkDerivation rec {
   pname = "fms";
   version = "0.0.0";
 
-  src = builtins.fetchGit{
-    url = "git@github.com:VulcanClimateModeling/fv3gfs-fortran.git";
-    rev = "c0d11c6a66f76835ae0e9bc791d7cda6d68e504b";
-  };
-
-
-  builder = ./build.sh;
+  src = ../../FMS/.;
 
   # nativeBuildInputs = [ m4 ];
   # buildInputs = [ hdf5 curl mpi ];
@@ -42,7 +36,18 @@ stdenv.mkDerivation rec {
   ];
   inherit netcdffortran;
 
+  configurePhase = ''
+    mkdir m4
+    autoreconf --install
 
+    export CC=mpicc
+    export FC=mpifort
+    export LOG_DRIVER_FLAGS="--comments"
+    export CPPFLAGS="-Duse_LARGEFILE -DMAXFIELDMETHODS_=500 -DGFS_PHYS"
+    export FCFLAGS="-fcray-pointer -Waliasing -ffree-line-length-none -fno-range-check -fdefault-real-8 -fdefault-double-8 -fopenmp -I$netcdffortran/include"
+
+    ./configure --prefix=$out
+  '';
 
   meta = {
       description = "Libraries for the Unidata network Common Data Format";
