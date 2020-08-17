@@ -2321,7 +2321,7 @@ module GFS_diagnostics
 
     idx = idx + 1
     ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'dt3dt_ww_clearsky'
+    ExtDiag(idx)%name = 'dt3dt_sw_clearsky'
     ExtDiag(idx)%desc = 'temperature change due to clear sky shortwave radiation'
     ExtDiag(idx)%unit = 'K'
     ExtDiag(idx)%mod_name = 'gfs_phys'
