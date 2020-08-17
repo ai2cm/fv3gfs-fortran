@@ -5115,8 +5115,8 @@ module GFS_typedefs
     if (Model%ldiag3d) then
       allocate (Diag%du3dt  (IM,Model%levs,4))
       allocate (Diag%dv3dt  (IM,Model%levs,4))
-      allocate (Diag%dt3dt  (IM,Model%levs,7))
-      allocate (Diag%t_dt   (IM,Model%levs,7))
+      allocate (Diag%dt3dt  (IM,Model%levs,9))
+      allocate (Diag%t_dt   (IM,Model%levs,9))
       allocate (Diag%cvm    (IM,Model%levs))
       allocate (Diag%dq3dt  (IM,Model%levs,9))
       allocate (Diag%q_dt   (IM,Model%levs,5))

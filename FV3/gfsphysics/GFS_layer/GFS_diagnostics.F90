@@ -2308,6 +2308,28 @@ module GFS_diagnostics
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%dt3dt(:,:,7)
     enddo
 
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'dt3dt_lw_clearsky'
+    ExtDiag(idx)%desc = 'temperature change due to clear sky longwave radiation'
+    ExtDiag(idx)%unit = 'K'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%dt3dt(:,:,8)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'dt3dt_ww_clearsky'
+    ExtDiag(idx)%desc = 'temperature change due to clear sky shortwave radiation'
+    ExtDiag(idx)%unit = 'K'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%dt3dt(:,:,9)
+    enddo
+
 ! Applying a time_avg converts these t_dt_* quantities to average tendencies, 
 ! because it amounts to dividing the total increments (what are stored in the
 ! diagnostics buckets) by the total time elapsed for the diagnostics interval
@@ -2394,6 +2416,30 @@ module GFS_diagnostics
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,7)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 't_dt_lw_clearsky'
+    ExtDiag(idx)%desc = 'temperature tendency due to clear sky longwave radiation'
+    ExtDiag(idx)%unit = 'K/s'
+    ExtDiag(idx)%time_avg = .true.
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,8)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 't_dt_sw_clearsky'
+    ExtDiag(idx)%desc = 'temperature tendency due to clear sky shortwave radiation'
+    ExtDiag(idx)%unit = 'K/s'
+    ExtDiag(idx)%time_avg = .true.
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,9)
     enddo
 
     idx = idx + 1
