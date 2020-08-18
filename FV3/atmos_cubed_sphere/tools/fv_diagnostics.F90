@@ -128,7 +128,7 @@ module fv_diagnostics_mod
  use fv_arrays_mod,      only: fv_atmos_type, fv_grid_type, fv_diag_type, fv_grid_bounds_type, & 
                                R_GRID
  !!! CLEANUP needs rem oval?
- use fv_mapz_mod,        only: E_Flux, moist_cv
+ use fv_mapz_mod,        only: E_Flux, moist_cv, moist_cp
  use fv_mp_mod,          only: mp_reduce_sum, mp_reduce_min, mp_reduce_max, is_master
  use fv_eta_mod,         only: get_eta_level, gw_1d
  use fv_grid_utils_mod,  only: g_sum
@@ -1098,6 +1098,11 @@ contains
     idiag%id_cvm = register_diag_field('dynamics', &
           'cvm', axes(1:3), Time, &
           'moist specific heat of air at constant volume', 'J/kg/K', &
+          missing_value=missing_value)
+
+    idiag%id_cpm = register_diag_field('dynamics', &
+          'cpm', axes(1:3), Time, &
+          'moist specific heat of air at constant pressure', 'J/kg/K', &
           missing_value=missing_value)
  end subroutine fv_diag_init
 
@@ -3134,6 +3139,11 @@ contains
              isc, iec, jsc, jec, npz, isd, ied, jsd, jed, Atm(n)%flagstruct%nwat, wk(isc:iec,jsc:jec,1:npz))
         used = send_data(idiag%id_cvm, wk(isc:iec,jsc:jec,1:npz), Time)
      endif
+     if (idiag%id_cpm > 0) then
+      call compute_cpm(Atm(n)%q(isd:ied,jsd:jed,1:npz,1:Atm(n)%flagstruct%nwat), Atm(n)%pt(isd:ied,jsd:jed,1:npz), &
+           isc, iec, jsc, jec, npz, isd, ied, jsd, jed, Atm(n)%flagstruct%nwat, wk(isc:iec,jsc:jec,1:npz))
+      used = send_data(idiag%id_cpm, wk(isc:iec,jsc:jec,1:npz), Time)
+   endif
    ! enddo  ! end ntileMe do-loop
 
     deallocate ( a2 )
@@ -5739,5 +5749,30 @@ end subroutine eqv_pot
       enddo
    enddo
  end subroutine compute_cvm
+
+ subroutine compute_cpm(q, pt, isc, iec, jsc, jec, npz, isd, ied, jsd, jed, nwat, cpm)
+   integer :: isc, iec, jsc, jec, npz, isd, ied, jsd, jed, nwat
+   real, dimension(isd:ied,jsd:jed,1:npz,1:nwat), intent(in) :: q
+   real, dimension(isd:ied,jsd:jed,1:npz), intent(in) :: pt
+   real, dimension(isc:iec,jsc:jec,1:npz), intent(out) :: cpm
+   real, dimension(isc:iec) :: qc, cpm_tmp
+   integer :: j, k, sphum, liq_wat, ice_wat, rainwat, snowwat, graupel
+
+   sphum = get_tracer_index (MODEL_ATMOS, 'sphum')
+   liq_wat = get_tracer_index (MODEL_ATMOS, 'liq_wat')
+   ice_wat = get_tracer_index (MODEL_ATMOS, 'ice_wat')
+   rainwat = get_tracer_index (MODEL_ATMOS, 'rainwat')
+   snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
+   graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
+
+   do j = jsc, jec
+      do k = 1, npz
+         call moist_cp(isc, iec, isd, ied, jsd, jed, npz, j, k, nwat, sphum, &
+              liq_wat, rainwat, ice_wat, snowwat, graupel, &
+              q, qc, cpm_tmp, pt(isc:iec,j,k))
+         cpm(isc:iec,j,k) = cpm_tmp
+      enddo
+   enddo
+ end subroutine compute_cpm
 
 end module fv_diagnostics_mod

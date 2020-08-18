@@ -2179,9 +2179,8 @@ contains
            enddo
         enddo
     endif
+    IPD_Data(nb)%Statein%dycore_hydrostatic = Atm(mytile)%flagstruct%hydrostatic
   enddo
-
-  IPD_Data(nb)%Statein%dycore_hydrostatic = Atm(mytile)%flagstruct%hydrostatic
 
  end subroutine atmos_phys_driver_statein
 
