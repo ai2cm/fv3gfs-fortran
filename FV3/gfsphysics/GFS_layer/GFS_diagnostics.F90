@@ -2398,14 +2398,14 @@ module GFS_diagnostics
 
     idx = idx + 1
     ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'cvm_phys'
-    ExtDiag(idx)%desc = 'moist specific heat of air at constant volume'
+    ExtDiag(idx)%name = 'c_phys'
+    ExtDiag(idx)%desc = 'moist specific heat of air at constant volume (if non-hydrostatic dycore) or constant pressure (if hydrostatic dycore)'
     ExtDiag(idx)%unit = 'J/kg/K'
     ExtDiag(idx)%time_avg = .true.
     ExtDiag(idx)%mod_name = 'gfs_phys'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%cvm(:,:)
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%specific_heat(:,:)
     enddo
 
     idx = idx + 1
