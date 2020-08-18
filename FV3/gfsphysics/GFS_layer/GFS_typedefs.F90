@@ -186,7 +186,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: slc (:,:)   => null()  !< soil liquid water content
     real (kind=kind_phys), pointer :: atm_ts (:)  => null() !< surface temperature from dynamical core
  
-    logical, pointer :: dycore_hydrostatic        => null()  !< whether the dynamical core is hydrostatic
+    logical :: dycore_hydrostatic                            !< whether the dynamical core is hydrostatic
     contains
       procedure :: create  => statein_create  !<   allocate array data
   end type GFS_statein_type
@@ -1999,7 +1999,6 @@ module GFS_typedefs
     ! surface temperature from atmospheric prognostic state
     allocate (Statein%atm_ts(IM))
     Statein%atm_ts = clear_val
-    Statein%dycore_hydrostatic = .true.
 
   end subroutine statein_create
 
