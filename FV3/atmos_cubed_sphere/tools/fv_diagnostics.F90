@@ -1082,8 +1082,8 @@ contains
           'temperature tendency from physics', 'K/s', &
           missing_value=missing_value)
     if (idiag%id_t_dt_phys > 0) then
-         allocate(Atm(n)%phys_diag%t_dt(isc:iec,jsc:jec,npz))
-         Atm(n)%phys_diag%t_dt(isc:iec,jsc:jec,1:npz) = 0.0
+         allocate(Atm(n)%physics_tendency_diag%t_dt(isc:iec,jsc:jec,npz))
+         Atm(n)%physics_tendency_diag%t_dt(isc:iec,jsc:jec,1:npz) = 0.0
     endif
 
     idiag%id_qv_dt_phys = register_diag_field('dynamics', &
@@ -1091,8 +1091,8 @@ contains
           'specific humidity tendency from physics', 'kg/kg/s', &
           missing_value=missing_value)
     if (idiag%id_qv_dt_phys > 0) then
-         allocate(Atm(n)%phys_diag%qv_dt(isc:iec,jsc:jec,npz))
-         Atm(n)%phys_diag%qv_dt(isc:iec,jsc:jec,1:npz) = 0.0
+         allocate(Atm(n)%physics_tendency_diag%qv_dt(isc:iec,jsc:jec,npz))
+         Atm(n)%physics_tendency_diag%qv_dt(isc:iec,jsc:jec,1:npz) = 0.0
     endif
 
     idiag%id_cvm = register_diag_field('dynamics', &
@@ -3124,10 +3124,10 @@ contains
      endif
 
      if (idiag%id_t_dt_phys > 0) then
-        used = send_data(idiag%id_t_dt_phys, Atm(n)%phys_diag%t_dt(isc:iec,jsc:jec,1:npz), Time)
+        used = send_data(idiag%id_t_dt_phys, Atm(n)%physics_tendency_diag%t_dt(isc:iec,jsc:jec,1:npz), Time)
      endif
      if (idiag%id_qv_dt_phys > 0) then
-        used = send_data(idiag%id_qv_dt_phys, Atm(n)%phys_diag%qv_dt(isc:iec,jsc:jec,1:npz), Time)
+        used = send_data(idiag%id_qv_dt_phys, Atm(n)%physics_tendency_diag%qv_dt(isc:iec,jsc:jec,1:npz), Time)
      endif
      if (idiag%id_cvm > 0) then
         call compute_cvm(Atm(n)%q(isd:ied,jsd:jed,1:npz,1:Atm(n)%flagstruct%nwat), Atm(n)%pt(isd:ied,jsd:jed,1:npz), &

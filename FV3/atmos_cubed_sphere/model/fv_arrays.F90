@@ -1143,12 +1143,12 @@ module fv_arrays_mod
 
    end type nudge_diag_type
 
-   type phys_diag_type
+   type physics_tendency_diag_type
 
       real, allocatable :: t_dt(:,:,:)
       real, allocatable :: qv_dt(:,:,:)
 
-   end type phys_diag_type
+   end type physics_tendency_diag_type
 !>@brief 'allocate_fv_nest_BC_type' is an interface to subroutines
 !! that allocate the 'fv_nest_BC_type' structure that holds the nested-grid BCs.
 !>@details The subroutines can pass the array bounds explicitly or not.
@@ -1392,7 +1392,7 @@ module fv_arrays_mod
 
   type(nudge_diag_type) :: nudge_diag
 
-  type(phys_diag_type) :: phys_diag
+  type(physics_tendency_diag_type) :: physics_tendency_diag
 
   type(fv_coarse_graining_type) :: coarse_graining
 

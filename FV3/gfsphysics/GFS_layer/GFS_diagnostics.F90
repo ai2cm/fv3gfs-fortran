@@ -2386,8 +2386,8 @@ module GFS_diagnostics
 
     idx = idx + 1
     ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_dissipation_of_orographic_gravity_waves'
-    ExtDiag(idx)%desc = 'temperature tendency due to orographic gravity wave drag'
+    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_dissipation_of_gravity_waves'
+    ExtDiag(idx)%desc = 'temperature tendency due to gravity wave drag'
     ExtDiag(idx)%unit = 'K/s'
     ExtDiag(idx)%time_avg = .true.
     ExtDiag(idx)%mod_name = 'gfs_phys'

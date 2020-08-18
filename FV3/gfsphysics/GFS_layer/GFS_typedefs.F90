@@ -1471,7 +1471,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: upd_mf (:,:)   => null()  !< instantaneous convective updraft mass flux
     real (kind=kind_phys), pointer :: dwn_mf (:,:)   => null()  !< instantaneous convective downdraft mass flux
     real (kind=kind_phys), pointer :: det_mf (:,:)   => null()  !< instantaneous convective detrainment mass flux
-    real (kind=kind_phys), pointer :: cldcov (:,:)   => null()  !< instantaneous 3D cloud fraction
+!   real (kind=kind_phys), pointer :: cldcov (:,:)   => null()  !< instantaneous 3D cloud fraction
 
     !--- MP quantities for 3D diagnositics 
     real (kind=kind_phys), pointer :: refl_10cm(:,:) => null()  !< instantaneous refl_10cm 
@@ -5125,7 +5125,7 @@ module GFS_typedefs
 !      allocate (Diag%upd_mf (IM,Model%levs))
 !      allocate (Diag%dwn_mf (IM,Model%levs))
 !      allocate (Diag%det_mf (IM,Model%levs))
-      allocate (Diag%cldcov (IM,Model%levs))
+!      allocate (Diag%cldcov (IM,Model%levs))
     endif
 
 !vay-2018
@@ -5302,9 +5302,9 @@ module GFS_typedefs
     Diag%topfsw%upfx0 = zero
     Diag%topflw%upfxc = zero
     Diag%topflw%upfx0 = zero
-    if (Model%ldiag3d) then
-      Diag%cldcov     = zero
-    endif
+    ! if (Model%ldiag3d) then
+    !   Diag%cldcov     = zero
+    ! endif
 
   end subroutine diag_rad_zero
 
