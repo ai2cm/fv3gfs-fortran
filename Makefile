@@ -1,10 +1,18 @@
 GCR_URL = us.gcr.io/vcm-ml
 COMPILER ?= gnu
 MPI ?= openmpi
-BUILD_ARGS ?= --build-arg BASE_OS_IMAGE="nvidia/cuda:10.1-devel-ubuntu18.04" 
+CUDA ?= n
+BASE_OS_IMAGE ?= ubuntu:19.10
+
+CUDA_VERSION=
+ifeq ($(CUDA),y)
+	BASE_OS_IMAGE ?= nvidia/cuda:10.1-devel-ubuntu18.0
+	CUDA_VERSION=_cuda10.1
+endif
+
 DOCKERFILE ?= docker/Dockerfile.$(MPI)
-COMPILED_TAG_NAME ?= $(COMPILER)_$(MPI)_cuda10.1
-ENVIRONMENT_TAG_NAME ?= $(COMPILER)_$(MPI)_cuda10.1
+COMPILED_TAG_NAME ?= $(COMPILER)_$(MPI)$(CUDA_VERSION)
+ENVIRONMENT_TAG_NAME ?= $(COMPILER)_$(MPI)$(CUDA_VERSION)
 COMPILE_OPTION ?=
 COMPILE_TARGET ?= fv3gfs-compiled
 BUILD_FROM_INTERMEDIATE ?= n
@@ -27,7 +35,7 @@ EXPERIMENT ?= new
 RUNDIR_CONTAINER=/rundir
 RUNDIR_HOST=$(shell pwd)/rundir
 
-
+BUILD_ARGS ?= --build-arg BASE_OS_IMAGE=$(BASE_OS_IMAGE) 
 ifeq ($(BUILD_FROM_INTERMEDIATE),y)
 	BUILD_ARGS += --build-arg FMS_IMAGE=$(FMS_IMAGE) --build-arg ESMF_IMAGE=$(ESMF_IMAGE) --build-arg SERIALBOX_IMAGE=$(SERIALBOX_IMAGE)
 endif

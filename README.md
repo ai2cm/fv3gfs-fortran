@@ -41,7 +41,9 @@ MPI - refers to the MPI library used. Valid values are 'openmpi' and 'mpich'.
 COMPILER - refers to the name of the compiler suite used to generate all compiled
            objects, libraries and executables.  Valid value is 'gnu' only presently.
 
-CUDA - refers to the version of CUDA used.  Currently, the only allowed value is '10.1'
+CUDA - should be set to 'y' if CUDA support is desired in the final compiled Docker
+       image.  If set to 'y', BASE_OS_IMAGE will be set to 'nvidia/cuda:10.1-devel-ubuntu18.04'.
+       Only CUDA Version 10.1 is currently supported. 
 
 #Specifying a different OS base version
 All Docker images are created using Ubuntu linux as the base operating system.  Docker
@@ -50,9 +52,11 @@ Ubuntu version, like 19.10, but CUDA support will be not provided.  The default 
 of the base OS is Ubuntu 18.04.  One can change this by setting the following build
 argument:
 
-BASE_OS_IMAGE - refers to the version of the base OS used.  Default value is 'nvidia/cuda:10.1-devel-ubuntu18.04'
-                which provides CUDA support.  Valid values with no CUDA support
-                include 'ubuntu:18.04' and 'ubuntu:19.10'.
+BASE_OS_IMAGE - refers to the version of the base OS used.  Default value is 
+                'ubuntu:19.10'.  If CUDA is set to 'y', BASE_OS_IMAGE will be set
+                to 'nvidia/cuda:10.1-devel-ubuntu18.04'.  Current valid values for
+                BASE_OS_IMAGE are 'ubuntu:18.04', 'ubuntu:19.10' and 
+                'nvidia/cuda:10.1-devel-ubuntu18.04'.
 
 ### Step 2: Install fv3config
 ```
