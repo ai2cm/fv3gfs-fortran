@@ -75,9 +75,17 @@ libs_no_dycore: fms_check
 	$(MAKE) -C ipd                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 	$(MAKE) -C io                    $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 
-$(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a coarse_graining/libfv3coarse_graining.a
+LIBS = atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a coarse_graining/libfv3coarse_graining.a
+
+$(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o $(LIBS)
 	$(LD) -o $@ $^ $(NCEPLIBS) $(LDFLAGS)
 endif
+
+install: $(FV3_EXE) $(LIBS)
+	mkdir -p $(PREFIX)/bin $(PREFIX)/lib $(PREFIX)/include
+	install -t $(PREFIX)/bin/ $(FV3_EXE)
+	install -t $(PREFIX)/lib/ $(LIBS)
+	install -t $(PREFIX)/include gfsphysics/*.mod ipd/*.mod cpl/*.mod io/*.mod atmos_cubed_sphere/*.mod ../stochastic_physics/*.mod
 
 $(FV3CAP_LIB): atmos_model.o module_fv3_config.o module_fcst_grid_comp.o time_utils.o fv3_cap.o
 	ar rv $(FV3CAP_LIB) $?
