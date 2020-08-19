@@ -186,6 +186,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: slc (:,:)   => null()  !< soil liquid water content
     real (kind=kind_phys), pointer :: atm_ts (:)  => null() !< surface temperature from dynamical core
  
+    logical, pointer :: dycore_hydrostatic        => null()  !< whether the dynamical core is hydrostatic
     contains
       procedure :: create  => statein_create  !<   allocate array data
   end type GFS_statein_type
@@ -1457,8 +1458,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: du3dt (:,:,:)  => null()   !< u momentum change due to physics
     real (kind=kind_phys), pointer :: dv3dt (:,:,:)  => null()   !< v momentum change due to physics
     real (kind=kind_phys), pointer :: dt3dt (:,:,:)  => null()   !< temperature change due to physics
-    real (kind=kind_phys), pointer :: t_dt(:,:,:)    => null()   !< temperature change due to physics scaled by cp / cvm
-    real (kind=kind_phys), pointer :: cvm(:,:)       => null()   !< moist specific heat of air at constant volume
+    real (kind=kind_phys), pointer :: t_dt(:,:,:)    => null()   !< temperature change due to physics scaled by cp / cvm or cp / cpm
     real (kind=kind_phys), pointer :: dq3dt (:,:,:)  => null()   !< moisture change due to physics
     real (kind=kind_phys), pointer :: q_dt  (:,:,:)  => null()   !< moisture tendency due to physics, adjusted to dycore mass fraction convention
     real (kind=kind_phys), pointer :: refdmax (:)    => null()   !< max hourly 1-km agl reflectivity
@@ -1471,7 +1471,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: upd_mf (:,:)   => null()  !< instantaneous convective updraft mass flux
     real (kind=kind_phys), pointer :: dwn_mf (:,:)   => null()  !< instantaneous convective downdraft mass flux
     real (kind=kind_phys), pointer :: det_mf (:,:)   => null()  !< instantaneous convective detrainment mass flux
-    real (kind=kind_phys), pointer :: cldcov (:,:)   => null()  !< instantaneous 3D cloud fraction
+!   real (kind=kind_phys), pointer :: cldcov (:,:)   => null()  !< instantaneous 3D cloud fraction
 
     !--- MP quantities for 3D diagnositics 
     real (kind=kind_phys), pointer :: refl_10cm(:,:) => null()  !< instantaneous refl_10cm 
@@ -1999,6 +1999,8 @@ module GFS_typedefs
     allocate (Statein%atm_ts(IM))
     Statein%atm_ts = clear_val
 
+    allocate(Statein%dycore_hydrostatic)
+    Statein%dycore_hydrostatic = .true.
   end subroutine statein_create
 
 
@@ -5115,9 +5117,8 @@ module GFS_typedefs
     if (Model%ldiag3d) then
       allocate (Diag%du3dt  (IM,Model%levs,4))
       allocate (Diag%dv3dt  (IM,Model%levs,4))
-      allocate (Diag%dt3dt  (IM,Model%levs,9))
-      allocate (Diag%t_dt   (IM,Model%levs,9))
-      allocate (Diag%cvm    (IM,Model%levs))
+      allocate (Diag%dt3dt  (IM,Model%levs,7))
+      allocate (Diag%t_dt   (IM,Model%levs,7))
       allocate (Diag%dq3dt  (IM,Model%levs,9))
       allocate (Diag%q_dt   (IM,Model%levs,5))
 !      allocate (Diag%dq3dt  (IM,Model%levs,oz_coeff+5))
@@ -5125,7 +5126,7 @@ module GFS_typedefs
 !      allocate (Diag%upd_mf (IM,Model%levs))
 !      allocate (Diag%dwn_mf (IM,Model%levs))
 !      allocate (Diag%det_mf (IM,Model%levs))
-      allocate (Diag%cldcov (IM,Model%levs))
+!      allocate (Diag%cldcov (IM,Model%levs))
     endif
 
 !vay-2018
@@ -5302,9 +5303,9 @@ module GFS_typedefs
     Diag%topfsw%upfx0 = zero
     Diag%topflw%upfxc = zero
     Diag%topflw%upfx0 = zero
-    if (Model%ldiag3d) then
-      Diag%cldcov     = zero
-    endif
+    ! if (Model%ldiag3d) then
+    !   Diag%cldcov     = zero
+    ! endif
 
   end subroutine diag_rad_zero
 
@@ -5420,7 +5421,6 @@ module GFS_typedefs
       Diag%dv3dt    = zero
       Diag%dt3dt    = zero
       Diag%t_dt     = zero
-      Diag%cvm      = zero
       Diag%dq3dt    = zero
       Diag%q_dt     = zero
 !     Diag%upd_mf   = zero

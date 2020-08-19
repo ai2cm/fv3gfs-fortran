@@ -99,7 +99,7 @@ module fv_update_phys_mod
   use tracer_manager_mod, only: get_tracer_index, adjust_mass, get_tracer_names
   use fv_mp_mod,          only: start_group_halo_update, complete_group_halo_update
   use fv_mp_mod,          only: group_halo_update_type
-  use fv_arrays_mod,      only: fv_flags_type, fv_nest_type, R_GRID, nudge_diag_type, phys_diag_type
+  use fv_arrays_mod,      only: fv_flags_type, fv_nest_type, R_GRID, nudge_diag_type, physics_tendency_diag_type
   use boundary_mod,       only: nested_grid_BC
   use boundary_mod,       only: extrapolation_BC
   use fv_eta_mod,         only: get_eta_level
@@ -137,7 +137,7 @@ module fv_update_phys_mod
                               ak, bk, phis, u_srf, v_srf, ts, delz, hydrostatic,  &
                               u_dt, v_dt, t_dt, moist_phys, Time, nudge,    &
                               gridstruct, lona, lata, npx, npy, npz, flagstruct,  &
-                              neststruct, bd, domain, ptop, nudge_diag, phys_diag, &
+                              neststruct, bd, domain, ptop, nudge_diag, physics_tendency_diag, &
                               q_dt)
     real, intent(in)   :: dt, ptop
     integer, intent(in):: is,  ie,  js,  je, ng
@@ -198,7 +198,7 @@ module fv_update_phys_mod
     integer, intent(IN) :: npx, npy, npz
 
     type(nudge_diag_type), intent(inout) :: nudge_diag
-    type(phys_diag_type), intent(inout) :: phys_diag
+    type(physics_tendency_diag_type), intent(inout) :: physics_tendency_diag
 
 !***********
 ! Haloe Data
@@ -295,7 +295,7 @@ module fv_update_phys_mod
 
     call get_eta_level(npz, 1.0E5, pfull, phalf, ak, bk)
 
-    if (allocated(phys_diag%t_dt)) phys_diag%t_dt = pt(is:ie,js:je,:)
+    if (allocated(physics_tendency_diag%t_dt)) physics_tendency_diag%t_dt = pt(is:ie,js:je,:)
 
 #ifdef MULTI_GASES
         nm = max(           nwat,num_gas)
@@ -464,7 +464,7 @@ module fv_update_phys_mod
 
     enddo ! k-loop
 
-if (allocated(phys_diag%t_dt)) phys_diag%t_dt = (pt(is:ie,js:je,:) - phys_diag%t_dt) / dt
+if (allocated(physics_tendency_diag%t_dt)) physics_tendency_diag%t_dt = (pt(is:ie,js:je,:) - physics_tendency_diag%t_dt) / dt
 
 ! [delp, (ua, va), pt, q] updated. Perform nudging if requested
 !------- nudging of atmospheric variables toward specified data --------

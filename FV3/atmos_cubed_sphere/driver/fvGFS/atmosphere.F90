@@ -173,7 +173,7 @@ use fv_iau_mod,             only: IAU_external_data_type
 !-----------------
 ! FV core modules:
 !-----------------
-use fv_arrays_mod,      only: fv_atmos_type, phys_diag_type, R_GRID
+use fv_arrays_mod,      only: fv_atmos_type, physics_tendency_diag_type, R_GRID
 use fv_control_mod,     only: fv_init, fv_end, ngrids
 use fv_eta_mod,         only: get_eta_level
 use fv_fill_mod,        only: fill_gfs
@@ -1535,7 +1535,7 @@ contains
 
    call timing_on('GFS_TENDENCIES')
 
-   call atmos_phys_qdt_diag(Atm(n)%q, Atm(n)%phys_diag, nt_dyn, dt_atmos, .true.)
+   call atmos_phys_qdt_diag(Atm(n)%q, Atm(n)%physics_tendency_diag, nt_dyn, dt_atmos, .true.)
 
 !--- put u/v tendencies into haloed arrays u_dt and v_dt
 !$OMP parallel do default (none) & 
@@ -1615,7 +1615,7 @@ contains
 
    enddo  ! nb-loop
 
-   call atmos_phys_qdt_diag(Atm(n)%q, Atm(n)%phys_diag, nt_dyn, dt_atmos, .false.)
+   call atmos_phys_qdt_diag(Atm(n)%q, Atm(n)%physics_tendency_diag, nt_dyn, dt_atmos, .false.)
 
    call timing_off('GFS_TENDENCIES')
 
@@ -1659,7 +1659,7 @@ contains
                          Atm(n)%gridstruct%agrid(:,:,1), Atm(n)%gridstruct%agrid(:,:,2),   &
                          Atm(n)%npx, Atm(n)%npy, Atm(n)%npz, Atm(n)%flagstruct,            &
                          Atm(n)%neststruct, Atm(n)%bd, Atm(n)%domain, Atm(n)%ptop,         &
-                         Atm(n)%nudge_diag, Atm(n)%phys_diag)
+                         Atm(n)%nudge_diag, Atm(n)%physics_tendency_diag)
        call timing_off('FV_UPDATE_PHYS')
    call mpp_clock_end (id_dynam)
 
@@ -2179,25 +2179,26 @@ contains
            enddo
         enddo
     endif
+    IPD_Data(nb)%Statein%dycore_hydrostatic = Atm(mytile)%flagstruct%hydrostatic
   enddo
 
  end subroutine atmos_phys_driver_statein
 
- subroutine atmos_phys_qdt_diag(q, phys_diag, nq, dt, begin)
+ subroutine atmos_phys_qdt_diag(q, physics_tendency_diag, nq, dt, begin)
    integer, intent(in) :: nq
    real, intent(in) :: q(isd:ied,jsd:jed,1:npz,1:nq)
    real, intent(in) :: dt
    logical, intent(in) :: begin
-   type(phys_diag_type), intent(inout) :: phys_diag
+   type(physics_tendency_diag_type), intent(inout) :: physics_tendency_diag
 
    integer :: sphum
 
    sphum = get_tracer_index (MODEL_ATMOS, 'sphum')
 
    if (begin) then
-      if (allocated(phys_diag%qv_dt)) phys_diag%qv_dt = q(isc:iec,jsc:jec,1:npz,sphum)
+      if (allocated(physics_tendency_diag%qv_dt)) physics_tendency_diag%qv_dt = q(isc:iec,jsc:jec,1:npz,sphum)
    else
-      if (allocated(phys_diag%qv_dt)) phys_diag%qv_dt = (q(isc:iec,jsc:jec,1:npz,sphum) - phys_diag%qv_dt) / dt
+      if (allocated(physics_tendency_diag%qv_dt)) physics_tendency_diag%qv_dt = (q(isc:iec,jsc:jec,1:npz,sphum) - physics_tendency_diag%qv_dt) / dt
    endif
  end subroutine atmos_phys_qdt_diag
 
