@@ -5707,13 +5707,13 @@ module module_physics_driver
       subroutine update_temperature_tendency_diagnostics(t_dt, dt3dt_initial, dt3dt_final, specific_heat, &
         im, levs)
         integer, intent(in) :: im, levs
-        real(kind=kind_phys), intent(in), dimension(1:im,1:levs,7) :: dt3dt_initial, dt3dt_final
-        real(kind=kind_phys), intent(inout) :: t_dt(1:im,1:levs,7)
+        real(kind=kind_phys), intent(in), dimension(1:im,1:levs,9) :: dt3dt_initial, dt3dt_final
+        real(kind=kind_phys), intent(inout) :: t_dt(1:im,1:levs,9)
         real(kind=kind_phys), intent(in), dimension(1:im,1:levs) :: specific_heat
 
         integer :: i
 
-        do i = 1, 7
+        do i = 1, 9
           t_dt(:,:,i) = t_dt(:,:,i) + con_cp * (dt3dt_final(:,:,i) - dt3dt_initial(:,:,i)) / specific_heat(:,:)
         enddo
       end subroutine update_temperature_tendency_diagnostics
