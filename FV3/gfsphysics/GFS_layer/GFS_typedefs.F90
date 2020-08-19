@@ -185,7 +185,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: stc (:,:)   => null()  !< soil temperature content
     real (kind=kind_phys), pointer :: slc (:,:)   => null()  !< soil liquid water content
     real (kind=kind_phys), pointer :: atm_ts (:)  => null() !< surface temperature from dynamical core
- 
+    real (kind=kind_phys), pointer :: column_moistening_implied_by_nudging (:) => null() !< Implied moistening from nudging specific humidity
     contains
       procedure :: create  => statein_create  !<   allocate array data
   end type GFS_statein_type
@@ -769,6 +769,8 @@ module GFS_typedefs
     logical              :: use_ufo         !< flag for gcycle surface option
     logical              :: use_analysis_sst ! whether to set physics SST to dynamical core ts, which is
                                              ! equal to analysis SST when nudging is active
+    logical              :: use_nudging_implied_moistening  !< flag to adjust precipitation felt by land surface
+                                                            !< by moistening implied by nudging specific humidity.
 !--- tuning parameters for physical parameterizations
     logical              :: ras             !< flag for ras convection scheme
     logical              :: flipv           !< flag for vertical direction flip (ras)
@@ -1996,6 +1998,9 @@ module GFS_typedefs
     allocate (Statein%atm_ts(IM))
     Statein%atm_ts = clear_val
 
+    allocate (Statein%column_moistening_implied_by_nudging(IM))
+    Statein%column_moistening_implied_by_nudging = clear_val
+
   end subroutine statein_create
 
 
@@ -2860,7 +2865,7 @@ module GFS_typedefs
     logical              :: use_ufo        = .false.         !< flag for gcycle surface option
     logical              :: use_analysis_sst = .false. ! whether to set physics SST to dynamical core ts
                                                        ! which is equal to analysis SST when nudging is active
-
+    logical              :: use_nudging_implied_moistening = .false.
 !--- tuning parameters for physical parameterizations
     logical              :: ras            = .false.                  !< flag for ras convection scheme
     logical              :: flipv          = .true.                   !< flag for vertical direction flip (ras)
@@ -3125,7 +3130,7 @@ module GFS_typedefs
 #else
                                lsm, lsoil, nmtvr, ivegsrc, use_ufo,                         &
 #endif
-                               use_analysis_sst,                                           &
+                               use_analysis_sst, use_nudging_implied_moistening,            &
                           !    Noah MP options
                                iopt_dveg,iopt_crs,iopt_btr,iopt_run,iopt_sfc, iopt_frz,     &
                                iopt_inf, iopt_rad,iopt_alb,iopt_snf,iopt_tbot,iopt_stc,     &
@@ -3439,6 +3444,7 @@ module GFS_typedefs
     Model%use_ufo          = use_ufo
 
     Model%use_analysis_sst = use_analysis_sst
+    Model%use_nudging_implied_moistening = use_nudging_implied_moistening
 
 ! Noah MP options from namelist
 !
@@ -3957,6 +3963,7 @@ module GFS_typedefs
 
       print *,' nst_anl=',Model%nst_anl,' use_ufo=',Model%use_ufo,' frac_grid=',Model%frac_grid
       print *,' use_analysis_sst=',Model%use_analysis_sst
+      print *,' use_nudging_implied_moistening=',Model%use_nudging_implied_moistening
       print *,' min_lakeice=',Model%min_lakeice,' min_seaice=',Model%min_seaice
       if (Model%nstf_name(1) > 0 ) then
         print *,' NSSTM is active '
@@ -4466,6 +4473,7 @@ module GFS_typedefs
 
       print *, ' use_ufo           : ', Model%use_ufo
       print *, ' use_analysis_sst : ', Model%use_analysis_sst
+      print *, ' use_nudging_implied_moistening : ', Model%use_nudging_implied_moistening
       print *, ' '
       print *, 'tuning parameters for physical parameterizations'
       print *, ' ras               : ', Model%ras

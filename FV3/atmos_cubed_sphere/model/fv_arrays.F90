@@ -1333,6 +1333,10 @@ module fv_arrays_mod
     type(fv_regional_bc_bounds_type) :: regional_bc_bounds
 
     type(domain2D) :: domain
+
+    ! Column moistening implied from nudging specific humidity (only
+    ! allocated if nudging specific humidity).
+    real, _ALLOCATABLE :: column_moistening_implied_by_nudging(:,:) _NULL
 #if defined(SPMD)
 
     type(domain2D) :: domain_for_coupler !< domain used in coupled model with halo = 1.
