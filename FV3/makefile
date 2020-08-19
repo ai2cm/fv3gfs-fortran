@@ -79,13 +79,18 @@ LIBS = atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/lib
 
 $(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o $(LIBS)
 	$(LD) -o $@ $^ $(NCEPLIBS) $(LDFLAGS)
-endif
 
-install: $(FV3_EXE) $(LIBS)
+libfv3.a: atmos_model.o module_fv3_config.o module_fv3_config.o
+	ar crs $@ $^
+
+install: $(FV3_EXE) $(LIBS) libfv3.a
 	mkdir -p $(PREFIX)/bin $(PREFIX)/lib $(PREFIX)/include
 	install -t $(PREFIX)/bin/ $(FV3_EXE)
-	install -t $(PREFIX)/lib/ $(LIBS)
+	install -t $(PREFIX)/lib/ $(LIBS) libfv3.a
 	install -t $(PREFIX)/include gfsphysics/*.mod ipd/*.mod cpl/*.mod io/*.mod atmos_cubed_sphere/*.mod ../stochastic_physics/*.mod
+
+endif
+
 
 $(FV3CAP_LIB): atmos_model.o module_fv3_config.o module_fcst_grid_comp.o time_utils.o fv3_cap.o
 	ar rv $(FV3CAP_LIB) $?
