@@ -22,7 +22,7 @@
 
       implicit none
 !
-      external esmf_dgemm
+!      external esmf_dgemm
 !
       integer lat1s(0:jcap),latl2
 !
@@ -123,50 +123,50 @@
 !           compute the sum of the even real      terms for each level
 !           compute the sum of the even imaginary terms for each level
 !
-!           call dgemm('t','n',latl2-lat1+1, 2*(nvar_2-nvar_1+1),
-!     &                 (jcap+2-l)/2,cons1,     !constant
-!     &                 plnev(indev,lat1), len_trio_ls,
-!     &                 flnev(indev,2*nvar_1-1),len_trio_ls,cons0,
-!     &                 apev(2*nvar_1-1,lat1),latl2)
-             call esmf_dgemm(
-     &                   't',
-     &                   'n',
-     &                    n2,
-     &                   latl2-lat1+1,
-     &                   (jcap+3-l)/2,
-     &                   cons1,
-     &                   flnev(indev,2*nvar_1-1),
-     &                   len_trie_ls,
-     &                   plnev(indev,lat1),
-     &                   len_trie_ls,
-     &                   cons0,
-     &                   apev(2*nvar_1-1,lat1),
-     &                   2*nvars
-     &                   )
+           call dgemm('t','n',latl2-lat1+1, 2*(nvar_2-nvar_1+1),
+     &                 (jcap+2-l)/2,cons1,     !constant
+     &                 plnev(indev,lat1), len_trio_ls,
+     &                 flnev(indev,2*nvar_1-1),len_trio_ls,cons0,
+     &                 apev(2*nvar_1-1,lat1),latl2)
+!             call esmf_dgemm(
+!     &                   't',
+!     &                   'n',
+!     &                    n2,
+!     &                   latl2-lat1+1,
+!     &                   (jcap+3-l)/2,
+!     &                   cons1,
+!     &                   flnev(indev,2*nvar_1-1),
+!     &                   len_trie_ls,
+!     &                   plnev(indev,lat1),
+!     &                   len_trie_ls,
+!     &                   cons0,
+!     &                   apev(2*nvar_1-1,lat1),
+!     &                   2*nvars
+!     &                   )
 !
 !           compute the sum of the odd real      terms for each level
 !           compute the sum of the odd imaginary terms for each level
 !
-!           call dgemm('t','n',latl2-lat1+1, 2*(nvar_2-nvar_1+1),
-!     &                 (jcap+2-l)/2,cons1,     !constant
-!     &                 plnod(indod,lat1), len_trio_ls,
-!     &                 flnod(indod,2*nvar_1-1),len_trio_ls,cons0,
-!     &                 apod(2*nvar_1-1,lat1), latl2)
-              call esmf_dgemm(
-     &                   't',
-     &                   'n',
-     &                   n2,
-     &                   latl2-lat1+1,
-     &                  (jcap+2-l)/2,
-     &                   cons1,
-     &                   flnod(indod,2*nvar_1-1),
-     &                   len_trio_ls,
-     &                   plnod(indod,lat1),
-     &                   len_trio_ls,
-     &                   cons0,
-     &                   apod(2*nvar_1-1,lat1),
-     &                   2*nvars
-     &                   )
+           call dgemm('t','n',latl2-lat1+1, 2*(nvar_2-nvar_1+1),
+     &                 (jcap+2-l)/2,cons1,     !constant
+     &                 plnod(indod,lat1), len_trio_ls,
+     &                 flnod(indod,2*nvar_1-1),len_trio_ls,cons0,
+     &                 apod(2*nvar_1-1,lat1), latl2)
+!              call esmf_dgemm(
+!     &                   't',
+!     &                   'n',
+!     &                   n2,
+!     &                   latl2-lat1+1,
+!     &                  (jcap+2-l)/2,
+!     &                   cons1,
+!     &                   flnod(indod,2*nvar_1-1),
+!     &                   len_trio_ls,
+!     &                   plnod(indod,lat1),
+!     &                   len_trio_ls,
+!     &                   cons0,
+!     &                   apod(2*nvar_1-1,lat1),
+!     &                   2*nvars
+!     &                   )
 !
             endif
           enddo   ! end of thread loop ..................................

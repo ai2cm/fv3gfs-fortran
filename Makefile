@@ -1,10 +1,12 @@
 GCR_URL = us.gcr.io/vcm-ml
-DOCKERFILE ?= docker/Dockerfile
-COMPILED_TAG_NAME ?= latest
-ENVIRONMENT_TAG_NAME ?= latest
+COMPILER ?= gnu
+MPI ?= openmpi
+BUILD_ARGS ?= --build-arg BASE_OS_IMAGE="nvidia/cuda:10.1-devel-ubuntu18.04" 
+DOCKERFILE ?= docker/Dockerfile.$(MPI)
+COMPILED_TAG_NAME ?= $(COMPILER)_$(MPI)_cuda10.1
+ENVIRONMENT_TAG_NAME ?= $(COMPILER)_$(MPI)_cuda10.1
 COMPILE_OPTION ?=
 COMPILE_TARGET ?= fv3gfs-compiled
-BUILD_ARGS ?=
 BUILD_FROM_INTERMEDIATE ?= n
 ENVIRONMENT_TARGET ?= fv3gfs-environment
 COMPILED_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)
@@ -12,9 +14,9 @@ SERIALIZE_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)-serialize
 ENVIRONMENT_IMAGE=$(GCR_URL)/$(ENVIRONMENT_TARGET):$(ENVIRONMENT_TAG_NAME)
 IMAGE ?= $(ENVIRONMENT_IMAGE)
 
-FMS_IMAGE = $(GCR_URL)/fms-build
-ESMF_IMAGE = $(GCR_URL)/esmf-build
-SERIALBOX_IMAGE = $(GCR_URL)/serialbox-build
+FMS_IMAGE = $(GCR_URL)/fms-build:$(COMPILED_TAG_NAME)
+ESMF_IMAGE = $(GCR_URL)/esmf-build:$(COMPILED_TAG_NAME)
+SERIALBOX_IMAGE = $(GCR_URL)/serialbox-build:$(COMPILED_TAG_NAME)
 
 MOUNTS?=-v $(shell pwd)/FV3:/FV3 \
 	-v $(shell pwd)/FV3/conf/configure.fv3.gnu_docker:/FV3/conf/configure.fv3
@@ -51,9 +53,9 @@ build_serialize_gt4pydev:
 	 COMPILE_OPTION="GT4PY_DEV=Y" SERIALIZE_IMAGE=$(SERIALIZE_IMAGE)-gt4pydev $(MAKE) build_serialize
 
 build_deps:
-	docker build -f $(DOCKERFILE) -t $(FMS_IMAGE) --target fv3gfs-fms .
-	docker build -f $(DOCKERFILE) -t $(ESMF_IMAGE) --target fv3gfs-esmf .
-	docker build -f $(DOCKERFILE) -t $(SERIALBOX_IMAGE) --target fv3gfs-environment-serialbox .
+	docker build $(BUILD_ARGS) -f $(DOCKERFILE) -t $(FMS_IMAGE) --target fv3gfs-fms .
+	docker build $(BUILD_ARGS) -f $(DOCKERFILE) -t $(ESMF_IMAGE) --target fv3gfs-esmf .
+	docker build $(BUILD_ARGS) -f $(DOCKERFILE) -t $(SERIALBOX_IMAGE) --target fv3gfs-environment-serialbox .
 
 push_deps:
 	docker push $(FMS_IMAGE)
@@ -85,13 +87,6 @@ test:
 
 update_circleci_reference: test
 	cd tests/pytest && bash set_reference.sh $(COMPILED_TAG_NAME)-serialize $(shell pwd)/reference/circleci
-
-# 32bit options don't currently build, fix these when issue #4 is fixed.
-#test_32bit:
-#	COMPILED_TAG_NAME=32bit $(MAKE) test
-#
-#build_32bit: build_environment
-#	COMPILED_TAG_NAME=32bit COMPILE_OPTION=32BIT=Y $(MAKE) build
 
 dev_serialize: # TODO: use run_docker -- string form of command is not translating correctly
 	docker run -w=/FV3 \

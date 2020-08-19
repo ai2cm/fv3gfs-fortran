@@ -2,10 +2,9 @@
 ############
 # commands #
 ############
-FC = FC=gfortran mpifort
-CC = CC=gcc mpicc
-CXX = g++
-LD = mpifort
+FC = mpif90
+CC = mpicc
+LD = mpif90
 
 NETCDF_DIR = /usr
 
@@ -92,7 +91,7 @@ CFLAGS_DEBUG = -O0 -g
 FFLAGS_TEST = -O3 -debug minimal -fp-model source -qoverride-limits
 CFLAGS_TEST = -O2
 
-LDFLAGS := -L${ESMF_DIR}/lib/libO3/Linux.gfortran.64.mpiuni.default/ -L${FMS_DIR}/libFMS/.libs/
+LDFLAGS := -L${ESMF_DIR}/lib -L${FMS_DIR}/libFMS/.libs/
 LDFLAGS +=  -L$(SERIALBOX_DIR)/lib  -lSerialboxFortran -lSerialboxC -lSerialboxCore -L/lib/x86_64-linux-gnu -lpthread -lstdc++ -lstdc++fs
 LDFLAGS_OPENMP := -fopenmp
 LDFLAGS_VERBOSE := -Wl,-V,--verbose,-cref,-M
@@ -135,6 +134,6 @@ FFLAGS += $(FFLAGS_VERBOSE)
 LDFLAGS += $(LDFLAGS_VERBOSE)
 endif
 
-LIBS += -lFMS -lesmf -lnetcdff -lnetcdf -llapack -lblas -lc -lrt
+LIBS += -lFMS -lesmf -lnetcdff -lnetcdf -L/usr/lib/x86_64-linux-gnu -llapack -lblas -lc -lrt
 
 LDFLAGS += $(LIBS)
