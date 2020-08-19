@@ -709,7 +709,7 @@ module module_physics_driver
       dtp    = Model%dtp
 
       if (Model%ldiag3d) then
-        allocate(dt3dt_initial(1:im,1:levs,7))
+        allocate(dt3dt_initial(1:im,1:levs,9))
         allocate(dq3dt_initial(1:im,1:levs,9))
         allocate(dqdt_work(1:im,1:levs))
         dt3dt_initial = Diag%dt3dt
