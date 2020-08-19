@@ -1459,7 +1459,6 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: dv3dt (:,:,:)  => null()   !< v momentum change due to physics
     real (kind=kind_phys), pointer :: dt3dt (:,:,:)  => null()   !< temperature change due to physics
     real (kind=kind_phys), pointer :: t_dt(:,:,:)    => null()   !< temperature change due to physics scaled by cp / cvm or cp / cpm
-    real (kind=kind_phys), pointer :: specific_heat(:,:) => null()   !< moist specific heat of air for scaling temperature tendency diagnostics (cvm or cpm)
     real (kind=kind_phys), pointer :: dq3dt (:,:,:)  => null()   !< moisture change due to physics
     real (kind=kind_phys), pointer :: q_dt  (:,:,:)  => null()   !< moisture tendency due to physics, adjusted to dycore mass fraction convention
     real (kind=kind_phys), pointer :: refdmax (:)    => null()   !< max hourly 1-km agl reflectivity
@@ -5120,7 +5119,6 @@ module GFS_typedefs
       allocate (Diag%dv3dt  (IM,Model%levs,4))
       allocate (Diag%dt3dt  (IM,Model%levs,7))
       allocate (Diag%t_dt   (IM,Model%levs,7))
-      allocate (Diag%specific_heat (IM,Model%levs))
       allocate (Diag%dq3dt  (IM,Model%levs,9))
       allocate (Diag%q_dt   (IM,Model%levs,5))
 !      allocate (Diag%dq3dt  (IM,Model%levs,oz_coeff+5))
@@ -5423,7 +5421,6 @@ module GFS_typedefs
       Diag%dv3dt    = zero
       Diag%dt3dt    = zero
       Diag%t_dt     = zero
-      Diag%specific_heat = zero
       Diag%dq3dt    = zero
       Diag%q_dt     = zero
 !     Diag%upd_mf   = zero

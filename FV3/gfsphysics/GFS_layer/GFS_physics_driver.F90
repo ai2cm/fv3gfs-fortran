@@ -5358,7 +5358,6 @@ module module_physics_driver
               Statein%prsi(1:im,1:levs+1), im, levs, nwat, 1, Model%ntcw, Model%ntiw, &
               Model%ntrw, Model%ntsw, Model%ntgl, specific_heat)
         endif
-        Diag%specific_heat(:,:) = Diag%specific_heat(:,:) + dtf * specific_heat(:,:)
 
         call update_temperature_tendency_diagnostics(Diag%t_dt, dt3dt_initial, Diag%dt3dt, &
             specific_heat, im, levs)
