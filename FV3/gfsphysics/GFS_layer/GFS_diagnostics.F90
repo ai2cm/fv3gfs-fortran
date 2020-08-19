@@ -2420,7 +2420,7 @@ module GFS_diagnostics
 
     idx = idx + 1
     ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_longwave_radiation_assuming_clear_sky'
+    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_clear_sky_longwave_heating'
     ExtDiag(idx)%desc = 'temperature tendency due to clear sky longwave radiation'
     ExtDiag(idx)%unit = 'K/s'
     ExtDiag(idx)%time_avg = .true.
@@ -2432,7 +2432,7 @@ module GFS_diagnostics
 
     idx = idx + 1
     ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_shortwave_radiation_assuming_clear_sky'
+    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_clear_sky_shortwave_heating'
     ExtDiag(idx)%desc = 'temperature tendency due to clear sky shortwave radiation'
     ExtDiag(idx)%unit = 'K/s'
     ExtDiag(idx)%time_avg = .true.
