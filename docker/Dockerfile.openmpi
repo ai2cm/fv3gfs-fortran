@@ -29,7 +29,7 @@ RUN apt-get update && apt-get install -y \
 RUN wget -q https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.4.tar.gz && \
     tar xzf openmpi-4.0.4.tar.gz && \
     cd openmpi-4.0.4 && \
-    ./configure --enable-mpi-fortran=yes --prefix=/usr --with-gnu-ld --with-cuda=/usr/local/cuda && \
+    ./configure --enable-mpi-fortran=yes --prefix=/usr --with-gnu-ld && \
     make -j4 && make install && \
     cd .. && rm -rf openmpi-4.0.4*
 

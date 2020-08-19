@@ -1,18 +1,11 @@
 GCR_URL = us.gcr.io/vcm-ml
 COMPILER ?= gnu
 MPI ?= openmpi
-CUDA ?= n
 BASE_OS_IMAGE ?= ubuntu:19.10
 
-CUDA_VERSION=
-ifeq ($(CUDA),y)
-	BASE_OS_IMAGE ?= nvidia/cuda:10.1-devel-ubuntu18.0
-	CUDA_VERSION=_cuda10.1
-endif
-
 DOCKERFILE ?= docker/Dockerfile.$(MPI)
-COMPILED_TAG_NAME ?= $(COMPILER)_$(MPI)$(CUDA_VERSION)
-ENVIRONMENT_TAG_NAME ?= $(COMPILER)_$(MPI)$(CUDA_VERSION)
+COMPILED_TAG_NAME ?= $(COMPILER)_$(MPI)
+ENVIRONMENT_TAG_NAME ?= $(COMPILER)_$(MPI)
 COMPILE_OPTION ?=
 COMPILE_TARGET ?= fv3gfs-compiled
 BUILD_FROM_INTERMEDIATE ?= n

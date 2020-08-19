@@ -14,9 +14,9 @@ built FV3 model. Both of these images can be built using the following command:
 make build
 ```
 This will make a `fv3gfs-environment:<compile>_<mpi>_<cuda>` image with the current 
-version of the environment using the specified compiler, MPI library and CUDA version.
-Likewise, a `fv3gfs-compiled:<compile>_<mpi>_<cuda>` image with the default compile 
-options is created.  
+version of the environment using the specified compiler and MPI library.  Likewise,
+a `fv3gfs-compiled:<compile>_<mpi>_<cuda>` image with the default compile  options 
+is created.  
 ```
 make build-serialize
 ```
@@ -30,10 +30,10 @@ make build_debug
 ```
 Rules are provided for certain compile options. Check the Makefile for a list.
 
-#Specifying different compiler, MPI library and CUDA versions
+#Specifying the compiler and MPI library
 Build arguments are defined in Makefile that correspond to the compiler used for
-library and executable creation, library providing Message Passing Interface 
-support and version of CUDA (if any) used.  The arguments are detailed below:
+library and executable creation, and the library providing Message Passing Interface 
+support.  The arguments are detailed below:
 
 MPI - refers to the MPI library used. Valid values are 'openmpi' and 'mpich'.
       Default value is openmpi
@@ -41,22 +41,12 @@ MPI - refers to the MPI library used. Valid values are 'openmpi' and 'mpich'.
 COMPILER - refers to the name of the compiler suite used to generate all compiled
            objects, libraries and executables.  Valid value is 'gnu' only presently.
 
-CUDA - should be set to 'y' if CUDA support is desired in the final compiled Docker
-       image.  If set to 'y', BASE_OS_IMAGE will be set to 'nvidia/cuda:10.1-devel-ubuntu18.04'.
-       Only CUDA Version 10.1 is currently supported. 
-
 #Specifying a different OS base version
-All Docker images are created using Ubuntu linux as the base operating system.  Docker
-images with CUDA support **must** be of version Ubuntu 18.04. Users may use a newer
-Ubuntu version, like 19.10, but CUDA support will be not provided.  The default version
-of the base OS is Ubuntu 18.04.  One can change this by setting the following build
-argument:
+All Docker images are created using Ubuntu linux as the base operating system.  One 
+can set the version of Ubuntu used by setting the following build argument:
 
 BASE_OS_IMAGE - refers to the version of the base OS used.  Default value is 
-                'ubuntu:19.10'.  If CUDA is set to 'y', BASE_OS_IMAGE will be set
-                to 'nvidia/cuda:10.1-devel-ubuntu18.04'.  Current valid values for
-                BASE_OS_IMAGE are 'ubuntu:18.04', 'ubuntu:19.10' and 
-                'nvidia/cuda:10.1-devel-ubuntu18.04'.
+                'ubuntu:19.10'. Current valid values are 'ubuntu:18.04' and 'ubuntu:19.10'. 
 
 ### Step 2: Install fv3config
 ```
