@@ -25,5 +25,4 @@ function args()
 
 args $0 $@
 
-cp ../nix/FV3/configure.fv3 conf/
 echo "PREFIX = ${PREFIX}" >> conf/configure.fv3

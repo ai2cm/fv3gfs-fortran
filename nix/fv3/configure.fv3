@@ -135,4 +135,4 @@ endif
 #LIBS += -lFMS -lnetcdff -lnetcdf -llapack -lblas ${ESMF_DIR}/lib/libesmf.a -lstdc++ #-lc -lrt
 LIBS += -lFMS -lnetcdff -lnetcdf -llapack -lblas -lesmf #-lc -lrt
 
-LDFLAGS += $(LIBS)
+LDFLAGS += $(LIBS) $(NCEPLIBS)

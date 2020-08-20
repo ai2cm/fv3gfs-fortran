@@ -11,6 +11,7 @@
   , openmpi
   , perl
   , gfortran
+  , getopt
 } :
 stdenv.mkDerivation {
   name = "fv3";
@@ -25,6 +26,7 @@ stdenv.mkDerivation {
       openmpi
       perl
       gfortran
+      getopt
   ];
 
 srcs = [
@@ -50,12 +52,14 @@ unpackPhase = ''
 config = ./configure.fv3;
 
 configurePhase = ''
-    cp $config FV3/conf/configure.fv3
+  cd FV3
+  ./configure --prefix="$out"
 
-    # need to call this since usr/bin/env isn't 
-    # installed in sandboxed build environment
-    # there goes 1 hr...
-    patchShebangs FV3/mkDepends.pl
+  # need to call this since usr/bin/env isn't 
+  # installed in sandboxed build environment
+  # there goes 1 hr...
+  patchShebangs FV3/mkDepends.pl
+  cd ..
 '';
 
 buildPhase = ''
@@ -63,9 +67,7 @@ buildPhase = ''
 '';
 
 installPhase = ''
-  mkdir -p $out/bin $out/lib 
-  cp FV3/*.exe $out/bin
-  cp FV3/*.o $out/lib
+    make -C FV3 install
 '';
 
 
