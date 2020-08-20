@@ -26,7 +26,7 @@ for df in ${dockerfiles[@]}; do
    arch=${df:24}
    export FV3_CONTAINER=fv3gfs-compiled:$arch
    export TAR_FILE=${FV3_CONTAINER/":"/"_"}.tar
-   gsutil copy gs://vcm-ml-public/jenkins-tmp/${TAR_FILE}.gz .
+   gsutil copy gs://vcm-jenkins/${TAR_FILE}.gz .
    gunzip ${TAR_FILE}.gz
    sarus load ./${TAR_FILE} ${FV3_CONTAINER}
 done
