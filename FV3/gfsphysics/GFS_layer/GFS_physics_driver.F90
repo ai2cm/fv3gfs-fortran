@@ -709,7 +709,7 @@ module module_physics_driver
       dtp    = Model%dtp
 
       if (Model%ldiag3d) then
-        allocate(dt3dt_initial(1:im,1:levs,7))
+        allocate(dt3dt_initial(1:im,1:levs,9))
         allocate(dq3dt_initial(1:im,1:levs,9))
         allocate(dqdt_work(1:im,1:levs))
         dt3dt_initial = Diag%dt3dt
@@ -1524,6 +1524,8 @@ module module_physics_driver
               do i=1,im
                 Diag%dt3dt(i,k,1) = Diag%dt3dt(i,k,1) + Radtend%htrlw(i,k)*dtf
                 Diag%dt3dt(i,k,2) = Diag%dt3dt(i,k,2) + Radtend%htrsw(i,k)*dtf*xmu(i)
+                Diag%dt3dt(i,k,8) = Diag%dt3dt(i,k,8) + Radtend%lwhc(i,k)*dtf
+                Diag%dt3dt(i,k,9) = Diag%dt3dt(i,k,9) + Radtend%swhc(i,k)*dtf*xmu(i)
               enddo
             enddo
           endif
@@ -5688,13 +5690,13 @@ module module_physics_driver
       subroutine update_temperature_tendency_diagnostics(t_dt, dt3dt_initial, dt3dt_final, specific_heat, &
         im, levs)
         integer, intent(in) :: im, levs
-        real(kind=kind_phys), intent(in), dimension(1:im,1:levs,7) :: dt3dt_initial, dt3dt_final
-        real(kind=kind_phys), intent(inout) :: t_dt(1:im,1:levs,7)
+        real(kind=kind_phys), intent(in), dimension(1:im,1:levs,9) :: dt3dt_initial, dt3dt_final
+        real(kind=kind_phys), intent(inout) :: t_dt(1:im,1:levs,9)
         real(kind=kind_phys), intent(in), dimension(1:im,1:levs) :: specific_heat
 
         integer :: i
 
-        do i = 1, 7
+        do i = 1, 9
           t_dt(:,:,i) = t_dt(:,:,i) + con_cp * (dt3dt_final(:,:,i) - dt3dt_initial(:,:,i)) / specific_heat(:,:)
         enddo
       end subroutine update_temperature_tendency_diagnostics
