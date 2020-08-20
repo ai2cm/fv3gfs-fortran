@@ -2865,7 +2865,8 @@ module GFS_typedefs
     logical              :: use_ufo        = .false.         !< flag for gcycle surface option
     logical              :: use_analysis_sst = .false. ! whether to set physics SST to dynamical core ts
                                                        ! which is equal to analysis SST when nudging is active
-    logical              :: use_nudging_implied_moistening = .false.
+    logical              :: use_nudging_implied_moistening = .false.  !< flag to adjust precipitation felt by land surface
+                                                                      !< by moistening implied by nudging specific humidity.
 !--- tuning parameters for physical parameterizations
     logical              :: ras            = .false.                  !< flag for ras convection scheme
     logical              :: flipv          = .true.                   !< flag for vertical direction flip (ras)

@@ -5535,12 +5535,12 @@ module module_physics_driver
         real, intent(in) :: timestep
         real(kind=kind_phys), intent(in) :: moistening(1:im)
         real(kind=kind_phys), intent(inout) :: precipitation(1:im)
-        real(kind=kind_phys) :: mm_per_m
+        real(kind=kind_phys) :: m_per_mm
 
-        mm_per_m = 1.0 / 1000.0
+        m_per_mm = 1.0 / 1000.0
 
-        precipitation = precipitation - moistening * timestep * mm_per_m
-        where (precipitation.lt. 0.0)
+        precipitation = precipitation - moistening * timestep * m_per_mm
+        where (precipitation .lt. 0.0)
            precipitation = 0.0
         endwhere
       end subroutine adjust_precipitation_for_qv_nudging

@@ -1335,7 +1335,7 @@ module fv_arrays_mod
     type(domain2D) :: domain
 
     ! Column moistening implied from nudging specific humidity (only
-    ! allocated if nudging specific humidity).
+    ! allocated if nudging is active).
     real, _ALLOCATABLE :: column_moistening_implied_by_nudging(:,:) _NULL
 #if defined(SPMD)
 
