@@ -187,6 +187,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: atm_ts (:)  => null() !< surface temperature from dynamical core
  
     logical, pointer :: dycore_hydrostatic        => null()  !< whether the dynamical core is hydrostatic
+    integer, pointer :: nwat                      => null()  !< number of water species used in the model
     contains
       procedure :: create  => statein_create  !<   allocate array data
   end type GFS_statein_type
@@ -2001,6 +2002,9 @@ module GFS_typedefs
 
     allocate(Statein%dycore_hydrostatic)
     Statein%dycore_hydrostatic = .true.
+
+    allocate(Statein%nwat)
+    Statein%nwat = 6
   end subroutine statein_create
 
 

@@ -1083,7 +1083,7 @@ contains
           missing_value=missing_value)
     if (idiag%id_t_dt_phys > 0) then
          allocate(Atm(n)%physics_tendency_diag%t_dt(isc:iec,jsc:jec,npz))
-         Atm(n)%physics_tendency_diag%t_dt(isc:iec,jsc:jec,1:npz) = 0.0
+         Atm(n)%physics_tendency_diag%t_dt = 0.0
     endif
 
     idiag%id_qv_dt_phys = register_diag_field('dynamics', &
@@ -1092,7 +1092,7 @@ contains
           missing_value=missing_value)
     if (idiag%id_qv_dt_phys > 0) then
          allocate(Atm(n)%physics_tendency_diag%qv_dt(isc:iec,jsc:jec,npz))
-         Atm(n)%physics_tendency_diag%qv_dt(isc:iec,jsc:jec,1:npz) = 0.0
+         Atm(n)%physics_tendency_diag%qv_dt = 0.0
     endif
  end subroutine fv_diag_init
 

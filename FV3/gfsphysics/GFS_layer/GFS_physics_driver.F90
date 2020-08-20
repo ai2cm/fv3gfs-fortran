@@ -5347,14 +5347,14 @@ module module_physics_driver
         ! Update t_dt_* and q_dt_* diagnostics such that they represent temperature
         ! and water vapor tendencies contributed by each component of the physics,
         ! consistent with how those tendencies are applied in the dynamical core.
-        call infer_nwat(1, Model%ntcw, Model%ntiw, Model%ntrw, Model%ntsw, Model%ntgl, nwat)
+        nwat = Statein%nwat
 
         if (Statein%dycore_hydrostatic) then
-          call moist_cp(Statein%qgrs(1:im,1:levs,1:nwat), Stateout%gq0(1:im,1:levs,1:nwat), &
+          call moist_cp_nwat6(Statein%qgrs(1:im,1:levs,1:nwat), Stateout%gq0(1:im,1:levs,1:nwat), &
               Statein%prsi(1:im,1:levs+1), im, levs, nwat, 1, Model%ntcw, Model%ntiw, &
               Model%ntrw, Model%ntsw, Model%ntgl, specific_heat)
         else
-          call moist_cv(Statein%qgrs(1:im,1:levs,1:nwat), Stateout%gq0(1:im,1:levs,1:nwat), &
+          call moist_cv_nwat6(Statein%qgrs(1:im,1:levs,1:nwat), Stateout%gq0(1:im,1:levs,1:nwat), &
               Statein%prsi(1:im,1:levs+1), im, levs, nwat, 1, Model%ntcw, Model%ntiw, &
               Model%ntrw, Model%ntsw, Model%ntgl, specific_heat)
         endif
@@ -5561,7 +5561,7 @@ module module_physics_driver
 
       end subroutine moist_bud2
 
-      subroutine moist_cv(initial_dynamics_q, physics_q, pressure_on_interfaces, &
+      subroutine moist_cv_nwat6(initial_dynamics_q, physics_q, pressure_on_interfaces, &
             im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, cvm)
         integer, intent(in) :: im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl
         real(kind=kind_phys), dimension(1:im,1:levs,1:nwat), intent(in) :: initial_dynamics_q, physics_q
@@ -5605,9 +5605,9 @@ module module_physics_driver
           cvm = cv_air * q_dry_air + cv_vap * q_vapor + c_liq * q_liquid + c_ice * q_ice
         endif
 #endif
-      end subroutine moist_cv
+      end subroutine moist_cv_nwat6
 
-      subroutine moist_cp(initial_dynamics_q, physics_q, pressure_on_interfaces, &
+      subroutine moist_cp_nwat6(initial_dynamics_q, physics_q, pressure_on_interfaces, &
         im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, cpm)
     integer, intent(in) :: im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl
     real(kind=kind_phys), dimension(1:im,1:levs,1:nwat), intent(in) :: initial_dynamics_q, physics_q
@@ -5651,7 +5651,7 @@ module module_physics_driver
       cpm = cp_air * q_dry_air + cp_vap * q_vapor + c_liq * q_liquid + c_ice * q_ice
     endif
 #endif
-  end subroutine moist_cp
+  end subroutine moist_cp_nwat6
 
       subroutine physics_to_dycore_mass_fraction(initial_dynamics_q, physics_q, &
             pressure_on_interfaces, im, levs, nwat, new_dynamics_q)
@@ -5680,23 +5680,6 @@ module module_physics_driver
           new_dynamics_q(:,:,t) = qwat(:,:,t) / delp
         enddo
       end subroutine physics_to_dycore_mass_fraction
-
-      subroutine infer_nwat(ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, nwat)
-        integer, intent(in) :: ntqv, ntcw, ntiw, ntrw, ntsw, ntgl
-        integer, intent(out) :: nwat
-
-        integer, dimension(6) :: tracer_indexes
-        integer, dimension(6) :: tracers_active
-
-        tracer_indexes = (/ ntqv, ntcw, ntiw, ntrw, ntsw, ntgl /)
-
-        where (tracer_indexes > 0)
-          tracers_active = 1
-        elsewhere
-          tracers_active = 0
-        endwhere
-        nwat = sum(tracers_active)
-      end subroutine infer_nwat
 
       ! Scale the temperature increment for each physics component by cp / cvm
       ! if the dynamical core is non-hydrostatic or cp / cpm if the dynamical
