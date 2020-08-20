@@ -84,10 +84,11 @@ libfv3.a: atmos_model.o module_fv3_config.o module_fv3_config.o
 	ar crs $@ $^
 
 install: $(FV3_EXE) $(LIBS) libfv3.a
-	mkdir -p $(PREFIX)/bin $(PREFIX)/lib $(PREFIX)/include
+	mkdir -p $(PREFIX)/bin $(PREFIX)/lib $(PREFIX)/include $(PREFIX)/lib/pkgconfig
 	install -t $(PREFIX)/bin/ $(FV3_EXE)
 	install -t $(PREFIX)/lib/ $(LIBS) libfv3.a
 	install -t $(PREFIX)/include gfsphysics/*.mod ipd/*.mod cpl/*.mod io/*.mod atmos_cubed_sphere/*.mod ../stochastic_physics/*.mod
+	bash write_pkg_config.sh $(PREFIX) $(NCEPLIBS_DIR) > $(PREFIX)/lib/pkgconfig/fv3.pc
 
 endif
 
