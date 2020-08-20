@@ -2308,6 +2308,94 @@ module GFS_diagnostics
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%dt3dt(:,:,7)
     enddo
 
+! Applying a time_avg converts these t_dt_* quantities to average tendencies, 
+! because it amounts to dividing the total increments (what are stored in the
+! diagnostics buckets) by the total time elapsed for the diagnostics interval
+! (in seconds).  
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_longwave_heating'
+    ExtDiag(idx)%desc = 'temperature tendency due to longwave radiation'
+    ExtDiag(idx)%unit = 'K/s'
+    ExtDiag(idx)%time_avg = .true.
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,1)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_shortwave_heating'
+    ExtDiag(idx)%desc = 'temperature tendency due to shortwave radiation'
+    ExtDiag(idx)%unit = 'K/s'
+    ExtDiag(idx)%time_avg = .true.
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,2)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_turbulence'
+    ExtDiag(idx)%desc = 'temperature tendency due to turbulence scheme'
+    ExtDiag(idx)%unit = 'K/s'
+    ExtDiag(idx)%time_avg = .true.
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,3)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_deep_convection'
+    ExtDiag(idx)%desc = 'temperature tendency due to deep convection'
+    ExtDiag(idx)%unit = 'K/s'
+    ExtDiag(idx)%time_avg = .true.
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,4)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_shallow_convection'
+    ExtDiag(idx)%desc = 'temperature tendency due to shallow convection'
+    ExtDiag(idx)%unit = 'K/s'
+    ExtDiag(idx)%time_avg = .true.
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,5)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_microphysics'
+    ExtDiag(idx)%desc = 'temperature tendency due to micro-physics'
+    ExtDiag(idx)%unit = 'K/s'
+    ExtDiag(idx)%time_avg = .true.
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,6)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_dissipation_of_gravity_waves'
+    ExtDiag(idx)%desc = 'temperature tendency due to gravity wave drag'
+    ExtDiag(idx)%unit = 'K/s'
+    ExtDiag(idx)%time_avg = .true.
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,7)
+    enddo
+
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'du3dt_pbl'
@@ -2397,6 +2485,69 @@ module GFS_diagnostics
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%dv3dt(:,:,4)
     enddo
 
+! Applying a time_avg converts these qv_dt_* quantities to average tendencies, 
+! because it amounts to dividing the total increments (what are stored in the
+! diagnostics buckets) by the total time elapsed for the diagnostics interval
+! (in seconds). 
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'tendency_of_specific_humidity_due_to_turbulence'
+    ExtDiag(idx)%desc = 'water vapor tendency due to turbulence scheme'
+    ExtDiag(idx)%unit = 'kg/kg/s'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%time_avg = .true.
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,1)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'tendency_of_specific_humidity_due_to_deep_convection'
+    ExtDiag(idx)%desc = 'water vapor tendency due to deep convection'
+    ExtDiag(idx)%unit = 'kg/kg/s'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%time_avg = .true.
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,2)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'tendency_of_specific_humidity_due_to_shallow_convection'
+    ExtDiag(idx)%desc = 'water vapor tendency due to shallow convection'
+    ExtDiag(idx)%unit = 'kg/kg/s'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%time_avg = .true.
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,3)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'tendency_of_specific_humidity_due_to_microphysics'
+    ExtDiag(idx)%desc = 'water vapor tendency due to microphysics'
+    ExtDiag(idx)%unit = 'kg/kg/s'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%time_avg = .true.
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,4)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 3
+    ExtDiag(idx)%name = 'tendency_of_specific_humidity_due_to_change_in_atmosphere_mass'
+    ExtDiag(idx)%desc = 'residual water vapor tendency'
+    ExtDiag(idx)%unit = 'kg/kg/s'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%time_avg = .true.
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,5)
+    enddo
 
 !rab
 !rab    do num = 1,5+Mdl_parms%pl_coeff

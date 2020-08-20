@@ -331,7 +331,7 @@
                        call print_var(mpirank,omprank, blkno, 'Diag%upd_mf      ',    Diag%upd_mf)
                        call print_var(mpirank,omprank, blkno, 'Diag%dwn_mf      ',    Diag%dwn_mf)
                        call print_var(mpirank,omprank, blkno, 'Diag%det_mf      ',    Diag%det_mf)
-                       call print_var(mpirank,omprank, blkno, 'Diag%cldcov      ',    Diag%cldcov)
+                    !  call print_var(mpirank,omprank, blkno, 'Diag%cldcov      ',    Diag%cldcov)
                      end if
                      if(Model%lradar) then
                        call print_var(mpirank,omprank, blkno, 'Diag%refl_10cm   ',  Diag%refl_10cm)
