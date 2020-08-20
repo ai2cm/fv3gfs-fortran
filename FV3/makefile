@@ -75,20 +75,20 @@ libs_no_dycore: fms_check
 	$(MAKE) -C ipd                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 	$(MAKE) -C io                    $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 
-LIBS = atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a coarse_graining/libfv3coarse_graining.a
+FV3_LIBS = atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a coarse_graining/libfv3coarse_graining.a
 
-$(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o $(LIBS)
-	$(LD) -o $@ $^ $(NCEPLIBS) $(LDFLAGS)
+$(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o $(FV3_LIBS)
+	$(LD) -o $@ $^ $(LDFLAGS)
 
 libfv3.a: atmos_model.o module_fv3_config.o
 	ar crs $@ $^
 
-install: $(FV3_EXE) $(LIBS) libfv3.a
+install: $(FV3_EXE) $(FV3_LIBS) libfv3.a
 	mkdir -p $(PREFIX)/bin $(PREFIX)/lib $(PREFIX)/include $(PREFIX)/lib/pkgconfig
 	install -t $(PREFIX)/bin/ $(FV3_EXE)
 	install -t $(PREFIX)/lib/ $(LIBS) libfv3.a
 	install -t $(PREFIX)/include gfsphysics/*.mod ipd/*.mod cpl/*.mod io/*.mod atmos_cubed_sphere/*.mod ../stochastic_physics/*.mod
-	bash write_pkg_config.sh $(PREFIX) "$(NCEPLIBS)" > $(PREFIX)/lib/pkgconfig/fv3.pc
+	bash write_pkg_config.sh $(PREFIX) "$(LDFLAGS)" > $(PREFIX)/lib/pkgconfig/fv3.pc
 
 endif
 
