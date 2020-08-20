@@ -27,4 +27,4 @@ prep="srun sarus run --mpi"
 ## Perform the c12 test
 ##
 
-${prep} --mount=type=bind,source=${SCRATCH_DIR},destination=/scratch --workdir=/scratch load/library/${FV3_CONTAINER} /myapps/fv3/fv3.exe
+${prep} --mount=type=bind,source=${SCRATCH_DIR},destination=/scratch --workdir=/scratch load/library/${FV3_CONTAINER} /FV3/fv3.exe

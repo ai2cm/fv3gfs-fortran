@@ -21,7 +21,7 @@ export SCRATCH_DIR=${PWD}
 
 
 # Import the Docker image to be tested on Daint
-export FV3_CONTAINER=fv3gfs-compiled:gnu_openmpi
+export FV3_CONTAINER=fv3gfs-compiled:gnu_mpich3
 export TAR_FILE=${FV3_CONTAINER/":"/"-"}.tar
 gsutil copy gs://vcm-ml-public/jenkins-tmp/${TAR_FILE}.gz .
 gunzip ${TAR_FILE}.gz

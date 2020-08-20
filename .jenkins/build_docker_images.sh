@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # Build the non-serialize and serialize versions of a Docker image
-make build build_serialize
+make MPI=mpich3 build build_serialize
 
 # Push images to VCM's Google Container Repository
-container=us.gcr.io/vcm-ml/fv3gfs-compiled:gnu_openmpi
-tar_file_prefix=fv3gfs-compiled-gnu_openmpi
+container=us.gcr.io/vcm-ml/fv3gfs-compiled:gnu_mpich3
+tar_file_prefix=fv3gfs-compiled-gnu_mpich3
 docker push ${container}
 docker push ${container}-serialize
 
