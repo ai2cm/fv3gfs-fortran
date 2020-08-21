@@ -5347,6 +5347,7 @@ module module_physics_driver
 
       ! Potentially add the implied column moistening from nudging to the surface precipitation rate.
       if (Model%use_nudging_implied_moistening) then
+        write(*,*) 'Adding precipitation implied by nudging'
         call adjust_precipitation_for_qv_nudging(Statein%column_moistening_implied_by_nudging, im, dtp, Sfcprop%tprcp)
       endif
 
@@ -5577,6 +5578,7 @@ module module_physics_driver
 
         m_per_mm = 1.0 / 1000.0
 
+        write(*,*) 'Maximum precipitation modification: ', maxval(abs(moistening * timestep * m_per_mm))
         precipitation = precipitation - moistening * timestep * m_per_mm
         where (precipitation .lt. 0.0)
            precipitation = 0.0
