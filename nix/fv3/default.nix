@@ -48,6 +48,15 @@ unpackPhase = ''
       runHook postUnpack
 '';
 
+patchPhase = ''
+
+patchShebangs FV3/configure
+  # need to call this since usr/bin/env isn't 
+  # installed in sandboxed build environment
+  # there goes 1 hr...
+  patchShebangs FV3/mkDepends.pl
+'';
+
 
 config = ./configure.fv3;
 
@@ -55,10 +64,6 @@ configurePhase = ''
   cd FV3
   ./configure --prefix="$out"
 
-  # need to call this since usr/bin/env isn't 
-  # installed in sandboxed build environment
-  # there goes 1 hr...
-  patchShebangs FV3/mkDepends.pl
   cd ..
 '';
 
