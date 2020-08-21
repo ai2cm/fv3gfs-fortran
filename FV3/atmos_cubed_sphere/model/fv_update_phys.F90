@@ -1184,7 +1184,6 @@ if (allocated(physics_tendency_diag%t_dt)) physics_tendency_diag%t_dt = (pt(is:i
     real, intent(in), dimension(is:ie,js:je,1:npz) :: specific_humidity_nudging_tendency, delp
     real, intent(out) :: column_moistening(is:ie,js:je)
 
-    integer :: k
 
     column_moistening = sum(specific_humidity_nudging_tendency * delp, 3) / grav
 
