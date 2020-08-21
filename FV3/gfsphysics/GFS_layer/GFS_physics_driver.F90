@@ -1362,10 +1362,6 @@ module module_physics_driver
         endif
       endif
 
-! Potentially add the implied column moistening from nudging to the surface precipitation rate
-     if (Model%use_nudging_implied_moistening) then
-       call adjust_precipitation_for_qv_nudging(Statein%column_moistening_implied_by_nudging, im, dtp, Sfcprop%tprcp)
-     endif
 !===========================Above Phys-tend Diag for COORDE ======================
 
 !  --- ...  initialize dtdt with heating rate from dcyc2
@@ -5348,6 +5344,11 @@ module module_physics_driver
         Diag%T02MAX(I)  = MAX(Diag%T02MAX(I), Sfcprop%t2m(i))  !<--- Hourly max 2m T
         Diag%T02MIN(I)  = MIN(Diag%T02MIN(I), Sfcprop%t2m(i))  !<--- Hourly min 2m T
       enddo
+
+      ! Potentially add the implied column moistening from nudging to the surface precipitation rate.
+      if (Model%use_nudging_implied_moistening) then
+        call adjust_precipitation_for_qv_nudging(Statein%column_moistening_implied_by_nudging, im, dtp, Sfcprop%tprcp)
+      endif
 
       if (Model%ldiag3d) then
         ! Update t_dt_* and q_dt_* diagnostics such that they represent temperature
