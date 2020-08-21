@@ -6,7 +6,7 @@ module module_physics_driver
                                    con_rerth, con_pi, rhc_max, dxmin,   &
                                    dxinv, pa2mb, rlapse, con_eps,       &
                                    con_epsm1, PQ0, A2A, A3, A4, RHmin,  &
-                                   tgice => con_tice
+                                   tgice => con_tice, con_cvap
 
   use cs_conv,               only: cs_convr
   use ozne_def,              only: levozp,  oz_coeff, oz_pres
@@ -32,6 +32,7 @@ module module_physics_driver
   use module_sfc_cice,       only: sfc_cice
   use module_sfc_nst,        only: sfc_nst
   use module_sfc_diag,       only: sfc_diag
+  use mpp_mod,               only: mpp_error, NOTE
 !
 !vay-2018
 !
@@ -560,7 +561,7 @@ module module_physics_driver
 
       real(kind=kind_phys), dimension(size(Grid%xlon,1),Model%levs) ::  &
           del, rhc, dtdt, dudt, dvdt, dtdtc,                            &
-          ud_mf, dd_mf, dt_mf, prnum, dkt
+          ud_mf, dd_mf, dt_mf, prnum, dkt, specific_heat
 !         ud_mf, dd_mf, dt_mf, prnum, dkt, sigmatot, sigmafrac, txa
       real(kind=kind_phys), allocatable, dimension(:,:) :: sigmatot,    &
           gwdcu, gwdcv, rainp, sigmafrac, tke
@@ -664,11 +665,14 @@ module module_physics_driver
 !===============================================================================
 
       real, allocatable, dimension(:) :: refd, REFD263K
+      real(kind=kind_phys), allocatable, dimension(:,:,:) :: dt3dt_initial, dq3dt_initial
       integer :: kdtminus1
       logical :: reset
 ! For computing saturation vapor pressure and rh at 2m
       real    :: pshltr,QCQ,rh02
       real(kind=kind_phys), allocatable, dimension(:,:) :: den
+      real(kind=kind_phys), allocatable, dimension(:,:) :: dqdt_work
+      integer :: nwat
 
       !! Initialize local variables (mainly for debugging purposes, because the
       !! corresponding variables Interstitial(nt)%... are reset to zero every time);
@@ -703,6 +707,14 @@ module module_physics_driver
       ntrac  = Model%ntrac
       dtf    = Model%dtf
       dtp    = Model%dtp
+
+      if (Model%ldiag3d) then
+        allocate(dt3dt_initial(1:im,1:levs,9))
+        allocate(dq3dt_initial(1:im,1:levs,9))
+        allocate(dqdt_work(1:im,1:levs))
+        dt3dt_initial = Diag%dt3dt
+        dq3dt_initial = Diag%dq3dt
+      endif
 
 !-------
 ! For COORDE-2019 averaging with fwindow, it was done before
@@ -1516,6 +1528,8 @@ module module_physics_driver
               do i=1,im
                 Diag%dt3dt(i,k,1) = Diag%dt3dt(i,k,1) + Radtend%htrlw(i,k)*dtf
                 Diag%dt3dt(i,k,2) = Diag%dt3dt(i,k,2) + Radtend%htrsw(i,k)*dtf*xmu(i)
+                Diag%dt3dt(i,k,8) = Diag%dt3dt(i,k,8) + Radtend%lwhc(i,k)*dtf
+                Diag%dt3dt(i,k,9) = Diag%dt3dt(i,k,9) + Radtend%swhc(i,k)*dtf*xmu(i)
               enddo
             enddo
           endif
@@ -2780,6 +2794,7 @@ module module_physics_driver
               do i=1,im
                 tem  = dtdt(i,k) - (Radtend%htrlw(i,k)+Radtend%htrsw(i,k)*xmu(i))
                 Diag%dt3dt(i,k,3) = Diag%dt3dt(i,k,3) + tem*dtf
+                Diag%dq3dt(i,k,1) = Diag%dq3dt(i,k,1) + dqdt(i,k,1) * dtp
               enddo
             enddo
           endif
@@ -3793,10 +3808,9 @@ module module_physics_driver
           do k=1,levs
             do i=1,im
               Diag%dt3dt(i,k,4) = Diag%dt3dt(i,k,4) + (Stateout%gt0(i,k)-dtdt(i,k)) * frain
-!             Diag%dq3dt(i,k,2) = Diag%dq3dt(i,k,2) + (Stateout%gq0(i,k,1)-dqdt(i,k,1)) * frain
+              Diag%dq3dt(i,k,2) = Diag%dq3dt(i,k,2) + (Stateout%gq0(i,k,1)-dqdt(i,k,1)) * frain
               Diag%du3dt(i,k,3) = Diag%du3dt(i,k,3) + (Stateout%gu0(i,k)-dudt(i,k)) * frain
               Diag%dv3dt(i,k,3) = Diag%dv3dt(i,k,3) + (Stateout%gv0(i,k)-dvdt(i,k)) * frain
-
 !             Diag%upd_mf(i,k)  = Diag%upd_mf(i,k)  + ud_mf(i,k) * (con_g*frain)
 !             Diag%dwn_mf(i,k)  = Diag%dwn_mf(i,k)  + dd_mf(i,k) * (con_g*frain)
 !             Diag%det_mf(i,k)  = Diag%det_mf(i,k)  + dt_mf(i,k) * (con_g*frain)
@@ -4035,6 +4049,7 @@ module module_physics_driver
         do k=1,levs
           do i=1,im
             dtdt(i,k)   = Stateout%gt0(i,k)
+            dqdt_work(i,k) = Stateout%gq0(i,k,1)
           enddo
         enddo
       endif
@@ -4150,7 +4165,7 @@ module module_physics_driver
             do k=1,levs
               do i=1,im
                 Diag%dt3dt(i,k,5) = Diag%dt3dt(i,k,5) + (Stateout%gt0(i,k)  -dtdt(i,k))   * frain
-!               Diag%dq3dt(i,k,3) = Diag%dq3dt(i,k,3) + (Stateout%gq0(i,k,1)-dqdt(i,k,1)) * frain
+                Diag%dq3dt(i,k,3) = Diag%dq3dt(i,k,3) + (Stateout%gq0(i,k,1)-dqdt_work(i,k)) * frain
               enddo
             enddo
           endif
@@ -5061,7 +5076,7 @@ module module_physics_driver
           do k=1,levs
             do i=1,im
               Diag%dt3dt(i,k,6) = Diag%dt3dt(i,k,6) + (Stateout%gt0(i,k)-dtdt(i,k)) * frain
-!             Diag%dq3dt(i,k,4) = Diag%dq3dt(i,k,4) + (Stateout%gq0(i,k,1)-dqdt(i,k,1)) * frain
+              Diag%dq3dt(i,k,4) = Diag%dq3dt(i,k,4) + (Stateout%gq0(i,k,1)-dqdt(i,k,1)) * frain
             enddo
           enddo
         endif
@@ -5334,6 +5349,28 @@ module module_physics_driver
         Diag%T02MIN(I)  = MIN(Diag%T02MIN(I), Sfcprop%t2m(i))  !<--- Hourly min 2m T
       enddo
 
+      if (Model%ldiag3d) then
+        ! Update t_dt_* and q_dt_* diagnostics such that they represent temperature
+        ! and water vapor tendencies contributed by each component of the physics,
+        ! consistent with how those tendencies are applied in the dynamical core.
+        nwat = Statein%nwat
+
+        if (Statein%dycore_hydrostatic) then
+          call moist_cp_nwat6(Statein%qgrs(1:im,1:levs,1:nwat), Stateout%gq0(1:im,1:levs,1:nwat), &
+              Statein%prsi(1:im,1:levs+1), im, levs, nwat, 1, Model%ntcw, Model%ntiw, &
+              Model%ntrw, Model%ntsw, Model%ntgl, specific_heat)
+        else
+          call moist_cv_nwat6(Statein%qgrs(1:im,1:levs,1:nwat), Stateout%gq0(1:im,1:levs,1:nwat), &
+              Statein%prsi(1:im,1:levs+1), im, levs, nwat, 1, Model%ntcw, Model%ntiw, &
+              Model%ntrw, Model%ntsw, Model%ntgl, specific_heat)
+        endif
+
+        call update_temperature_tendency_diagnostics(Diag%t_dt, dt3dt_initial, Diag%dt3dt, &
+            specific_heat, im, levs)
+        call update_water_vapor_tendency_diagnostics(Diag%q_dt, dq3dt_initial, Diag%dq3dt, &
+            Statein%qgrs(:,:,1:nwat), Stateout%gq0(:,:,1:nwat), im, levs, nwat)
+      endif
+
 !     if (kdt > 2 ) stop
       return
 !...................................
@@ -5544,6 +5581,180 @@ module module_physics_driver
            precipitation = 0.0
         endwhere
       end subroutine adjust_precipitation_for_qv_nudging
+
+      subroutine moist_cv_nwat6(initial_dynamics_q, physics_q, pressure_on_interfaces, &
+            im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, cvm)
+        integer, intent(in) :: im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl
+        real(kind=kind_phys), dimension(1:im,1:levs,1:nwat), intent(in) :: initial_dynamics_q, physics_q
+        real(kind=kind_phys), intent(in) :: pressure_on_interfaces(1:im,1:levs+1)
+        real(kind=kind_phys), intent(out) :: cvm(1:im,1:levs)
+
+        real(kind=kind_phys) :: new_dynamics_q(1:im,1:levs,1:nwat)
+        real(kind=kind_phys) :: q_vapor(1:im,1:levs)
+        real(kind=kind_phys) :: q_dry_air(1:im,1:levs)
+        real(kind=kind_phys) :: q_liquid(1:im,1:levs)
+        real(kind=kind_phys) :: q_ice(1:im,1:levs)
+
+        real(kind=kind_phys) :: cv_air = con_cp - con_rd  ! From fv_mapz.F90
+        real(kind=kind_phys) :: cv_vap = 3.0 * con_rv  ! From fv_mapz.F90
+        real(kind=kind_phys) :: c_liq = 4.1855e+3  ! Hard-coded in fv_mapz.F90
+        real(kind=kind_phys) :: c_ice = 1972.0  ! Hard-coded in fv_mapz.F90
+
+        ! fv_mapz.moist_cv defines branches for using other moist tracer configurations.
+        ! For simplicity we choose not to replicate that behavior here, since we have
+        ! only run in one tracer configuration (nwat = 6) so far.  We also do not implement
+        ! the branch of code that is run if the compiler directive MULTI_GASES is defined.
+        ! In those cases we default to using the specific heat at constant volume for dry
+        ! air, and emit a warning.
+#ifdef MULTI_GASES
+        call mpp_error (NOTE, 'GFS_physics_driver::moist_cv - moist_cv for tracer configuration not implemented; using default cv_air for t_dt diagnostics')
+        cvm = cv_air
+#else
+        if (nwat /= 6) then
+          call mpp_error (NOTE, 'GFS_physics_driver::moist_cv - moist_cv for tracer configuration not implemented; using default cv_air for t_dt diagnostics')
+          cvm = cv_air
+        else
+          call physics_to_dycore_mass_fraction(initial_dynamics_q, physics_q, &
+              pressure_on_interfaces, im, levs, nwat, new_dynamics_q)
+
+          q_vapor = new_dynamics_q(:,:,ntqv)
+          q_liquid = new_dynamics_q(:,:,ntcw) + new_dynamics_q(:,:,ntrw)
+          q_ice = new_dynamics_q(:,:,ntiw) + new_dynamics_q(:,:,ntsw) + new_dynamics_q(:,:,ntgl)
+          q_dry_air = 1.0 - q_vapor - q_liquid - q_ice
+
+          ! By definition now, the weights sum to 1.0.
+          cvm = cv_air * q_dry_air + cv_vap * q_vapor + c_liq * q_liquid + c_ice * q_ice
+        endif
+#endif
+      end subroutine moist_cv_nwat6
+
+      subroutine moist_cp_nwat6(initial_dynamics_q, physics_q, pressure_on_interfaces, &
+        im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, cpm)
+    integer, intent(in) :: im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl
+    real(kind=kind_phys), dimension(1:im,1:levs,1:nwat), intent(in) :: initial_dynamics_q, physics_q
+    real(kind=kind_phys), intent(in) :: pressure_on_interfaces(1:im,1:levs+1)
+    real(kind=kind_phys), intent(out) :: cpm(1:im,1:levs)
+
+    real(kind=kind_phys) :: new_dynamics_q(1:im,1:levs,1:nwat)
+    real(kind=kind_phys) :: q_vapor(1:im,1:levs)
+    real(kind=kind_phys) :: q_dry_air(1:im,1:levs)
+    real(kind=kind_phys) :: q_liquid(1:im,1:levs)
+    real(kind=kind_phys) :: q_ice(1:im,1:levs)
+
+    real(kind=kind_phys) :: cp_air = con_cp  ! From fv_mapz.F90
+    real(kind=kind_phys) :: cp_vap = con_cvap  ! From fv_mapz.F90
+    real(kind=kind_phys) :: c_liq = 4.1855e+3  ! Hard-coded in fv_mapz.F90
+    real(kind=kind_phys) :: c_ice = 1972.0  ! Hard-coded in fv_mapz.F90
+
+    ! fv_mapz.moist_cp defines branches for using other moist tracer configurations.
+    ! For simplicity we choose not to replicate that behavior here, since we have
+    ! only run in one tracer configuration (nwat = 6) so far.  We also do not implement
+    ! the branch of code that is run if the compiler directive MULTI_GASES is defined.
+    ! In those cases we default to using the specific heat at constant volume for dry
+    ! air, and emit a warning.
+#ifdef MULTI_GASES
+    call mpp_error (NOTE, 'GFS_physics_driver::moist_cp - moist_cp for tracer configuration not implemented; using default cp_air for t_dt diagnostics')
+    cpm = cp_air
+#else
+    if (nwat /= 6) then
+      call mpp_error (NOTE, 'GFS_physics_driver::moist_cp - moist_cp for tracer configuration not implemented; using default cp_air for t_dt diagnostics')
+      cpm = cp_air
+    else
+      call physics_to_dycore_mass_fraction(initial_dynamics_q, physics_q, &
+          pressure_on_interfaces, im, levs, nwat, new_dynamics_q)
+
+      q_vapor = new_dynamics_q(:,:,ntqv)
+      q_liquid = new_dynamics_q(:,:,ntcw) + new_dynamics_q(:,:,ntrw)
+      q_ice = new_dynamics_q(:,:,ntiw) + new_dynamics_q(:,:,ntsw) + new_dynamics_q(:,:,ntgl)
+      q_dry_air = 1.0 - q_vapor - q_liquid - q_ice
+
+      ! By definition now, the weights sum to 1.0.
+      cpm = cp_air * q_dry_air + cp_vap * q_vapor + c_liq * q_liquid + c_ice * q_ice
+    endif
+#endif
+  end subroutine moist_cp_nwat6
+
+      subroutine physics_to_dycore_mass_fraction(initial_dynamics_q, physics_q, &
+            pressure_on_interfaces, im, levs, nwat, new_dynamics_q)
+        integer, intent(in) :: im, levs, nwat
+        real(kind=kind_phys), intent(in) :: initial_dynamics_q(1:im,1:levs,1:nwat)
+        real(kind=kind_phys), intent(in) :: physics_q(1:im,1:levs,1:nwat)
+        real(kind=kind_phys), intent(in) :: pressure_on_interfaces(1:im,1:levs+1)
+        real(kind=kind_phys), intent(out) :: new_dynamics_q(1:im,1:levs,1:nwat)
+
+        real(kind=kind_phys) :: delp(1:im,1:levs)
+        real(kind=kind_phys) :: qwat(1:im,1:levs,1:nwat)
+        real(kind=kind_phys) :: qt(1:im,1:levs)
+        integer :: k, t
+
+        ! Follow the procedure used in atmosphere.atmosphere_state_update to convert
+        ! mass fractions in the physics driver to mass fractions in the dynamical core.
+        do k = 1, levs
+          delp(:,k) = pressure_on_interfaces(:,k) - pressure_on_interfaces(:,k+1)
+        enddo
+        do t = 1, nwat
+          qwat(:,:,t) = delp * physics_q(:,:,t)
+        enddo
+        qt = sum(qwat, 3)
+        delp = delp * (1.0 - sum(initial_dynamics_q(:,:,1:nwat), 3)) + qt
+        do t = 1, nwat
+          new_dynamics_q(:,:,t) = qwat(:,:,t) / delp
+        enddo
+      end subroutine physics_to_dycore_mass_fraction
+
+      ! Scale the temperature increment for each physics component by cp / cvm
+      ! if the dynamical core is non-hydrostatic or cp / cpm if the dynamical
+      ! core is hydrostatic to account for how the temperature tendency is
+      ! adjusted within the dynamical core.
+      subroutine update_temperature_tendency_diagnostics(t_dt, dt3dt_initial, dt3dt_final, specific_heat, &
+        im, levs)
+        integer, intent(in) :: im, levs
+        real(kind=kind_phys), intent(in), dimension(1:im,1:levs,9) :: dt3dt_initial, dt3dt_final
+        real(kind=kind_phys), intent(inout) :: t_dt(1:im,1:levs,9)
+        real(kind=kind_phys), intent(in), dimension(1:im,1:levs) :: specific_heat
+
+        integer :: i
+
+        do i = 1, 9
+          t_dt(:,:,i) = t_dt(:,:,i) + con_cp * (dt3dt_final(:,:,i) - dt3dt_initial(:,:,i)) / specific_heat(:,:)
+        enddo
+      end subroutine update_temperature_tendency_diagnostics
+
+      ! Scale the water vapor mass fraction increment for each physics component by
+      ! (mass of dry air + mass of only water vapor at the start of the physics) / 
+      ! (mass of dry air + mass of all hydrometeors at the end of the physics).
+      !
+      ! This leaves a residual water vapor tendency that cannot be assigned to a single
+      ! physical process (because the mass of dry air + mass of all hydrometeors changes
+      ! during the physics).  This residual is equal to the initial mass of water vapor going
+      ! into the physics, multiplied by the difference between
+      ! 1 / (mass of dry air + mass of all hydrometeors at the end of the physics) and
+      ! 1 / (mass of dry air + mass of all hydrometeors at the beginning of the physics).
+      ! This residual is typically small compared to the tendencies induced by the
+      ! physics parameterizations themselves.
+      subroutine update_water_vapor_tendency_diagnostics(q_dt, dq3dt_initial, dq3dt_final, &
+        q_initial, q_final, im, levs, nwat)
+        integer, intent(in) :: im, levs, nwat
+        real(kind=kind_phys), intent(inout) :: q_dt(1:im,1:levs,5)
+        real(kind=kind_phys), intent(in), dimension(1:im,1:levs,1:9) :: dq3dt_initial, dq3dt_final
+        real(kind=kind_phys), intent(in), dimension(1:im,1:levs,1:nwat) :: q_initial, q_final
+
+        integer :: i
+        real(kind=kind_phys), dimension(1:im,1:levs) :: initial_dynamics_denominator, final_dynamics_denominator
+
+        ! Note a factor of delp = mass of dry air + mass of water vapor at the start of
+        ! the physics cancels in all of these calculations, so we can work with mass
+        ! fractions instead of masses for all of these scalings.
+        initial_dynamics_denominator = 1.0 + sum(q_initial(:,:,2:nwat), 3)
+        final_dynamics_denominator = 1.0 + sum(dq3dt_final(:,:,1:4) - dq3dt_initial(:,:,1:4), 3) + sum(q_final(:,:,2:nwat), 3)
+
+        do i = 1, 4
+          q_dt(:,:,i) = q_dt(:,:,i) + (dq3dt_final(:,:,i) - dq3dt_initial(:,:,i)) / final_dynamics_denominator
+        enddo
+
+        ! Compute the residual tendency.
+        q_dt(:,:,5) = q_dt(:,:,5) + q_initial(:,:,1) * ((1.0 / final_dynamics_denominator) - (1.0 / initial_dynamics_denominator))
+      end subroutine update_water_vapor_tendency_diagnostics
 !> @}
 
 end module module_physics_driver
