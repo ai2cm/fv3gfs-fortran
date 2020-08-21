@@ -1361,7 +1361,6 @@ module module_physics_driver
           endif
         endif
       endif
-
 !===========================Above Phys-tend Diag for COORDE ======================
 
 !  --- ...  initialize dtdt with heating rate from dcyc2
@@ -1370,6 +1369,7 @@ module module_physics_driver
 !           faster model time steps.
 !      sw:  using cos of zenith angle as scaling factor
 !      lw:  using surface air skin temperature as scaling factor
+
       if (Model%pre_rad) then
         call dcyc2t3_pre_rad                                                &
 !  ---  inputs:
