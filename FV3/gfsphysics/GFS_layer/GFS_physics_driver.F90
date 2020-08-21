@@ -5570,7 +5570,7 @@ module module_physics_driver
 
       subroutine adjust_precipitation_for_qv_nudging(moistening, im, timestep, precipitation)
         integer, intent(in) :: im
-        real(kind_phys), intent(in) :: timestep
+        real(kind=kind_phys), intent(in) :: timestep
         real(kind=kind_phys), intent(in) :: moistening(1:im)
         real(kind=kind_phys), intent(inout) :: precipitation(1:im)
         real(kind=kind_phys) :: m_per_mm
