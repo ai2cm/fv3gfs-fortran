@@ -289,8 +289,8 @@ contains
 #ifdef CCPP
       integer :: ierr
 #endif
-      !$ser verbatim integer:: id_mdt, mode, n_map_step
-      !$ser verbatim id_mdt=idiag%id_mdt
+      !$ser verbatim integer:: mode, n_map_step
+      !$ser verbatim real :: ph1v(npz), ph2v(npz)
 #ifdef CCPP
       ccpp_associate: associate( cappa     => CCPP_interstitial%cappa,     &
                                  dp1       => CCPP_interstitial%te0,       &
@@ -418,6 +418,7 @@ contains
            snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
            graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
            cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
+        
       endif
 
       theta_d = get_tracer_index (MODEL_ATMOS, 'theta_d')
@@ -455,8 +456,6 @@ contains
          enddo
       enddo
     else
-      !$ser savepoint FVSetup-In
-      !$ser data  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) q_con=q_con cvm=cvm zvir=zvir cappa=cappa dp1=dp1 delp=delp pt=pt pkz=pkz delz=delz 
 
 #if defined(CCPP) && defined(__GFORTRAN__)
 !$OMP parallel do default(none) shared(is,ie,js,je,isd,ied,jsd,jed,npz,zvir,q,q_con,sphum,liq_wat, &
@@ -520,8 +519,6 @@ contains
            enddo
          endif
        enddo
-      !$ser savepoint FVSetup-Out
-      !$ser data q_con=q_con cvm=cvm cappa=cappa dp1=dp1 pkz=pkz
 
     endif
       if ( flagstruct%fv_debug ) then
@@ -654,13 +651,13 @@ contains
        enddo
   endif
 #endif
-
                                                   call timing_on('FV_DYN_LOOP')
   do n_map=1, k_split   ! first level of time-split
-     k_step = n_map
      !$ser verbatim n_map_step=n_map
+     k_step = n_map
+    
       !$ser savepoint DynCore-In
-      !$ser data nq=nq mdt=mdt n_split=n_split zvir=zvir  akap=akap cappa=cappa u=u v=v w=w delz=delz pt=pt  delp=delp pe=pe pk=pk phis=phis wsd=ws omga=omga ptop=ptop pfull=pfull ua=ua va=va uc=uc vc=vc mfxd=mfx mfyd=mfy cxd=cx cyd=cy pkz=pkz peln=peln q_con=q_con ak=ak bk=bk ks=ks diss_estd=diss_est n_map_step=n_map_step 
+      !$ser data nq=nq mdt=mdt n_split=n_split zvir=zvir  akap=akap cappa=cappa u=u v=v w=w delz=delz pt=pt  delp=delp pe=pe pk=pk phis=phis wsd=ws omga=omga ptop=ptop pfull=pfull ua=ua va=va uc=uc vc=vc mfxd=mfx mfyd=mfy cxd=cx cyd=cy pkz=pkz peln=peln q_con=q_con ak=ak bk=bk ks=ks diss_estd=diss_est n_map=n_map_step
                                            call timing_on('COMM_TOTAL')
 #ifdef USE_COND
       call start_group_halo_update(i_pack(11), q_con, domain)
@@ -718,7 +715,7 @@ contains
                                          call timing_off('DYN_CORE')
       !$ser savepoint DynCore-Out
       !$ser data cappa=cappa u=u v=v w=w delz=delz pt=pt delp=delp pe=pe pk=pk phis=phis wsd=ws omga=omga ptop=ptop pfull=pfull ua=ua va=va uc=uc vc=vc mfxd=mfx mfyd=mfy cxd=cx cyd=cy pkz=pkz peln=peln q_con=q_con diss_estd=diss_est  
-    
+
 #ifdef SW_DYNAMICS
 !!$OMP parallel do default(none) shared(is,ie,js,je,ps,delp,agrav)
       do j=js,je
@@ -741,12 +738,12 @@ contains
        else
          if ( flagstruct%z_tracer ) then
             !$ser savepoint Tracer2D1L-In
-            !$ser data qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) dp1=dp1 mfxd=mfx mfyd=mfy cxd=cx cyd=cy nq=nq q_split=q_split mdt=mdt
+            !$ser data tracers=q dp1=dp1 mfxd=mfx mfyd=mfy cxd=cx cyd=cy nq=nq q_split=q_split mdt=mdt
          call tracer_2d_1L(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, domain, npx, npy, npz, nq,    &
                         flagstruct%hord_tr, q_split, mdt, idiag%id_divg, i_pack(10), &
                         flagstruct%nord_tr, flagstruct%trdm2, flagstruct%lim_fac,flagstruct%regional)
             !$ser savepoint Tracer2D1L-Out
-            !$ser data qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) dp1=dp1 mfxd=mfx mfyd=mfy cxd=cx cyd=cy
+            !$ser data tracers=q dp1=dp1 mfxd=mfx mfyd=mfy cxd=cx cyd=cy
          else
          call tracer_2d(q, dp1, mfx, mfy, cx, cy, gridstruct, bd, domain, npx, npy, npz, nq,    &
                         flagstruct%hord_tr, q_split, mdt, idiag%id_divg, i_pack(10), &
@@ -777,7 +774,7 @@ contains
              if(flagstruct%fv_debug) call prt_mxm('divg',  dp1, is, ie, js, je, 0, npz, 1.,gridstruct%area_64, domain)
          endif
       endif
-
+     
       if ( npz > 4 ) then
 !------------------------------------------------------------------------
 ! Perform vertical remapping from Lagrangian control-volume to
@@ -795,9 +792,11 @@ contains
                                                   call timing_on('Remapping')
 #ifdef AVEC_TIMERS
                                                   call avec_timer_start(6)
+
 #endif
+
          !$ser savepoint Remapping-In
-         !$ser data iq=iq last_step=last_step consv_te=consv_te ps=ps pe=pe delp=delp pkz=pkz pk=pk mdt=mdt bdt=bdt sphum=sphum q_con=q_con u=u v=v w=w delz=delz pt=pt  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) phis=phis zvir=zvir akap=akap cappa=cappa kord_tracer=kord_tracer peln=peln te_2d=te_2d ua=ua va=va omga=omga dp1=dp1 wsd=ws  reproduce_sum=reproduce_sum id_mdt=id_mdt ptop=ptop ak=ak bk=bk pfull=pfull hybrid_z=hybrid_z do_adiabatic_init=do_adiabatic_init
+         !$ser data iq=iq last_step=last_step consv_te=consv_te ps=ps pe=pe delp=delp pkz=pkz pk=pk mdt=mdt bdt=bdt sphum=sphum q_con=q_con u=u v=v w=w delz=delz pt=pt tracers=q phis=phis zvir=zvir akap=akap cappa=cappa kord_tracer=kord_tracer peln=peln te_2d=te_2d ua=ua va=va omga=omga dp1=dp1 wsd=ws  reproduce_sum=reproduce_sum ptop=ptop ak=ak bk=bk pfull=pfull hybrid_z=hybrid_z do_adiabatic_init=do_adiabatic_init nq=nq
          call Lagrangian_to_Eulerian(last_step, consv_te, ps, pe, delp,                 &
                      pkz, pk, mdt, bdt, npz, is,ie,js,je, isd,ied,jsd,jed,              &
                      nq, nwat, sphum, q_con, u,  v, w, delz, pt, q, phis,               &
@@ -808,7 +807,8 @@ contains
                      flagstruct%do_sat_adj, hydrostatic, hybrid_z, do_omega,            &
                      flagstruct%adiabatic, do_adiabatic_init)
          !$ser savepoint Remapping-Out
-         !$ser data te_2d=te_2d pk=pk  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) delp=delp pe=pe ps=ps u=u v=v w=w pt=pt delz=delz q_con=q_con cappa=cappa ua=ua va=va omga=omga peln=peln pkz=pkz dp1=dp1
+         !$ser data te_2d=te_2d pk=pk tracers=q delp=delp pe=pe ps=ps u=u v=v w=w pt=pt delz=delz q_con=q_con cappa=cappa ua=ua va=va omga=omga peln=peln pkz=pkz dp1=dp1
+
 #ifdef AVEC_TIMERS
                                                   call avec_timer_stop(6)
 #endif
@@ -848,9 +848,11 @@ contains
             call del2_cubed(omga, 0.18*gridstruct%da_min, gridstruct, domain, npx, npy, npz, flagstruct%nf_omega, bd)
          endif
       end if
+      
 #endif
   enddo    ! n_map loop
                                                   call timing_off('FV_DYN_LOOP')
+ 
   if ( idiag%id_mdt > 0 .and. (.not.do_adiabatic_init) ) then
 ! Output temperature tendency due to inline moist physics:
 #if defined(CCPP) && defined(__GFORTRAN__)
@@ -898,7 +900,7 @@ contains
                                 q(isd,jsd,1,graupel), check_negative=flagstruct%check_negative)
      endif
       !$ser savepoint Neg_Adj3-Out
-      !$ser data  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt)
+      !$ser data  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) pt=pt
      if ( flagstruct%fv_debug ) then
        call prt_mxm('T_dyn_a3',    pt, is, ie, js, je, ng, npz, 1., gridstruct%area_64, domain)
        call prt_mxm('SPHUM_dyn',   q(isd,jsd,1,sphum  ), is, ie, js, je, ng, npz, 1.,gridstruct%area_64, domain)
@@ -983,6 +985,7 @@ contains
             m_fac(i,j) = u0*cos(gridstruct%agrid(i,j,2))
          enddo
       enddo
+
 !$OMP parallel do default(none) shared(is,ie,js,je,npz,hydrostatic,pt,m_fac,ua,cp_air, &
 !$OMP                                  u,u0,gridstruct,v )
       do k=1,npz
@@ -999,13 +1002,15 @@ contains
       enddo
     endif   !  consv_am
   endif
+ 
 !$ser savepoint CubedToLatLon-In
 !$ser verbatim mode=1
 !$ser data u=u v=v ua=ua va=va mode=mode
 911  call cubed_to_latlon(u, v, ua, va, gridstruct, &
           npx, npy, npz, 1, gridstruct%grid_type, domain, gridstruct%nested, flagstruct%c2l_ord, bd)
 !$ser savepoint CubedToLatLon-Out
-!$ser data u=u v=v ua=ua va=va 
+!$ser data u=u v=v ua=ua va=va
+  
 #ifdef MULTI_GASES
   deallocate(kapad)
 #endif
@@ -1032,7 +1037,7 @@ contains
             call range_check('W_dyn', w, is, ie, js, je, ng, npz, gridstruct%agrid,   &
                          -50., 100., bad_range)
   endif
- !$ser off
+ 
 #ifdef CCPP
   end associate ccpp_associate
 #endif

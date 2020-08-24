@@ -186,6 +186,8 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: slc (:,:)   => null()  !< soil liquid water content
     real (kind=kind_phys), pointer :: atm_ts (:)  => null() !< surface temperature from dynamical core
  
+    logical, pointer :: dycore_hydrostatic        => null()  !< whether the dynamical core is hydrostatic
+    integer, pointer :: nwat                      => null()  !< number of water species used in the model
     contains
       procedure :: create  => statein_create  !<   allocate array data
   end type GFS_statein_type
@@ -227,6 +229,22 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: lakefrac(:)  => null()  !< lake  fraction [0:1]
     real (kind=kind_phys), pointer :: tsfc   (:)   => null()  !< surface air temperature in K
                                                               !< [tsea in gbphys.f]
+    real (kind=kind_phys), pointer :: qsfc   (:)   => null()  !< surface specific humidity in kg/kg
+    !
+    real (kind=kind_phys), pointer :: tsclim   (:)    => null()  !< climatological SST in k 
+    real (kind=kind_phys), pointer :: mldclim  (:)    => null()  !< climatological ocean mixed layer depth in m
+    real (kind=kind_phys), pointer :: qfluxadj (:)    => null()  !< climatological qflux used for SOM
+    real (kind=kind_phys), pointer :: ts_som   (:)    => null()  !< predicted SST in SOM or MLM
+    real (kind=kind_phys), pointer :: ts_clim_iano  (:)   => null()  !< climatological SST plus initial anomaly with decay
+    real (kind=kind_phys), pointer :: tml    (:)   => null()  !< ocean mixed layer temp
+    real (kind=kind_phys), pointer :: tml0   (:)   => null()  !< ocean mixed layer temp at initial or previous time step
+    real (kind=kind_phys), pointer :: mld    (:)   => null()  !< ocean mixed layer depth (MLD)
+    real (kind=kind_phys), pointer :: mld0   (:)   => null()  !< MLD at initial or previous time step
+    real (kind=kind_phys), pointer :: huml   (:)   => null()  !< ocean zonal current * MLD
+    real (kind=kind_phys), pointer :: hvml   (:)   => null()  !< ocean meridional current *MLD
+    real (kind=kind_phys), pointer :: tmoml  (:)   => null()  !< ocean temp at the above 200 m
+    real (kind=kind_phys), pointer :: tmoml0 (:)   => null()  !< ocean temp at the above 200 m at initial or previous time step
+    !
     real (kind=kind_phys), pointer :: tsfco  (:)   => null()  !< sst in K
     real (kind=kind_phys), pointer :: tsfcl  (:)   => null()  !< surface land temperature in K
     real (kind=kind_phys), pointer :: tisfc  (:)   => null()  !< surface temperature over ice fraction 
@@ -550,6 +568,7 @@ module GFS_typedefs
     integer              :: thermodyn_id    !< valid for GFS only for get_prs/phi
     integer              :: sfcpress_id     !< valid for GFS only for get_prs/phi
     logical              :: gen_coord_hybrid!< for Henry's gen coord
+    logical              :: sfc_override    !< use idealized surface conditions
 
 !--- set some grid extent parameters
     integer              :: isc             !< starting i-index for this MPI-domain
@@ -1017,6 +1036,7 @@ module GFS_typedefs
 !--- debug flag
     logical              :: debug         
     logical              :: pre_rad         !< flag for testing purpose
+    logical              :: do_ocean        !< flag for slab ocean model
 
 !--- variables modified at each time step
     integer              :: ipt             !< index for diagnostic printout point
@@ -1439,7 +1459,9 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: du3dt (:,:,:)  => null()   !< u momentum change due to physics
     real (kind=kind_phys), pointer :: dv3dt (:,:,:)  => null()   !< v momentum change due to physics
     real (kind=kind_phys), pointer :: dt3dt (:,:,:)  => null()   !< temperature change due to physics
+    real (kind=kind_phys), pointer :: t_dt(:,:,:)    => null()   !< temperature change due to physics scaled by cp / cvm or cp / cpm
     real (kind=kind_phys), pointer :: dq3dt (:,:,:)  => null()   !< moisture change due to physics
+    real (kind=kind_phys), pointer :: q_dt  (:,:,:)  => null()   !< moisture tendency due to physics, adjusted to dycore mass fraction convention
     real (kind=kind_phys), pointer :: refdmax (:)    => null()   !< max hourly 1-km agl reflectivity
     real (kind=kind_phys), pointer :: refdmax263k(:) => null()   !< max hourly -10C reflectivity
     real (kind=kind_phys), pointer :: t02max  (:)    => null()   !< max hourly 2m T
@@ -1450,7 +1472,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: upd_mf (:,:)   => null()  !< instantaneous convective updraft mass flux
     real (kind=kind_phys), pointer :: dwn_mf (:,:)   => null()  !< instantaneous convective downdraft mass flux
     real (kind=kind_phys), pointer :: det_mf (:,:)   => null()  !< instantaneous convective detrainment mass flux
-    real (kind=kind_phys), pointer :: cldcov (:,:)   => null()  !< instantaneous 3D cloud fraction
+!   real (kind=kind_phys), pointer :: cldcov (:,:)   => null()  !< instantaneous 3D cloud fraction
 
     !--- MP quantities for 3D diagnositics 
     real (kind=kind_phys), pointer :: refl_10cm(:,:) => null()  !< instantaneous refl_10cm 
@@ -1978,6 +2000,11 @@ module GFS_typedefs
     allocate (Statein%atm_ts(IM))
     Statein%atm_ts = clear_val
 
+    allocate(Statein%dycore_hydrostatic)
+    Statein%dycore_hydrostatic = .true.
+
+    allocate(Statein%nwat)
+    Statein%nwat = 6
   end subroutine statein_create
 
 
@@ -2022,6 +2049,20 @@ module GFS_typedefs
     allocate (Sfcprop%landfrac (IM))
     allocate (Sfcprop%lakefrac (IM))
     allocate (Sfcprop%tsfc     (IM))
+    allocate (Sfcprop%qsfc     (IM))
+    allocate (Sfcprop%tsclim   (IM))
+    allocate (Sfcprop%mldclim  (IM))
+    allocate (Sfcprop%qfluxadj (IM))
+    allocate (Sfcprop%ts_som   (IM))
+    allocate (Sfcprop%ts_clim_iano  (IM))
+    allocate (Sfcprop%tml      (IM))
+    allocate (Sfcprop%tml0     (IM))
+    allocate (Sfcprop%mld      (IM))
+    allocate (Sfcprop%mld0     (IM))
+    allocate (Sfcprop%huml     (IM))
+    allocate (Sfcprop%hvml     (IM))
+    allocate (Sfcprop%tmoml    (IM))
+    allocate (Sfcprop%tmoml0   (IM))
     allocate (Sfcprop%tsfco    (IM))
     allocate (Sfcprop%tsfcl    (IM))
     allocate (Sfcprop%tisfc    (IM))
@@ -2038,6 +2079,20 @@ module GFS_typedefs
     Sfcprop%landfrac  = clear_val
     Sfcprop%lakefrac  = clear_val
     Sfcprop%tsfc      = clear_val
+    Sfcprop%qsfc      = clear_val
+    Sfcprop%tsclim    = clear_val
+    Sfcprop%mldclim   = clear_val
+    Sfcprop%qfluxadj  = clear_val
+    Sfcprop%ts_som    = clear_val
+    Sfcprop%ts_clim_iano = clear_val
+    Sfcprop%tml       = clear_val
+    Sfcprop%tml0      = clear_val
+    Sfcprop%mld       = clear_val
+    Sfcprop%mld0      = clear_val
+    Sfcprop%huml      = clear_val
+    Sfcprop%hvml      = clear_val
+    Sfcprop%tmoml     = clear_val
+    Sfcprop%tmoml0    = clear_val
     Sfcprop%tsfco     = clear_val
     Sfcprop%tsfcl     = clear_val
     Sfcprop%tisfc     = clear_val
@@ -2675,6 +2730,7 @@ module GFS_typedefs
     real(kind=kind_phys) :: fhcyc          = 0.              !< frequency for surface data cycling (hours)
     integer              :: thermodyn_id   =  1              !< valid for GFS only for get_prs/phi
     integer              :: sfcpress_id    =  1              !< valid for GFS only for get_prs/phi
+    logical              :: sfc_override   = .false.         !< use idealized surface conditions
 
     !--- coupling parameters
     logical              :: cplflx         = .false.         !< default no cplflx collection
@@ -3017,6 +3073,7 @@ module GFS_typedefs
 !--- debug flag
     logical              :: debug          = .false.
     logical              :: pre_rad        = .false.         !< flag for testing purpose
+    logical              :: do_ocean       = .false.         !< flag for slab ocean model
 
 !  max and min lon and lat for critical relative humidity
     integer :: max_lon=5000, max_lat=2000, min_lon=192, min_lat=94
@@ -3045,7 +3102,7 @@ module GFS_typedefs
     NAMELIST /gfs_physics_nml/                                                              &
                           !--- general parameters
                                fhzero, ldiag3d, lssav, fhcyc,                               &
-                               thermodyn_id, sfcpress_id,                                   &
+                               thermodyn_id, sfcpress_id, sfc_override,                     &
                           !--- coupling parameters
                                cplflx, cplwav, cplchm, lsidea,                              &
                           !--- radiation parameters
@@ -3124,7 +3181,7 @@ module GFS_typedefs
                           !--- IAU
                                iau_delthrs,iaufhrs,iau_inc_files,iau_filter_increments,     &
                           !--- debug options
-                               debug, pre_rad,                                              &
+                               debug, pre_rad, do_ocean,                                    &
                           !--- parameter range for critical relative humidity
                                max_lon, max_lat, min_lon, min_lat, rhcmax,                  &
                                phys_version,                                                &
@@ -3201,6 +3258,7 @@ module GFS_typedefs
     Model%thermodyn_id     = thermodyn_id
     Model%sfcpress_id      = sfcpress_id
     Model%gen_coord_hybrid = gen_coord_hybrid
+    Model%sfc_override     = sfc_override
 
     !--- set some grid extent parameters
     Model%tile_num         = tile_num
@@ -3714,6 +3772,7 @@ module GFS_typedefs
 !--- debug flag
     Model%debug            = debug
     Model%pre_rad          = pre_rad
+    Model%do_ocean         = do_ocean
 
 !--- set initial values for time varying properties
     Model%ipt              = 1
@@ -4285,6 +4344,7 @@ module GFS_typedefs
       print *, ' thermodyn_id      : ', Model%thermodyn_id
       print *, ' sfcpress_id       : ', Model%sfcpress_id
       print *, ' gen_coord_hybrid  : ', Model%gen_coord_hybrid
+      print *, ' sfc_override      : ', Model%sfc_override
       print *, ' '
       print *, 'grid extent parameters'
       print *, ' isc               : ', Model%isc
@@ -4589,6 +4649,7 @@ module GFS_typedefs
       print *, 'debug flags'
       print *, ' debug             : ', Model%debug 
       print *, ' pre_rad           : ', Model%pre_rad
+      print *, ' do_ocean          : ', Model%do_ocean
       print *, ' '
       print *, 'variables modified at each time step'
       print *, ' ipt               : ', Model%ipt
@@ -5060,8 +5121,10 @@ module GFS_typedefs
     if (Model%ldiag3d) then
       allocate (Diag%du3dt  (IM,Model%levs,4))
       allocate (Diag%dv3dt  (IM,Model%levs,4))
-      allocate (Diag%dt3dt  (IM,Model%levs,7))
+      allocate (Diag%dt3dt  (IM,Model%levs,9))
+      allocate (Diag%t_dt   (IM,Model%levs,9))
       allocate (Diag%dq3dt  (IM,Model%levs,9))
+      allocate (Diag%q_dt   (IM,Model%levs,5))
 !      allocate (Diag%dq3dt  (IM,Model%levs,oz_coeff+5))
 !--- needed to allocate GoCart coupling fields
 !      allocate (Diag%upd_mf (IM,Model%levs))
@@ -5244,9 +5307,9 @@ module GFS_typedefs
     Diag%topfsw%upfx0 = zero
     Diag%topflw%upfxc = zero
     Diag%topflw%upfx0 = zero
-    if (Model%ldiag3d) then
-      Diag%cldcov     = zero
-    endif
+    ! if (Model%ldiag3d) then
+    !   Diag%cldcov     = zero
+    ! endif
 
   end subroutine diag_rad_zero
 
@@ -5361,7 +5424,9 @@ module GFS_typedefs
       Diag%du3dt    = zero
       Diag%dv3dt    = zero
       Diag%dt3dt    = zero
-!     Diag%dq3dt    = zero
+      Diag%t_dt     = zero
+      Diag%dq3dt    = zero
+      Diag%q_dt     = zero
 !     Diag%upd_mf   = zero
 !     Diag%dwn_mf   = zero
 !     Diag%det_mf   = zero

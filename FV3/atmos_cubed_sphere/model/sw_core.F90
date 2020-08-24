@@ -219,7 +219,7 @@
 !----------------
 ! Xdir:
       !$ser savepoint TransportDelp-In
-      !$ser data_kbuff k=k k_size=nz delp=delp pt=pt w=w utc=ut vtc=vt
+      !$ser data_kbuff k=k k_size=nz delp=delp pt=pt w=w utc=ut vtc=vt wc=wc
       !$ser verbatim dir=1
       !$ser verbatim if (flagstruct%grid_type < 3 .and. .not. (nested .or. regional)) then
       !$ser savepoint Fill2_4Corners-In
@@ -3073,6 +3073,11 @@ end subroutine ytp_v
 
   if (grid_type < 3 .and. .not. (nested .or. regional)) then
      npt = 4
+#ifdef GT4PY_DEV
+     if (npt > (je - js) .or. npt > (ie - is)) then
+        npt = min(je-js, ie-is)
+     endif
+#endif
   else
      npt = -2
   endif

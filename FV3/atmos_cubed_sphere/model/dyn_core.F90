@@ -293,7 +293,8 @@ contains
     !$ser verbatim boolean_false = .false.
     !$ser verbatim boolean_true = .true.
     !$ser verbatim call mpi_comm_rank(MPI_COMM_WORLD, mpi_rank,ier)
-
+    !$ser verbatim ser_on=fs_is_serialization_on()
+ 
       is  = bd%is
       ie  = bd%ie
       js  = bd%js
@@ -1416,6 +1417,9 @@ contains
 
 !-----------------------------------------------------
   enddo   ! time split loop
+  !$ser verbatim if (ser_on) then
+  !$ser on
+  !$ser verbatim endif
   first_call=.false.
 !-----------------------------------------------------
     if ( nq > 0 .and. .not. flagstruct%inline_q ) then

@@ -205,6 +205,7 @@ clean:
 	(cd io                    && make clean)
 	(cd atmos_cubed_sphere    && make clean)
 	(cd cpl                   && make clean)
+	(cd coarse_graining       && make clean)
 	$(RM) -f $(FV3_EXE) $(FV3CAP_LIB) *.o *.mod *.i90 *.lst depend
 
 clean_no_dycore:
@@ -216,6 +217,7 @@ clean_no_dycore:
 	(cd ../stochastic_physics && make clean)
 	(cd io                    && make clean)
 	(cd cpl                   && make clean)
+	(cd coarse_graining       && make clean)
 	$(RM) -f $(FV3_EXE) $(FV3CAP_LIB) *.o *.mod *.i90 *.lst depend
 
 cleanall: clean

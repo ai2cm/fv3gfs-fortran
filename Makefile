@@ -47,6 +47,9 @@ build_compiled:
 build_serialize:
 	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" COMPILED_IMAGE=$(SERIALIZE_IMAGE) $(MAKE) build_compiled
 
+build_serialize_gt4pydev:
+	 COMPILE_OPTION="GT4PY_DEV=Y" SERIALIZE_IMAGE=$(SERIALIZE_IMAGE)-gt4pydev $(MAKE) build_serialize
+
 build_deps:
 	docker build -f $(DOCKERFILE) -t $(FMS_IMAGE) --target fv3gfs-fms .
 	docker build -f $(DOCKERFILE) -t $(ESMF_IMAGE) --target fv3gfs-esmf .
@@ -64,6 +67,9 @@ pull_deps:
 
 build_debug: build_environment
 	COMPILED_TAG_NAME=debug COMPILE_OPTION="REPRO=\\\nDEBUG=Y" $(MAKE) build
+
+build_coverage: build_environment
+	COMPILED_TAG_NAME=gcov COMPILED_IMAGE=$(COMPILE_TARGET):gcov COMPILE_OPTION="OPENMP=\\\nREPRO=\\\nDEBUG=Y\\\nGCOV=Y" $(MAKE) build
 
 enter:
 	docker run --rm $(MOUNTS) -w /FV3 -it $(COMPILED_IMAGE) bash
@@ -94,11 +100,11 @@ dev_serialize: # TODO: use run_docker -- string form of command is not translati
 		-it $(GCR_URL)/$(COMPILE_TARGET):serialize /bin/bash -c 'cd /FV3;make serialize_preprocess && cd /Serialize/FV3 && make build_serializer && cd /rundir && rm -f Gen*.dat && rm -f *.json &&  /rundir/submit_job.sh /Serialize/'
 
 clean:
-	(cd FV3            && make clean)
+	(cd FV3 && make clean)
 	$(RM) -f inputdata
 	$(RM) -rf tests/pytest/output/*
 
 
 .PHONY: build build_environment build_compiled enter enter_serialize run test test_32bit clean \
 	run_serialize test_serialize test_serialize_image dev_serialize build_serialize \
-	build_environment_serialize
+	build_environment_serialize build_serialize_gt4pydev

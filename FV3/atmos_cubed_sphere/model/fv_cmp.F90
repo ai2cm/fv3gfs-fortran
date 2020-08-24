@@ -53,7 +53,7 @@ module fv_cmp_mod
 !         rad_rain, rad_snow, rad_graupel, dw_ocean, dw_land, tintqs</td>
 !   </tr>
 ! </table>
-    
+    !$ser verbatim USE m_serialize, ONLY: fs_is_serialization_on
     use constants_mod, only: rvgas, rdgas, grav, hlv, hlf, cp_air
     use fv_mp_mod, only: is_master
     use fv_arrays_mod, only: r_grid
@@ -1034,7 +1034,7 @@ subroutine qs_init (kmp)
     integer, parameter :: length = 2621
     
     integer :: i
-    
+    !$ser verbatim logical :: ser_on
     if (mp_initialized) return
     
     if (is_master ()) write (*, *) 'top layer for gfdl_mp = ', kmp
@@ -1046,6 +1046,13 @@ subroutine qs_init (kmp)
     allocate (tablew (length))
     allocate (des2 (length))
     allocate (desw (length))
+    !$ser verbatim ser_on=fs_is_serialization_on()
+    !$ser on
+    !$ser verbatim table(:)=0.0
+    !$ser verbatim tablew(:)=0.0
+    !$ser verbatim table2(:)=0.0
+    !$ser verbatim des2(:)=0.0
+    !$ser verbatim desw(:)=0.0
     !$ser savepoint QSInit-In
     !$ser data table=table table2=table2 tablew=tablew des2=des2 desw=desw
     call qs_table (length)
@@ -1059,7 +1066,10 @@ subroutine qs_init (kmp)
     des2 (length) = des2 (length - 1)
     desw (length) = desw (length - 1)
     !$ser savepoint QSInit-Out
-    !$ser data table=table table2=table2 tablew=tablew des2=des2 desw=desw 
+    !$ser data table=table table2=table2 tablew=tablew des2=des2 desw=desw
+    !$ser verbatim if (.not. ser_on) then
+    !$ser off
+    !$ser verbatim endif
     mp_initialized = .true.
     
 end subroutine qs_init
