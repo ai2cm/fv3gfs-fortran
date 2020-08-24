@@ -2874,7 +2874,7 @@ module GFS_typedefs
     logical              :: use_analysis_sst = .false. ! whether to set physics SST to dynamical core ts
                                                        ! which is equal to analysis SST when nudging is active
 
-    !--- tuning parameters for physical parameterizations
+!--- tuning parameters for physical parameterizations
     logical              :: ras            = .false.                  !< flag for ras convection scheme
     logical              :: flipv          = .true.                   !< flag for vertical direction flip (ras)
                                                                       !< .true. implies surface at k=1
