@@ -291,6 +291,7 @@ contains
 #endif
       !$ser verbatim integer:: mode, n_map_step
       !$ser verbatim real :: ph1v(npz), ph2v(npz)
+
 #ifdef CCPP
       ccpp_associate: associate( cappa     => CCPP_interstitial%cappa,     &
                                  dp1       => CCPP_interstitial%te0,       &
@@ -559,11 +560,12 @@ contains
 
       if( (flagstruct%consv_am.or.idiag%id_amdt>0) .and. (.not.do_adiabatic_init) ) then
           !$ser savepoint ComputeAAM-In
-          !$ser data ptop=ptop ua=ua va=va delp=delp teq=teq ps2=ps2 m_fac=m_fac
+          !$ser data ptop=ptop u=u v=v delp=delp ua=ua va=va ps=ps2 aam=teq m_fac=m_fac
+               
           call compute_aam(npz, is, ie, js, je, isd, ied, jsd, jed, gridstruct, bd,   &
                            ptop, ua, va, u, v, delp, teq, ps2, m_fac)
           !$ser savepoint ComputeAAM-Out
-          !$ser data ua=ua va=va delp=delp teq=teq ps2=ps2 m_fac=m_fac
+          !$ser data u=u v=v delp=delp ua=ua va=va aam=teq ps=ps2 m_fac=m_fac
       endif
 
       if( .not.flagstruct%RF_fast .and. flagstruct%tau .ne. 0. ) then
