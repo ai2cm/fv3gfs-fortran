@@ -2873,7 +2873,8 @@ module GFS_typedefs
     logical              :: use_ufo        = .false.         !< flag for gcycle surface option
     logical              :: use_analysis_sst = .false. ! whether to set physics SST to dynamical core ts
                                                        ! which is equal to analysis SST when nudging is active
-!--- tuning parameters for physical parameterizations
+
+    !--- tuning parameters for physical parameterizations
     logical              :: ras            = .false.                  !< flag for ras convection scheme
     logical              :: flipv          = .true.                   !< flag for vertical direction flip (ras)
                                                                       !< .true. implies surface at k=1
@@ -3137,7 +3138,7 @@ module GFS_typedefs
 #else
                                lsm, lsoil, nmtvr, ivegsrc, use_ufo,                         &
 #endif
-                               use_analysis_sst,                                            &
+                               use_analysis_sst,                                           &
                           !    Noah MP options
                                iopt_dveg,iopt_crs,iopt_btr,iopt_run,iopt_sfc, iopt_frz,     &
                                iopt_inf, iopt_rad,iopt_alb,iopt_snf,iopt_tbot,iopt_stc,     &
