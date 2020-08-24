@@ -189,6 +189,7 @@ module GFS_typedefs
  
     logical, pointer :: dycore_hydrostatic        => null()  !< whether the dynamical core is hydrostatic
     integer, pointer :: nwat                      => null()  !< number of water species used in the model
+    logical, pointer :: dycore_nudge              => null()  !< whether nudging is active in the dynamical core
     contains
       procedure :: create  => statein_create  !<   allocate array data
   end type GFS_statein_type
@@ -2009,6 +2010,9 @@ module GFS_typedefs
 
     allocate(Statein%nwat)
     Statein%nwat = 6
+
+    allocate(Statein%dycore_nudge)
+    Statein%dycore_nudge = .false.
   end subroutine statein_create
 
 

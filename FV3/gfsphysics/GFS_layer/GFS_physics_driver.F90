@@ -5345,7 +5345,9 @@ module module_physics_driver
         Diag%T02MIN(I)  = MIN(Diag%T02MIN(I), Sfcprop%t2m(i))  !<--- Hourly min 2m T
       enddo
 
-      call adjust_precipitation_for_qv_nudging(Statein%column_moistening_implied_by_nudging, im, dtp, Sfcprop%tprcp)
+      if (Statein%dycore_nudge) then
+        call adjust_precipitation_for_qv_nudging(Statein%column_moistening_implied_by_nudging, im, dtp, Sfcprop%tprcp)
+      endif
 
       if (Model%ldiag3d) then
         ! Update t_dt_* and q_dt_* diagnostics such that they represent temperature

@@ -2190,6 +2190,7 @@ contains
     endif
     IPD_Data(nb)%Statein%dycore_hydrostatic = Atm(mytile)%flagstruct%hydrostatic
     IPD_Data(nb)%Statein%nwat = Atm(mytile)%flagstruct%nwat
+    IPD_Data(nb)%Statein%dycore_nudge = Atm(mytile)%flagstruct%nudge
   enddo
 
  end subroutine atmos_phys_driver_statein
