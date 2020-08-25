@@ -5345,6 +5345,10 @@ module module_physics_driver
         Diag%T02MIN(I)  = MIN(Diag%T02MIN(I), Sfcprop%t2m(i))  !<--- Hourly min 2m T
       enddo
 
+      if (Statein%dycore_nudge) then
+        call adjust_precipitation_for_qv_nudging(Statein%column_moistening_implied_by_nudging, im, dtp, Sfcprop%tprcp)
+      endif
+
       if (Model%ldiag3d) then
         ! Update t_dt_* and q_dt_* diagnostics such that they represent temperature
         ! and water vapor tendencies contributed by each component of the physics,
@@ -5562,6 +5566,23 @@ module module_physics_driver
       return
 
       end subroutine moist_bud2
+
+      ! If nudging the specific humidity to NCEP analysis, subtract the column-integrated
+      ! specific humidity nudging tendency from the precipitation felt by the surface.
+      subroutine adjust_precipitation_for_qv_nudging(moistening, im, timestep, precipitation)
+        integer, intent(in) :: im
+        real(kind=kind_phys), intent(in) :: timestep
+        real(kind=kind_phys), intent(in) :: moistening(1:im)
+        real(kind=kind_phys), intent(inout) :: precipitation(1:im)
+        real(kind=kind_phys) :: m_per_mm
+
+        m_per_mm = 1.0 / 1000.0
+
+        precipitation = precipitation - moistening * timestep * m_per_mm
+        where (precipitation .lt. 0.0)
+           precipitation = 0.0
+        endwhere
+      end subroutine adjust_precipitation_for_qv_nudging
 
       subroutine moist_cv_nwat6(initial_dynamics_q, physics_q, pressure_on_interfaces, &
             im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, cvm)

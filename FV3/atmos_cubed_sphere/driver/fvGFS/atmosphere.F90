@@ -575,7 +575,7 @@ contains
    call nullify_domain()
    call fv_diag(Atm(mytile:mytile), zvir, Time, -1)
 #endif
-
+   if (Atm(mytile)%flagstruct%nudge) allocate(Atm(mytile)%column_moistening_implied_by_nudging(isc:iec,jsc:jec))
    n = mytile
    call switch_current_Atm(Atm(n)) 
       
@@ -1658,7 +1658,9 @@ contains
                          Atm(n)%gridstruct%agrid(:,:,1), Atm(n)%gridstruct%agrid(:,:,2),   &
                          Atm(n)%npx, Atm(n)%npy, Atm(n)%npz, Atm(n)%flagstruct,            &
                          Atm(n)%neststruct, Atm(n)%bd, Atm(n)%domain, Atm(n)%ptop,         &
-                         Atm(n)%nudge_diag, Atm(n)%physics_tendency_diag)
+                         Atm(n)%nudge_diag, Atm(n)%physics_tendency_diag,                  &
+                         Atm(n)%column_moistening_implied_by_nudging)
+
        call timing_off('FV_UPDATE_PHYS')
    call mpp_clock_end (id_dynam)
 
@@ -2038,6 +2040,14 @@ contains
        IPD_Data(nb)%Statein%atm_ts(ix) = _DBL_(_RL_(Atm(mytile)%ts(i,j)))
      enddo
 
+     if (Atm(mytile)%flagstruct%nudge) then
+       do ix = 1, blen
+        i = Atm_block%index(nb)%ii(ix)
+        j = Atm_block%index(nb)%jj(ix)
+        IPD_Data(nb)%Statein%column_moistening_implied_by_nudging(ix) = _DBL_(_RL_(Atm(mytile)%column_moistening_implied_by_nudging(i,j)))
+       enddo
+     endif
+
      do k = 1, npz
        !Indices for FV's vertical coordinate, for which 1 = top
        !here, k is the index for GFS's vertical coordinate, for which 1 =
@@ -2180,6 +2190,7 @@ contains
     endif
     IPD_Data(nb)%Statein%dycore_hydrostatic = Atm(mytile)%flagstruct%hydrostatic
     IPD_Data(nb)%Statein%nwat = Atm(mytile)%flagstruct%nwat
+    IPD_Data(nb)%Statein%dycore_nudge = Atm(mytile)%flagstruct%nudge
   enddo
 
  end subroutine atmos_phys_driver_statein
