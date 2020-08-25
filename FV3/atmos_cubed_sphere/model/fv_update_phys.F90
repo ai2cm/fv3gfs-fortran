@@ -559,7 +559,6 @@ if (allocated(physics_tendency_diag%t_dt)) physics_tendency_diag%t_dt = (pt(is:i
         if (allocated(nudge_diag%nudge_t_dt)) nudge_diag%nudge_t_dt = pt(is:ie,js:je,:)
         if (allocated(nudge_diag%nudge_ps_dt)) nudge_diag%nudge_ps_dt = ps(is:ie,js:je)
         if (allocated(nudge_diag%nudge_delp_dt)) nudge_diag%nudge_delp_dt = delp(is:ie,js:je,:)
-        if (allocated(nudge_diag%nudge_q_dt)) nudge_diag%nudge_q_dt = q(is:ie,js:je,:,sphum)
         if (allocated(nudge_diag%nudge_u_dt)) nudge_diag%nudge_u_dt = u_dt(is:ie,js:je,:)
         if (allocated(nudge_diag%nudge_v_dt)) nudge_diag%nudge_v_dt = v_dt(is:ie,js:je,:)
 
