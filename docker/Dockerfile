@@ -173,9 +173,7 @@ RUN cd /FV3 && make clean_no_dycore && make libs_no_dycore -j8
 
 COPY --from=fv3gfs-sources FV3/atmos_cubed_sphere /FV3/atmos_cubed_sphere
 
-RUN cd /FV3/atmos_cubed_sphere && make clean && make -C /FV3
-
-RUN PREFIX=/usr/local make -C /FV3 install
+RUN cd /FV3/atmos_cubed_sphere && make clean && cd /FV3 && make -j8
 
 ## Define final "user" image for running tests
 ##---------------------------------------------------------------------------------
