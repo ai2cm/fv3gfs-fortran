@@ -138,7 +138,7 @@ module fv_update_phys_mod
                               u_dt, v_dt, t_dt, moist_phys, Time, nudge,    &
                               gridstruct, lona, lata, npx, npy, npz, flagstruct,  &
                               neststruct, bd, domain, ptop, nudge_diag, physics_tendency_diag, &
-                              q_dt)
+                              column_moistening_implied_by_nudging, q_dt)
     real, intent(in)   :: dt, ptop
     integer, intent(in):: is,  ie,  js,  je, ng
     integer, intent(in):: isd, ied, jsd, jed
@@ -200,6 +200,7 @@ module fv_update_phys_mod
     type(nudge_diag_type), intent(inout) :: nudge_diag
     type(physics_tendency_diag_type), intent(inout) :: physics_tendency_diag
 
+    real, intent(inout) :: column_moistening_implied_by_nudging(is:ie,js:je)
 !***********
 ! Haloe Data
 !***********
@@ -233,6 +234,7 @@ module fv_update_phys_mod
     logical, dimension(nq) :: conv_vmr_mmr
     real                   :: adj_vmr(is:ie,js:je,npz)
     character(len=32)      :: tracer_units, tracer_name
+    real, allocatable :: qv_dt_nudge(:,:,:)
 
     cv_air = cp_air - rdgas ! = rdgas * (7/2-1) = 2.5*rdgas=717.68
 
@@ -557,9 +559,11 @@ if (allocated(physics_tendency_diag%t_dt)) physics_tendency_diag%t_dt = (pt(is:i
         if (allocated(nudge_diag%nudge_t_dt)) nudge_diag%nudge_t_dt = pt(is:ie,js:je,:)
         if (allocated(nudge_diag%nudge_ps_dt)) nudge_diag%nudge_ps_dt = ps(is:ie,js:je)
         if (allocated(nudge_diag%nudge_delp_dt)) nudge_diag%nudge_delp_dt = delp(is:ie,js:je,:)
-        if (allocated(nudge_diag%nudge_q_dt)) nudge_diag%nudge_q_dt = q(is:ie,js:je,:,sphum)
         if (allocated(nudge_diag%nudge_u_dt)) nudge_diag%nudge_u_dt = u_dt(is:ie,js:je,:)
         if (allocated(nudge_diag%nudge_v_dt)) nudge_diag%nudge_v_dt = v_dt(is:ie,js:je,:)
+
+        if (.not. allocated(qv_dt_nudge)) allocate(qv_dt_nudge(is:ie,js:je,1:npz))
+        qv_dt_nudge = q(is:ie,js:je,:,sphum)
 
         call fv_nwp_nudge ( Time, dt, npx, npy, npz,  ps_dt, u_dt, v_dt, t_dt,   &
                             zvir, ptop, ak, bk, ts, ps, delp, ua, va, pt,    &
@@ -568,11 +572,17 @@ if (allocated(physics_tendency_diag%t_dt)) physics_tendency_diag%t_dt = (pt(is:i
          if (allocated(nudge_diag%nudge_t_dt)) nudge_diag%nudge_t_dt = (pt(is:ie,js:je,:) - nudge_diag%nudge_t_dt) / dt
          if (allocated(nudge_diag%nudge_ps_dt)) nudge_diag%nudge_ps_dt = (ps(is:ie,js:je) - nudge_diag%nudge_ps_dt) / dt
          if (allocated(nudge_diag%nudge_delp_dt)) nudge_diag%nudge_delp_dt = (delp(is:ie,js:je,:) - nudge_diag%nudge_delp_dt) / dt
-         if (allocated(nudge_diag%nudge_q_dt)) nudge_diag%nudge_q_dt = (q(is:ie,js:je,:,sphum) - nudge_diag%nudge_q_dt) / dt
+         qv_dt_nudge = (q(is:ie,js:je,:,sphum) - qv_dt_nudge) / dt
+         if (allocated(nudge_diag%nudge_q_dt)) nudge_diag%nudge_q_dt = qv_dt_nudge
 
           ! Note that u_dt and v_dt are already tendencies, so we do not need to divide by dt.
          if (allocated(nudge_diag%nudge_u_dt)) nudge_diag%nudge_u_dt = (u_dt(is:ie,js:je,:) - nudge_diag%nudge_u_dt)
          if (allocated(nudge_diag%nudge_v_dt)) nudge_diag%nudge_v_dt = (v_dt(is:ie,js:je,:) - nudge_diag%nudge_v_dt)
+
+         call compute_column_moistening_implied_by_nudging(qv_dt_nudge(is:ie,js:je,1:npz), &
+           delp(is:ie,js:je,1:npz), &
+           is, ie, js, je, npz, &
+           column_moistening_implied_by_nudging(is:ie,js:je))
 #endif
   endif         ! end nudging       
 
@@ -1166,5 +1176,14 @@ if (allocated(physics_tendency_diag%t_dt)) physics_tendency_diag%t_dt = (pt(is:i
     enddo     ! k-loop
 
   end subroutine update2d_dwinds_phys
+
+  subroutine compute_column_moistening_implied_by_nudging(specific_humidity_nudging_tendency, delp, &
+    is, ie, js, je, npz, column_moistening)
+    integer, intent(in) :: is, ie, js, je, npz
+    real, intent(in), dimension(is:ie,js:je,1:npz) :: specific_humidity_nudging_tendency, delp
+    real, intent(out) :: column_moistening(is:ie,js:je)
+
+    column_moistening = sum(specific_humidity_nudging_tendency * delp, 3) / grav
+  end subroutine compute_column_moistening_implied_by_nudging
 
 end module fv_update_phys_mod
