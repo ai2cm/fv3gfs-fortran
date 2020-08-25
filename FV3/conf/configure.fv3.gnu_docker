@@ -29,7 +29,8 @@ BACIO_LIB4 = $(NCEPLIBS_DIR)/libbacio_4.a
 SP_LIBd = $(NCEPLIBS_DIR)/libsp_v2.0.2_d.a
 W3EMC_LIBd = $(NCEPLIBS_DIR)/libw3emc_d.a
 W3NCO_LIBd = $(NCEPLIBS_DIR)/libw3nco_d.a
-NCEPLIBS = $(NEMSIO_LIB) $(BACIO_LIB4) $(SP_LIBd) $(W3EMC_LIBd) $(W3NCO_LIBd)
+# NCEPLIBS = $(NEMSIO_LIB) $(BACIO_LIB4) $(SP_LIBd) $(W3EMC_LIBd) $(W3NCO_LIBd)
+NCEPLIBS = -L$(NCEPLIBS_DIR) -lnemsio_d -lbacio_4 -lsp_v2.0.2_d -lw3emc_d -lw3nco_d
 
 ##############################################
 # Need to use at least GNU Make version 3.81 #
