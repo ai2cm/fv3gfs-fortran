@@ -2337,9 +2337,8 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_longwave_heating'
-    ExtDiag(idx)%desc = 'temperature tendency due to longwave radiation'
+    ExtDiag(idx)%desc = 'isntantaneous temperature tendency due to longwave radiation'
     ExtDiag(idx)%unit = 'K/s'
-    ExtDiag(idx)%time_avg = .true.
     ExtDiag(idx)%mod_name = 'gfs_phys'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
@@ -2349,9 +2348,8 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_shortwave_heating'
-    ExtDiag(idx)%desc = 'temperature tendency due to shortwave radiation'
+    ExtDiag(idx)%desc = 'isntantaneous temperature tendency due to shortwave radiation'
     ExtDiag(idx)%unit = 'K/s'
-    ExtDiag(idx)%time_avg = .true.
     ExtDiag(idx)%mod_name = 'gfs_phys'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
@@ -2361,9 +2359,8 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_turbulence'
-    ExtDiag(idx)%desc = 'temperature tendency due to turbulence scheme'
+    ExtDiag(idx)%desc = 'isntantaneous temperature tendency due to turbulence scheme'
     ExtDiag(idx)%unit = 'K/s'
-    ExtDiag(idx)%time_avg = .true.
     ExtDiag(idx)%mod_name = 'gfs_phys'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
@@ -2373,9 +2370,8 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_deep_convection'
-    ExtDiag(idx)%desc = 'temperature tendency due to deep convection'
+    ExtDiag(idx)%desc = 'isntantaneous temperature tendency due to deep convection'
     ExtDiag(idx)%unit = 'K/s'
-    ExtDiag(idx)%time_avg = .true.
     ExtDiag(idx)%mod_name = 'gfs_phys'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
@@ -2385,9 +2381,8 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_shallow_convection'
-    ExtDiag(idx)%desc = 'temperature tendency due to shallow convection'
+    ExtDiag(idx)%desc = 'isntantaneous temperature tendency due to shallow convection'
     ExtDiag(idx)%unit = 'K/s'
-    ExtDiag(idx)%time_avg = .true.
     ExtDiag(idx)%mod_name = 'gfs_phys'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
@@ -2397,9 +2392,8 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_microphysics'
-    ExtDiag(idx)%desc = 'temperature tendency due to micro-physics'
+    ExtDiag(idx)%desc = 'isntantaneous temperature tendency due to micro-physics'
     ExtDiag(idx)%unit = 'K/s'
-    ExtDiag(idx)%time_avg = .true.
     ExtDiag(idx)%mod_name = 'gfs_phys'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
@@ -2409,9 +2403,8 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_dissipation_of_gravity_waves'
-    ExtDiag(idx)%desc = 'temperature tendency due to gravity wave drag'
+    ExtDiag(idx)%desc = 'isntantaneous temperature tendency due to gravity wave drag'
     ExtDiag(idx)%unit = 'K/s'
-    ExtDiag(idx)%time_avg = .true.
     ExtDiag(idx)%mod_name = 'gfs_phys'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
@@ -2421,9 +2414,8 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_longwave_heating_assuming_clear_sky'
-    ExtDiag(idx)%desc = 'temperature tendency due to clear sky longwave radiation'
+    ExtDiag(idx)%desc = 'isntantaneous temperature tendency due to clear sky longwave radiation'
     ExtDiag(idx)%unit = 'K/s'
-    ExtDiag(idx)%time_avg = .true.
     ExtDiag(idx)%mod_name = 'gfs_phys'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
@@ -2433,9 +2425,8 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_shortwave_heating_assuming_clear_sky'
-    ExtDiag(idx)%desc = 'temperature tendency due to clear sky shortwave radiation'
+    ExtDiag(idx)%desc = 'isntantaneous temperature tendency due to clear sky shortwave radiation'
     ExtDiag(idx)%unit = 'K/s'
-    ExtDiag(idx)%time_avg = .true.
     ExtDiag(idx)%mod_name = 'gfs_phys'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
@@ -2538,10 +2529,9 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'tendency_of_specific_humidity_due_to_turbulence'
-    ExtDiag(idx)%desc = 'water vapor tendency due to turbulence scheme'
+    ExtDiag(idx)%desc = 'isntantaneous water vapor tendency due to turbulence scheme'
     ExtDiag(idx)%unit = 'kg/kg/s'
     ExtDiag(idx)%mod_name = 'gfs_phys'
-    ExtDiag(idx)%time_avg = .true.
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,1)
@@ -2550,10 +2540,9 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'tendency_of_specific_humidity_due_to_deep_convection'
-    ExtDiag(idx)%desc = 'water vapor tendency due to deep convection'
+    ExtDiag(idx)%desc = 'isntantaneous water vapor tendency due to deep convection'
     ExtDiag(idx)%unit = 'kg/kg/s'
     ExtDiag(idx)%mod_name = 'gfs_phys'
-    ExtDiag(idx)%time_avg = .true.
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,2)
@@ -2562,10 +2551,9 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'tendency_of_specific_humidity_due_to_shallow_convection'
-    ExtDiag(idx)%desc = 'water vapor tendency due to shallow convection'
+    ExtDiag(idx)%desc = 'isntantaneous water vapor tendency due to shallow convection'
     ExtDiag(idx)%unit = 'kg/kg/s'
     ExtDiag(idx)%mod_name = 'gfs_phys'
-    ExtDiag(idx)%time_avg = .true.
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,3)
@@ -2574,10 +2562,9 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'tendency_of_specific_humidity_due_to_microphysics'
-    ExtDiag(idx)%desc = 'water vapor tendency due to microphysics'
+    ExtDiag(idx)%desc = 'isntantaneous water vapor tendency due to microphysics'
     ExtDiag(idx)%unit = 'kg/kg/s'
     ExtDiag(idx)%mod_name = 'gfs_phys'
-    ExtDiag(idx)%time_avg = .true.
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,4)
@@ -2586,10 +2573,9 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'tendency_of_specific_humidity_due_to_change_in_atmosphere_mass'
-    ExtDiag(idx)%desc = 'residual water vapor tendency'
+    ExtDiag(idx)%desc = 'isntantaneous residual water vapor tendency'
     ExtDiag(idx)%unit = 'kg/kg/s'
     ExtDiag(idx)%mod_name = 'gfs_phys'
-    ExtDiag(idx)%time_avg = .true.
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,5)
