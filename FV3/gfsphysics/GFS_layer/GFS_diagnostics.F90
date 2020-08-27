@@ -2330,10 +2330,6 @@ module GFS_diagnostics
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%dt3dt(:,:,9)
     enddo
 
-! Applying a time_avg converts these t_dt_* quantities to average tendencies, 
-! because it amounts to dividing the total increments (what are stored in the
-! diagnostics buckets) by the total time elapsed for the diagnostics interval
-! (in seconds).  
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_longwave_heating'
@@ -2522,10 +2518,6 @@ module GFS_diagnostics
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%dv3dt(:,:,4)
     enddo
 
-! Applying a time_avg converts these qv_dt_* quantities to average tendencies, 
-! because it amounts to dividing the total increments (what are stored in the
-! diagnostics buckets) by the total time elapsed for the diagnostics interval
-! (in seconds). 
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'tendency_of_specific_humidity_due_to_turbulence'
