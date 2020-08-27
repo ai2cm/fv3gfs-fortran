@@ -1,7 +1,7 @@
 #!/bin/bash
 
 RUNDIR=/rundir
-TEST_DATA_DIR=$RUNDIR/../test_data
+TEST_DATA_DIR=$RUNDIR/test_data
 if [ -z $NUM_RANKS ]; then
     NUM_RANKS=6
 fi
