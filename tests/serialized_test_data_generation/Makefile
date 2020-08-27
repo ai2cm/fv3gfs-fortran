@@ -2,7 +2,6 @@ GCR_URL = us.gcr.io/vcm-ml
 REGRESSION_DATA_STORAGE_BUCKET=gs://vcm-fv3gfs-serialized-regression-data
 #<some large conceptual version change>.<serialization statement change>.<hotfix>
 FORTRAN_VERSION=7.1.0
-SHELL=/bin/bash
 CWD=$(shell pwd)
 EXPERIMENT ?=c12_6ranks_standard
 
@@ -11,7 +10,6 @@ RUNDIR_HOST ?=$(CWD)/rundir/$(EXPERIMENT)
 
 FORTRAN_DIR=$(CWD)/../../
 COMPILED_IMAGE ?= $(GCR_URL)/fv3gfs-compiled:$(FORTRAN_VERSION)-serialize
-RUNDIR_IMAGE=$(GCR_URL)/fv3gfs-rundir
 
 RUNDIR_CONTAINER=/rundir
 TEST_DATA_CONTAINER=$(RUNDIR_CONTAINER)/test_data
