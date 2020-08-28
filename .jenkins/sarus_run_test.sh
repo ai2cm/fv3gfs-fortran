@@ -17,6 +17,7 @@ deactivate
 
 cd ${PWD}/c12_test
 cp ../../.jenkins/job_jenkins_sarus .
+cp ../../.jenkins/md5.txt .
 export SCRATCH_DIR=${PWD}
 
 
@@ -41,4 +42,4 @@ sarus load ./fv3gfs-compiled_gnu8_mpich314_cuda101.tar ${FV3_CONTAINER}
 module unload sarus
 
 sbatch --wait job_jenkins_sarus
-md5sum -c ../../tests/pytest/reference/circleci/default/md5.txt
+md5sum -c ./md5.txt
