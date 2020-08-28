@@ -1,7 +1,7 @@
 GCR_URL = us.gcr.io/vcm-ml
 STORAGE_BUCKET=gs://vcm-fv3gfs-serialized-regression-data
 #<some large conceptual version change>.<serialization statement change>.<hotfix>
-FORTRAN_VERSION=7.1.1
+FORTRAN_VERSION=7.1.0
 CWD=$(shell pwd)
 EXPERIMENT ?=c12_6ranks_standard
 

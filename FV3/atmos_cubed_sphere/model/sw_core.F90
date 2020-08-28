@@ -3075,7 +3075,7 @@ end subroutine ytp_v
      npt = 4
 #ifdef GT4PY_DEV
      if (npt > (je - js) .or. npt > (ie - is)) then
-        npt = 0
+        npt = min(je-js, ie-is)
      endif
 #endif
   else
