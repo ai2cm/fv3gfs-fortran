@@ -5366,9 +5366,9 @@ module module_physics_driver
         endif
 
         call update_temperature_tendency_diagnostics(Diag%t_dt, dt3dt_initial, Diag%dt3dt, &
-            specific_heat, im, levs)
+            specific_heat, im, levs, dtp)
         call update_water_vapor_tendency_diagnostics(Diag%q_dt, dq3dt_initial, Diag%dq3dt, &
-            Statein%qgrs(:,:,1:nwat), Stateout%gq0(:,:,1:nwat), im, levs, nwat)
+            Statein%qgrs(:,:,1:nwat), Stateout%gq0(:,:,1:nwat), im, levs, nwat, dtp)
       endif
 
 !     if (kdt > 2 ) stop
@@ -5709,16 +5709,17 @@ module module_physics_driver
       ! core is hydrostatic to account for how the temperature tendency is
       ! adjusted within the dynamical core.
       subroutine update_temperature_tendency_diagnostics(t_dt, dt3dt_initial, dt3dt_final, specific_heat, &
-        im, levs)
+        im, levs, timestep)
         integer, intent(in) :: im, levs
         real(kind=kind_phys), intent(in), dimension(1:im,1:levs,9) :: dt3dt_initial, dt3dt_final
         real(kind=kind_phys), intent(inout) :: t_dt(1:im,1:levs,9)
         real(kind=kind_phys), intent(in), dimension(1:im,1:levs) :: specific_heat
+        real(kind=kind_phys), intent(in) :: timestep
 
         integer :: i
 
         do i = 1, 9
-          t_dt(:,:,i) = t_dt(:,:,i) + con_cp * (dt3dt_final(:,:,i) - dt3dt_initial(:,:,i)) / specific_heat(:,:)
+          t_dt(:,:,i) = con_cp * (dt3dt_final(:,:,i) - dt3dt_initial(:,:,i)) / (timestep * specific_heat(:,:))
         enddo
       end subroutine update_temperature_tendency_diagnostics
 
@@ -5735,11 +5736,12 @@ module module_physics_driver
       ! This residual is typically small compared to the tendencies induced by the
       ! physics parameterizations themselves.
       subroutine update_water_vapor_tendency_diagnostics(q_dt, dq3dt_initial, dq3dt_final, &
-        q_initial, q_final, im, levs, nwat)
+        q_initial, q_final, im, levs, nwat, timestep)
         integer, intent(in) :: im, levs, nwat
         real(kind=kind_phys), intent(inout) :: q_dt(1:im,1:levs,5)
         real(kind=kind_phys), intent(in), dimension(1:im,1:levs,1:9) :: dq3dt_initial, dq3dt_final
         real(kind=kind_phys), intent(in), dimension(1:im,1:levs,1:nwat) :: q_initial, q_final
+        real(kind=kind_phys), intent(in) :: timestep
 
         integer :: i
         real(kind=kind_phys), dimension(1:im,1:levs) :: initial_dynamics_denominator, final_dynamics_denominator
@@ -5751,11 +5753,11 @@ module module_physics_driver
         final_dynamics_denominator = 1.0 + sum(dq3dt_final(:,:,1:4) - dq3dt_initial(:,:,1:4), 3) + sum(q_final(:,:,2:nwat), 3)
 
         do i = 1, 4
-          q_dt(:,:,i) = q_dt(:,:,i) + (dq3dt_final(:,:,i) - dq3dt_initial(:,:,i)) / final_dynamics_denominator
+          q_dt(:,:,i) = (dq3dt_final(:,:,i) - dq3dt_initial(:,:,i)) / (timestep * final_dynamics_denominator)
         enddo
 
         ! Compute the residual tendency.
-        q_dt(:,:,5) = q_dt(:,:,5) + q_initial(:,:,1) * ((1.0 / final_dynamics_denominator) - (1.0 / initial_dynamics_denominator))
+        q_dt(:,:,5) = q_initial(:,:,1) * ((1.0 / final_dynamics_denominator) - (1.0 / initial_dynamics_denominator)) / timestep
       end subroutine update_water_vapor_tendency_diagnostics
 !> @}
 
