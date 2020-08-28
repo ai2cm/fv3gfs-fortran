@@ -29,7 +29,8 @@ module unload sarus
 
 sbatch --wait job_jenkins_sarus
 md5sum -c ../../tests/pytest/reference/circleci/default/md5.txt
-
+rm *.nc 
+rm RESTART/*.nc
 
 # Run a c12 regression test for the GNU-8 Docker image
 export FV3_CONTAINER=fv3gfs-compiled:gnu8_mpich314_cuda101
