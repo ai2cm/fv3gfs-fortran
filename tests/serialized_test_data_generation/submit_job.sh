@@ -2,9 +2,7 @@
 
 RUNDIR=/rundir
 TEST_DATA_DIR=$RUNDIR/test_data
-if [ -z $NUM_RANKS ]; then
-    NUM_RANKS=6
-fi
+NUM_RANKS=`python count_ranks.py $RUNDIR/fv3config.yaml`
 ulimit -s unlimited
 cp /FV3/fv3.exe $RUNDIR/fv3.exe
 mkdir -p $TEST_DATA_DIR

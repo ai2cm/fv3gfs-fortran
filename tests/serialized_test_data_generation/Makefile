@@ -23,7 +23,10 @@ install_deps:
 	pip3 install -r ../../requirements.txt	
 
 setup_rundir: 
-	if [ ! -d $(RUNDIR_HOST) ]; then python3 make_rundir.py $(EXPERIMENT) ; fi
+	if [ ! -d $(RUNDIR_HOST) ]; then \
+	write_run_directory configs/$(EXPERIMENT).yml $(RUNDIR_HOST) && \
+	cp submit_job.sh $(RUNDIR_HOST) && cp count_ranks.py $(RUNDIR_HOST) \
+	git rev-parse HEAD > $(RUNDIR_HOST)/fortran_sha.txt ; fi
 
 compile_fortran:
 	cd $(FORTRAN_DIR) && DOCKER_BUILDKIT=1 SERIALIZE_IMAGE=$(COMPILED_IMAGE) $(MAKE) build_serialize_gt4pydev
