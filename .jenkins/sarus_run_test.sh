@@ -33,8 +33,17 @@ done
 module unload sarus
 
 
-# Perform the c12 test for each imported Docker image
+# Perform a series of runs 
 for df in ${dockerfiles[@]}; do
+   # run a c12 run for the specified Docker image
    export FV3_CONTAINER=fv3gfs-compiled:${df:24}
    sbatch --wait job_jenkins_sarus
+
+   # verify the output files using a md5sum check
+   md5sum -c ../../tests/pytest/reference/circleci/default/md5.txt
+
+   # clean up the working directory for the next run
+   rm *.nc RESTART/*.nc
 done
+
+
