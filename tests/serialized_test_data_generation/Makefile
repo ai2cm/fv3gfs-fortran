@@ -25,7 +25,7 @@ install_deps:
 setup_rundir: 
 	if [ ! -d $(RUNDIR_HOST) ]; then \
 	write_run_directory configs/$(EXPERIMENT).yml $(RUNDIR_HOST) && \
-	cp submit_job.sh $(RUNDIR_HOST) && cp count_ranks.py $(RUNDIR_HOST) \
+	cp submit_job.sh $(RUNDIR_HOST) && cp count_ranks.py $(RUNDIR_HOST) && \
 	git rev-parse HEAD > $(RUNDIR_HOST)/fortran_sha.txt ; fi
 
 compile_fortran:
