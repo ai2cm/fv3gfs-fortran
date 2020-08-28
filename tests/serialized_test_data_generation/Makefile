@@ -1,5 +1,5 @@
 GCR_URL = us.gcr.io/vcm-ml
-REGRESSION_DATA_STORAGE_BUCKET=gs://vcm-fv3gfs-serialized-regression-data
+STORAGE_BUCKET=gs://vcm-fv3gfs-serialized-regression-data
 #<some large conceptual version change>.<serialization statement change>.<hotfix>
 FORTRAN_VERSION=7.1.0
 CWD=$(shell pwd)
@@ -15,7 +15,7 @@ RUNDIR_CONTAINER=/rundir
 TEST_DATA_CONTAINER=$(RUNDIR_CONTAINER)/test_data
 
 TEST_DATA_TARFILE=dat_files.tar.gz
-TEST_DATA_BUCKET=$(REGRESSION_DATA_STORAGE_BUCKET)/$(FORTRAN_VERSION)/$(EXPERIMENT)
+TEST_DATA_BUCKET=$(STORAGE_BUCKET)/$(FORTRAN_VERSION)/$(EXPERIMENT)
 FV3CONFIG_DIR=$(CWD)/external/fv3config
 LOOKUP_BUCKET=$(shell eval gsutil -q stat $(TEST_DATA_BUCKET)/MetaData-Generator_rank0.json || echo 1)
 
@@ -23,7 +23,7 @@ install_deps:
 	pip3 install -r ../../requirements.txt	
 
 setup_rundir: 
-	if [ ! -d $(RUNDIR_HOST) ]; then $(MAKE) install_deps && python3 make_rundir.py $(EXPERIMENT) ; fi
+	if [ ! -d $(RUNDIR_HOST) ]; then python3 make_rundir.py $(EXPERIMENT) ; fi
 
 compile_fortran:
 	cd $(FORTRAN_DIR) && DOCKER_BUILDKIT=1 SERIALIZE_IMAGE=$(COMPILED_IMAGE) $(MAKE) build_serialize_gt4pydev
@@ -31,10 +31,7 @@ compile_fortran:
 run_model_make_data:
 	docker run --network host --rm -v $(RUNDIR_HOST):$(RUNDIR_CONTAINER) -v $(TEST_DATA_HOST):$(TEST_DATA_CONTAINER) -it $(COMPILED_IMAGE)-gt4pydev /rundir/submit_job.sh
 
-generate_test_data:
-	if [ ! -d $(RUNDIR_HOST) ]; then $(MAKE) setup_rundir ; fi
-	$(MAKE) compile_fortran
-	$(MAKE) run_model_make_data
+generate_test_data: setup_rundir compile_fortran run_model_make_data
 
 pack_test_data:
 	if [ ! -d $(TEST_DATA_HOST)/$(TEST_DATA_TARFILE) ]; then \
@@ -51,17 +48,11 @@ unpack_test_data:
 
 push_test_data:
 	echo $(LOOKUP_BUCKET)
-	if [ $(LOOKUP_BUCKET) == 1 ]; then \
-	 gsutil -m rsync $(TEST_DATA_HOST) $(TEST_DATA_BUCKET); \
-	else echo "Version $(FORTRAN_VERSION) of the data has already been pushed, please increment the FORTRAN_VERSION if you have a new set of data. If you want to manually force a sync, please run 'gsutil -m rsync $(TEST_DATA_HOST) $(TEST_DATA_BUCKET)' manually" && exit 1 ; fi
+	gsutil -m rsync $(TEST_DATA_HOST) $(TEST_DATA_BUCKET)	
 
-make_and_push_data:
-	$(MAKE) setup_rundir
-	$(MAKE) run_model_make_data
-	$(MAKE) pack_test_data
-	$(MAKE) push_test_data
+generate_and_push_data: setup_rundir run_model_make_data pack_test_data push_test_data
 
-generate_coverage: clone_deps
+generate_coverage: install_deps
 	rm -rf coverage
 	EXPERIMENT=fv3config_coverage $(MAKE) setup_rundir 	
 	cd $(FORTRAN_DIR) && DOCKER_BUILDKIT=1 $(MAKE) build_coverage
@@ -72,4 +63,4 @@ generate_coverage: clone_deps
 
 
 .PHONY: install_deps setup_rundir compile_fortran run_model_make_data generate_test_data pack_test_data \
-	unpack_test_data push_test_data make_and_push_data generate_coverage
+	unpack_test_data push_test_data generate_and_push_data generate_coverage
