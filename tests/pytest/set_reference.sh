@@ -12,7 +12,7 @@ do
     echo $REF_DIR/$run_name
     cd $dir 
     md5sum *.nc RESTART/*.nc > $REF_DIR/$run_name/md5.txt
-    if ls Gen*.dat *.json >/dev/null 2>&1; then
-        md5sum Gen*.dat *.json > $REF_DIR/$run_name/md5_serialize.txt
+    if ls test_data/Gen*.dat test_data/*.json >/dev/null 2>&1; then
+        md5sum test_data/Gen*.dat test_data/*.json > $REF_DIR/$run_name/md5_serialize.txt
     fi
 done

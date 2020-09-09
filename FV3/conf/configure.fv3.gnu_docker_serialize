@@ -16,7 +16,7 @@ NETCDF_DIR = /usr
 DEBUG = 
 REPRO = Y
 VERBOSE =
-OPENMP = Y
+OPENMP =
 AVX2 = N
 HYDRO = N
 32BIT = N
@@ -50,6 +50,10 @@ FFLAGS := $(INCLUDE) -fcray-pointer -ffree-line-length-none -fno-range-check -fP
 
 CPPDEFS += -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO -Duse_LARGEFILE -DUSE_GFSL63 -DGFS_PHYS -DNO_INLINE_POST -DSERIALIZE 
 CPPDEFS += -DNEW_TAUCTMAX -DINTERNAL_FILE_NML
+
+ifeq ($(GT4PY_DEV),Y)
+CPPDEFS += -DGT4PY_DEV
+endif
 
 ifeq ($(HYDRO),Y)
 CPPDEFS += 
