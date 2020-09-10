@@ -25,7 +25,7 @@ export SCRATCH_DIR=${PWD}
 dockerfiles=( $( ls ../../docker/Dockerfile.* ) )
 for df in ${dockerfiles[@]}; do
    # Grab the architecture tag from the dockerfile filename
-   arch=${df:18}
+   arch=${df:24}
 
    # Get the name of the Docker image and tar file
    export FV3_CONTAINER=fv3gfs-compiled:${arch}
