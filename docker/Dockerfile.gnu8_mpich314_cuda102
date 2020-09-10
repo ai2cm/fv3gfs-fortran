@@ -2,7 +2,7 @@
 ### Stage 0: Build MPI
 ###
 
-FROM nvidia/cuda:10.1-devel-ubuntu18.04 AS mpich-bld
+FROM nvidia/cuda:10.2-devel-ubuntu18.04 AS mpich-bld
 
 RUN apt-get update && \
     apt-get install -y wget \
@@ -43,16 +43,21 @@ FROM mpich-bld AS esmf-bld
 RUN apt-get update && \
     apt-get install -y git libnetcdf-dev libnetcdff-dev 
 
-RUN export ESMF_DIR=/esmf ESMF_INSTALL_PREFIX=/myapps/esmf ESMF_COMM=mpich2 ESMF_LAPACK=internal && \
-    export ESMF_NETCDF_INCLUDE=/usr/local/include && ESMF_NETCDF_LIBS="-L/usr/local/lib -lnetcdf -lnetcdff" ESMF_BOPT=O3 && \
+RUN export ESMF_DIR=/esmf && \
+    export ESMF_INSTALL_PREFIX=/myapps/esmf && \
+    export ESMF_COMM=mpich2 && \
+    export ESMF_LAPACK=internal && \
+    export ESMF_NETCDF_INCLUDE=/usr/local/include && \
+    export ESMF_NETCDF_LIBS="-L/usr/local/lib -lnetcdf -lnetcdff" && \
+    export ESMF_BOPT=O3 && \
     git clone -b ESMF_8_0_0 --depth 1 https://git.code.sf.net/p/esmf/esmf && \
     export PATH=/usr/bin:$PATH && \
     cd esmf && make -j8 lib 
  
 RUN mkdir -p /myapps/esmf/include && mkdir -p /myapps/esmf/lib && \
-    cd /esmf/lib/libO/Linux.gfortran.64.mpich2.default && \
+    cd /esmf/lib/libO3/Linux.gfortran.64.mpich2.default && \
     cp *.so /myapps/esmf/lib/ && cp *.a /myapps/esmf/lib/ && cp esmf.mk /myapps/esmf/lib/ && \
-    cd /esmf/mod/modO/Linux.gfortran.64.mpich2.default && \
+    cd /esmf/mod/modO3/Linux.gfortran.64.mpich2.default && \
     cp *.mod /myapps/esmf/include/ && \
     cd /esmf/src/include && \ 
     cp *.h /myapps/esmf/include/
@@ -88,7 +93,7 @@ COPY --from=fms-bld /myapps/fms/ /myapps/fms/
 COPY --from=ncep-bld /myapps/ncep/ /myapps/ncep/
 
 RUN apt-get install -y libblas-dev liblapack-dev && \
-    git clone https://github.com/VulcanClimateModeling/fv3gfs-fortran.git && \
+    git clone -b feature/jenkins https://github.com/VulcanClimateModeling/fv3gfs-fortran.git && \
     cd fv3gfs-fortran/FV3 && \
     cp conf/configure.fv3.linux_gnu conf/configure.fv3 && \
     export FMS_DIR=/myapps/fms ESMF_DIR=/myapps/esmf ESMF_INC="-I/myapps/esmf/include" NCEPLIBS_DIR=/myapps/ncep NETCDF_DIR=/usr && \
