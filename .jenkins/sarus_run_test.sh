@@ -23,7 +23,7 @@ export SCRATCH_DIR=${PWD}
 
 # Run a c12 regression test for the GNU-9 Docker image
 export FV3_CONTAINER=fv3gfs-compiled:gnu9_mpich314_nocuda
-gsutil copy gs://vcm-ml-public/jenkins-tmp/fv3gfs-compiled_gnu9_mpich314_nocuda.tar.gz .
+gsutil copy gs://vcm-jenkins/fv3gfs-compiled_gnu9_mpich314_nocuda.tar.gz .
 gunzip fv3gfs-compiled_gnu9_mpich314_nocuda.tar.gz
 sarus load ./fv3gfs-compiled_gnu9_mpich314_nocuda.tar ${FV3_CONTAINER}
 module unload sarus
