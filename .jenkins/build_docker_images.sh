@@ -4,9 +4,6 @@
 export DOCKER_BUILDKIT=1
 export BUILDKIT_PROGRESS=plain
 
-module load daint-gpu
-module load gcloud
-
 # Get the dockerfiles for the images to be tested on Piz Daint
 dockerfiles=( $( ls docker/Dockerfile.* ) )
 
