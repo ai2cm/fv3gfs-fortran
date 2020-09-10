@@ -17,7 +17,7 @@ deactivate
 
 cd ${PWD}/c12_test
 cp ../../.jenkins/job_jenkins_sarus .
-cp ../../.jenkins/md5.txt .
+cp ../../.jenkins/md5*.txt .
 export SCRATCH_DIR=${PWD}
 
 
