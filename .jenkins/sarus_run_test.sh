@@ -22,7 +22,7 @@ export SCRATCH_DIR=${PWD}
 
 
 # Run a c12 regression test for each Docker image
-dockerfiles=( $( ls docker/Dockerfile.* ) )
+dockerfiles=( $( ls ../../docker/Dockerfile.* ) )
 for df in ${dockerfiles[@]}; do
    # Grab the architecture tag from the dockerfile filename
    arch=${df:18}
