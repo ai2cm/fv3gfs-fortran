@@ -36,9 +36,9 @@ INCLUDE = -I${NETCDF_ROOT}/include -I${ESMF_DIR}/include -I$(MKL_DIR)/include -I
 FPPFLAGS := -cpp -Wp,-w $(INCLUDE)
 CFLAGS := $(INCLUDE) -qno-opt-dynamic-align 
 
-FFLAGS := $(INCLUDE) -fno-alias -auto -safe-cray-ptr -ftz -assume byterecl -nowarn -sox -align array64byte -i4 -qno-opt-dynamic-align -DNATIVE_DGEMM
+FFLAGS := $(INCLUDE) -fno-alias -auto -safe-cray-ptr -ftz -assume byterecl -nowarn -sox -align array64byte -i4 -qno-opt-dynamic-align 
 CPPDEFS += -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO -Duse_LARGEFILE -DUSE_GFSL63 -DGFS_PHYS
-CPPDEFS += -DNEW_TAUCTMAX -DINTERNAL_FILE_NML -DNO_INLINE_POST -D__GFORTRAN__ -DNATIVE_DGEMM
+CPPDEFS += -DNEW_TAUCTMAX -DINTERNAL_FILE_NML -DNO_INLINE_POST -D__GFORTRAN__ 
 
 ifneq ($(HYDRO),Y)
 CPPDEFS += -DMOIST_CAPPA -DUSE_COND
