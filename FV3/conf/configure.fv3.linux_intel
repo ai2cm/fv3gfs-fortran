@@ -1,8 +1,8 @@
 ############
 # commands #
 ############
-FC = mpif90
-CC = mpicc
+FC = ${MPI_F90} 
+CC = ${MPI_CC}
 LD = $(FC) -cxxlib
 
 #########
