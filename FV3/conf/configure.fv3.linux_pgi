@@ -1,0 +1,112 @@
+############
+# commands #
+############
+FC = ${MPI_F90} 
+CC = ${MPI_CC}
+LD = $(FC) -Mnomain
+
+#########
+# flags #
+#########
+# default is 64-bit OpenMP non-hydrostatic build using AVX2
+DEBUG =
+REPRO =
+VERBOSE =
+OPENMP = Y
+AVX2 = Y
+HYDRO = N
+
+NCEPLIBS_DIR=/myapps/ncep
+NEMSIOINC = -I$(NCEPLIBS_DIR)/include
+NCEPLIBS = -L$(NCEPLIBS_DIR)/lib -lbacio_4 -lsp_v2.0.2_d -lw3nco_d
+
+##############################################
+# Need to use at least GNU Make version 3.81 #
+##############################################
+need := 3.81
+ok := $(filter $(need),$(firstword $(sort $(MAKE_VERSION) $(need))))
+ifneq ($(need),$(ok))
+$(error Need at least make version $(need).  Load module gmake/3.81)
+endif
+
+MATH_DIR=/opt/nvidia/hpc_sdk/Linux_x86_64/20.7/REDIST/compilers
+INCLUDE = -I${NETCDF_ROOT}/include -I${ESMF_DIR}/include -I$(MATH_DIR)/include -I${FMS_DIR}/include
+
+FPPFLAGS := -cpp -Wp,-w $(INCLUDE)
+CFLAGS := $(INCLUDE) -Mnocache_align 
+
+FFLAGS := $(INCLUDE) -Mcache_align -Mcray=pointer -Mflushz -slient -Mdalign -i4  
+CPPDEFS += -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO -Duse_LARGEFILE -DUSE_GFSL63 -DGFS_PHYS
+CPPDEFS += -DNEW_TAUCTMAX -DINTERNAL_FILE_NML -DNO_INLINE_POST -D__GFORTRAN__ 
+
+ifneq ($(HYDRO),Y)
+CPPDEFS += -DMOIST_CAPPA -DUSE_COND
+endif
+
+ifeq ($(32BIT),Y)
+CPPDEFS += -DOVERLOAD_R4 -DOVERLOAD_R8
+FFLAGS += -r4
+else
+FFLAGS += -r8 
+endif
+
+ifeq ($(AVX2),Y)
+FFLAGS += -fastsse
+CFLAGS += -fastsse
+endif
+
+FFLAGS_OPT = -O2 -g -Mnontemporal 
+FFLAGS_REPRO = -O2 -g 
+FFLAGS_DEBUG = -g -O0 -check noarg_temp_created -check nopointer -warn -warn noerrors -fp-stack-check -fstack-protector-all -fpe0 -debug -traceback -ftrapuv
+
+FFLAGS_OPENMP = -mp
+FFLAGS_VERBOSE = -v -V -what
+
+CFLAGS += -D__IFC 
+
+CFLAGS_OPT = -O2 -g
+CFLAGS_REPRO = -O2 -g
+CFLAGS_OPENMP = -mp
+CFLAGS_DEBUG = -O0 -g -ftrapuv -traceback
+
+LDFLAGS :=
+LDFLAGS_OPENMP := -mp
+LDFLAGS_VERBOSE := -Wl,-V,--verbose,-cref,-M
+
+# start with blank LIBS
+LIBS := 
+
+FAST :=
+ifneq ($(REPRO),)
+CFLAGS += $(CFLAGS_REPRO)
+FFLAGS += $(FFLAGS_REPRO)
+else ifneq ($(DEBUG),)
+CFLAGS += $(CFLAGS_DEBUG)
+FFLAGS += $(FFLAGS_DEBUG)
+else ifneq ($(TEST),)
+CFLAGS += $(CFLAGS_TEST)
+FFLAGS += $(FFLAGS_TEST)
+else
+CFLAGS += $(CFLAGS_OPT)
+FFLAGS += $(FFLAGS_OPT)
+endif
+
+ifneq ($(OPENMP),)
+CFLAGS += $(CFLAGS_OPENMP)
+FFLAGS += $(FFLAGS_OPENMP)
+LDFLAGS += $(LDFLAGS_OPENMP)
+endif
+
+ifneq ($(VERBOSE),)
+CFLAGS += $(CFLAGS_VERBOSE)
+FFLAGS += $(FFLAGS_VERBOSE)
+LDFLAGS += $(LDFLAGS_VERBOSE)
+endif
+
+LIBS += -L${ESMF_DIR}/lib -lesmf -L${FMS_DIR}/lib -lFMS -L${NETCDF_ROOT}/lib -lnetcdff -lnetcdf
+
+# LAPACK and BLAS library support
+LIBS += -L$(MATH_DIR)/lib -llapack -lblas -lpthread -lm
+
+LDFLAGS += $(LIBS)
+
