@@ -52,13 +52,17 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt-get update && apt-get install -y \
     cmake \
     libssl-dev \
-    libboost-all-dev \ 
     clang \
     clang-format \
     clang-tidy \
     python3-numpy \
     python3-nose \
     python3-sphinx
+
+RUN wget -q https://dl.bintray.com/boostorg/release/1.74.0/source/boost_1_74_0.tar.gz && \
+    tar xzf boost_1_74_0.tar.gz && \
+    cd boost_1_74_0 && \
+    cp -r boost /usr/include 
 
 # install serialbox2 from source
 COPY serialbox2 serialbox2
