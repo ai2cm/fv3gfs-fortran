@@ -138,7 +138,6 @@ COPY FV3/makefile FV3/mkDepends.pl FV3/atmos_model.F90 FV3/LICENSE.md \
     FV3/coupler_main.F90 FV3/fv3_cap.F90 FV3/module_fcst_grid_comp.F90 \
     FV3/module_fv3_config.F90 FV3/time_utils.F90 /FV3/
 
-# copy appropriate configuration file to configure.fv3
 RUN cp /FV3/conf/$configure_file \
         /FV3/conf/configure.fv3 && \
     if [ ! -z $compile_option ]; then sed -i "33i $compile_option" \
@@ -159,7 +158,6 @@ ENV FV3_BASE=/FV3/original
 COPY --from=fv3gfs-src-serialize-false /FV3 $FV3_BASE
 COPY --from=fv3gfs-src-serialize-false /stochastic_physics $(FV3_BASE)/../stochastic_physics 
 
-# copy appropriate configuration file to configure.fv3
 RUN cp $FV3_BASE/conf/$configure_file \
         $FV3_BASE/conf/configure.fv3 && \
     if [ ! -z $compile_option ]; then sed -i "33i $compile_option" \
@@ -183,8 +181,8 @@ ENV SERIALBOX_DIR=/serialbox2 \
     FMS_DIR=/FMS \
     ESMF_DIR=/usr/local/esmf
 
-ENV ESMF_INC="-I/usr/local/esmf/include -I${ESMF_DIR}/mod/modO3/Linux.gfortran.64.mpiuni.default/" \
-    LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ESMF_DIR}/lib/libO3/Linux.gfortran.64.mpiuni.default/:${FMS_DIR}/libFMS/.libs/:${SERIALBOX_DIR}/lib \
+ENV ESMF_INC="-I/usr/local/esmf/include" \
+    LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ESMF_DIR}/lib:${FMS_DIR}/libFMS/.libs/:${SERIALBOX_DIR}/lib \
     PPSER_PY=$(SERIALBOX_DIR)/python/pp_ser/pp_ser.py
 
 COPY --from=serialbox_image /serialbox2/install $SERIALBOX_DIR
@@ -208,7 +206,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip && \
     ln -s /bin/python3 /bin/python && \
     ln -s /bin/pip3 /bin/pip && \
-    pip install --no-cache-dir pyyaml
+    pip3 install --no-cache-dir pyyaml
 
 COPY FV3/testsuite /FV3/testsuite
 
