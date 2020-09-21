@@ -3,7 +3,7 @@ ARG FMS_IMAGE=fv3gfs-fms
 ARG ESMF_IMAGE=fv3gfs-esmf
 ARG SERIALBOX_IMAGE=fv3gfs-environment-serialbox
 
-FROM ubuntu:19.10 AS fv3gfs-environment
+FROM nvidia/cuda:10.2-devel-ubuntu18.04 AS fv3gfs-environment
 
 RUN apt-get update && apt-get install -y \
     curl \
@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y \
 RUN wget -q http://www.mpich.org/static/downloads/3.1.4/mpich-3.1.4.tar.gz && \
     tar xzf mpich-3.1.4.tar.gz && \
     cd mpich-3.1.4 && \
-    ./configure --enable-fortran --enable-cxx --prefix=/usr --enable-fast=all,O3 && \
+    ./configure --enable-fortran --enable-cxx --prefix=/usr --enable-fast=all,O3 --with-cuda=/usr/local/cuda && \
     make -j4 && make install && ldconfig && \
     cd .. && rm -rf mpich-3.1.4*
 
@@ -50,7 +50,6 @@ ENV TZ=US/Pacific
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN apt-get update && apt-get install -y \
-    cmake \
     libssl-dev \
     clang \
     clang-format \
@@ -63,6 +62,12 @@ RUN wget -q https://dl.bintray.com/boostorg/release/1.74.0/source/boost_1_74_0.t
     tar xzf boost_1_74_0.tar.gz && \
     cd boost_1_74_0 && \
     cp -r boost /usr/include 
+
+RUN wget -q https://github.com/Kitware/CMake/releases/download/v3.18.2/cmake-3.18.2.tar.gz && \
+    tar xzf cmake-3.18.2.tar.gz && \
+    cd cmake-3.18.2 && \
+    ./boostrap && make -j24 && make install && \
+    cd .. && rm -rf cmake-3* 
 
 # install serialbox2 from source
 COPY serialbox2 serialbox2
@@ -79,8 +84,8 @@ RUN cd serialbox2 && \
 ##---------------------------------------------------------------------------------
 FROM fv3gfs-environment AS fv3gfs-fms
 
-ENV CC=mpicc
-ENV FC=mpifort
+ENV CC=/usr/bin/mpicc
+ENV FC=/usr/bin/mpif90
 ENV LDFLAGS="-L/usr/lib"
 ENV LOG_DRIVER_FLAGS="--comments"
 ENV CPPFLAGS="-I/usr/include -Duse_LARGEFILE -DMAXFIELDMETHODS_=500 -DGFS_PHYS"
@@ -97,19 +102,24 @@ FROM fv3gfs-environment AS fv3gfs-esmf
 
 ENV ESMF_DIR=/esmf
 ENV ESMF_INSTALL_PREFIX=/usr/local/esmf
+ENV ESMF_INSTALL_MODDIR=include
+ENV ESMF_INSTALL_HEADERDIR=include
+ENV ESMF_INSTALL_LIBDIR=lib
+ENV ESMF_INSTALL_BINDIR=bin
 ENV ESMF_NETCDF_INCLUDE=/usr/include
 ENV ESMF_NETCDF_LIBS="-lnetcdf -lnetcdff"
 ENV ESMF_BOPT=O3
 
-RUN git clone -b ESMF_8_0_0 --depth 1 https://git.code.sf.net/p/esmf/esmf $ESMF_DIR && \
+RUN export PATH=/usr/bin:${PATH} && \
+    git clone -b ESMF_8_0_0 --depth 1 https://git.code.sf.net/p/esmf/esmf $ESMF_DIR && \
     cd $ESMF_DIR && \
-    make lib -j8 && \
+    make lib -j24 && \
     make install && \
     make installcheck
 
 ## Copy FV3GFS sources for non-serialize image
 ##---------------------------------------------------------------------------------
-FROM ubuntu:19.10 AS fv3gfs-src-serialize-false
+FROM ubuntu:18.04 AS fv3gfs-src-serialize-false
 
 ARG compile_option
 ARG configure_file=configure.fv3.gnu_docker
@@ -154,6 +164,7 @@ RUN cp $FV3_BASE/conf/$configure_file \
     if [ ! -z $compile_option ]; then sed -i "33i $compile_option" \
         $FV3_BASE/conf/configure.fv3; fi && \
     cd $FV3_BASE && \
+    export PATH=/usr/bin:${PATH} && \
     make serialize_preprocess
 
 FROM fv3gfs-src-serialize-$serialize AS fv3gfs-sources
@@ -178,15 +189,14 @@ ENV ESMF_INC="-I/usr/local/esmf/include -I${ESMF_DIR}/mod/modO3/Linux.gfortran.6
 COPY --from=serialbox_image /serialbox2/install $SERIALBOX_DIR
 COPY --from=fms_image /FMS $FMS_DIR
 COPY --from=esmf_image /usr/local/esmf $ESMF_DIR
-
 COPY --from=fv3gfs-sources /FV3 /FV3
 COPY --from=fv3gfs-sources /stochastic_physics /stochastic_physics
 
-RUN cd /FV3 && make clean_no_dycore && make libs_no_dycore -j8
+RUN cd /FV3 && make clean_no_dycore && make libs_no_dycore -j16
 
 COPY --from=fv3gfs-sources FV3/atmos_cubed_sphere /FV3/atmos_cubed_sphere
 
-RUN cd /FV3/atmos_cubed_sphere && make clean && cd /FV3 && make -j8
+RUN cd /FV3/atmos_cubed_sphere && make clean && cd /FV3 && make -j16
 
 ## Define final "user" image for running tests
 ##---------------------------------------------------------------------------------
