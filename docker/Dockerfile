@@ -9,6 +9,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     wget \
     gcc \
+    gfortran \
+    g++ \
     git \
     libblas-dev \
     liblapack-dev \
@@ -19,8 +21,14 @@ RUN apt-get update && apt-get install -y \
     rsync \
     libffi-dev \
     openssl \
-    libopenmpi3 \
     bats
+
+RUN wget -q http://www.mpich.org/static/downloads/3.1.4/mpich-3.1.4.tar.gz && \
+    tar xzf mpich-3.1.4.tar.gz && \
+    cd mpich-3.1.4 && \
+    ./configure --enable-fortran --enable-cxx --prefix=/usr --enable-fast=all,O3 && \
+    make -j4 && make install && ldconfig && \
+    cd .. && rm -rf mpich-3.1.4*
 
 # download and install NCEP libraries
 RUN git config --global http.sslverify false && \
@@ -28,6 +36,7 @@ RUN git config --global http.sslverify false && \
     mkdir /opt/NCEPlibs && \
     cd NCEPlibs && \
     git checkout 3da51e139d5cd731c9fc27f39d88cb4e1328212b && \
+    export PATH=/usr/bin:${PATH} && \
     echo "y" | ./make_ncep_libs.sh -s linux -c gnu -d /opt/NCEPlibs -o 1
 
 ##
