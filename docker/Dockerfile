@@ -66,7 +66,7 @@ RUN wget -q https://dl.bintray.com/boostorg/release/1.74.0/source/boost_1_74_0.t
 RUN wget -q https://github.com/Kitware/CMake/releases/download/v3.18.2/cmake-3.18.2.tar.gz && \
     tar xzf cmake-3.18.2.tar.gz && \
     cd cmake-3.18.2 && \
-    ./boostrap && make -j24 && make install && \
+    ./bootstrap && make -j24 && make install && \
     cd .. && rm -rf cmake-3* 
 
 # install serialbox2 from source
@@ -92,7 +92,8 @@ ENV CPPFLAGS="-I/usr/include -Duse_LARGEFILE -DMAXFIELDMETHODS_=500 -DGFS_PHYS"
 ENV FCFLAGS="-fcray-pointer -Waliasing -ffree-line-length-none -fno-range-check -fdefault-real-8 -fdefault-double-8 -fopenmp"
 
 COPY FMS /FMS
-RUN cd /FMS && autoreconf --install && ./configure && \
+RUN apt-get update && apt-get install -y m4 libtool autoconf && \
+    cd /FMS && autoreconf --install && ./configure && \
     cd /FMS && make -j8 && \
     mv /FMS/*/*.mod /FMS/*/*.o /FMS/*/*.h /FMS/
 
