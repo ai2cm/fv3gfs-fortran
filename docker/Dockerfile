@@ -54,6 +54,7 @@ RUN apt-get update && apt-get install -y \
     clang \
     clang-format \
     clang-tidy \
+    python3 \
     python3-numpy \
     python3-nose \
     python3-sphinx
@@ -202,7 +203,7 @@ RUN cd /FV3/atmos_cubed_sphere && make clean && cd /FV3 && make -j16
 FROM fv3gfs-build AS fv3gfs-compiled
 
 RUN apt-get update && apt-get install -y \
-    python3 \
+    python3 && \
     python3-pip && \
     ln -s /bin/python3 /bin/python && \
     ln -s /bin/pip3 /bin/pip && \
