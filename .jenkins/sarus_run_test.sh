@@ -13,7 +13,7 @@ gcloud auth configure-docker
 cd examples
 . /project/d107/install/venv/sn_1.0/bin/activate
 #python write_rundir.py ../tests/pytest/config/default.yml "./c12_test"
-python -c 'from fv3config import write_run_directory; write_run_directory ../tests/pytest/config/default.yml ./c12_test'
+python -c 'from fv3config import write_run_directory; write_run_directory "../tests/pytest/config/default.yml" "./c12_test"'
 deactivate
 
 cd ${PWD}/c12_test
