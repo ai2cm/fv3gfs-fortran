@@ -347,13 +347,14 @@ contains
     enddo
   end subroutine block_upsample_2d
 
-  subroutine block_upsample_3d(coarse, fine)
-    real, intent(in) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz+1)
-    real, intent(out) :: fine(is:ie,js:je,1:npz+1)
+  subroutine block_upsample_3d(coarse, fine, nz)
+    integer, intent(in) :: nz
+    real, intent(in) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:nz+1)
+    real, intent(out) :: fine(is:ie,js:je,1:nz+1)
 
     integer :: k
 
-    do k = 1, npz + 1
+    do k = 1, nz + 1
       call block_upsample_2d(coarse(is_coarse:ie_coarse,js_coarse:je_coarse,k), fine(is:ie,js:je,k))
     enddo
   end subroutine block_upsample_3d
@@ -489,7 +490,7 @@ contains
     call compute_phalf_from_delp(delp(is:ie,js:je,1:npz), ptop, is, ie, js, je, phalf)
     call weighted_block_average(area(is:ie,js:je), delp(is:ie,js:je,1:npz), coarse_delp)
     call compute_phalf_from_delp(coarse_delp, ptop, is_coarse, ie_coarse, js_coarse, je_coarse, coarse_phalf)
-    call block_upsample_3d(coarse_phalf, upsampled_coarse_phalf)
+    call block_upsample(coarse_phalf, upsampled_coarse_phalf, npz+1)
 
     deallocate(coarse_delp)
     deallocate(coarse_phalf)
