@@ -202,9 +202,8 @@ RUN cd /FV3/atmos_cubed_sphere && make clean && cd /FV3 && make -j16
 ##---------------------------------------------------------------------------------
 FROM fv3gfs-build AS fv3gfs-compiled
 
-RUN apt-get update && apt-get install -y \
-    python3 && \
-    python3-pip && \
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip && \
     ln -s /bin/python3 /bin/python && \
     ln -s /bin/pip3 /bin/pip && \
     pip3 install --no-cache-dir pyyaml
