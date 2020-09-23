@@ -46,20 +46,20 @@ jobs:
             - /opt/circleci/.pyenv/versions/3.6.2
           key: v1.3-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt"}}
       # tests
-      #      - run: 
-      #    name: "Run pytest tests"
-      #    # -s to avoid capturing stdout/stderr of md5sum call
-      #    command: |
-      #      make test
-      #    no_output_timeout: 1200
-      #- run:
-      #    name: "Delete data files"
-      #    command: |
-      #      rm ./tests/pytest/output/*/*/INPUT/*.nc
-      #      rm ./tests/pytest/output/*/*/*/*.grb
-      #    when: on_fail
-      #- store_artifacts:
-      #    path: ./tests/pytest/output
+            - run: 
+          name: "Run pytest tests"
+          # -s to avoid capturing stdout/stderr of md5sum call
+          command: |
+            make test
+          no_output_timeout: 1200
+      - run:
+          name: "Delete data files"
+          command: |
+            rm ./tests/pytest/output/*/*/INPUT/*.nc
+            rm ./tests/pytest/output/*/*/*/*.grb
+          when: on_fail
+      - store_artifacts:
+          path: ./tests/pytest/output
 workflows:
   version: 2
   build:
