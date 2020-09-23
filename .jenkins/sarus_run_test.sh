@@ -14,7 +14,9 @@ gcloud auth configure-docker
 # defined in https://github.com/VulcanClimateModeling/daint_venv
 cd examples
 . /project/d107/install/venv/sn_1.0/bin/activate
-python write_rundir.py ../tests/pytest/config/default.yml "./c12_test"
+pip install -r ../requirements.txt
+python -c 'import fv3config; fid=open("config.yml", "r"); config = yaml.safe_load(fid); write_run_directory(config, "./c12_test")'
+#python write_rundir.py ../tests/pytest/config/default.yml "./c12_test"
 deactivate
 
 cd ${PWD}/c12_test
