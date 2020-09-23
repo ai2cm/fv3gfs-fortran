@@ -9,4 +9,4 @@ mkdir -p $TEST_DATA_DIR
 cp $RUNDIR/input.nml $TEST_DATA_DIR/
 cp $RUNDIR/fortran_sha.txt $TEST_DATA_DIR/
 cd $RUNDIR
-mpirun -np $NUM_RANKS --allow-run-as-root --mca btl_vader_single_copy_mechanism none --oversubscribe $RUNDIR/fv3.exe
+mpirun -np $NUM_RANKS $RUNDIR/fv3.exe
