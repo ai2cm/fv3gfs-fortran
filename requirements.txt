@@ -4,4 +4,3 @@ fsspec==0.6.0
 f90nml==1.1.0
 google-cloud-storage==1.23.0
 git+https://github.com/VulcanClimateModeling/fv3config.git@0348a71f1cac9babe82cf23ae5a10c4345ebe14f#egg=fv3config
-
