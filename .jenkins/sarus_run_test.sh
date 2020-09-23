@@ -16,7 +16,6 @@ cd examples
 . /project/d107/install/venv/sn_1.0/bin/activate
 pip install -r ../requirements.txt
 python -c 'import fv3config; import yaml; fid=open("../tests/pytest/config/default.yml", "r"); config = yaml.safe_load(fid); fv3config.write_run_directory(config, "./c12_test")'
-#python write_rundir.py ../tests/pytest/config/default.yml "./c12_test"
 deactivate
 
 cd ${PWD}/c12_test
