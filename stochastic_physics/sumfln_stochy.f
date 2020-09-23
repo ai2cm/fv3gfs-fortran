@@ -122,13 +122,12 @@
 !
 !           compute the sum of the even real      terms for each level
 !           compute the sum of the even imaginary terms for each level
-#ifdef NATIVE_DGEMM
-           call dgemm('t','n',latl2-lat1+1, 2*(nvar_2-nvar_1+1),
-     &                 (jcap+2-l)/2,cons1,     !constant
-     &                 plnev(indev,lat1), len_trio_ls,
-     &                 flnev(indev,2*nvar_1-1),len_trio_ls,cons0,
-     &                 apev(2*nvar_1-1,lat1),latl2)
-#else
+!
+!           call dgemm('t','n',latl2-lat1+1, 2*(nvar_2-nvar_1+1),
+!     &                 (jcap+2-l)/2,cons1,     !constant
+!     &                 plnev(indev,lat1), len_trio_ls,
+!     &                 flnev(indev,2*nvar_1-1),len_trio_ls,cons0,
+!     &                 apev(2*nvar_1-1,lat1),latl2)
              call esmf_dgemm(
      &                   't',
      &                   'n',
@@ -144,17 +143,16 @@
      &                   apev(2*nvar_1-1,lat1),
      &                   2*nvars
      &                   )
-#endif
 !
 !           compute the sum of the odd real      terms for each level
 !           compute the sum of the odd imaginary terms for each level
-#ifdef NATIVE_DGEMM
-           call dgemm('t','n',latl2-lat1+1, 2*(nvar_2-nvar_1+1),
-     &                 (jcap+2-l)/2,cons1,     !constant
-     &                 plnod(indod,lat1), len_trio_ls,
-     &                 flnod(indod,2*nvar_1-1),len_trio_ls,cons0,
-     &                 apod(2*nvar_1-1,lat1), latl2)
-#else
+!
+!           call dgemm('t','n',latl2-lat1+1, 2*(nvar_2-nvar_1+1),
+!
+!     &                 (jcap+2-l)/2,cons1,     !constant
+!     &                 plnod(indod,lat1), len_trio_ls,
+!     &                 flnod(indod,2*nvar_1-1),len_trio_ls,cons0,
+!     &                 apod(2*nvar_1-1,lat1), latl2)
               call esmf_dgemm(
      &                   't',
      &                   'n',
@@ -170,7 +168,7 @@
      &                   apod(2*nvar_1-1,lat1),
      &                   2*nvars
      &                   )
-#endif
+
             endif
           enddo   ! end of thread loop ..................................
         else !------------------------------------------------------------
