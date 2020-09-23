@@ -1,0 +1,7 @@
+cf20eac67f2a214d757762b11bd34632  atmos_8xdaily.tile1.nc
+534581bd30c07e9d477898500346dbd6  atmos_8xdaily.tile2.nc
+8173f3b63ccd4e362df00759f2b127f1  atmos_8xdaily.tile3.nc
+83a89d10bb34bc2668bf0d56e34e2fc6  atmos_8xdaily.tile4.nc
+2024cd0bedf011b9e492ddf164da2bbb  atmos_8xdaily.tile5.nc
+cf70b809e39ecee7d67510fca74f8ab7  atmos_8xdaily.tile6.nc
+03f92921ec61bc2e8650bcc3b1cc3971  RESTART/fv_core.res.nc

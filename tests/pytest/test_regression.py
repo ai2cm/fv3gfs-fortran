@@ -15,7 +15,7 @@ CONFIG_DIR = os.path.join(TEST_DIR, 'config')
 SUBMIT_JOB_FILENAME = os.path.join(TEST_DIR, 'run_files/submit_job.sh')
 STDOUT_FILENAME = 'stdout.log'
 STDERR_FILENAME = 'stderr.log'
-MD5SUM_FILENAME = "md5.txt"
+MD5SUM_FILENAME = "md5_gnu8.txt"
 SERIALIZE_MD5SUM_FILENAME = "md5_serialize.txt"
 
 USE_LOCAL_ARCHIVE = True
