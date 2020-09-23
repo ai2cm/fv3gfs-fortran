@@ -10,6 +10,8 @@ gcloud auth configure-docker
 
 
 # Set up the working directing for the c12 test
+# Using the standard python virtual environment for Piz Daint
+# defined in https://github.com/VulcanClimateModeling/daint_venv
 cd examples
 . /project/d107/install/venv/sn_1.0/bin/activate
 python write_rundir.py ../tests/pytest/config/default.yml "./c12_test"
