@@ -12,9 +12,10 @@ SERIALIZE_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)-serialize
 ENVIRONMENT_IMAGE=$(GCR_URL)/$(ENVIRONMENT_TARGET):$(ENVIRONMENT_TAG_NAME)
 IMAGE ?= $(ENVIRONMENT_IMAGE)
 
-FMS_IMAGE = $(GCR_URL)/fms-build
-ESMF_IMAGE = $(GCR_URL)/esmf-build
-SERIALBOX_IMAGE = $(GCR_URL)/serialbox-build
+DEP_TAG_NAME ?= gnu9-mpich314-nocuda
+FMS_IMAGE = $(GCR_URL)/fms-build:$(DEP_TAG_NAME)
+ESMF_IMAGE = $(GCR_URL)/esmf-build:$(DEP_TAG_NAME)
+SERIALBOX_IMAGE = $(GCR_URL)/serialbox-build:$(DEP_TAG_NAME)
 
 MOUNTS?=-v $(shell pwd)/FV3:/FV3 \
 	-v $(shell pwd)/FV3/conf/configure.fv3.gnu_docker:/FV3/conf/configure.fv3

@@ -9,6 +9,8 @@ RUN apt-get update && apt-get install -y \
     curl \
     wget \
     gcc \
+    g++ \
+    gfortran \
     git \
     libblas-dev \
     liblapack-dev \
@@ -58,7 +60,7 @@ RUN apt-get update && apt-get install -y \
 # Install headers from the Boost library
 RUN wget -q https://dl.bintray.com/boostorg/release/1.74.0/source/boost_1_74_0.tar.gz && \
     tar xzf boost_1_74_0.tar.gz && \
-    cd boost_174_0 && \
+    cd boost_1_74_0 && \
     cp -r boost /usr/include/ && cd /    
 
 # install serialbox2 from source
@@ -84,7 +86,9 @@ ENV CC=/usr/bin/mpicc \
     FCFLAGS="-fcray-pointer -Waliasing -ffree-line-length-none -fno-range-check -fdefault-real-8 -fdefault-double-8 -fopenmp"
 
 COPY FMS /FMS
-RUN cd /FMS && autoreconf --install && ./configure && \
+RUN apt-get update && \
+    apt-get install -y m4 libtool autoconf && \
+    cd /FMS && autoreconf --install && ./configure && \
     cd /FMS && make -j8 && \
     mv /FMS/*/*.mod /FMS/*/*.o /FMS/*/*.h /FMS/
 
