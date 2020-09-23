@@ -39,7 +39,6 @@ jobs:
             pyenv global 3.6.2
             pip install -r requirements.txt
       - run: bash download_inputdata.sh
-      - run: python3 -m fv3config.download_data
       - save_cache:
           paths:
             - ./fv3gfs-data-docker_2020-01-13.tar.gz
