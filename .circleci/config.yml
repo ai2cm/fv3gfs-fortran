@@ -27,7 +27,7 @@ jobs:
           command: |
             git submodule init
             git submodule update
-      - run: DOCKER_BUILDKIT=1 BUILD_FROM_INTERMEDIATE=n make build build_serialize
+      - run: DOCKER_BUILDKIT=1 BUILD_FROM_INTERMEDIATE=y make build build_serialize
       - restore_cache:
           keys:
             - v1.3-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt"}}
@@ -46,7 +46,7 @@ jobs:
             - /opt/circleci/.pyenv/versions/3.6.2
           key: v1.3-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt"}}
       # tests
-            - run: 
+      - run: 
           name: "Run pytest tests"
           # -s to avoid capturing stdout/stderr of md5sum call
           command: |
