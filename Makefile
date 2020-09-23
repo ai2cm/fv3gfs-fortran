@@ -12,9 +12,9 @@ SERIALIZE_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)-serialize
 ENVIRONMENT_IMAGE=$(GCR_URL)/$(ENVIRONMENT_TARGET):$(ENVIRONMENT_TAG_NAME)
 IMAGE ?= $(ENVIRONMENT_IMAGE)
 
-FMS_IMAGE = $(GCR_URL)/fms-build
-ESMF_IMAGE = $(GCR_URL)/esmf-build
-SERIALBOX_IMAGE = $(GCR_URL)/serialbox-build
+FMS_IMAGE = $(GCR_URL)/fms-build:gnu8-mpich314-cuda102
+ESMF_IMAGE = $(GCR_URL)/esmf-build:gnu8-mpich314-cuda102
+SERIALBOX_IMAGE = $(GCR_URL)/serialbox-build:gnu8-mpich314-cuda102
 
 MOUNTS?=-v $(shell pwd)/FV3:/FV3 \
 	-v $(shell pwd)/FV3/conf/configure.fv3.gnu_docker:/FV3/conf/configure.fv3
