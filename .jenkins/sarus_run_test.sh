@@ -18,39 +18,33 @@ pip install -r ../requirements.txt
 python -c 'import fv3config; import yaml; fid=open("../tests/pytest/config/default.yml", "r"); config = yaml.safe_load(fid); fv3config.write_run_directory(config, "./c12_test")'
 deactivate
 
-cd ${PWD}/c12_test
-cp ../../.jenkins/job_jenkins_sarus .
-cp ../../.jenkins/md5*.txt .
-export SCRATCH_DIR=${PWD}
+# Set the working directory for the upcoming SLURM jobs
+export SCRATCH_DIR=${PWD}/c12_test
 
 
-# Run a c12 regression test for each Docker image
-dockerfiles=( $( ls ../../docker/Dockerfile.* ) )
-for df in ${dockerfiles[@]}; do
-   # Grab the architecture tag from the dockerfile filename
-   arch=${df:24}
+# Run c12 regression test on each Docker image
+declare -a tags=("latest" "latest-serialize")
+for tag in "${tags[@]}"; do
+    # Copy archived version of the Docker image from a Google Storage Bucket
+    tar_file=fv3gfs-compiled-hpc_${tag}.tar
+    gsutil copy gs://vcm-jenkins/${tar_file}.gz .
+    gunzip ${tar_file}.gz
 
-   # Get the name of the Docker image and tar file
-   export FV3_CONTAINER=fv3gfs-compiled:${arch}
-   tar_file=fv3gfs-compiled_${arch}.tar
+    # Load archive Docker image into the local Sarus container registry
+    export FV3_CONTAINER=fv3gfs-compiled-hpc:${tag}
+    module load sarus
+    sarus load ./${tar_file} ${FV3_CONTAINER}
+    module unload sarus
 
-   # Copy archived version of the Docker image from a Google Storage Bucket
-   gsutil copy gs://vcm-jenkins/${tar_file}.gz .
-   gunzip ${tar_file}.gz
+    # Launch SLURM job
+    sbatch --wait job_jenkins_sarus
 
-   # Load archive Docker image into the local Sarus container registry
-   module load sarus
-   sarus load ./${tar_file} ${FV3_CONTAINER}
-   module unload sarus
+    # Verify results
+    md5sum -c ../tests/pytest/reference/circleci/default/md5.txt 
 
-   # Launch SLURM job
-   sbatch --wait job_jenkins_sarus
+    # Clean up working directory
+    rm *.nc
+    rm RESTART/*.nc
 
-   # Verify results
-   md5sum -c ./md5_${arch}.txt
-
-   # Clean up working directory
-   rm *.nc
-   rm RESTART/*.nc
 done
 

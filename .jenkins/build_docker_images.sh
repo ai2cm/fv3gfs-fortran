@@ -4,23 +4,23 @@
 export DOCKER_BUILDKIT=1
 export BUILDKIT_PROGRESS=plain
 
-# Get the dockerfiles for the images to be tested on Piz Daint
-dockerfiles=( $( ls docker/Dockerfile.* ) )
+# Speed-up the compilations by using pre-built MPI, FMS, and ESMF images
+export BUILD_FROM_INTERMEDIATE=y
 
-for df in ${dockerfiles[@]}; do
-   # Grab the architecture tag from the dockerfile filename
-   arch=${df:18}
+# Build FV3 without and with Serialbox support enabled
+COMPILE_TARGET=fv3gfs-compiled-hpc make build build_serialize
 
-   # Set the names of the new Docker image and tar file
-   container=us.gcr.io/vcm-ml/fv3gfs-compiled:$arch
-   tar_file=fv3gfs-compiled_${arch}.tar
-   
-   # Build the docker image and push image to VCM's Google Container Repository
-   docker build -f $df --target fv3-bld -t $container .
-   docker push $container
+# For each newly built Docker image:
+#   - push image to VCM's Google Container Repository (necessary?)
+#   - create a tar archive of the image
+#   - store tar archive in a Google Storage Bucket
 
-   # Copy an archived version of the image to a public Google Storage Bucket
-   docker save $container -o $tar_file
-   gzip $tar_file
-   gsutil copy ${tar_file}.gz gs://vcm-jenkins/${tar_file}.gz
+declare -a tags=("latest" "latest-serialize")
+for tag in "${tags[@]}"; do
+    container=us.gcr.io/vcm-ml/fv3gfs-compiled-hpc:${tag}
+    tar_file=fv3gfs-compiled-hpc_${tag}.tar
+#    docker push $container 
+    docker save $container -o $tar_file
+    gzip $tar_file
+    gsutil copy ${tar_file}.gz gs://vcm-jenkins/${tar_file}.gz
 done
