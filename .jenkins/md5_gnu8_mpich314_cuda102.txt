@@ -1,0 +1,13 @@
+cf20eac67f2a214d757762b11bd34632  atmos_8xdaily.tile1.nc
+534581bd30c07e9d477898500346dbd6  atmos_8xdaily.tile2.nc
+8173f3b63ccd4e362df00759f2b127f1  atmos_8xdaily.tile3.nc
+83a89d10bb34bc2668bf0d56e34e2fc6  atmos_8xdaily.tile4.nc
+2024cd0bedf011b9e492ddf164da2bbb  atmos_8xdaily.tile5.nc
+cf70b809e39ecee7d67510fca74f8ab7  atmos_8xdaily.tile6.nc
+8eb161a8cd002f6b4d22153b2f70d1e9  atmos_static.tile1.nc
+ef1e925dfc78367952c956bdb7e1ceb4  atmos_static.tile2.nc
+8d896f1374d26641eb88ee448db35fef  atmos_static.tile3.nc
+2ffd7708edd11a7f5b4d986237ef128b  atmos_static.tile4.nc
+69767c62e6861db5fc20ce34cda3d383  atmos_static.tile5.nc
+2e112b68717697f780843d8a3a48e2cd  atmos_static.tile6.nc
+03f92921ec61bc2e8650bcc3b1cc3971  RESTART/fv_core.res.nc
