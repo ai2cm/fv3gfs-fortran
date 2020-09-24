@@ -19,7 +19,8 @@ python -c 'import fv3config; import yaml; fid=open("../tests/pytest/config/defau
 deactivate
 
 # Set the working directory for the upcoming SLURM jobs
-export SCRATCH_DIR=${PWD}/c12_test
+cd c12_test
+export SCRATCH_DIR=${PWD}
 
 
 # Run c12 regression test on each Docker image
@@ -37,10 +38,10 @@ for tag in "${tags[@]}"; do
     module unload sarus
 
     # Launch SLURM job
-    sbatch --wait ../.jenkins/job_jenkins_sarus
+    sbatch --wait ../../.jenkins/job_jenkins_sarus
 
     # Verify results
-    md5sum -c ../tests/pytest/reference/circleci/default/md5.txt 
+    md5sum -c ../../tests/pytest/reference/circleci/default/md5.txt 
 
     # Clean up working directory
     rm *.nc
