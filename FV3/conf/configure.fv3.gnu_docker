@@ -129,6 +129,6 @@ FFLAGS += $(FFLAGS_VERBOSE)
 LDFLAGS += $(LDFLAGS_VERBOSE)
 endif
 
-LIBS += -lFMS -lesmf -lnetcdff -lnetcdf -llapack -lblas -lc -lrt
+LIBS += -lFMS -L/usr/local/esmf/lib -lesmf -lnetcdff -lnetcdf -llapack -lblas -lc -lrt
 
 LDFLAGS += $(LIBS)
