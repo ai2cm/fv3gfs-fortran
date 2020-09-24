@@ -1,5 +1,4 @@
 GCR_URL = us.gcr.io/vcm-ml
-DOCKERFILE ?= docker/Dockerfile
 COMPILED_TAG_NAME ?= latest
 ENVIRONMENT_TAG_NAME ?= latest
 COMPILE_OPTION ?=
@@ -13,6 +12,7 @@ ENVIRONMENT_IMAGE=$(GCR_URL)/$(ENVIRONMENT_TARGET):$(ENVIRONMENT_TAG_NAME)
 IMAGE ?= $(ENVIRONMENT_IMAGE)
 
 DEP_TAG_NAME ?= gnu9-mpich314-nocuda
+MPI_IMAGE = $(GCR_URL)/mpi-build:$(DEP_TAG_NAME)
 FMS_IMAGE = $(GCR_URL)/fms-build:$(DEP_TAG_NAME)
 ESMF_IMAGE = $(GCR_URL)/esmf-build:$(DEP_TAG_NAME)
 SERIALBOX_IMAGE = $(GCR_URL)/serialbox-build:$(DEP_TAG_NAME)
@@ -28,7 +28,10 @@ RUNDIR_HOST=$(shell pwd)/rundir
 
 
 ifeq ($(BUILD_FROM_INTERMEDIATE),y)
-	BUILD_ARGS += --build-arg FMS_IMAGE=$(FMS_IMAGE) --build-arg ESMF_IMAGE=$(ESMF_IMAGE) --build-arg SERIALBOX_IMAGE=$(SERIALBOX_IMAGE)
+	BUILD_ARGS += --build-arg FMS_IMAGE=$(FMS_IMAGE) --build-arg ESMF_IMAGE=$(ESMF_IMAGE) --build-arg SERIALBOX_IMAGE=$(SERIALBOX_IMAGE) --build-arg MPI_IMAGE=$(MPI_IMAGE)
+        DOCKERFILE = docker/Dockerfile
+else
+	DOCKERFILE = docker/Dockerfile.full
 endif
 
 build: build_compiled
@@ -48,20 +51,23 @@ build_compiled:
 build_serialize:
 	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" COMPILED_IMAGE=$(SERIALIZE_IMAGE) $(MAKE) build_compiled
 
-build_serialize_gt4pydev:
+build_serialize_gt4pydev: 
 	 COMPILE_OPTION="GT4PY_DEV=Y" SERIALIZE_IMAGE=$(SERIALIZE_IMAGE)-gt4pydev $(MAKE) build_serialize
 
 build_deps:
+	docker build -f $(DOCKERFILE) -t $(MPI_IMAGE) --target fv3gfs-mpi .
 	docker build -f $(DOCKERFILE) -t $(FMS_IMAGE) --target fv3gfs-fms .
 	docker build -f $(DOCKERFILE) -t $(ESMF_IMAGE) --target fv3gfs-esmf .
 	docker build -f $(DOCKERFILE) -t $(SERIALBOX_IMAGE) --target fv3gfs-environment-serialbox .
 
 push_deps:
+	docker push $(MPI_IMAGE)
 	docker push $(FMS_IMAGE)
 	docker push $(ESMF_IMAGE)
 	docker push $(SERIALBOX_IMAGE)
 
 pull_deps:
+	docker pull $(MPI_IMAGE)
 	docker pull $(FMS_IMAGE)
 	docker pull $(ESMF_IMAGE)
 	docker pull $(SERIALBOX_IMAGE)
