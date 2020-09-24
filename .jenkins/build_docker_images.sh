@@ -8,6 +8,7 @@ export BUILDKIT_PROGRESS=plain
 export BUILD_FROM_INTERMEDIATE=y
 
 # Build FV3 without and with Serialbox support enabled
+make pull_deps
 COMPILE_TARGET=fv3gfs-compiled-hpc make build build_serialize
 
 # For each newly built Docker image:
