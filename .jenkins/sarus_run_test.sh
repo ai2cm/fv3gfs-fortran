@@ -2,6 +2,8 @@
 set -e
 set -x
 
+tags="hpc hpc-serialize"
+
 # Set up the compute node environment
 module load daint-gpu
 module add /project/d107/install/modulefiles/
@@ -27,7 +29,7 @@ export SCRATCH_DIR=${PWD}
 
 # Run c12 regression test on each Docker image
 declare -a tags=("hpc" "hpc-serialize")
-for tag in "${tags[@]}"; do
+for tag in ${tags}; do
     # Copy archived version of the Docker image from a Google Storage Bucket
     tar_file=fv3gfs-compiled-${tag}.tar
     gsutil copy gs://vcm-jenkins/${tar_file}.gz .
