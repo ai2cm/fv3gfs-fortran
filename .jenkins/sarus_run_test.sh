@@ -23,15 +23,15 @@ export SCRATCH_DIR=${PWD}/c12_test
 
 
 # Run c12 regression test on each Docker image
-declare -a tags=("latest" "latest-serialize")
+declare -a tags=("hpc" "hpc-serialize")
 for tag in "${tags[@]}"; do
     # Copy archived version of the Docker image from a Google Storage Bucket
-    tar_file=fv3gfs-compiled-hpc_${tag}.tar
+    tar_file=fv3gfs-compiled-${tag}.tar
     gsutil copy gs://vcm-jenkins/${tar_file}.gz .
     gunzip ${tar_file}.gz
 
     # Load archive Docker image into the local Sarus container registry
-    export FV3_CONTAINER=fv3gfs-compiled-hpc:${tag}
+    export FV3_CONTAINER=fv3gfs-compiled:${tag}
     module load sarus
     sarus load ./${tar_file} ${FV3_CONTAINER}
     module unload sarus

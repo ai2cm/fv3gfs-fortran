@@ -9,17 +9,17 @@ export BUILD_FROM_INTERMEDIATE=y
 
 # Build FV3 without and with Serialbox support enabled
 make pull_deps
-COMPILE_TARGET=fv3gfs-compiled-hpc make build build_serialize
+COMPILED_TAG_NAME=hpc make build build_serialize
 
 # For each newly built Docker image:
 #   - push image to VCM's Google Container Repository (necessary?)
 #   - create a tar archive of the image
 #   - store tar archive in a Google Storage Bucket
 
-declare -a tags=("latest" "latest-serialize")
+declare -a tags=("hpc" "hpc-serialize")
 for tag in "${tags[@]}"; do
-    container=us.gcr.io/vcm-ml/fv3gfs-compiled-hpc:${tag}
-    tar_file=fv3gfs-compiled-hpc_${tag}.tar
+    container=us.gcr.io/vcm-ml/fv3gfs-compiled:${tag}
+    tar_file=fv3gfs-compiled-${tag}.tar
 #    docker push $container 
     docker save $container -o $tar_file
     gzip $tar_file
