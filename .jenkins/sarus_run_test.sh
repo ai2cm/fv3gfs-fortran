@@ -20,6 +20,8 @@ deactivate
 
 # Set the working directory for the upcoming SLURM jobs
 cd c12_test
+cp ../../.jenkins/job_jenkins_sarus .
+cp ../../tests/pytest/reference/circleci/default/md5.txt .
 export SCRATCH_DIR=${PWD}
 
 
@@ -38,10 +40,10 @@ for tag in "${tags[@]}"; do
     module unload sarus
 
     # Launch SLURM job
-    sbatch --wait ../../.jenkins/job_jenkins_sarus
+    sbatch --wait job_jenkins_sarus
 
     # Verify results
-    md5sum -c ../../tests/pytest/reference/circleci/default/md5.txt 
+    md5sum -c ./md5.txt 
 
     # Clean up working directory
     rm *.nc
