@@ -37,7 +37,7 @@ for tag in "${tags[@]}"; do
     module unload sarus
 
     # Launch SLURM job
-    sbatch --wait job_jenkins_sarus
+    sbatch --wait ../.jenkins/job_jenkins_sarus
 
     # Verify results
     md5sum -c ../tests/pytest/reference/circleci/default/md5.txt 
