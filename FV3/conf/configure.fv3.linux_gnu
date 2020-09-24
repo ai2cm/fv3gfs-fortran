@@ -107,4 +107,4 @@ else
   LIBS += -lnetcdff -lnetcdf
 endif
 
-LDFLAGS += $(LIBS) -llapack -lblas 
+LDFLAGS += $(LIBS) -L/usr/lib/x86_64-linux-gnu -llapack -lblas 
