@@ -13,3 +13,5 @@ experiments
 *.tar.gz
 
 depend
+fv3.exe
+*.tmp.f90

@@ -1,1 +1,4 @@
 tests/pytest/output/**
+*.o
+*.mod
+*.so
