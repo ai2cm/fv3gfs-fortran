@@ -4,7 +4,9 @@ module coarse_grained_diagnostics_mod
   use fv_arrays_mod, only: fv_atmos_type, fv_coarse_diag_type, fv_coarse_graining_type
   use mpp_domains_mod, only: domain2d
   use mpp_mod, only: FATAL, mpp_error
-  use coarse_graining_mod, only: block_sum, get_fine_array_bounds, get_coarse_array_bounds, MODEL_LEVEL, weighted_block_average
+  use coarse_graining_mod, only: block_sum, get_fine_array_bounds, get_coarse_array_bounds, MODEL_LEVEL, &
+                                 weighted_block_average, PRESSURE_LEVEL, vertically_remap_field, &
+                                 vertical_remapping_requirements, mask_area_weights
   use time_manager_mod, only: time_type
   
   implicit none
@@ -94,6 +96,8 @@ contains
 
     if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. MODEL_LEVEL) then
        call fv_coarse_diag_model_levels(Atm, Time)
+    else if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL) then
+       call fv_coarse_diag_pressure_levels(Atm, Time)
     endif
   end subroutine fv_coarse_diag
   
@@ -124,11 +128,71 @@ contains
     endif    
   end subroutine fv_coarse_diag_model_levels
   
+  subroutine fv_coarse_diag_pressure_levels(Atm, Time)
+     type(fv_atmos_type), intent(in), target :: Atm(:)
+     type(time_type), intent(in) :: Time
+     
+     real, allocatable, dimension(:,:,:) :: work_3d_coarse, remapped_field, phalf, upsampled_coarse_phalf, masked_area_weights
+     integer :: diagnostic_ids_3d(Atm(tile_count)%coarse_graining%idiag%n_3d_diagnostics)
+     integer :: area_weighted_diagnostic_ids(1)
+     integer :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz
+     logical :: used
+ 
+     call get_diagnostic_ids_3d(Atm(tile_count)%coarse_graining%idiag, diagnostic_ids_3d)
+     call get_area_weighted_diagnostic_ids(Atm(tile_count)%coarse_graining%idiag, area_weighted_diagnostic_ids)
+     call get_fine_array_bounds(is, ie, js, je)
+     call get_coarse_array_bounds(is_coarse, ie_coarse, js_coarse, je_coarse)
+     npz = Atm(tile_count)%npz
+ 
+     if (any(diagnostic_ids_3d > 0)) then
+        allocate(work_3d_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz))
+        allocate(remapped_field(is:ie,js:je,1:npz))
+        allocate(phalf(is:ie,js:je,1:npz+1))      
+        allocate(upsampled_coarse_phalf(is:ie,js:je,1:npz+1))
+
+        call vertical_remapping_requirements( &
+             Atm(tile_count)%delp(is:ie,js:je,1:npz), &
+             Atm(tile_count)%gridstruct%area(is:ie,js:je), &
+             Atm(tile_count)%ptop, &
+             phalf, &
+             upsampled_coarse_phalf)
+     endif
+
+     if (any(area_weighted_diagnostic_ids > 0)) then
+          allocate(masked_area_weights(is:ie,js:je,1:npz))
+          call mask_area_weights( &
+             Atm(tile_count)%gridstruct%area(is:ie,js:je), &
+             phalf, &
+             upsampled_coarse_phalf, &
+             masked_area_weights)
+     endif
+ 
+     if (Atm(tile_count)%coarse_graining%idiag%id_omega_coarse > 0) then
+        call vertically_remap_field( &
+             phalf, &
+             Atm(tile_count)%omga(is:ie,js:je,1:npz), &
+             upsampled_coarse_phalf, &
+             Atm(tile_count)%ptop, &
+             remapped_field)
+        call weighted_block_average( &
+             masked_area_weights, &
+             remapped_field, &
+             work_3d_coarse)
+        used = send_data(Atm(tile_count)%coarse_graining%idiag%id_omega_coarse, work_3d_coarse, Time)
+     endif    
+   end subroutine fv_coarse_diag_pressure_levels
+
   subroutine get_diagnostic_ids_3d(idiag_coarse, diagnostic_ids_3d)
     type(fv_coarse_diag_type), intent(in) :: idiag_coarse
     integer, intent(out) :: diagnostic_ids_3d(idiag_coarse%n_3d_diagnostics)
 
     diagnostic_ids_3d = (/ idiag_coarse%id_omega_coarse /)
   end subroutine 
-  
+
+  subroutine get_area_weighted_diagnostic_ids(idiag_coarse, area_weighted_diagnostic_ids)
+     type(fv_coarse_diag_type), intent(in) :: idiag_coarse
+     integer, intent(out) :: area_weighted_diagnostic_ids(1)
+ 
+     area_weighted_diagnostic_ids = (/ idiag_coarse%id_omega_coarse /)
+   end subroutine
 end module coarse_grained_diagnostics_mod
