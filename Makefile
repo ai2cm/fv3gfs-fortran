@@ -16,6 +16,7 @@ MPI_IMAGE = $(GCR_URL)/mpi-build:$(DEP_TAG_NAME)
 FMS_IMAGE = $(GCR_URL)/fms-build:$(DEP_TAG_NAME)
 ESMF_IMAGE = $(GCR_URL)/esmf-build:$(DEP_TAG_NAME)
 SERIALBOX_IMAGE = $(GCR_URL)/serialbox-build:$(DEP_TAG_NAME)
+DOCKERFILE = docker/Dockerfile
 
 MOUNTS?=-v $(shell pwd)/FV3:/FV3 \
 	-v $(shell pwd)/FV3/conf/configure.fv3.gnu_docker:/FV3/conf/configure.fv3
