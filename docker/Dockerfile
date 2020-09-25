@@ -1,12 +1,35 @@
 ARG serialize=false
-ARG MPI_IMAGE=us.gcr.io/vcm-ml/mpi-build:gnu9-mpich314-nocuda
+ARG BASE_IMAGE
+ARG MPI_IMAGE=fv3gfs-mpi
 ARG FMS_IMAGE=fv3gfs-fms
 ARG ESMF_IMAGE=fv3gfs-esmf
 ARG SERIALBOX_IMAGE=fv3gfs-environment-serialbox
 
-FROM $MPI_IMAGE AS fv3gfs-environment
+FROM $BASE_IMAGE AS fv3gfs-mpi
 
 RUN apt-get update && apt-get install -y \
+    wget \
+    gcc \
+    g++ \
+    gfortran \
+    make 
+
+RUN wget -q http://www.mpich.org/static/downloads/3.1.4/mpich-3.1.4.tar.gz && \
+    tar xzf mpich-3.1.4.tar.gz && \
+    cd mpich-3.1.4 && \
+    ./configure --enable-fortran --enable-cxx --prefix=/usr --enable-fast=all,O3 && \
+    make -j24
+
+FROM $MPI_IMAGE AS mpi_image
+
+FROM $BASE_IMAGE AS fv3gfs-environment
+
+RUN apt-get update && apt-get install -y \
+    wget \
+    gcc \
+    g++ \
+    gfortran \
+    make \
     curl \
     git \
     libblas-dev \
@@ -16,7 +39,11 @@ RUN apt-get update && apt-get install -y \
     perl \
     rsync \
     libffi-dev \
-    openssl 
+    openssl
+
+COPY --from=mpi_image /mpich-3.1.4 /mpich-3.1.4
+
+RUN cd /mpich-3.1.4 && make install && ldconfig
 
 # download and install NCEP libraries
 RUN git config --global http.sslverify false && \
