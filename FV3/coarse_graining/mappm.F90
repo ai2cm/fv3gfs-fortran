@@ -1,4 +1,4 @@
-! Code here has been copied from fv_mapz.F90; this just a lightweight
+! Code here has been copied from fv_mapz.F90; this is just a lightweight
 ! module used for vertical interpolation in coarse_graining.F90.
 module mappm_mod
 
