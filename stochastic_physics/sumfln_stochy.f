@@ -148,6 +148,7 @@
 !           compute the sum of the odd imaginary terms for each level
 !
 !           call dgemm('t','n',latl2-lat1+1, 2*(nvar_2-nvar_1+1),
+!
 !     &                 (jcap+2-l)/2,cons1,     !constant
 !     &                 plnod(indod,lat1), len_trio_ls,
 !     &                 flnod(indod,2*nvar_1-1),len_trio_ls,cons0,
@@ -167,7 +168,7 @@
      &                   apod(2*nvar_1-1,lat1),
      &                   2*nvars
      &                   )
-!
+
             endif
           enddo   ! end of thread loop ..................................
         else !------------------------------------------------------------
