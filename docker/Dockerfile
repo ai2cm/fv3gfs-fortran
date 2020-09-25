@@ -1,12 +1,35 @@
 ARG serialize=false
-ARG MPI_IMAGE=us.gcr.io/vcm-ml/mpi-build:gnu9-mpich314-nocuda
+ARG BASE_IMAGE
+ARG MPI_IMAGE=fv3gfs-mpi
 ARG FMS_IMAGE=fv3gfs-fms
 ARG ESMF_IMAGE=fv3gfs-esmf
 ARG SERIALBOX_IMAGE=fv3gfs-environment-serialbox
 
-FROM $MPI_IMAGE AS fv3gfs-environment
+FROM $BASE_IMAGE AS fv3gfs-mpi
 
 RUN apt-get update && apt-get install -y \
+    wget \
+    gcc \
+    g++ \
+    gfortran \
+    make 
+
+RUN wget -q http://www.mpich.org/static/downloads/3.1.4/mpich-3.1.4.tar.gz && \
+    tar xzf mpich-3.1.4.tar.gz && \
+    cd mpich-3.1.4 && \
+    ./configure --enable-fortran --enable-cxx --prefix=/usr --enable-fast=all,O3 && \
+    make -j24
+
+FROM $MPI_IMAGE AS mpi_image
+
+FROM $BASE_IMAGE AS fv3gfs-environment
+
+RUN apt-get update && apt-get install -y \
+    wget \
+    gcc \
+    g++ \
+    gfortran \
+    make \
     curl \
     git \
     libblas-dev \
@@ -16,7 +39,11 @@ RUN apt-get update && apt-get install -y \
     perl \
     rsync \
     libffi-dev \
-    openssl 
+    openssl
+
+COPY --from=mpi_image /mpich-3.1.4 /mpich-3.1.4
+
+RUN cd /mpich-3.1.4 && make install && ldconfig
 
 # download and install NCEP libraries
 RUN git config --global http.sslverify false && \
@@ -36,7 +63,6 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # install dependencies for serialbox
 RUN apt-get update && apt-get install -y \
-    cmake \
     libssl-dev \
     clang \
     clang-format \
@@ -44,6 +70,15 @@ RUN apt-get update && apt-get install -y \
     python3-numpy \
     python3-nose \
     python3-sphinx
+
+# RUN wget -q https://github.com/Kitware/CMake/releases/download/v3.18.3/cmake-3.18.3-Linux-x86_64.sh && \
+#     chmod +x ./cmake-3.18.3-Linux-x86_64.sh && \
+#     cmake-3.18.3-Linux-x86_64.sh
+
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.17.3/cmake-3.17.3.tar.gz && \
+    tar xzf cmake-3.17.3.tar.gz && \
+    cd cmake-3.17.3 && \
+    ./bootstrap && make -j4 && make install
 
 # Install headers from the Boost library
 RUN wget -q https://dl.bintray.com/boostorg/release/1.74.0/source/boost_1_74_0.tar.gz && \
@@ -190,7 +225,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip && \
     ln -s /bin/python3 /bin/python && \
     ln -s /bin/pip3 /bin/pip && \
-    pip install --no-cache-dir pyyaml
+    pip3 install --no-cache-dir pyyaml
 
 COPY FV3/testsuite /FV3/testsuite
 

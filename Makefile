@@ -3,6 +3,7 @@ COMPILED_TAG_NAME ?= latest
 ENVIRONMENT_TAG_NAME ?= latest
 COMPILE_OPTION ?=
 COMPILE_TARGET ?= fv3gfs-compiled
+CUDA ?=n
 BUILD_ARGS ?=
 BUILD_FROM_INTERMEDIATE ?= n
 ENVIRONMENT_TARGET ?= fv3gfs-environment
@@ -11,11 +12,11 @@ SERIALIZE_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)-serialize
 ENVIRONMENT_IMAGE=$(GCR_URL)/$(ENVIRONMENT_TARGET):$(ENVIRONMENT_TAG_NAME)
 IMAGE ?= $(ENVIRONMENT_IMAGE)
 
-DEP_TAG_NAME ?= gnu9-mpich314-nocuda
 MPI_IMAGE = $(GCR_URL)/mpi-build:$(DEP_TAG_NAME)
 FMS_IMAGE = $(GCR_URL)/fms-build:$(DEP_TAG_NAME)
 ESMF_IMAGE = $(GCR_URL)/esmf-build:$(DEP_TAG_NAME)
 SERIALBOX_IMAGE = $(GCR_URL)/serialbox-build:$(DEP_TAG_NAME)
+DOCKERFILE = docker/Dockerfile
 
 MOUNTS?=-v $(shell pwd)/FV3:/FV3 \
 	-v $(shell pwd)/FV3/conf/configure.fv3.gnu_docker:/FV3/conf/configure.fv3
@@ -26,12 +27,18 @@ EXPERIMENT ?= new
 RUNDIR_CONTAINER=/rundir
 RUNDIR_HOST=$(shell pwd)/rundir
 
+ifeq ($(CUDA),n)
+	BASE_IMAGE ?= ubuntu:19.10
+	DEP_TAG_NAME ?= gnu9-mpich314-nocuda
+else
+	BASE_IMAGE ?= nvidia/cuda:10.2-devel-ubuntu18.04
+	DEP_TAG_NAME ?= gnu8-mpich314-cuda102
+endif
+
+BUILD_ARGS += --build-arg BASE_IMAGE=$(BASE_IMAGE)
 
 ifeq ($(BUILD_FROM_INTERMEDIATE),y)
 	BUILD_ARGS += --build-arg FMS_IMAGE=$(FMS_IMAGE) --build-arg ESMF_IMAGE=$(ESMF_IMAGE) --build-arg SERIALBOX_IMAGE=$(SERIALBOX_IMAGE) --build-arg MPI_IMAGE=$(MPI_IMAGE)
-        DOCKERFILE = docker/Dockerfile
-else
-	DOCKERFILE = docker/Dockerfile.full
 endif
 
 build: build_compiled
@@ -55,10 +62,10 @@ build_serialize_gt4pydev:
 	 COMPILE_OPTION="GT4PY_DEV=Y" SERIALIZE_IMAGE=$(SERIALIZE_IMAGE)-gt4pydev $(MAKE) build_serialize
 
 build_deps:
-	docker build -f $(DOCKERFILE) -t $(MPI_IMAGE) --target fv3gfs-mpi .
-	docker build -f $(DOCKERFILE) -t $(FMS_IMAGE) --target fv3gfs-fms .
-	docker build -f $(DOCKERFILE) -t $(ESMF_IMAGE) --target fv3gfs-esmf .
-	docker build -f $(DOCKERFILE) -t $(SERIALBOX_IMAGE) --target fv3gfs-environment-serialbox .
+	docker build -f $(DOCKERFILE) -t $(MPI_IMAGE) $(BUILD_ARGS) --target fv3gfs-mpi .
+	docker build -f $(DOCKERFILE) -t $(FMS_IMAGE) $(BUILD_ARGS) --target fv3gfs-fms .
+	docker build -f $(DOCKERFILE) -t $(ESMF_IMAGE) $(BUILD_ARGS) --target fv3gfs-esmf .
+	docker build -f $(DOCKERFILE) -t $(SERIALBOX_IMAGE) $(BUILD_ARGS) --target fv3gfs-environment-serialbox .
 
 push_deps:
 	docker push $(MPI_IMAGE)
