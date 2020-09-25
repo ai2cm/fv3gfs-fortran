@@ -71,9 +71,14 @@ RUN apt-get update && apt-get install -y \
     python3-nose \
     python3-sphinx
 
-RUN wget -q https://github.com/Kitware/CMake/releases/download/v3.18.3/cmake-3.18.3-Linux-x86_64.sh && \
-    chmod +x ./cmake-3.18.3-Linux-x86_64.sh && \
-    ./cmake-3.18.3-Linux-x86_64.sh --skip-license
+# RUN wget -q https://github.com/Kitware/CMake/releases/download/v3.18.3/cmake-3.18.3-Linux-x86_64.sh && \
+#     chmod +x ./cmake-3.18.3-Linux-x86_64.sh && \
+#     cmake-3.18.3-Linux-x86_64.sh
+
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.17.3/cmake-3.17.3.tar.gz && \
+    tar xzf cmake-3.17.3.tar.gz && \
+    cd cmake-3.17.3 && \
+    ./bootstrap && make -j4 && make install
 
 # Install headers from the Boost library
 RUN wget -q https://dl.bintray.com/boostorg/release/1.74.0/source/boost_1_74_0.tar.gz && \
@@ -220,7 +225,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip && \
     ln -s /bin/python3 /bin/python && \
     ln -s /bin/pip3 /bin/pip && \
-    pip install --no-cache-dir pyyaml
+    pip3 install --no-cache-dir pyyaml
 
 COPY FV3/testsuite /FV3/testsuite
 
