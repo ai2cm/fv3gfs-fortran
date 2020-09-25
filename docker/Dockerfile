@@ -63,7 +63,6 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # install dependencies for serialbox
 RUN apt-get update && apt-get install -y \
-    cmake \
     libssl-dev \
     clang \
     clang-format \
@@ -71,6 +70,10 @@ RUN apt-get update && apt-get install -y \
     python3-numpy \
     python3-nose \
     python3-sphinx
+
+RUN wget -q https://github.com/Kitware/CMake/releases/download/v3.18.3/cmake-3.18.3-Linux-x86_64.sh && \
+    chmod +x ./cmake-3.18.3-Linux-x86_64.sh && \
+    ./cmake-3.18.3-Linux-x86_64.sh --skip-license
 
 # Install headers from the Boost library
 RUN wget -q https://dl.bintray.com/boostorg/release/1.74.0/source/boost_1_74_0.tar.gz && \
