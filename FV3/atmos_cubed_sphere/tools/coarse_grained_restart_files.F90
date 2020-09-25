@@ -7,6 +7,7 @@ module coarse_grained_restart_files_mod
   use fms_io_mod,      only: register_restart_field, save_restart
   use fv_arrays_mod, only: coarse_restart_type, fv_atmos_type
   use mpp_domains_mod, only: domain2d, EAST, NORTH
+  use mpp_mod, only: FATAL, mpp_error
   use tracer_manager_mod, only: get_tracer_names, set_tracer_profile
 
   implicit none
@@ -272,8 +273,13 @@ contains
   subroutine coarse_grain_restart_data(Atm)
     type(fv_atmos_type), intent(inout) :: Atm
 
+    character(len=256) :: error_message
+
     if (trim(Atm%coarse_graining%strategy) .eq. MODEL_LEVEL) then
        call coarse_grain_restart_data_on_model_levels(Atm)
+    else
+       write(error_message, *) 'Currently only model_level coarse-graining is supported for restart files.'
+       call mpp_error(FATAL, error_message)
     endif
   end subroutine coarse_grain_restart_data
   
