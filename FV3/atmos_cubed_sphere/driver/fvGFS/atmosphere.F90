@@ -223,6 +223,8 @@ public :: atmosphere_resolution,   atmosphere_grid_bdry,         &
 !--- physics/radiation data exchange routines
 public :: atmos_phys_driver_statein
 
+public :: atmosphere_column_moistening_implied_by_nudging
+
 !-----------------------------------------------------------------------
 ! version number of this module
 ! Include variable "version" to be written to log file.
@@ -883,9 +885,9 @@ contains
  end subroutine atmosphere_pref
 
 
- subroutine atmosphere_control_data (i1, i2, j1, j2, kt, p_hydro, hydro, tile_num)
+ subroutine atmosphere_control_data (i1, i2, j1, j2, kt, p_hydro, hydro, tile_num, nudge)
    integer, intent(out)           :: i1, i2, j1, j2, kt
-   logical, intent(out), optional :: p_hydro, hydro
+   logical, intent(out), optional :: p_hydro, hydro, nudge
    integer, intent(out), optional :: tile_num
    i1 = Atm(mytile)%bd%isc
    i2 = Atm(mytile)%bd%iec
@@ -896,9 +898,9 @@ contains
    if (present(tile_num)) tile_num = Atm(mytile)%tile
    if (present(p_hydro)) p_hydro   = Atm(mytile)%flagstruct%phys_hydrostatic
    if (present(  hydro))   hydro   = Atm(mytile)%flagstruct%hydrostatic
+   if (present (nudge))    nudge   = Atm(mytile)%flagstruct%nudge
 
  end subroutine atmosphere_control_data
-
 
 !>@brief The subroutine 'atmosphere_grid_ctr' is an API that returns the longitude and 
 !! latitude cell centers of the current MPI-rank.
@@ -2040,14 +2042,6 @@ contains
        IPD_Data(nb)%Statein%atm_ts(ix) = _DBL_(_RL_(Atm(mytile)%ts(i,j)))
      enddo
 
-     if (Atm(mytile)%flagstruct%nudge) then
-       do ix = 1, blen
-        i = Atm_block%index(nb)%ii(ix)
-        j = Atm_block%index(nb)%jj(ix)
-        IPD_Data(nb)%Statein%column_moistening_implied_by_nudging(ix) = _DBL_(_RL_(Atm(mytile)%column_moistening_implied_by_nudging(i,j)))
-       enddo
-     endif
-
      do k = 1, npz
        !Indices for FV's vertical coordinate, for which 1 = top
        !here, k is the index for GFS's vertical coordinate, for which 1 =
@@ -2190,7 +2184,6 @@ contains
     endif
     IPD_Data(nb)%Statein%dycore_hydrostatic = Atm(mytile)%flagstruct%hydrostatic
     IPD_Data(nb)%Statein%nwat = Atm(mytile)%flagstruct%nwat
-    IPD_Data(nb)%Statein%dycore_nudge = Atm(mytile)%flagstruct%nudge
   enddo
 
  end subroutine atmos_phys_driver_statein
@@ -2212,5 +2205,19 @@ contains
       if (allocated(physics_tendency_diag%qv_dt)) physics_tendency_diag%qv_dt = (q(isc:iec,jsc:jec,1:npz,sphum) - physics_tendency_diag%qv_dt) / dt
    endif
  end subroutine atmos_phys_qdt_diag
+
+ subroutine atmosphere_column_moistening_implied_by_nudging(nb, im, Atm_block, column_moistening_implied_by_nudging)
+   integer, intent(in) :: nb, im
+   type (block_control_type), intent(in) :: Atm_block
+   real(kind=kind_phys) :: column_moistening_implied_by_nudging(1:im)
+
+   integer :: i, j, ix
+
+   do ix = 1, im
+      i = Atm_block%index(nb)%ii(ix)
+      j = Atm_block%index(nb)%jj(ix)
+      column_moistening_implied_by_nudging(ix) = _DBL_(_RL_(Atm(mytile)%column_moistening_implied_by_nudging(i,j)))
+   enddo
+ end subroutine atmosphere_column_moistening_implied_by_nudging
 
 end module atmosphere_mod
