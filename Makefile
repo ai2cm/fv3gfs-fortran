@@ -43,13 +43,13 @@ build_compiled:  ## build production container image
 		-t $(COMPILED_IMAGE) \
 		--target $(COMPILE_TARGET) .
 
-.PHONY: build_serialize
+.PHONY: build_serialize_check_md5
 build_serialize_check_md5:
 	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
 	COMPILED_IMAGE=$(SERIALIZE_IMAGE)-check-md5 \
 	$(MAKE) build_compiled
 
-.PHONY: build_serialize_gt4pydev
+.PHONY: build_serialize
 build_serialize:  ## build container image for generating serialize data
 	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
 	    COMPILED_IMAGE=$(SERIALIZE_IMAGE) \
