@@ -10,10 +10,16 @@ docker_image_name=$1
 rundir_host=$2
 fv3config_cache_dir=$3
 
-cp submit_job.sh $rundir_host
-
 if [ ! -d $rundir_host  ]; then
     echo "ERROR: provided run directory $2 does not exist"
+    exit 1
+fi
+if [ ! -f $rundir_host/submit_job.sh ] ; then
+    echo "Missing submit_job.sh in $rundir_host. Abort!"
+    exit 1
+fi
+if [ -n "`find $rundir_host -type l -ls`" ] ; then
+    echo "Symbolic links found in run directory but no cache directory specified"
     exit 1
 fi
 
@@ -27,10 +33,10 @@ if [ "$#" -gt 2 ]; then # mount fv3config cache directory
         -v $fv3config_cache_dir:$fv3config_cache_dir \
         -it $1 ${remaining_args[@]}
 else # the rundir has real input files, not symlinked to a fv3config_cache dir
-   
     docker run \
-        -d \
         --rm \
         -v $rundir_host:$rundir_container \
-        -it $1 
+        -it $1 ${remaining_args[@]}
 fi
+
+exit 0

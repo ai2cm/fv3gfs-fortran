@@ -1,42 +1,41 @@
-GCR_URL = us.gcr.io/vcm-ml
-DOCKERFILE ?= docker/Dockerfile
-COMPILED_TAG_NAME ?= latest
-ENVIRONMENT_TAG_NAME ?= latest
-COMPILE_OPTION ?=
-COMPILE_TARGET ?= fv3gfs-compiled
-BUILD_ARGS ?=
+# setup (use XXX=<value> make <target> to override)
+GCR_URL                 ?= us.gcr.io/vcm-ml
+DOCKERFILE              ?= docker/Dockerfile
+COMPILED_TAG_NAME       ?= latest
+ENVIRONMENT_TAG_NAME    ?= latest
+COMPILE_OPTION          ?=
+COMPILE_TARGET          ?= fv3gfs-compiled
+BUILD_ARGS              ?=
 BUILD_FROM_INTERMEDIATE ?= n
-ENVIRONMENT_TARGET ?= fv3gfs-environment
-COMPILED_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)
-SERIALIZE_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)-serialize
-ENVIRONMENT_IMAGE=$(GCR_URL)/$(ENVIRONMENT_TARGET):$(ENVIRONMENT_TAG_NAME)
-IMAGE ?= $(ENVIRONMENT_IMAGE)
+ENVIRONMENT_TARGET      ?= fv3gfs-environment
 
-FMS_IMAGE = $(GCR_URL)/fms-build
-ESMF_IMAGE = $(GCR_URL)/esmf-build
-SERIALBOX_IMAGE = $(GCR_URL)/serialbox-build
+# image names (use XXX_IMAGE=<name> make <target> to override)
+COMPILED_IMAGE     ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)
+SERIALIZE_IMAGE    ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)-serialize
+ENVIRONMENT_IMAGE  ?= $(GCR_URL)/$(ENVIRONMENT_TARGET):$(ENVIRONMENT_TAG_NAME)
+FMS_IMAGE          ?= $(GCR_URL)/fms-build
+ESMF_IMAGE         ?= $(GCR_URL)/esmf-build
+SERIALBOX_IMAGE    ?= $(GCR_URL)/serialbox-build
 
-MOUNTS?=-v $(shell pwd)/FV3:/FV3 \
-	-v $(shell pwd)/FV3/conf/configure.fv3.gnu_docker:/FV3/conf/configure.fv3
-
-MOUNTS_SERIALIZE?=-v $(shell pwd)/FV3:/FV3/original
-
-EXPERIMENT ?= new
-RUNDIR_CONTAINER=/rundir
-RUNDIR_HOST=$(shell pwd)/rundir
-
-
+# used to shorten build times in CircleCI
 ifeq ($(BUILD_FROM_INTERMEDIATE),y)
 	BUILD_ARGS += --build-arg FMS_IMAGE=$(FMS_IMAGE) --build-arg ESMF_IMAGE=$(ESMF_IMAGE) --build-arg SERIALBOX_IMAGE=$(SERIALBOX_IMAGE)
 endif
 
-build: build_compiled
+.PHONY: help
+help:
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-build_environment:
+.PHONY: build
+build: build_compiled  ## build default container image (production)
+
+.PHONY: build_environment
+build_environment:  ## build environment container image
 	docker build -f $(DOCKERFILE) -t $(ENVIRONMENT_IMAGE) \
 	--target $(ENVIRONMENT_TARGET) .
 
-build_compiled:
+.PHONY: build_compiled
+build_compiled:  ## build production container image
 	docker build \
 		--build-arg compile_option=$(COMPILE_OPTION) \
 		$(BUILD_ARGS) \
@@ -44,68 +43,73 @@ build_compiled:
 		-t $(COMPILED_IMAGE) \
 		--target $(COMPILE_TARGET) .
 
-build_serialize:
-	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" COMPILED_IMAGE=$(SERIALIZE_IMAGE) $(MAKE) build_compiled
+.PHONY: build_serialize
+build_serialize_check_md5:
+	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
+	COMPILED_IMAGE=$(SERIALIZE_IMAGE)-check-md5 \
+	$(MAKE) build_compiled
 
-build_serialize_gt4pydev:
-	 COMPILE_OPTION="GT4PY_DEV=Y" SERIALIZE_IMAGE=$(SERIALIZE_IMAGE)-gt4pydev $(MAKE) build_serialize
+.PHONY: build_serialize_gt4pydev
+build_serialize:  ## build container image for generating serialize data
+	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
+	    COMPILED_IMAGE=$(SERIALIZE_IMAGE) \
+		COMPILE_OPTION="GT4PY_DEV=Y" \
+		$(MAKE) build_compiled
 
-build_deps:
+.PHONY: build_debug
+build_debug:  ## build container image for debugging
+	COMPILED_TAG_NAME=debug COMPILE_OPTION="REPRO=\\\nDEBUG=Y" $(MAKE) build
+
+.PHONY: build_coverage
+build_coverage: build_environment  ## build container image for code coverage analysis
+	COMPILED_TAG_NAME=gcov COMPILED_IMAGE=$(GCR_URL)/$(COMPILE_TARGET):gcov \
+	COMPILE_OPTION="OPENMP=\\\nREPRO=\\\nDEBUG=Y\\\nGCOV=Y" $(MAKE) build
+
+.PHONY: build_deps
+build_deps:  ## build container images of dependnecies (FMS, ESMF, SerialBox)
 	docker build -f $(DOCKERFILE) -t $(FMS_IMAGE) --target fv3gfs-fms .
 	docker build -f $(DOCKERFILE) -t $(ESMF_IMAGE) --target fv3gfs-esmf .
 	docker build -f $(DOCKERFILE) -t $(SERIALBOX_IMAGE) --target fv3gfs-environment-serialbox .
 
-push_deps:
+.PHONY: push_deps
+push_deps:  ## push container images of dependencies to GCP
 	docker push $(FMS_IMAGE)
 	docker push $(ESMF_IMAGE)
 	docker push $(SERIALBOX_IMAGE)
 
-pull_deps:
+.PHONY: pull_deps
+pull_deps:  ## pull container images of dependnecies from GCP (for faster builds)
 	docker pull $(FMS_IMAGE)
 	docker pull $(ESMF_IMAGE)
 	docker pull $(SERIALBOX_IMAGE)
 
-build_debug: build_environment
-	COMPILED_TAG_NAME=debug COMPILE_OPTION="REPRO=\\\nDEBUG=Y" $(MAKE) build
+.PHONY: enter
+enter:  ## run and enter production container for development
+	docker run --rm -v $(shell pwd)/FV3:/FV3 \
+		-w /FV3 -it $(COMPILED_IMAGE) bash
 
-build_coverage: build_environment
-	COMPILED_TAG_NAME=gcov COMPILED_IMAGE=$(GCR_URL)/$(COMPILE_TARGET):gcov \
-	COMPILE_OPTION="OPENMP=\\\nREPRO=\\\nDEBUG=Y\\\nGCOV=Y" $(MAKE) build
+.PHONY: enter_serialize
+enter_serialize:  ## run and enter serialization container for development
+	docker run --rm -v $(shell pwd)/FV3:/FV3/original \
+		-w /FV3 -it $(SERIALIZE_IMAGE) bash
 
-enter:
-	docker run --rm $(MOUNTS) -w /FV3 -it $(COMPILED_IMAGE) bash
-
-enter_serialize:
-	MOUNTS="$(MOUNTS_SERIALIZE)" COMPILED_IMAGE="$(SERIALIZE_IMAGE)" $(MAKE) enter
-
-compile_dev: build_compiled
-	docker run --rm $(MOUNTS) -w /FV3 -it $(COMPILED_IMAGE) bash -c "make libs && make fv3.exe"
-
-test:
+.PHONY: test
+test:  ## run tests (set COMPILED_TAG_NAME to override default)
 	pytest tests/pytest --capture=no --verbose --refdir $(shell pwd)/tests/pytest/reference/circleci --image_version $(COMPILED_TAG_NAME)
 
-update_circleci_reference: test
+.PHONY: update_circleci_reference
+update_test_reference: test  ## update md5 checksums for regression tests
 	cd tests/pytest && bash set_reference.sh $(COMPILED_TAG_NAME)-serialize $(shell pwd)/reference/circleci
 
-# 32bit options don't currently build, fix these when issue #4 is fixed.
+.PHONY: clean
+clean:  ## cleanup source tree and test output
+	(cd FV3 && make clean)
+	$(RM) -f inputdata
+	$(RM) -rf tests/pytest/output/*
+
+# TODO 32bit options don't currently build, fix these when issue #4 is fixed.
 #test_32bit:
 #	COMPILED_TAG_NAME=32bit $(MAKE) test
 #
 #build_32bit: build_environment
 #	COMPILED_TAG_NAME=32bit COMPILE_OPTION=32BIT=Y $(MAKE) build
-
-dev_serialize: # TODO: use run_docker -- string form of command is not translating correctly
-	docker run -w=/FV3 \
-		-v $(RUNDIR_HOST):/rundir \
-		-v $(FV3CONFIG_CACHE_DIR):$(FV3CONFIG_CACHE_DIR) \
-		-it $(GCR_URL)/$(COMPILE_TARGET):serialize /bin/bash -c 'cd /FV3;make serialize_preprocess && cd /Serialize/FV3 && make build_serializer && cd /rundir && rm -f Gen*.dat && rm -f *.json &&  /rundir/submit_job.sh /Serialize/'
-
-clean:
-	(cd FV3 && make clean)
-	$(RM) -f inputdata
-	$(RM) -rf tests/pytest/output/*
-
-
-.PHONY: build build_environment build_compiled enter enter_serialize run test test_32bit clean \
-	run_serialize test_serialize test_serialize_image dev_serialize build_serialize \
-	build_environment_serialize build_serialize_gt4pydev

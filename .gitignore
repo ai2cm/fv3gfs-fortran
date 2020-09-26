@@ -11,5 +11,5 @@ experiments
 /TAGS
 .DS_Store
 *.tar.gz
-
 depend
+**/.vscode
