@@ -2,6 +2,12 @@
 
 # How to run fv3gfs via a docker image
 
+Don't forget to load the submodules in your local copy of the source. I.e.
+'''
+cd fv3gfs-fortran
+git submodule update --init --recursive
+'''
+
 ## Step 1: Create Docker image
 
 Different docker images are used to build the environment and compile this
