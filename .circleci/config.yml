@@ -27,7 +27,7 @@ jobs:
           command: |
             git submodule init
             git submodule update
-      - run: DOCKER_BUILDKIT=1 BUILD_FROM_INTERMEDIATE=y make build build_serialize_check_md5
+      - run: DOCKER_BUILDKIT=1 BUILDKIT_PROGRESS=plain BUILD_FROM_INTERMEDIATE=y make build build_serialize_check_md5
       - restore_cache:
           keys:
             - v1.3-inputdata-{{ checksum "download_inputdata.sh" }}-{{ checksum "requirements.txt"}}
