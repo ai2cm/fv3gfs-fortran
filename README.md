@@ -1,8 +1,8 @@
-[![CircleCI](https://circleci.com/gh/VulcanClimateModeling/fv3gfs.svg?style=svg)](https://circleci.com/gh/VulcanClimateModeling/fv3gfs)
+[![VulcanClimateModeling](https://circleci.com/gh/VulcanClimateModeling/fv3gfs-fortran.svg?style=svg)](https://circleci.com/gh/VulcanClimateModeling/fv3gfs-fortran)
 
 # How to run fv3gfs via a docker image
 
-### Step 1: Create Docker image
+## Step 1: Create Docker image
 
 Different docker images are used to build the environment and compile this
 model. For development purposes, the software environment is useful, but for
@@ -22,7 +22,7 @@ make build_debug
 
 Rules are provided for certain compile options. Check the Makefile for a list or simply type `make help`.
 
-### Step 2: Install fv3config
+## Step 2: Install fv3config
 
 ```bash
 python3 -m venv venv
@@ -48,7 +48,7 @@ python -c 'import fv3config; print(fv3config.get_cache_dir())'
 
 to find out the default location.
 
-### Step 3: Create run directory
+## Step 3: Create run directory
 
 Create or download an fv3config yaml configuration. Edit the configuration as needed.
 Examples of such configurations are included in the tests under `tests/pytest/config`.
@@ -76,7 +76,7 @@ for your run and the set of diagnostics the model will output. Ideally this shou
 done instead by editing the `config.yml` we used earlier.
 
 
-### Step 4: Run the model
+## Step 4: Run the model
 
 ```bash
 bash run_docker.sh us.gcr.io/vcm-ml/fv3gfs-compiled:latest <rundir> $FV3CONFIG_CACHE_DIR
