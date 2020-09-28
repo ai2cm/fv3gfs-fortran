@@ -43,6 +43,7 @@ module module_physics_driver
 
 
   !--- CONSTANT PARAMETERS
+  logical, parameter :: ignore_thermo_schemes = .true.
   real(kind=kind_phys), parameter :: hocp    = con_hvap/con_cp
   real(kind=kind_phys), parameter :: qmin    = 1.0d-10
   real(kind=kind_phys), parameter :: qsmall  = 1.0d-20
@@ -3510,7 +3511,8 @@ module module_physics_driver
           enddo
         endif
 
-        if (Model%isppt_deep) then
+        
+        if (Model%isppt_deep .or. ignore_thermo_schemes) then
           allocate(savet(im,levs), saveq(im,levs), saveu(im,levs), savev(im,levs))
           do k=1,levs
             do i=1,im
@@ -3764,6 +3766,7 @@ module module_physics_driver
 
         endif   ! end if_not_ras
 
+
         if(Model%isppt_deep)then
           do k=1,levs
             do i=1,im
@@ -3773,8 +3776,18 @@ module module_physics_driver
               Coupling%vconvtend(i,k) = Stateout%gv0(i,k)   - savev(i,k)
             enddo
           enddo
-          deallocate(savet, saveq, saveu, savev)
         endif
+
+        if (ignore_thermo_schemes) then
+          do k=1,levs
+            do i=1,im
+              Stateout%gt0(i,k) = savet(i,k)
+              Stateout%gq0(i,k,1) = saveq(i,k)
+            enddo
+          enddo
+        end if
+
+        if (Model%isppt_deep .or. ignore_thermo_schemes) deallocate(savet, saveq, saveu, savev)
 
       else      ! no parameterized deep convection
         cld1d = zero
@@ -4052,6 +4065,17 @@ module module_physics_driver
 
       if (.not. Model%do_shoc) then
 
+        if (ignore_thermo_schemes) then
+          allocate(savet(im,levs), saveq(im,levs))
+          do k=1,levs
+            do i=1,im
+              savet(i,k) = Stateout%gt0(i,k)
+              saveq(i,k) = Stateout%gq0(i,k,1)
+            enddo
+          enddo
+        endif
+
+
         if (Model%shal_cnv) then               ! Shallow convection parameterizations
 !                                               --------------------------------------
           if (Model%imfshalcnv == 1) then      ! opr option now at 2014
@@ -4276,7 +4300,17 @@ module module_physics_driver
 !     write(0,*)' aft shoc gt0=',gt0(1,:),' lat=',lat
 !     write(0,*)' aft shoc gq0=',gq0(1,:,1),' lat=',lat
 !     write(0,*)' aft shoc gu0=',gu0(1,:),' lat=',lat
-!
+
+        if (ignore_thermo_schemes) then
+          do k=1,levs
+            do i=1,im
+              Stateout%gt0(i,k) = savet(i,k)
+              Stateout%gq0(i,k,1) = saveq(i,k)
+            enddo
+          enddo
+        end if
+        if (ignore_thermo_schemes) deallocate(savet, saveq)
+
       endif   ! if( .not. do_shoc)
 !
 !       if (lprnt) then
