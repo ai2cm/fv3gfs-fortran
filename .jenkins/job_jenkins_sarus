@@ -20,4 +20,4 @@ ulimit -s unlimited
 ## Perform the c12 test
 ##
 
-srun sarus run --mpi --mount=type=bind,source=${SCRATCH_DIR},destination=/scratch --workdir=/scratch load/library/${FV3_CONTAINER} /myapps/fv3/fv3.exe
+srun sarus run --mpi --mount=type=bind,source=${SCRATCH_DIR},destination=/scratch --workdir=/scratch load/library/${FV3_CONTAINER} /FV3/fv3.exe

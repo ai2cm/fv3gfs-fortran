@@ -2,6 +2,7 @@ module coarse_graining_mod
 
   use fms_mod, only: check_nml_error, close_file, open_namelist_file
   use mpp_domains_mod, only: domain2d, mpp_define_io_domain, mpp_define_mosaic, mpp_get_compute_domain
+  use mappm_mod, only: mappm
   use mpp_mod, only: FATAL, input_nml_file, mpp_error, mpp_npes
   
   implicit none
@@ -9,7 +10,9 @@ module coarse_graining_mod
 
   public :: block_sum, compute_mass_weights, get_fine_array_bounds, &
        get_coarse_array_bounds, coarse_graining_init, weighted_block_average, &
-       weighted_block_edge_average_x, weighted_block_edge_average_y, MODEL_LEVEL
+       weighted_block_edge_average_x, weighted_block_edge_average_y, MODEL_LEVEL, &
+       block_upsample, mask_area_weights, PRESSURE_LEVEL, vertical_remapping_requirements, &
+       vertically_remap_field
 
   interface block_sum
      module procedure block_sum_2d
@@ -31,11 +34,17 @@ module coarse_graining_mod
      module procedure weighted_block_edge_average_y_3d_field_2d_weights
   end interface weighted_block_edge_average_y
   
+  interface block_upsample
+     module procedure block_upsample_2d
+     module procedure block_upsample_3d
+  end interface block_upsample
+
   ! Global variables for the module, initialized in coarse_graining_init
   integer :: is, ie, js, je, npz
   integer :: is_coarse, ie_coarse, js_coarse, je_coarse
   character(len=11) :: MODEL_LEVEL = 'model_level'
-  
+  character(len=14) :: PRESSURE_LEVEL = 'pressure_level'
+
   ! Namelist parameters initialized with default values
   integer :: coarsening_factor = 8
   integer :: coarse_io_layout(2) = (/1, 1/)
@@ -111,7 +120,7 @@ contains
 
     character(len=256) :: error_message
 
-    if (trim(strategy) .ne. MODEL_LEVEL) then
+    if (trim(strategy) .ne. MODEL_LEVEL .and. trim(strategy) .ne. PRESSURE_LEVEL) then
        write(error_message, *) 'Invalid coarse graining strategy provided.'
        call mpp_error(FATAL, error_message)
     endif
@@ -300,6 +309,56 @@ contains
     enddo
   end subroutine weighted_block_edge_average_y_3d_field_2d_weights
 
+  subroutine vertically_remap_field(phalf_in, field, phalf_out, ptop, field_out)
+    real, intent(in) :: phalf_in(is:ie,js:je,1:npz+1), phalf_out(is:ie,js:je,1:npz+1)
+    real, intent(in) :: field(is:ie,js:je,1:npz)
+    real, intent(in) :: ptop
+    real, intent(out) :: field_out(is:ie,js:je,1:npz)
+
+    integer :: kn, km, kord, iv, j, q2
+
+    kn = npz
+    km = npz
+
+    ! Hard code values of kord and iv for now
+    kord = 1
+    iv = 1
+    q2 = 1
+
+    do j = js, je
+       call mappm(km, phalf_in(is:ie,j,:), field(is:ie,j,:), kn, &
+            phalf_out(is:ie,j,:), field_out(is:ie,j,:), is, ie, iv, kord, ptop)
+    enddo
+  end subroutine vertically_remap_field
+
+  subroutine block_upsample_2d(coarse, fine)
+    real, intent(in) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse)
+    real, intent(out) :: fine(is:ie,js:je)
+
+    integer :: i, j, i_coarse, j_coarse, offset
+
+    offset = coarsening_factor - 1
+    do i = is, ie, coarsening_factor
+      i_coarse = (i - 1) / coarsening_factor + 1
+      do j = js, je, coarsening_factor
+          j_coarse = (j - 1) / coarsening_factor + 1
+          fine(i:i+offset,j:j+offset) = coarse(i_coarse, j_coarse)
+      enddo
+    enddo
+  end subroutine block_upsample_2d
+
+  subroutine block_upsample_3d(coarse, fine, nz)
+    integer, intent(in) :: nz
+    real, intent(in) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:nz+1)
+    real, intent(out) :: fine(is:ie,js:je,1:nz+1)
+
+    integer :: k
+
+    do k = 1, nz + 1
+      call block_upsample_2d(coarse(is_coarse:ie_coarse,js_coarse:je_coarse,k), fine(is:ie,js:je,k))
+    enddo
+  end subroutine block_upsample_3d
+
   ! This subroutine is copied from FMS/test_fms/horiz_interp/test2_horiz_interp.F90.
   ! domain_decomp in fv_mp_mod.F90 does something similar, but it does a
   ! few other unnecessary things (and requires more arguments).
@@ -394,5 +453,64 @@ contains
          istart2, iend2, jstart2, jend2, pe_start, pe_end, &
          symmetry=.true., name='coarse cubic mosaic')
   end subroutine define_cubic_mosaic
-  
+
+  subroutine compute_phalf_from_delp(delp, ptop, i_start, i_end, j_start, j_end, phalf)
+    integer, intent(in) :: i_start, i_end, j_start, j_end
+    real, intent(in) :: delp(i_start:i_end,j_start:j_end,1:npz)
+    real, intent(in) :: ptop
+    real, intent(out) :: phalf(i_start:i_end,j_start:j_end,1:npz+1)
+
+    integer :: i, j, k
+
+    phalf(:,:,1) = ptop  ! Top level interface pressure is the model top
+
+    ! Integrate delp from top of model to the surface.
+    do i = i_start, i_end
+       do j = j_start, j_end
+          do k = 2, npz + 1
+             phalf(i,j,k) = phalf(i,j,k-1) + delp(i,j,k-1)
+          enddo
+       enddo
+    enddo
+  end subroutine compute_phalf_from_delp
+
+ ! Routine for computing the common requirements for pressure-level coarse-graining.
+  subroutine vertical_remapping_requirements(delp, area, ptop, phalf, upsampled_coarse_phalf)
+    real, intent(in) :: delp(is:ie,js:je,1:npz)
+    real, intent(in) :: area(is:ie,js:je)
+    real, intent(in) :: ptop
+    real, intent(out) :: phalf(is:ie,js:je,1:npz+1)
+    real, intent(out) :: upsampled_coarse_phalf(is:ie,js:je,1:npz+1)
+
+    real, allocatable :: coarse_delp(:,:,:), coarse_phalf(:,:,:)
+
+    allocate(coarse_delp(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz))
+    allocate(coarse_phalf(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz+1))
+
+    call compute_phalf_from_delp(delp(is:ie,js:je,1:npz), ptop, is, ie, js, je, phalf)
+    call weighted_block_average(area(is:ie,js:je), delp(is:ie,js:je,1:npz), coarse_delp)
+    call compute_phalf_from_delp(coarse_delp, ptop, is_coarse, ie_coarse, js_coarse, je_coarse, coarse_phalf)
+    call block_upsample(coarse_phalf, upsampled_coarse_phalf, npz+1)
+
+    deallocate(coarse_delp)
+    deallocate(coarse_phalf)
+   end subroutine vertical_remapping_requirements
+
+   subroutine mask_area_weights(area, phalf, upsampled_coarse_phalf, masked_area_weights)
+    real, intent(in) :: area(is:ie,js:je)
+    real, intent(in) :: phalf(is:ie,js:je,1:npz+1)
+    real, intent(in) :: upsampled_coarse_phalf(is:ie,js:je,1:npz+1)
+    real, intent(out) :: masked_area_weights(is:ie,js:je,1:npz)
+
+    integer :: k
+
+    do k = 1, npz
+      where (upsampled_coarse_phalf(is:ie,js:je,k+1) .lt. phalf(is:ie,js:je,npz+1))
+        masked_area_weights(is:ie,js:je,k) = area(is:ie,js:je)
+      elsewhere
+        masked_area_weights(is:ie,js:je,k) = 0.0
+      endwhere
+    enddo
+   end subroutine mask_area_weights
+
 end module coarse_graining_mod
