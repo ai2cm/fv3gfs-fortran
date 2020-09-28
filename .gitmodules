@@ -1,6 +1,3 @@
 [submodule "FV3/testsuite/src"]
 	path = FV3/testsuite/src
 	url = git@github.com:VulcanClimateModeling/testsuite.git
-[submodule "serialbox2"]
-	path = serialbox2
-	url = git@github.com:VulcanClimateModeling/serialbox2.git
