@@ -9,6 +9,7 @@ BUILD_ARGS              ?=
 BUILD_FROM_INTERMEDIATE ?= n
 ENVIRONMENT_TARGET      ?= fv3gfs-environment
 CUDA                    ?= n
+OTHER_MOUNTS            ?= 
 
 # image names (use XXX_IMAGE=<name> make <target> to override)
 COMPILED_IMAGE     ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)
@@ -18,11 +19,6 @@ MPI_IMAGE          ?= $(GCR_URL)/mpi-build:$(DEP_TAG_NAME)
 FMS_IMAGE          ?= $(GCR_URL)/fms-build:$(DEP_TAG_NAME)
 ESMF_IMAGE         ?= $(GCR_URL)/esmf-build:$(DEP_TAG_NAME)
 SERIALBOX_IMAGE    ?= $(GCR_URL)/serialbox-build:$(DEP_TAG_NAME)
-
-MOUNTS?=-v $(shell pwd)/FV3:/FV3 \
-	-v $(shell pwd)/FV3/conf/configure.fv3.gnu_docker:/FV3/conf/configure.fv3
-
-MOUNTS_SERIALIZE?=-v $(shell pwd)/FV3:/FV3/original
 
 # base images w/ or w/o CUDA
 ifeq ($(CUDA),n)
@@ -105,12 +101,14 @@ pull_deps:  ## pull container images of dependnecies from GCP (for faster builds
 
 .PHONY: enter
 enter:  ## run and enter production container for development
-	docker run --rm -v $(shell pwd)/FV3:/FV3 \
+	docker run --rm \
+	       	-v $(shell pwd)/FV3:/FV3 $(OTHER_MOUNTS) \
 		-w /FV3 -it $(COMPILED_IMAGE) bash
 
 .PHONY: enter_serialize
 enter_serialize:  ## run and enter serialization container for development
-	docker run --rm -v $(shell pwd)/FV3:/FV3/original \
+	docker run --rm \
+		-v $(shell pwd)/FV3:/FV3/original $(OTHER_MOUNTS) \
 		-w /FV3 -it $(SERIALIZE_IMAGE) bash
 
 .PHONY: test

@@ -151,7 +151,7 @@ If you need to be able to see the preprocessed `atmos_cubed_sphere` sources on y
 host filesystem, you can do that with:
 
 ```bash
-MOUNTS_SERIALIZE="-v $(pwd)/FV3:/FV3/original -v <local dir>:/FV3/atmos_cubed_sphere" make enter_serialize
+OTHER_MOUNTS="-v <local dir>:/FV3/atmos_cubed_sphere" make enter_serialize
 ```
 
 Where `<local_dir>` is replaced with the directory on your host filesystem where you
