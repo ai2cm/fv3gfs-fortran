@@ -2,3 +2,5 @@ tests/pytest/output/**
 *.o
 *.mod
 *.so
+fv3.exe
+*.tmp.f90
