@@ -97,6 +97,7 @@ enter:  ## run and enter production container for development
 		-w /FV3 -it $(COMPILED_IMAGE) bash
 
 enter_serialize:  ## run and enter serialization container for development
+	@echo ">>> NOTE: Make sure to compile with GT4PY_DEV=Y when developing serialization"
 	docker run --rm \
 		-v $(shell pwd)/FV3:/FV3/original $(OTHER_MOUNTS) \
 		-w /FV3 -it $(SERIALIZE_IMAGE) bash
