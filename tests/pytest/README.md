@@ -5,6 +5,7 @@ Tests need to be passed a reference directory to use. They can be run with
 `pytest --refdir=$(pwd)/reference/circleci`. After running, the output of the
 tests will be present in `output`. These output files can be used to update the
 references, if non-bit-for-bit changes have occurred and those changes are valid.
+
 These files can be updated using
 `set_reference.sh`, by calling e.g. `bash set_reference.sh latest-serialize $(pwd)/reference/circleci`.
 This script requires you give it an image tag (e.g. `latest-serialize`) and a
@@ -16,3 +17,4 @@ updating the reference md5sum!
 
 Test configurations are stored in `config` as fv3config yaml files. Adding new
 yaml files to this directory will add new regression tests automatically.
+
