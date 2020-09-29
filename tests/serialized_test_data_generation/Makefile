@@ -29,7 +29,7 @@ setup_rundir:
 	git rev-parse HEAD > $(RUNDIR_HOST)/fortran_sha.txt ; fi
 
 compile_fortran:
-	cd $(FORTRAN_DIR) && DOCKER_BUILDKIT=1 SERIALIZE_IMAGE=$(COMPILED_IMAGE) $(MAKE) build_serialize
+	cd $(FORTRAN_DIR) && DOCKER_BUILDKIT=1 SERIALIZE_IMAGE=$(COMPILED_IMAGE) $(MAKE) build_serialize_gt4py_dev
 
 run_model_make_data:
 	docker run --network host --rm -v $(RUNDIR_HOST):$(RUNDIR_CONTAINER) -v $(TEST_DATA_HOST):$(TEST_DATA_CONTAINER) -it $(COMPILED_IMAGE)-gt4pydev /rundir/submit_job.sh

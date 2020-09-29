@@ -128,7 +128,7 @@ The model can be compiled for the generation of serialize data which can be used
 To build a docker image for serialization use the command
 
 ```bash
-make build_serialize
+make build_serialize_gt4py_dev
 ```
 
 which will create an image where the source files have been pre-processed for serialization. Similarly to default compilation, you can interactively develop
@@ -138,7 +138,7 @@ for serialization using the command
 make enter_serialize
 ```
 
-The original FV3 sources will be mounted to `/FV3/original`. To compile the model for serialization inside the container, you can use the commands
+Make sure to set the GT4PY\_DEV flag for compilation. The original FV3 sources will be mounted to `/FV3/original`. To compile the model for serialization inside the container, you can use the commands
 
 ```bash
 cd /FV3

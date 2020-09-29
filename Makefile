@@ -35,7 +35,7 @@ ifeq ($(BUILD_FROM_INTERMEDIATE),y)
 	BUILD_ARGS += --build-arg FMS_IMAGE=$(FMS_IMAGE) --build-arg ESMF_IMAGE=$(ESMF_IMAGE) --build-arg SERIALBOX_IMAGE=$(SERIALBOX_IMAGE) --build-arg MPI_IMAGE=$(MPI_IMAGE)
 endif
 
-.PHONY: help build build_environment build_compiled build_serialize_check_md5 build_serialize build_debug build_coverage
+.PHONY: help build build_environment build_compiled build_serialize build_serialize_gt4py_dev build_debug build_coverage
 .PHONY: build_deps push_deps pull_deps enter enter_serialize test update_circleci_reference clean
 
 help:
@@ -55,12 +55,12 @@ build_compiled:  ## build production container image
 		-t $(COMPILED_IMAGE) \
 		--target $(COMPILE_TARGET) .
 
-build_serialize_check_md5:
+build_serialize:
 	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
 	COMPILED_IMAGE=$(SERIALIZE_IMAGE)-check-md5 \
 	$(MAKE) build_compiled
 
-build_serialize:  ## build container image for generating serialize data
+build_serialize_gt4py_dev:  ## build container image for generating serialize data
 	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
 	    COMPILED_IMAGE=$(SERIALIZE_IMAGE) \
 		COMPILE_OPTION="GT4PY_DEV=Y" \
