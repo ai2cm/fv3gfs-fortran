@@ -38,6 +38,10 @@ FFLAGS := $(INCLUDE) -fcray-pointer -ffree-line-length-none -fno-range-check -fP
 CPPDEFS += -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO -DUSE_GFSL63 -DGFS_PHYS 
 CPPDEFS += -DNEW_TAUCTMAX -DINTERNAL_FILE_NML -DNO_INLINE_POST
 
+ifeq ($(GT4PY_DEV),Y)
+CPPDEFS += -DGT4PY_DEV
+endif
+
 ifneq ($(HYDRO),Y)
 CPPDEFS += -DMOIST_CAPPA -DUSE_COND
 endif

@@ -23,13 +23,8 @@ HYDRO = N
 
 NEMSIOINC = -I$(NEMSIO_INC)
 
-NCEPLIBS_DIR = /opt/NCEPlibs/lib
-NEMSIO_LIB = $(NCEPLIBS_DIR)/libnemsio_d.a
-BACIO_LIB4 = $(NCEPLIBS_DIR)/libbacio_4.a
-SP_LIBd = $(NCEPLIBS_DIR)/libsp_v2.0.2_d.a
-W3EMC_LIBd = $(NCEPLIBS_DIR)/libw3emc_d.a
-W3NCO_LIBd = $(NCEPLIBS_DIR)/libw3nco_d.a
-NCEPLIBS = $(NEMSIO_LIB) $(BACIO_LIB4) $(SP_LIBd) $(W3EMC_LIBd) $(W3NCO_LIBd)
+NCEPLIBS_DIR ?= /opt/NCEPlibs/lib
+NCEPLIBS = -L$(NCEPLIBS_DIR) -lnemsio_d -lbacio_4 -lsp_v2.0.2_d -lw3emc_d -lw3nco_d
 
 ##############################################
 # Need to use at least GNU Make version 3.81 #
@@ -75,6 +70,7 @@ endif
 FFLAGS_OPT = -O2 
 FFLAGS_REPRO = -O2 -g -fbacktrace
 FFLAGS_DEBUG = -O0 -g -fbacktrace -fno-fast-math -ffree-line-length-none -fno-backslash -pedantic -Waliasing -Wampersand -Wline-truncation -Wsurprising -Wtabs -Wunderflow -fdump-core -ffpe-trap=invalid,zero,overflow -fbounds-check -finit-real=nan -finit-integer=9999999 -finit-logical=true -finit-character=35
+FFLAGS_GCOV = --coverage
 
 TRANSCENDENTALS := -fast-transcendentals
 FFLAGS_OPENMP = -fopenmp
@@ -86,11 +82,13 @@ CFLAGS_OPT = -O2
 CFLAGS_REPRO = -O2 
 CFLAGS_OPENMP = -fopenmp
 CFLAGS_DEBUG = -O0 -g 
+CFLAGS_GCOV = --coverage
 
 LDFLAGS := -L${ESMF_DIR}/lib/libO3/Linux.gfortran.64.mpiuni.default/ -L${FMS_DIR}/libFMS/.libs/
 LDFLAGS +=  -L$(SERIALBOX_DIR)/lib  -lSerialboxFortran -lSerialboxC -lSerialboxCore -L/lib/x86_64-linux-gnu -lpthread -lstdc++ -lstdc++fs
 LDFLAGS_OPENMP := -fopenmp
 LDFLAGS_VERBOSE := -Wl,-V,--verbose,-cref,-M
+LDFLAGS_GCOV = --coverage
 
 # start with blank LIBS
 LIBS :=
@@ -108,6 +106,12 @@ else
 CFLAGS += $(CFLAGS_OPT)
 FFLAGS += $(FFLAGS_OPT)
 FAST := $(TRANSCENDENTALS)
+endif
+
+ifneq ($(GCOV),)
+CFLAGS += $(CFLAGS_GCOV)
+FFLAGS += $(FFLAGS_GCOV)
+LDFLAGS += $(LDFLAGS_GCOV)
 endif
 
 ifneq ($(OPENMP),)
