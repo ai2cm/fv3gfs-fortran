@@ -3,7 +3,7 @@
 # Set variable to allow parallel building in the Docker image creation
 export DOCKER_BUILDKIT=1
 export BUILDKIT_PROGRESS=plain
-targets="build build_serialize"
+targets="build build_serialize_gt4py_dev"
 tags="hpc hpc-serialize"
 
 # Speed-up the compilations by using pre-built MPI, FMS, and ESMF images
