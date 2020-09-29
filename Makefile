@@ -39,7 +39,7 @@ endif
 .PHONY: build_deps push_deps pull_deps enter enter_serialize test update_circleci_reference clean
 
 help:
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 build: build_compiled ## build default container image (production)
 
@@ -60,7 +60,7 @@ build_serialize:
 	COMPILED_IMAGE=$(SERIALIZE_IMAGE) \
 	$(MAKE) build_compiled
 
-build_serialize_gt4py_dev: ## build container image for generating serialize data
+build_serialize_gt4py_dev: ## build container image for generating serialized data
 	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
 		COMPILED_IMAGE=$(SERIALIZE_IMAGE)-gt4pydev \
 		COMPILE_OPTION="GT4PY_DEV=Y" \
