@@ -57,12 +57,12 @@ build_compiled: ## build production container image
 
 build_serialize:
 	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
-	COMPILED_IMAGE=$(SERIALIZE_IMAGE)-check-md5 \
+	COMPILED_IMAGE=$(SERIALIZE_IMAGE) \
 	$(MAKE) build_compiled
 
 build_serialize_gt4py_dev: ## build container image for generating serialize data
 	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
-		COMPILED_IMAGE=$(SERIALIZE_IMAGE) \
+		COMPILED_IMAGE=$(SERIALIZE_IMAGE)-gt4pydev \
 		COMPILE_OPTION="GT4PY_DEV=Y" \
 		$(MAKE) build_compiled
 

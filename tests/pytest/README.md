@@ -7,8 +7,8 @@ tests will be present in `output`. These output files can be used to update the
 references, if non-bit-for-bit changes have occurred and those changes are valid.
 
 These files can be updated using
-`set_reference.sh`, by calling e.g. `bash set_reference.sh latest-serialize-check-md5 $(pwd)/reference/circleci`.
-This script requires you give it an image tag (e.g. `latest-serialize-check-md5`) and a
+`set_reference.sh`, by calling e.g. `bash set_reference.sh latest-serialize $(pwd)/reference/circleci`.
+This script requires you give it an image tag (e.g. `latest-serialize`) and a
 reference directory. The updated references need to be committed into version control.
 
 Considering whether a non-bit-for-bit change is valid is left to the user. If you

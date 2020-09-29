@@ -23,7 +23,7 @@ USE_LOCAL_ARCHIVE = True
 config_filenames = os.listdir(CONFIG_DIR)
 
 
-@pytest.fixture(params=["{version}", "{version}-serialize-check-md5"])
+@pytest.fixture(params=["{version}", "{version}-serialize"])
 def model_image_tag(request):
     return request.param.format(version=request.config.getoption("--image_version"))
 
