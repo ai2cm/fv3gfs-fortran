@@ -227,7 +227,5 @@ RUN apt-get update && apt-get install -y \
     ln -s /bin/pip3 /bin/pip && \
     pip3 install --no-cache-dir pyyaml
 
-COPY FV3/testsuite /FV3/testsuite
-
 # run model
 CMD ["bash", "/rundir/submit_job.sh"]
