@@ -97,6 +97,9 @@ RUN cd serialbox && \
     make test && \
     make install
 
+# setup link for backwards comatibility
+RUN ln -s /serialbox /serialbox2
+
 ## Build FMS
 ##---------------------------------------------------------------------------------
 FROM fv3gfs-environment AS fv3gfs-fms
