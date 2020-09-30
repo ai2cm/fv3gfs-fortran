@@ -29,7 +29,7 @@ setup_rundir:
 	git rev-parse HEAD > $(RUNDIR_HOST)/fortran_sha.txt ; fi
 
 run_model_make_data:
-	docker run --network host --rm -v $(RUNDIR_HOST):$(RUNDIR_CONTAINER) -v $(TEST_DATA_HOST):$(TEST_DATA_CONTAINER) -it $(COMPILED_IMAGE)-gt4pydev /rundir/submit_job.sh
+	docker run --network host --rm -v $(RUNDIR_HOST):$(RUNDIR_CONTAINER) -v $(TEST_DATA_HOST):$(TEST_DATA_CONTAINER) $(COMPILED_IMAGE)-gt4pydev /rundir/submit_job.sh
 
 pack_test_data:
 	if [ ! -d $(TEST_DATA_HOST)/$(TEST_DATA_TARFILE) ]; then \
