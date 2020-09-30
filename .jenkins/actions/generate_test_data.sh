@@ -45,9 +45,13 @@ T="$(date +%s)"
 # parse command line options (pass all of them to function)
 parseOptions $*
 
-### work
-echo ${BRANCH}
-echo ${FORCE_PUSH}
+# do the work
+echo "BRANCH=${BRANCH}"
+echo "FORCE_PUSH=${FORCE_PUSH}"
+echo "CONFIG_PATTERN=${CONFIG_PATTERN}"
+echo "FORTRAN_VERSION=${FORTRAN_VERSION}"
+cd tests/serialized_test_data_generation
+./make_all_datasets.sh
 
 # end timer and report time taken
 T="$(($(date +%s)-T))"
