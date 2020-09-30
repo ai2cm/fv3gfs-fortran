@@ -2750,10 +2750,9 @@ end subroutine atmos_data_type_chksum
       call atmosphere_column_moistening_implied_by_nudging(nb, im, Atm_block, column_moistening_implied_by_nudging)
       call subtract_column_moistening_from_precipitation( &
         column_moistening_implied_by_nudging, &
-        Atm_block%blksz(nb), &
+        im, &
         IPD_control%dtp, &
         IPD_Data(nb)%Sfcprop%tprcp)
-
       deallocate(column_moistening_implied_by_nudging)
     enddo
   end subroutine update_precipitation_for_qv_nudging

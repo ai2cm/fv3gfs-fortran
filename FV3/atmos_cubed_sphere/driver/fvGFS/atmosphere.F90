@@ -902,6 +902,7 @@ contains
 
  end subroutine atmosphere_control_data
 
+
 !>@brief The subroutine 'atmosphere_grid_ctr' is an API that returns the longitude and 
 !! latitude cell centers of the current MPI-rank.
  subroutine atmosphere_grid_ctr (lon, lat)
