@@ -14,6 +14,6 @@ cp $RUNDIR/fortran_sha.txt $TEST_DATA_DIR/
 cd $RUNDIR
 
 ulimit -s unlimited
-mpirun -np $NUM_RANKS --allow-run-as-root --mca btl_vader_single_copy_mechanism none --oversubscribe $RUNDIR/fv3.exe
+mpirun -np $NUM_RANKS $RUNDIR/fv3.exe
 
 exit 0
