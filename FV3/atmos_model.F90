@@ -79,7 +79,6 @@ use atmosphere_mod,     only: atmosphere_scalar_field_halo
 use atmosphere_mod,     only: atmosphere_get_bottom_layer
 use atmosphere_mod,     only: set_atmosphere_pelist
 use atmosphere_mod,     only: Atm, mytile
-use atmosphere_mod,     only: atmosphere_column_moistening_implied_by_nudging
 use block_control_mod,  only: block_control_type, define_blocks_packed
 use DYCORE_typedefs,    only: DYCORE_data_type, DYCORE_diag_type
 #ifdef CCPP
@@ -158,7 +157,6 @@ public Atm_block, IPD_Data, IPD_Control
      type(time_type)               :: Time_init          ! reference time.
      type(grid_box_type)           :: grid               ! hold grid information needed for 2nd order conservative flux exchange 
      type(IPD_diag_type), pointer, dimension(:) :: Diag
-     logical                       :: nudge              ! whether nudging to NCEP analysis is active in the dynamical core
  end type atmos_data_type
                                                          ! to calculate gradient on cubic sphere grid.
 !</PUBLICTYPE >
@@ -521,7 +519,7 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
 !-----------------------------------------------------------------------
 !--- before going any further check definitions for 'blocks'
 !-----------------------------------------------------------------------
-   call atmosphere_control_data (isc, iec, jsc, jec, nlev, p_hydro, hydro, tile_num, Atmos%nudge)
+   call atmosphere_control_data (isc, iec, jsc, jec, nlev, p_hydro, hydro, tile_num)
    call define_blocks_packed ('atmos_model', Atm_block, isc, iec, jsc, jec, nlev, &
                               blocksize, block_message)
    
@@ -862,11 +860,6 @@ subroutine update_atmos_model_state (Atmos)
     call mpp_clock_begin(fv3Clock)
     call mpp_clock_begin(updClock)
     call atmosphere_state_update (Atmos%Time, IPD_Data, IAU_Data, Atm_block, flip_vc)
-
-    if (Atmos%nudge) then
-      call update_precipitation_for_qv_nudging
-    endif
-
     call mpp_clock_end(updClock)
     call mpp_clock_end(fv3Clock)
 
@@ -2720,41 +2713,5 @@ end subroutine atmos_data_type_chksum
 
   end subroutine addLsmask2grid
 !------------------------------------------------------------------------------
-
-  ! If nudging the specific humidity to NCEP analysis, subtract the column-integrated
-  ! specific humidity nudging tendency from the precipitation felt by the surface.
-  subroutine subtract_column_moistening_from_precipitation(moistening, im, timestep, precipitation)
-    integer, intent(in) :: im
-    real(kind=IPD_kind_phys), intent(in) :: timestep
-    real(kind=IPD_kind_phys), intent(in) :: moistening(1:im)
-    real(kind=IPD_kind_phys), intent(inout) :: precipitation(1:im)
-    real(kind=IPD_kind_phys) :: m_per_mm
-
-    m_per_mm = 1.0 / 1000.0
-
-    precipitation = precipitation - moistening * timestep * m_per_mm
-    where (precipitation .lt. 0.0)
-       precipitation = 0.0
-    endwhere
-  end subroutine subtract_column_moistening_from_precipitation
-
-  subroutine update_precipitation_for_qv_nudging
-    real(kind=IPD_kind_phys), allocatable :: column_moistening_implied_by_nudging(:)
-    integer :: nblks, nb, im
-
-    nblks = Atm_block%nblks
-
-    do nb = 1, Atm_block%nblks
-      im = Atm_block%blksz(nb)
-      allocate(column_moistening_implied_by_nudging(1:im))
-      call atmosphere_column_moistening_implied_by_nudging(nb, im, Atm_block, column_moistening_implied_by_nudging)
-      call subtract_column_moistening_from_precipitation( &
-        column_moistening_implied_by_nudging, &
-        im, &
-        IPD_control%dtp, &
-        IPD_Data(nb)%Sfcprop%tprcp)
-      deallocate(column_moistening_implied_by_nudging)
-    enddo
-  end subroutine update_precipitation_for_qv_nudging
 
 end module atmos_model_mod

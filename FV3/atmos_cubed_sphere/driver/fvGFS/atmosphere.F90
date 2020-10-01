@@ -223,8 +223,6 @@ public :: atmosphere_resolution,   atmosphere_grid_bdry,         &
 !--- physics/radiation data exchange routines
 public :: atmos_phys_driver_statein
 
-public :: atmosphere_column_moistening_implied_by_nudging
-
 !-----------------------------------------------------------------------
 ! version number of this module
 ! Include variable "version" to be written to log file.
@@ -885,9 +883,9 @@ contains
  end subroutine atmosphere_pref
 
 
- subroutine atmosphere_control_data (i1, i2, j1, j2, kt, p_hydro, hydro, tile_num, nudge)
+ subroutine atmosphere_control_data (i1, i2, j1, j2, kt, p_hydro, hydro, tile_num)
    integer, intent(out)           :: i1, i2, j1, j2, kt
-   logical, intent(out), optional :: p_hydro, hydro, nudge
+   logical, intent(out), optional :: p_hydro, hydro
    integer, intent(out), optional :: tile_num
    i1 = Atm(mytile)%bd%isc
    i2 = Atm(mytile)%bd%iec
@@ -898,7 +896,6 @@ contains
    if (present(tile_num)) tile_num = Atm(mytile)%tile
    if (present(p_hydro)) p_hydro   = Atm(mytile)%flagstruct%phys_hydrostatic
    if (present(  hydro))   hydro   = Atm(mytile)%flagstruct%hydrostatic
-   if (present (nudge))    nudge   = Atm(mytile)%flagstruct%nudge
 
  end subroutine atmosphere_control_data
 
@@ -1470,7 +1467,7 @@ contains
 !! and compute a consistent prognostic state.
  subroutine atmosphere_state_update (Time, IPD_Data, IAU_Data, Atm_block, flip_vc)
    type(time_type),              intent(in) :: Time
-   type(IPD_data_type),          intent(in) :: IPD_Data(:)
+   type(IPD_data_type),          intent(inout) :: IPD_Data(:)
    type(IAU_external_data_type), intent(in) :: IAU_Data
    type(block_control_type),     intent(in) :: Atm_block
    logical,                      intent(in) :: flip_vc
@@ -1666,6 +1663,8 @@ contains
 
        call timing_off('FV_UPDATE_PHYS')
    call mpp_clock_end (id_dynam)
+
+   if (Atm(n)%flagstruct%nudge) call update_physics_precipitation_for_qv_nudging(Atm_block, IPD_Data)
 
 !--- nesting update after updating atmospheric variables with
 !--- physics tendencies
@@ -2220,5 +2219,42 @@ contains
       column_moistening_implied_by_nudging(ix) = _DBL_(_RL_(Atm(mytile)%column_moistening_implied_by_nudging(i,j)))
    enddo
  end subroutine atmosphere_column_moistening_implied_by_nudging
+
+! If nudging the specific humidity to NCEP analysis, subtract the column-integrated
+! specific humidity nudging tendency from the precipitation felt by the surface.
+ subroutine subtract_column_moistening_from_precipitation(moistening, im, timestep, precipitation)
+   integer, intent(in) :: im
+   real(kind=kind_phys), intent(in) :: timestep
+   real(kind=kind_phys), intent(in) :: moistening(1:im)
+   real(kind=kind_phys), intent(inout) :: precipitation(1:im)
+   real(kind=kind_phys) :: m_per_mm
+
+   m_per_mm = 1.0 / 1000.0
+
+   precipitation = precipitation - moistening * timestep * m_per_mm
+   where (precipitation .lt. 0.0)
+      precipitation = 0.0
+   endwhere
+ end subroutine subtract_column_moistening_from_precipitation
+
+ subroutine update_physics_precipitation_for_qv_nudging(Atm_block, IPD_Data)
+   type (block_control_type), intent(in) :: Atm_block
+   type(IPD_data_type), intent(inout) :: IPD_Data(:)
+
+   real(kind=kind_phys), allocatable :: column_moistening_implied_by_nudging(:)
+   integer :: nb, im
+
+   do nb = 1, Atm_block%nblks
+     im = Atm_block%blksz(nb)
+     allocate(column_moistening_implied_by_nudging(1:im))
+     call atmosphere_column_moistening_implied_by_nudging(nb, im, Atm_block, column_moistening_implied_by_nudging)
+     call subtract_column_moistening_from_precipitation( &
+       column_moistening_implied_by_nudging, &
+       im, &
+       dt_atmos, &
+       IPD_Data(nb)%Sfcprop%tprcp)
+     deallocate(column_moistening_implied_by_nudging)
+   enddo
+ end subroutine update_physics_precipitation_for_qv_nudging
 
 end module atmosphere_mod
