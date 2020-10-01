@@ -45,11 +45,25 @@ T="$(date +%s)"
 # parse command line options (pass all of them to function)
 parseOptions $*
 
+# echo configuration parameters
+echo "=== the following setup is being used ==="
+echo "BRANCH:          ${BRANCH}"
+if [ -n "${CONFIG_PATTERN}" ] ; then
+    echo "CONFIG_PATTERN:  ${CONFIG_PATTERN}"
+else
+    echo "CONFIG_PATTERN: (default)"
+    unset CONFIG_PATTERN
+fi
+if [ -n "${FORTRAN_VERSION}" ] ; then
+    echo "FORTRAN_VERSION: ${FORTRAN_VERSION}"
+else
+    echo "FORTRAN_VERSION: (default)"
+    unset FORTRAN_VERSION
+fi
+echo "FORCE_PUSH:      ${FORCE_PUSH}"
+echo "=== the following setup is being used ==="
+
 # do the work
-echo "BRANCH=${BRANCH}"
-echo "FORCE_PUSH=${FORCE_PUSH}"
-echo "CONFIG_PATTERN=${CONFIG_PATTERN}"
-echo "FORTRAN_VERSION=${FORTRAN_VERSION}"
 cd tests/serialized_test_data_generation
 ./make_all_datasets.sh
 
