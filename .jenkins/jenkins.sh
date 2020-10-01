@@ -33,7 +33,7 @@ action="$1"
 optarg="$2"
 
 # get latest version of buildenv
-git submodule update --init
+git submodule update --init --recursive
 
 # setup module environment and default queue
 . ${envloc}/env/machineEnvironment.sh
