@@ -74,6 +74,9 @@ pip install -r requirements.txt
 # configure Docker builds
 export DOCKER_BUILDKIT=1
 export BUILD_ARGS="-q"
+export BUILD_FROM_INTERMEDIATE=y
+export BUILDKIT_PROGRESS=plain
+make pull_deps
 
 # do the work
 echo ">> Running ./make_all_datasets.sh in ./tests/serialize_test_data_generation"
