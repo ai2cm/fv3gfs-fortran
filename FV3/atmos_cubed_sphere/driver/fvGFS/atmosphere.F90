@@ -2238,7 +2238,7 @@ contains
  end subroutine subtract_column_moistening_from_precipitation
 
  subroutine update_physics_precipitation_for_qv_nudging(Atm_block, IPD_Data)
-   type (block_control_type), intent(in) :: Atm_block
+   type(block_control_type), intent(in) :: Atm_block
    type(IPD_data_type), intent(inout) :: IPD_Data(:)
 
    real(kind=kind_phys), allocatable :: column_moistening_implied_by_nudging(:)
