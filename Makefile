@@ -80,10 +80,10 @@ push_deps: ## push container images of dependencies to GCP
 	docker push $(SERIALBOX_IMAGE)
 
 pull_deps: ## pull container images of dependnecies from GCP (for faster builds)
-	docker pull $(MPI_IMAGE)
-	docker pull $(FMS_IMAGE)
-	docker pull $(ESMF_IMAGE)
-	docker pull $(SERIALBOX_IMAGE)
+	docker pull -q $(MPI_IMAGE)
+	docker pull -q $(FMS_IMAGE)
+	docker pull -q $(ESMF_IMAGE)
+	docker pull -q $(SERIALBOX_IMAGE)
 
 enter: ## run and enter production container for development
 	docker run --rm \
