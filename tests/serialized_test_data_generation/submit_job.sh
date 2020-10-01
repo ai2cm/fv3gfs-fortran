@@ -19,7 +19,7 @@ NUM_RANKS=`python ${RUNDIR}/count_ranks.py $RUNDIR/fv3config.yml`
 ulimit -s unlimited
 echo ">>> Running model, inspect stdout.out / stderr.out in rundir for details"
 mpirun -l -np $NUM_RANKS $RUNDIR/fv3.exe 2>$RUNDIR/stderr.out 1>$RUNDIR/stdout.out
-echo ">>> Successfull"
+echo ">>> Success"
 
 # copy artefacts to test_data directory
 cp $RUNDIR/input.nml $TEST_DATA_DIR/

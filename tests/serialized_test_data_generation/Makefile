@@ -47,7 +47,7 @@ setup_rundir: ## create run directory on local host using fv3config
 		exit 1 ; \
 	fi
 	@if [ -d $(RUN_DIR_HOST) ] ; then \
-		echo "Error: Run directory $(RUN_DIR_HOST) already exists. Run make clean?." ; \
+		echo "Error: Run directory $(RUN_DIR_HOST) already exists. Run make clean?" ; \
 		exit 1 ; \
 	fi
 	write_run_directory $(CONFIGURATION_DIR)/$(CONFIGURATION).yml $(RUN_DIR_HOST)
@@ -60,6 +60,10 @@ run_model: ## run model using Docker image to generate serialized data
 		echo "Error: Docker image $(COMPILE_IMAGE) does not exist. Run make build_model?" ; \
 		exit 1 ; \
 	fi
+	@if [ -d $(DATA_DIR_HOST) ] ; then \
+		echo "Error: Data directory $(DATA_DIR_HOST) already exists. Run make clean?" ; \
+		exit 1 ; \
+	fi
 	mkdir -p $(DATA_DIR_HOST)
 	docker run -e USER_ID_HOST=$(USER_ID_HOST) -e GROUP_ID_HOST=$(GROUP_ID_HOST) \
 		--network host --rm -v $(RUN_DIR_HOST):$(RUN_DIR_CONTAINER) \
@@ -67,6 +71,7 @@ run_model: ## run model using Docker image to generate serialized data
 		/rundir/submit_job.sh
 	cd $(DATA_DIR_HOST) && \
 		md5sum * > md5sums.txt
+	./check_data_dir.sh $(DATA_DIR_HOST)
 
 pack_data: ## pack *.dat files into a *.tar.gz and delete them
 	@if [ -f $(TARFILE_HOST) ] ; then \
