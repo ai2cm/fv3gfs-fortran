@@ -28,7 +28,7 @@ export SCRATCH_DIR=${PWD}
 
 
 # Run c12 regression test on each Docker image
-declare -a tags=("gnu9-mpich314-nocuda" "gnu9-mpich314-nocuda-serialize")
+declare -a tags=("gnu9-mpich314-nocuda" "gnu9-mpich314-nocuda-serialize-gt4pydev")
 for tag in ${tags}; do
     # Copy archived version of the Docker image from a Google Storage Bucket
     tar_file=fv3gfs-compiled-${tag}.tar
