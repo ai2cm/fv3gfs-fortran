@@ -72,7 +72,7 @@ pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
 
 # configure Docker builds
-export DOCKER_BUIDKIT=1
+export DOCKER_BUILDKIT=1
 export BUILD_ARGS="-q"
 
 # do the work
