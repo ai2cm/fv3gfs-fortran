@@ -14,7 +14,7 @@ CONFIG_DIR=configs
 
 # use default pattern if no environment varaible is set
 if [ -z "${CONFIG_PATTERN}" ] ; then
-    CONFIG_PATTERN=*.yml
+    CONFIG_PATTERN="*.yml"
 fi
 
 # unset FORTRAN_VERSION, if empty
@@ -35,6 +35,7 @@ for config in ${CONFIGS} ; do
   echo "====================================================="
   echo "Generating data for $config_file ..."
   CONFIGURATION=$config_file make generate_and_push_data
+  echo "====================================================="
   echo ""
 done
 
