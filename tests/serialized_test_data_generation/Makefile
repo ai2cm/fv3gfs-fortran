@@ -1,13 +1,14 @@
 SHELL = /bin/bash
 
-# select configuration file (has to be in ./configs)
-CONFIGURATION ?= c12_6ranks_standard
+# select experiment directory and file
+EXPERIMENT_DIR = $(CWD)/configs
+EXPERIMENT ?= c12_6ranks_standard
 
 # version number or tag (determines image tag and destination directory in cloud storage)
 # -convention: <tag>-<some large conceptual version change>.<serialization statement change>.<hotfix>
 # -version number should be increased when serialization data is expected to change
-# -omit tag for "operational" serialization data, use tag for experimental serialization data
-FORTRAN_VERSION ?= jenkins-7.1.1
+# -omit tag (e.g. 7.1.1) for "operational" serialization data, use tag for experimental serialization data
+FORTRAN_VERSION ?= 7.1.1
 
 # docker container image setup (used for running model, see ../../README.md)
 GCR_URL = us.gcr.io/vcm-ml
@@ -18,9 +19,8 @@ DATA_DIR_CONTAINER = $(RUN_DIR_CONTAINER)/test_data
 # local host setup
 CWD=$(shell pwd)
 FORTRAN_DIR = $(CWD)/../../
-CONFIGURATION_DIR = $(CWD)/configs
-RUN_DIR_HOST = $(CWD)/rundir/$(CONFIGURATION)
-DATA_DIR_HOST = $(CWD)/data/$(CONFIGURATION)
+RUN_DIR_HOST = $(CWD)/rundir/$(EXPERIMENT)
+DATA_DIR_HOST = $(CWD)/data/$(EXPERIMENT)
 TARFILE_HOST = $(DATA_DIR_HOST)/dat_files.tar.gz
 TARFILE_INDEX_HOST = $(DATA_DIR_HOST)/tarfile_index.txt
 USER_ID_HOST = $(shell id -u)
@@ -28,7 +28,7 @@ GROUP_ID_HOST = $(shell id -g)
 
 # cloud storage location for pushing generated data
 STORAGE_BUCKET = gs://vcm-fv3gfs-serialized-regression-data
-DATA_DIR_BUCKET = $(STORAGE_BUCKET)/$(FORTRAN_VERSION)/$(CONFIGURATION)
+DATA_DIR_BUCKET = $(STORAGE_BUCKET)/$(FORTRAN_VERSION)/$(EXPERIMENT)
 
 help:
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -49,7 +49,7 @@ setup_rundir: ## create run directory on local host using fv3config
 		echo "Error: Run directory $(RUN_DIR_HOST) already exists. Run make clean?" ; \
 		exit 1 ; \
 	fi
-	write_run_directory $(CONFIGURATION_DIR)/$(CONFIGURATION).yml $(RUN_DIR_HOST)
+	write_run_directory $(EXPERIMENT_DIR)/$(EXPERIMENT).yml $(RUN_DIR_HOST)
 	cp submit_job.sh $(RUN_DIR_HOST)
 	cp count_ranks.py $(RUN_DIR_HOST)
 	git rev-parse HEAD > $(RUN_DIR_HOST)/fortran_sha.txt
@@ -122,7 +122,7 @@ push_data: ## push packed data to cloud storage bucket
 	fi
 	gsutil -m rsync -d -r $(DATA_DIR_HOST) $(DATA_DIR_BUCKET)
 
-clean: ## remove artifacts for current configuration
+clean: ## remove artifacts for current experiment
 	rm -rf $(DATA_DIR_HOST)
 	rm -rf $(RUN_DIR_HOST)
 
@@ -130,7 +130,7 @@ distclean: ## remove all artifacts
 	rm -rf $(CWD)/rundir
 	rm -rf $(CWD)/data
 
-generate_data: build_model setup_rundir run_model ## build, setup, and run for a specific configuration
+generate_data: build_model setup_rundir run_model ## build, setup, and run for a specific experiment
 
 .PHONY: build_model setup_rundir run_model pack_data \
 	unpack_data push_data generate_data validate_data \

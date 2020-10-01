@@ -1,20 +1,22 @@
 #!/bin/bash
 
 # This is a utility script which allows to generate serialized data for multiple
-# configuration files matching a certain search pattern.
+# experiment files matching a certain search pattern.
 
 # Environment variables:
-# CONFIG_PATTERN  search pattern for config files (default: *.yml)
+# EXPERIMENT_PATTERN  search pattern for experiment files (default: *.yml)
+# FORTRAN_VERSION     override value in Makefile (see docu there)
+# VALIDATE_ONLY       only compare data against version stored in cloud (instead of pushing)
 
 # stop on all errors
 set -e
 
-# directory containing the configuration files
-CONFIG_DIR=configs
+# directory containing the experiment files
+EXPERIMENT_DIR=configs
 
 # use default pattern if no environment varaible is set
-if [ -z "${CONFIG_PATTERN}" ] ; then
-    CONFIG_PATTERN="*.yml"
+if [ -z "${EXPERIMENT_PATTERN}" ] ; then
+    EXPERIMENT_PATTERN="*.yml"
 fi
 
 # unset FORTRAN_VERSION, if empty
@@ -31,22 +33,22 @@ else
     set -e
 fi
 
-# generate list of configurations (and abort if none found)
-CONFIGS=${CONFIG_DIR}/${CONFIG_PATTERN}
-if [ -z "${CONFIGS}" ] ; then
-    echo "Warning: No matching configuration files for pattern ${CONFIG_PATTERN} in ${CONFIG_DIR} found."
+# generate list of experiments (and abort if none found)
+EXPERIMENTS=${EXPERIMENT_DIR}/${EXPERIMENT_PATTERN}
+if [ -z "${EXPERIMENTS}" ] ; then
+    echo "Warning: No matching experiment files for pattern ${EXPERIMENT_PATTERN} in ${EXPERIMENT_DIR} found."
     exit 1
 fi
 
-# loop over configurations
-for config in ${CONFIGS} ; do
-  config=`basename $config .yml`
+# loop over experiments
+for exp_file in ${EXPERIMENTS} ; do
+  exp_name=`basename ${exp_file} .yml`
   echo "====================================================="
-  echo "Generating data for $config ..."
+  echo "Generating data for ${exp_name} ..."
   if [ "${VALIDATE_ONLY}" == "true" ] ; then
-      CONFIGURATION=$config make generate_data validate_data
+      EXPERIMENT=${exp_name} make generate_data validate_data
   else
-      CONFIGURATION=$config make generate_data pack_data push_data
+      EXPERIMENT=${exp_name} make generate_data pack_data push_data
   fi
   echo "====================================================="
   echo ""

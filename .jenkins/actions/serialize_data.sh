@@ -46,14 +46,14 @@ T="$(date +%s)"
 # parse command line options (pass all of them to function)
 parseOptions $*
 
-# echo configuration parameters
+# echo parameters
 echo "=== the following setup is being used ==="
 echo "BRANCH:          ${BRANCH}"
-if [ -n "${CONFIG_PATTERN}" ] ; then
-    echo "CONFIG_PATTERN:  ${CONFIG_PATTERN}"
+if [ -n "${EXPERIMENT_PATTERN}" ] ; then
+    echo "EXPERIMENT_PATTERN:  ${EXPERIMENT_PATTERN}"
 else
-    echo "CONFIG_PATTERN: (default)"
-    unset CONFIG_PATTERN
+    echo "EXPERIMENT_PATTERN: (default)"
+    unset EXPERIMENT_PATTERN
 fi
 if [ -n "${FORTRAN_VERSION}" ] ; then
     echo "FORTRAN_VERSION: ${FORTRAN_VERSION}"
