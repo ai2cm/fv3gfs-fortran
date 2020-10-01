@@ -40,8 +40,8 @@ you increase the `FORTRAN_VERSION` number in the `Makefile`. You can also use `e
 4. Use `export CONFIGURATION=<configuration>` to set the configuration file you want to work with. The file `configs/<configuration>.yml` must exist for the following steps to work.
 
 5. You can now simply type `make generate_and_push_data` which will run the model, ensure that the model run has been successful and data has been generated, pack the data and push the data to the cloud storage bucket. Alternatively, you can execute the individual steps...
-  - Type `make setup_rundir` to creates a run directory from the configuration file using `fv3config` which contains all input data to execute a FV3GFS model run.
-  - Type `make run_model` to run the Docker container with the model using the run directory you have just created. A `data/<configuration>` directory will be populated with the serialized data and some diagnostic output.
-  - Type `make pack_data` to pack the `*.dat` files into a single `*.tar.gz` to reduce the number of files that have to be stored on the cloud.
-  - Type `make push_data` to push the serialized data to the cloud storage bucket. If the bucket already exists, the push will fail. You either forgot to increase the `FORTRAN_VERSION` number. In case you are sure you want to overwrite existing data on the cloud, you can `export FORCE_PUSH=true` and try again.
+   - Type `make setup_rundir` to creates a run directory from the configuration file using `fv3config` which contains all input data to execute a FV3GFS model run.
+   - Type `make run_model` to run the Docker container with the model using the run directory you have just created. A `data/<configuration>` directory will be populated with the serialized data and some diagnostic output.
+   - Type `make pack_data` to pack the `*.dat` files into a single `*.tar.gz` to reduce the number of files that have to be stored on the cloud.
+   - Type `make push_data` to push the serialized data to the cloud storage bucket. If the bucket already exists, the push will fail. You either forgot to increase the `FORTRAN_VERSION` number. In case you are sure you want to overwrite existing data on the cloud, you can `export FORCE_PUSH=true` and try again.
 
