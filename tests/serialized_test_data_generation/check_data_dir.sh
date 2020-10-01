@@ -38,7 +38,10 @@ if [ `grep "WARNING: SERIALIZATION IS ON" ${dir}/stdout.out | wc -l` -lt 1 ] ; t
 fi
 
 # make sure GT4PY_DEV was switched on
-# TODO
+if ! grep "WARNING: RUNNING WITH GT4PY_DEV ON" ${dir}/stdout.out &> /dev/null ; then
+    echo "Error: model run without GT4PY_DEV=Y activated"
+    exit 1
+fi
 
 # make sure reasonable number of *.json files exists and they are all > 0 bytes
 if [ `/bin/ls ${dir}/*.json | wc -l` -lt 2 ] ; then

@@ -69,7 +69,7 @@ run_model: ## run model using Docker image to generate serialized data
 		-v $(DATA_DIR_HOST):$(DATA_DIR_CONTAINER) $(COMPILED_IMAGE) \
 		/rundir/submit_job.sh
 	cd $(DATA_DIR_HOST) && \
-		md5sum * > md5sums.txt
+		md5sum `/bin/ls -1d * | egrep -v '^logfile.000000.out$$|^stdout.out$$|^stderr.out$$|^env.out$$'` > md5sums.txt
 	./check_data_dir.sh $(DATA_DIR_HOST)
 
 pack_data: ## pack *.dat files into a *.tar.gz and delete them
@@ -89,6 +89,23 @@ unpack_data: ## unack *.dat files from a *.tar.gz and remove tar-file
 	cd $(DATA_DIR_HOST) && \
 		tar -xvf $(TARFILE_HOST) && \
 		rm -f $(TARFILE_HOST) $(TARFILE_INDEX_HOST)  ; \
+
+validate_data: ## compare generated data with data stored on cloud storage bucket
+	@if [ ! gsutil ls $(DATA_DIR_BUCKET) &> /dev/null ] ; then \
+		echo "Error: version $(FORTRAN_VERSION) of data does not exist on cloud storage $(DATA_DIR_BUCKET)." ; \
+		exit 1 ; \
+	fi
+	@if [ ! gsutil ls $(DATA_DIR_BUCKET)/md5sums.txt &> /dev/null ] ; then \
+		echo "Error: cannot find md5sums.txt on cloud storage $(DATA_DIR_BUCKET)." ; \
+		exit 1 ; \
+	fi
+	@if [ -f $(TARFILE_HOST) ] ; then \
+		echo "Error: Tar file $(TARFILE_HOST) exists. You need to unpack for validation." ; \
+		exit 1 ; \
+	fi
+	gsutil cp $(DATA_DIR_BUCKET)/md5sums.txt /tmp/md5sums.txt
+	cd $(DATA_DIR_HOST) && \
+		md5sum --check --quiet /tmp/md5sums.txt
 
 push_data: ## push packed data to cloud storage bucket
 	@if compgen -G "$(DATA_DIR_HOST)/*.dat" &> /dev/null ; then \
@@ -115,8 +132,7 @@ distclean: ## remove all artifacts
 
 generate_data: build_model setup_rundir run_model ## build, setup, and run for a specific configuration
 
-generate_and_push_data: generate_data pack_data push_data ## build, setup, run, pack and push for a specific configuration
-
 .PHONY: build_model setup_rundir run_model pack_data \
-	unpack_data push_data generate_and_push_data
+	unpack_data push_data generate_data validate_data \
+	pack_and_push_data
 

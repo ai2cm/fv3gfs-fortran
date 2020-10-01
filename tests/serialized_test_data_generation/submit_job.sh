@@ -31,6 +31,8 @@ if [ $? -ne 0 ] ; then
     cat $RUNDIR/stderr.out
     echo ">>>>> stdout:"
     cat $RUNDIR/stdout.out
+    echo ">>>>> env:"
+    cat $RUNDIR/env.out
     echo ">>>>> Aborting"
     exit 1
 else
