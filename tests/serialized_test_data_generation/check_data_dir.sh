@@ -51,6 +51,8 @@ if [ `wc --bytes ${dir}/*.json | sort -n | head -1 | awk '{print $1}'` -eq 0 ] ;
 fi
 
 # make sure that all *.json files exists from all ranks
+# explanation: <name>_rank0.json | extract  <name> | sort names | count occurrences of different <name>'s 
+#                   | extract counts | sort counts | count occurrences of different counts | make sure there is only exactly 1
 if [ `/bin/ls ${dir}/*.json | sed 's/_.*//g' | sort | uniq -c | awk '{print $1}' | sort | uniq -c | wc -l` -ne 1 ] ; then
   echo "Error: there seem to be an inconsistent number of *.json files"
   exit 1
@@ -67,7 +69,9 @@ if [ `wc --bytes ${dir}/*.dat | sort -n | head -1 | awk '{print $1}'` -eq 0 ] ; 
 fi
 
 # make sure that all fields are serialized from all ranks
-if [ `/bin/ls ${dir}/*.dat | sed 's/.*rank[0-9]*_//g' | sed 's/\.dat//g' | sort | uniq -c | awk '{print $1}' | sort -n | uniq -c | wc -l` -ne 1 ] ; then
+# explanation: Generator_rank<XXX>_<field>.dat | extract <field>.dat | sort fields | count occurrences of differnt <fields>'s
+#                   | extract counts | sort counts | count occurrences of different counts | make sure thre is only exactly 1
+if [ `/bin/ls ${dir}/*.dat | sed 's/.*rank[0-9]*_//g' | sort | uniq -c | awk '{print $1}' | sort -n | uniq -c | wc -l` -ne 1 ] ; then
     echo "Error: there seem to be different number of *.dat files for different data fields"
     exit 1
 fi
