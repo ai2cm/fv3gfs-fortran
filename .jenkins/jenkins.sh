@@ -21,7 +21,8 @@
 # BUILD_URL          Full URL of this build, like http://server:port/jenkins/job/foo/15/
 # JOB_URL            Full URL of this job, like http://server:port/jenkins/job/foo/
 
-set -x +e
+# stop on all errors
+set +e
 
 # get root directory of where jenkins.sh is sitting
 root=`dirname $0`
@@ -40,25 +41,13 @@ git submodule update --init
 # load machine dependent environment
 . ${envloc}/env/env.${host}.sh
 
-# load scheduler tools (provides run_command)
-. ${envloc}/env/schedulerTools.sh
-
-set -e
-
 # check if action script exists
 script="${root}/actions/${action}.sh"
 test -f "${script}" || exitError 1301 ${LINENO} "cannot find script ${script}"
 
-# set up virtual env, if not already set up
-python3 -m venv venv
-. ./venv/bin/activate
-pip3 install --upgrade pip setuptools wheel
-pip3 install -r requirements.txt
-
-set +e
-
-run_command ${script} ${optarg}
-
+# run the action script
+echo "### Running ${script} ${optarg}"
+${script} ${optarg}
 if [ $? -ne 0 ] ; then
   exitError 1510 ${LINENO} "problem while executing script ${script}"
 fi
