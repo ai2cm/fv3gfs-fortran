@@ -11,7 +11,7 @@ FORTRAN_VERSION ?= jenkins-7.1.1
 
 # docker container image setup (used for running model, see ../../README.md)
 GCR_URL = us.gcr.io/vcm-ml
-COMPILED_IMAGE = $(GCR_URL)/fv3gfs-compiled:$(FORTRAN_VERSION)-serialize
+COMPILED_IMAGE = $(GCR_URL)/fv3gfs-compiled:$(FORTRAN_VERSION)-serialize-gt4pydev
 RUN_DIR_CONTAINER = /rundir
 DATA_DIR_CONTAINER = $(RUN_DIR_CONTAINER)/test_data
 
@@ -35,7 +35,11 @@ help:
 
 build_model: ## build Docker image with compiled model code for serialization
 	cd $(FORTRAN_DIR) && \
-		DOCKER_BUILDKIT=1 SERIALIZE_IMAGE=$(COMPILED_IMAGE) $(MAKE) -C $(FORTRAN_DIR) build_serialize_gt4py_dev
+		$(MAKE) pull_deps && \
+		        BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
+			COMPILED_IMAGE=$(COMPILED_IMAGE) \
+			COMPILE_OPTION="GT4PY_DEV=Y" \
+			$(MAKE) build_compiled
 
 setup_rundir: ## create run directory on local host using fv3config
 	@if ! command -v write_run_directory ; then \
@@ -52,14 +56,14 @@ setup_rundir: ## create run directory on local host using fv3config
 	git rev-parse HEAD > $(RUN_DIR_HOST)/fortran_sha.txt
 
 run_model: ## run model using Docker image to generate serialized data
-	@if [ ! "`docker image ls $(COMPILED_IMAGE)-gt4pydev | wc -l`" -eq 2 ] ; then \
+	@if [ ! "`docker image ls $(COMPILED_IMAGE) | wc -l`" -eq 2 ] ; then \
 		echo "Error: Docker image $(COMPILE_IMAGE) does not exist. Run make build_model?" ; \
 		exit 1 ; \
 	fi
 	mkdir -p $(DATA_DIR_HOST)
 	docker run -e USER_ID_HOST=$(USER_ID_HOST) -e GROUP_ID_HOST=$(GROUP_ID_HOST) \
 		--network host --rm -v $(RUN_DIR_HOST):$(RUN_DIR_CONTAINER) \
-		-v $(DATA_DIR_HOST):$(DATA_DIR_CONTAINER) $(COMPILED_IMAGE)-gt4pydev \
+		-v $(DATA_DIR_HOST):$(DATA_DIR_CONTAINER) $(COMPILED_IMAGE) \
 		/rundir/submit_job.sh
 	cd $(DATA_DIR_HOST) && \
 		md5sum * > md5sums.txt
