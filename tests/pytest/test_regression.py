@@ -122,7 +122,7 @@ def run_model_sarus(rundir, model_image):
     env = os.environ.copy()
     env["FV3_CONTAINER"] = model_image
     env["SCRATCH_DIR"] = rundir
-    subprocess.check_call(["sbatch", "--wait", "job_jenkins_sarus"], env=env)
+    subprocess.check_call(["sbatch", "--wait", "job_jenkins_sarus"], env=env, cwd=rundir)
 
 
 def check_md5sum(run_dir, md5sum_filename):

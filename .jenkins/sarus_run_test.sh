@@ -28,7 +28,7 @@ for tag in ${tags}; do
     module unload sarus
 done
 # Launch SLURM job
-pytest --image_runner=sarus --image=fv3gfs-compiled --image_tag=hpc
+pytest --image_runner=sarus --image=fv3gfs-compiled --image_tag=hpc tests/pytest
 
 # Clean up working directory
 rm *.nc
