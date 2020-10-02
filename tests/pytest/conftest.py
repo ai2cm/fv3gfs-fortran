@@ -3,7 +3,7 @@ DEFAULT_MODEL_IMAGE = 'us.gcr.io/vcm-ml/fv3gfs-compiled'
 
 def pytest_addoption(parser):
     parser.addoption(
-        "--refdir", action="store", default="reference/docker", help="directory for reference files"
+        "--refdir", action="store", default="reference/circleci", help="directory for reference files"
     )
     parser.addoption(
         "--image_version", action="store", default="latest", help="The image version to run"

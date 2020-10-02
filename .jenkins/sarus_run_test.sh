@@ -2,6 +2,8 @@
 set -e
 set -x
 
+tags="hpc hpc-serialize"
+
 # Set up the compute node environment
 module load daint-gpu
 module add /project/d107/install/modulefiles/
@@ -29,8 +31,4 @@ for tag in ${tags}; do
 done
 
 # Launch SLURM job
-pytest --image_runner=sarus --image=fv3gfs-compiled --image_version=hpc tests/pytest
-
-# Clean up working directory
-rm *.nc
-rm RESTART/*.nc
+pytest --image_runner=sarus --image=fv3gfs-compiled --image_version=hpc --refdir=reference/circleci tests/pytest
