@@ -14,16 +14,22 @@ gcloud auth configure-docker
 . /project/d107/install/venv/sn_1.0/bin/activate
 pip install -r requirements.txt
 
-# Copy archived version of the Docker image from a Google Storage Bucket
-tar_file=fv3gfs-compiled-${tag}.tar
-gsutil copy gs://vcm-jenkins/${tar_file}.gz .
-gunzip ${tar_file}.gz
-
-# Load archive Docker image into the local Sarus container registry
-export FV3_CONTAINER=fv3gfs-compiled:${tag}
-module load sarus
-sarus load ./${tar_file} ${FV3_CONTAINER}
-module unload sarus
-
+# Run c12 regression test on each Docker image
+declare -a tags=("hpc" "hpc-serialize")
+for tag in ${tags}; do
+    # Copy archived version of the Docker image from a Google Storage Bucket
+    tar_file=fv3gfs-compiled-${tag}.tar
+    gsutil copy gs://vcm-jenkins/${tar_file}.gz .
+    gunzip ${tar_file}.gz
+    # Load archive Docker image into the local Sarus container registry
+    export FV3_CONTAINER=fv3gfs-compiled:${tag}
+    module load sarus
+    sarus load ./${tar_file} ${FV3_CONTAINER}
+    module unload sarus
+done
 # Launch SLURM job
 pytest --image_runner=sarus --image=fv3gfs-compiled --image_tag=hpc
+
+# Clean up working directory
+rm *.nc
+rm RESTART/*.nc
