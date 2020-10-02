@@ -37,13 +37,15 @@ module module_physics_driver
 !vay-2018
 !
   use cires_ugwp_module,     only:  cires_ugwp_driver, knob_ugwp_version
+  use GFS_diagnostics
 !
 
   implicit none
 
 
   !--- CONSTANT PARAMETERS
-  logical, parameter :: ignore_thermo_schemes = .true.
+  logical, parameter :: ignore_shallow_thermo = .false.
+  logical, parameter :: ignore_deep_thermo = .true.
   real(kind=kind_phys), parameter :: hocp    = con_hvap/con_cp
   real(kind=kind_phys), parameter :: qmin    = 1.0d-10
   real(kind=kind_phys), parameter :: qsmall  = 1.0d-20
@@ -3512,7 +3514,7 @@ module module_physics_driver
         endif
 
         
-        if (Model%isppt_deep .or. ignore_thermo_schemes) then
+        if (Model%isppt_deep .or. ignore_deep_thermo) then
           allocate(savet(im,levs), saveq(im,levs), saveu(im,levs), savev(im,levs))
           do k=1,levs
             do i=1,im
@@ -3778,16 +3780,6 @@ module module_physics_driver
           enddo
         endif
 
-        if (ignore_thermo_schemes) then
-          do k=1,levs
-            do i=1,im
-              Stateout%gt0(i,k) = savet(i,k)
-              Stateout%gq0(i,k,1) = saveq(i,k)
-            enddo
-          enddo
-        end if
-
-        if (Model%isppt_deep .or. ignore_thermo_schemes) deallocate(savet, saveq, saveu, savev)
 
       else      ! no parameterized deep convection
         cld1d = zero
@@ -3816,8 +3808,8 @@ module module_physics_driver
         if (Model%ldiag3d) then
           do k=1,levs
             do i=1,im
-              Diag%dt3dt(i,k,4) = Diag%dt3dt(i,k,4) + (Stateout%gt0(i,k)-dtdt(i,k)) * frain
-              Diag%dq3dt(i,k,2) = Diag%dq3dt(i,k,2) + (Stateout%gq0(i,k,1)-dqdt(i,k,1)) * frain
+              Diag%dt3dt(i,k, TEMPERATURE_DEEP_CONVECTION) = Diag%dt3dt(i,k, TEMPERATURE_DEEP_CONVECTION) + (Stateout%gt0(i,k)-dtdt(i,k)) * frain
+              Diag%dq3dt(i,k, SPECIFIC_HUMIDITY_DEEP_CONVECTION) = Diag%dq3dt(i,k,SPECIFIC_HUMIDITY_DEEP_CONVECTION) + (Stateout%gq0(i,k,1)-dqdt(i,k,1)) * frain
               Diag%du3dt(i,k,3) = Diag%du3dt(i,k,3) + (Stateout%gu0(i,k)-dudt(i,k)) * frain
               Diag%dv3dt(i,k,3) = Diag%dv3dt(i,k,3) + (Stateout%gv0(i,k)-dvdt(i,k)) * frain
 !             Diag%upd_mf(i,k)  = Diag%upd_mf(i,k)  + ud_mf(i,k) * (con_g*frain)
@@ -3826,6 +3818,17 @@ module module_physics_driver
             enddo
           enddo
         endif ! if (ldiag3d)
+
+        if (ignore_deep_thermo) then
+          do k=1,levs
+            do i=1,im
+              Stateout%gt0(i,k) = savet(i,k)
+              Stateout%gq0(i,k,1) = saveq(i,k)
+            enddo
+          enddo
+        end if
+
+        if (Model%isppt_deep .or. ignore_deep_thermo) deallocate(savet, saveq, saveu, savev)
 
       endif   ! end if_lssav
 !
@@ -4065,7 +4068,7 @@ module module_physics_driver
 
       if (.not. Model%do_shoc) then
 
-        if (ignore_thermo_schemes) then
+        if (ignore_shallow_thermo) then
           allocate(savet(im,levs), saveq(im,levs))
           do k=1,levs
             do i=1,im
@@ -4184,12 +4187,23 @@ module module_physics_driver
           if (Model%ldiag3d) then
             do k=1,levs
               do i=1,im
-                Diag%dt3dt(i,k,5) = Diag%dt3dt(i,k,5) + (Stateout%gt0(i,k)  -dtdt(i,k))   * frain
-                Diag%dq3dt(i,k,3) = Diag%dq3dt(i,k,3) + (Stateout%gq0(i,k,1)-dqdt_work(i,k)) * frain
+                Diag%dt3dt(i,k, TEMPERATURE_SHALLOW_CONVECTION) = Diag%dt3dt(i,k, TEMPERATURE_SHALLOW_CONVECTION) + (Stateout%gt0(i,k)  -dtdt(i,k))   * frain
+                Diag%dq3dt(i,k, SPECIFIC_HUMIDITY_SHALLOW_CONVECTION) = Diag%dq3dt(i,k, SPECIFIC_HUMIDITY_SHALLOW_CONVECTION) + (Stateout%gq0(i,k,1)-dqdt_work(i,k)) * frain
               enddo
             enddo
           endif
         endif   ! end if_lssav
+
+        if (ignore_shallow_thermo) then
+          do k=1,levs
+            do i=1,im
+              Stateout%gt0(i,k) = savet(i,k)
+              Stateout%gq0(i,k,1) = saveq(i,k)
+            enddo
+          enddo
+        end if
+        if (ignore_shallow_thermo) deallocate(savet, saveq)
+
 
         if (Model%cplchm) then
           do k=1,levs
@@ -4301,15 +4315,6 @@ module module_physics_driver
 !     write(0,*)' aft shoc gq0=',gq0(1,:,1),' lat=',lat
 !     write(0,*)' aft shoc gu0=',gu0(1,:),' lat=',lat
 
-        if (ignore_thermo_schemes) then
-          do k=1,levs
-            do i=1,im
-              Stateout%gt0(i,k) = savet(i,k)
-              Stateout%gq0(i,k,1) = saveq(i,k)
-            enddo
-          enddo
-        end if
-        if (ignore_thermo_schemes) deallocate(savet, saveq)
 
       endif   ! if( .not. do_shoc)
 !

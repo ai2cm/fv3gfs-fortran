@@ -46,6 +46,12 @@ module GFS_diagnostics
 
   !--- public interfaces ---
   public  GFS_externaldiag_populate
+
+  !--- indices for 3d tendency diagnostics ---
+  integer, parameter, public :: TEMPERATURE_DEEP_CONVECTION = 4
+  integer, parameter, public :: TEMPERATURE_SHALLOW_CONVECTION = 5
+  integer, parameter, public :: SPECIFIC_HUMIDITY_DEEP_CONVECTION = 2
+  integer, parameter, public :: SPECIFIC_HUMIDITY_SHALLOW_CONVECTION = 3
  
   CONTAINS
 
@@ -2371,7 +2377,7 @@ module GFS_diagnostics
     ExtDiag(idx)%mod_name = 'gfs_phys'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,4)
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:, TEMPERATURE_DEEP_CONVECTION)
     enddo
 
     idx = idx + 1
@@ -2382,7 +2388,7 @@ module GFS_diagnostics
     ExtDiag(idx)%mod_name = 'gfs_phys'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,5)
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:, TEMPERATURE_SHALLOW_CONVECTION)
     enddo
 
     idx = idx + 1
@@ -2537,7 +2543,7 @@ module GFS_diagnostics
     ExtDiag(idx)%mod_name = 'gfs_phys'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,2)
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,SPECIFIC_HUMIDITY_DEEP_CONVECTION)
     enddo
 
     idx = idx + 1
@@ -2548,7 +2554,7 @@ module GFS_diagnostics
     ExtDiag(idx)%mod_name = 'gfs_phys'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,3)
+      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,SPECIFIC_HUMIDITY_SHALLOW_CONVECTION)
     enddo
 
     idx = idx + 1
