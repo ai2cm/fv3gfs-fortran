@@ -4,3 +4,6 @@
 [submodule "physics_standalone"]
 	path = physics_standalone
 	url = https://github.com/VulcanClimateModeling/physics_standalone.git
+[submodule ".jenkins/env"]
+	path = .jenkins/env
+	url = https://github.com/VulcanClimateModeling/buildenv.git

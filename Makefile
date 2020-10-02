@@ -60,12 +60,6 @@ build_serialize:
 	COMPILED_IMAGE=$(SERIALIZE_IMAGE) \
 	$(MAKE) build_compiled
 
-build_serialize_gt4py_dev: ## build container image for generating serialized data
-	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
-		COMPILED_IMAGE=$(SERIALIZE_IMAGE)-gt4pydev \
-		COMPILE_OPTION="GT4PY_DEV=Y" \
-		$(MAKE) build_compiled
-
 build_debug: ## build container image for debugging
 	COMPILED_TAG_NAME=debug COMPILE_OPTION="REPRO=\\\nDEBUG=Y" $(MAKE) build
 
@@ -97,7 +91,6 @@ enter: ## run and enter production container for development
 		-w /FV3 -it $(COMPILED_IMAGE) bash
 
 enter_serialize: ## run and enter serialization container for development
-	@echo ">>> NOTE: Make sure to compile with GT4PY_DEV=Y when developing serialization"
 	docker run --rm \
 		-v $(shell pwd)/FV3:/FV3/original $(OTHER_MOUNTS) \
 		-w /FV3 -it $(SERIALIZE_IMAGE) bash
