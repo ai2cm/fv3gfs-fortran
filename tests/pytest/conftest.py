@@ -6,10 +6,13 @@ def pytest_addoption(parser):
         "--refdir", action="store", default="reference/docker", help="directory for reference files"
     )
     parser.addoption(
-        "--image_version", action="store", default="latest", help="The docker image version to run"
+        "--image_version", action="store", default="latest", help="The image version to run"
     )
     parser.addoption(
-        "--image", action="store", default=DEFAULT_MODEL_IMAGE, help="The docker image name to run, without tags"
+        "--image_runner", action="store", default="docker", choices=("docker", "sarus"), help="The image runner to use"
+    )
+    parser.addoption(
+        "--image", action="store", default=DEFAULT_MODEL_IMAGE, help="The image name to run, without tags"
     )
     parser.addoption(
         "--code_root", action="store", default="/", help="The path to the codebase to test"
