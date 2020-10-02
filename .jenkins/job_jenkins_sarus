@@ -1,7 +1,8 @@
 #!/bin/bash -l
-#SBATCH --job-name="FV3gfs_800km_resolution"
+#SBATCH --job-name="fv3gfs-fortran-test"
 #SBATCH --partition=cscsci
-#SBATCH --constraint=gpu
+#SBATCH --account=s1053m
+#SBATCH --constraint=mc
 #SBATCH --time=00:04:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=6
