@@ -185,11 +185,9 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: stc (:,:)   => null()  !< soil temperature content
     real (kind=kind_phys), pointer :: slc (:,:)   => null()  !< soil liquid water content
     real (kind=kind_phys), pointer :: atm_ts (:)  => null() !< surface temperature from dynamical core
-    real (kind=kind_phys), pointer :: column_moistening_implied_by_nudging (:) => null() !< Implied moistening from nudging specific humidity
  
     logical, pointer :: dycore_hydrostatic        => null()  !< whether the dynamical core is hydrostatic
     integer, pointer :: nwat                      => null()  !< number of water species used in the model
-    logical, pointer :: dycore_nudge              => null()  !< whether nudging is active in the dynamical core
     contains
       procedure :: create  => statein_create  !<   allocate array data
   end type GFS_statein_type
@@ -2002,17 +2000,11 @@ module GFS_typedefs
     allocate (Statein%atm_ts(IM))
     Statein%atm_ts = clear_val
 
-    allocate (Statein%column_moistening_implied_by_nudging(IM))
-    Statein%column_moistening_implied_by_nudging = clear_val
-
     allocate(Statein%dycore_hydrostatic)
     Statein%dycore_hydrostatic = .true.
 
     allocate(Statein%nwat)
     Statein%nwat = 6
-
-    allocate(Statein%dycore_nudge)
-    Statein%dycore_nudge = .false.
   end subroutine statein_create
 
 
