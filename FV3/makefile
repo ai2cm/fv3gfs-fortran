@@ -16,6 +16,10 @@ else
 endif
 
 CWD      := $(shell pwd)
+SERIALBOX_OUTDIR?=
+SERIALBOX_APP?=/serialbox
+PPSER_PY?=$(SERIALBOX_APP)/install/python/pp_ser/pp_ser.py
+PPSER_FLAGS = --verbose --ignore-identical -m utils_ppser_kbuff
 
 FV3_EXE  = fv3.exe
 FV3CAP_LIB  = libfv3cap.a

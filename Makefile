@@ -98,7 +98,7 @@ enter_serialize: ## run and enter serialization container for development
 test: ## run tests (set COMPILED_TAG_NAME to override default)
 	pytest tests/pytest --capture=no --verbose --refdir $(shell pwd)/tests/pytest/reference/circleci --image_version $(COMPILED_TAG_NAME)
 
-update_test_reference: test ## update md5 checksums for regression tests
+update_test_reference: ## update md5 checksums for regression tests
 	cd tests/pytest && bash set_reference.sh $(COMPILED_TAG_NAME)-serialize $(shell pwd)/reference/circleci
 
 clean: ## cleanup source tree and test output
