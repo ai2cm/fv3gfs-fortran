@@ -4,7 +4,7 @@ field_table: gs://vcm-fv3config/config/field_table/TKE-EDMF/v1.0/field_table
 experiment_name: baroclinicnew
 forcing: gs://vcm-fv3config/data/base_forcing/v1.1/
 orographic_forcing: gs://vcm-fv3config/data/orographic_data/v1.0
-initial_conditions: []
+initial_conditions: ""
 namelist:
   amip_interp_nml:
     data_set: hurrell
@@ -262,6 +262,7 @@ namelist:
     prslrd0: 0.0
     random_clds: false
     redrag: true
+    sfc_override: true
     satmedmf: true
     shal_cnv: true
     swhtr: true
@@ -321,3 +322,5 @@ sfc_prop_override_nml:
     ideal_sst: true
     sst_max: 305
     sst_profile: 1
+test_case_nml:
+    test_case: 13
