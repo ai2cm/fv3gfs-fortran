@@ -86,9 +86,9 @@ RUN wget -q https://dl.bintray.com/boostorg/release/1.74.0/source/boost_1_74_0.t
     cd boost_1_74_0 && \
     cp -r boost /usr/include/ && cd /    
 
-# install serialbox2 from source
-COPY serialbox2 serialbox2
-RUN cd serialbox2 && \
+# install serialbox from source
+COPY serialbox serialbox
+RUN cd serialbox && \
     mkdir build && \
     cd build && \
     cmake -DSERIALBOX_USE_NETCDF=ON -DSERIALBOX_ENABLE_FORTRAN=ON \
@@ -96,6 +96,9 @@ RUN cd serialbox2 && \
     make -j16 && \
     make test && \
     make install
+
+# setup link for backwards comatibility
+RUN ln -s /serialbox /serialbox2
 
 ## Build FMS
 ##---------------------------------------------------------------------------------
@@ -194,7 +197,7 @@ FROM $SERIALBOX_IMAGE AS serialbox_image
 ##---------------------------------------------------------------------------------
 FROM fv3gfs-environment AS fv3gfs-build
 
-ENV SERIALBOX_DIR=/serialbox2 \
+ENV SERIALBOX_DIR=/serialbox \
     SERIALBOX_OUTDIR=/FV3 \
     FMS_DIR=/FMS \
     ESMF_DIR=/usr/local/esmf
@@ -203,7 +206,7 @@ ENV ESMF_INC="-I/usr/local/esmf/include" \
     LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ESMF_DIR}/lib:${FMS_DIR}/libFMS/.libs/:${SERIALBOX_DIR}/lib \
     PPSER_PY=$(SERIALBOX_DIR)/python/pp_ser/pp_ser.py
 
-COPY --from=serialbox_image /serialbox2/install $SERIALBOX_DIR
+COPY --from=serialbox_image /serialbox/install $SERIALBOX_DIR
 COPY --from=fms_image /FMS $FMS_DIR
 COPY --from=esmf_image /usr/local/esmf $ESMF_DIR
 

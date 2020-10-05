@@ -1,6 +1,6 @@
-[submodule "serialbox2"]
-	path = serialbox2
-	url = git@github.com:VulcanClimateModeling/serialbox2.git
+[submodule "serialbox"]
+	path = serialbox
+	url = https://github.com/GridTools/serialbox.git
 [submodule ".jenkins/env"]
 	path = .jenkins/env
 	url = https://github.com/VulcanClimateModeling/buildenv.git
