@@ -18,3 +18,5 @@ updating the reference md5sum!
 Test configurations are stored in `config` as fv3config yaml files. Adding new
 yaml files to this directory will add new regression tests automatically.
 
+These tests also support running on sarus using the SLURM scheduler, by setting `--image-runner=sarus`
+as an argument to `pytest`.
