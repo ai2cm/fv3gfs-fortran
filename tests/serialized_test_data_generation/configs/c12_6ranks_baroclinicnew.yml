@@ -233,7 +233,7 @@ namelist:
     cnvcld: false
     cnvgwd: false
     debug: false
-    do_ocean: false	
+    do_ocean: false
     do_deep: false
     dspheat: true
     fhcyc: 24.0
@@ -317,7 +317,7 @@ namelist:
     fvmnl: 99999
     fvmxl: 99999
     ldebug: false
- sfc_prop_override_nml:
+sfc_prop_override_nml:
     ideal_sst: true
     sst_max: 305
     sst_profile: 1
