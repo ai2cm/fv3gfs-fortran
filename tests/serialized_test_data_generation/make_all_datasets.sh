@@ -34,9 +34,11 @@ else
 fi
 
 # generate list of experiments (and abort if none found)
-EXPERIMENTS=${EXPERIMENT_DIR}/${EXPERIMENT_PATTERN}
+set +e
+EXPERIMENTS=`/bin/ls -1d ${EXPERIMENT_DIR}/${EXPERIMENT_PATTERN} 2> /dev/null`
+set -e
 if [ -z "${EXPERIMENTS}" ] ; then
-    echo "Warning: No matching experiment files for pattern ${EXPERIMENT_PATTERN} in ${EXPERIMENT_DIR} found."
+    echo "Error: No matching experiment files for pattern ${EXPERIMENT_PATTERN} in ${EXPERIMENT_DIR} found."
     exit 1
 fi
 
