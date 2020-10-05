@@ -5,7 +5,7 @@ set -x
 tags="hpc hpc-serialize"
 
 # Set up the compute node environment
-module load daint-gpu
+module load daint-mc
 module add /project/d107/install/modulefiles/
 module load cray-python gcloud 
 gcloud auth configure-docker
