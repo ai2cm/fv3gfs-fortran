@@ -4,7 +4,7 @@ field_table: gs://vcm-fv3config/config/field_table/TKE-EDMF/v1.0/field_table
 experiment_name: baroclinicnew
 forcing: gs://vcm-fv3config/data/base_forcing/v1.1/
 orographic_forcing: gs://vcm-fv3config/data/orographic_data/v1.0
-initial_conditions: ""
+initial_conditions: []
 namelist:
   amip_interp_nml:
     data_set: hurrell
