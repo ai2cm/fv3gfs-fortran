@@ -277,6 +277,12 @@ namelist:
     lat_s: 96
     lon_s: 192
     ntrunc: 94
+  sfc_prop_override_nml:
+    ideal_sst: true
+    sst_max: 305
+    sst_profile: 1
+  test_case_nml:
+    test_case: 13
   namsfc:
     fabsl: 99999
     faisl: 99999
@@ -318,9 +324,3 @@ namelist:
     fvmnl: 99999
     fvmxl: 99999
     ldebug: false
-sfc_prop_override_nml:
-    ideal_sst: true
-    sst_max: 305
-    sst_profile: 1
-test_case_nml:
-    test_case: 13
