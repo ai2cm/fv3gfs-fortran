@@ -2,7 +2,8 @@
 set -e
 set -x
 
-tags="hpc hpc-serialize"
+# Read in tag name used for the Docker images to be tested
+tagname=$1
 
 # Set up the compute node environment
 module load daint-mc
@@ -17,7 +18,8 @@ gcloud auth configure-docker
 pip install -r requirements.txt
 
 # Run c12 regression test on each Docker image
-declare -a tags=("gnu9-mpich314-nocuda" "gnu9-mpich314-nocuda-serialize")
+module load sarus
+declare -a tags=("$tagname" "$(tagname)-serialize")
 for tag in ${tags}; do
     # Copy archived version of the Docker image from a Google Storage Bucket
     tar_file=fv3gfs-compiled-${tag}.tar
@@ -25,10 +27,9 @@ for tag in ${tags}; do
     gunzip ${tar_file}.gz
     # Load archive Docker image into the local Sarus container registry
     export FV3_CONTAINER=fv3gfs-compiled:${tag}
-    module load sarus
     sarus load ./${tar_file} ${FV3_CONTAINER}
-    module unload sarus
 done
+module unload sarus
 
 # Launch SLURM job
-pytest --image_runner=sarus --image=fv3gfs-compiled --image_version=gnu9-mpich314-nocuda --refdir=$(pwd)/tests/pytest/reference/circleci --maxfail=1 tests/pytest
+pytest --image_runner=sarus --image=fv3gfs-compiled --image_version=$(tagname) --refdir=$(pwd)/tests/pytest/reference/circleci --maxfail=1 tests/pytest
