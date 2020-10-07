@@ -31,4 +31,4 @@ for tag in ${tags}; do
 done
 
 # Launch SLURM job
-pytest --image_runner=sarus --image=fv3gfs-compiled --image_version=hpc --refdir=$(pwd)/tests/pytest/reference/circleci --maxfail=1 tests/pytest
+pytest --image_runner=sarus --image=fv3gfs-compiled --image_version=gnu9-mpich314-nocuda --refdir=$(pwd)/tests/pytest/reference/circleci --maxfail=1 tests/pytest
