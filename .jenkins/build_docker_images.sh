@@ -12,7 +12,7 @@ export BUILD_FROM_INTERMEDIATE=y
 
 # Build FV3 without and with Serialbox support enabled
 make pull_deps
-make DEP_TAG_NAME=tagname build build_serialize 
+make DEP_TAG_NAME=$tagname build build_serialize 
 
 # For each newly built Docker image:
 #   - push image to VCM's Google Container Repository (necessary?)
