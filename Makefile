@@ -1,7 +1,6 @@
 # setup (use XXX=<value> make <target> to override)
 GCR_URL ?= us.gcr.io/vcm-ml
 DOCKERFILE ?= docker/Dockerfile
-COMPILED_TAG_NAME ?= latest
 ENVIRONMENT_TAG_NAME ?= latest
 COMPILE_OPTION ?=
 COMPILE_TARGET ?= fv3gfs-compiled
@@ -10,15 +9,6 @@ BUILD_FROM_INTERMEDIATE ?= n
 ENVIRONMENT_TARGET ?= fv3gfs-environment
 CUDA ?= n
 OTHER_MOUNTS ?= 
-
-# image names (use XXX_IMAGE=<name> make <target> to override)
-COMPILED_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)
-SERIALIZE_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)-serialize
-ENVIRONMENT_IMAGE ?= $(GCR_URL)/$(ENVIRONMENT_TARGET):$(ENVIRONMENT_TAG_NAME)
-MPI_IMAGE ?= $(GCR_URL)/mpi-build:$(DEP_TAG_NAME)
-FMS_IMAGE ?= $(GCR_URL)/fms-build:$(DEP_TAG_NAME)
-ESMF_IMAGE ?= $(GCR_URL)/esmf-build:$(DEP_TAG_NAME)
-SERIALBOX_IMAGE ?= $(GCR_URL)/serialbox-build:$(DEP_TAG_NAME)
 
 # base images w/ or w/o CUDA
 ifeq ($(CUDA),n)
@@ -29,6 +19,16 @@ else
 	DEP_TAG_NAME ?= gnu8-mpich314-cuda102
 endif
 BUILD_ARGS += --build-arg BASE_IMAGE=$(BASE_IMAGE)
+
+# image names (use XXX_IMAGE=<name> make <target> to override)
+COMPILED_TAG_NAME ?= $(DEP_TAG_NAME) 
+COMPILED_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)
+SERIALIZE_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)-serialize
+ENVIRONMENT_IMAGE ?= $(GCR_URL)/$(ENVIRONMENT_TARGET):$(ENVIRONMENT_TAG_NAME)
+MPI_IMAGE ?= $(GCR_URL)/mpi-build:$(DEP_TAG_NAME)
+FMS_IMAGE ?= $(GCR_URL)/fms-build:$(DEP_TAG_NAME)
+ESMF_IMAGE ?= $(GCR_URL)/esmf-build:$(DEP_TAG_NAME)
+SERIALBOX_IMAGE ?= $(GCR_URL)/serialbox-build:$(DEP_TAG_NAME)
 
 # used to shorten build times in CircleCI
 ifeq ($(BUILD_FROM_INTERMEDIATE),y)
