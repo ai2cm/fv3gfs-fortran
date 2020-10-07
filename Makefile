@@ -12,16 +12,16 @@ OTHER_MOUNTS ?=
 
 # base images w/ or w/o CUDA
 ifeq ($(CUDA),n)
-	BASE_IMAGE ?= ubuntu:19.10
-	DEP_TAG_NAME ?= gnu9-mpich314-nocuda
+	BASE_IMAGE ?=ubuntu:19.10
+	DEP_TAG_NAME ?=gnu9-mpich314-nocuda
 else
-	BASE_IMAGE ?= nvidia/cuda:10.2-devel-ubuntu18.04
-	DEP_TAG_NAME ?= gnu8-mpich314-cuda102
+	BASE_IMAGE ?=nvidia/cuda:10.2-devel-ubuntu18.04
+	DEP_TAG_NAME ?=gnu8-mpich314-cuda102
 endif
 BUILD_ARGS += --build-arg BASE_IMAGE=$(BASE_IMAGE)
 
 # image names (use XXX_IMAGE=<name> make <target> to override)
-COMPILED_TAG_NAME ?= $(DEP_TAG_NAME) 
+COMPILED_TAG_NAME ?=$(DEP_TAG_NAME) 
 COMPILED_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)
 SERIALIZE_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)-serialize
 ENVIRONMENT_IMAGE ?= $(GCR_URL)/$(ENVIRONMENT_TARGET):$(ENVIRONMENT_TAG_NAME)
