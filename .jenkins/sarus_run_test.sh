@@ -17,7 +17,7 @@ gcloud auth configure-docker
 pip install -r requirements.txt
 
 # Run c12 regression test on each Docker image
-declare -a tags=("hpc" "hpc-serialize")
+declare -a tags=("gnu9-mpich314-nocuda" "gnu9-mpich314-nocuda-serialize")
 for tag in ${tags}; do
     # Copy archived version of the Docker image from a Google Storage Bucket
     tar_file=fv3gfs-compiled-${tag}.tar
