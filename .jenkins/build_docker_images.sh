@@ -18,7 +18,7 @@ make DEP_TAG_NAME=tagname build build_serialize
 #   - push image to VCM's Google Container Repository (necessary?)
 #   - create a tar archive of the image
 #   - store tar archive in a Google Storage Bucket
-declare -a tags=("$tagname" "$(tagname)-serialize")
+declare -a tags=("$tagname" "${tagname}-serialize")
 for tag in ${tags}; do
     container=us.gcr.io/vcm-ml/fv3gfs-compiled:${tag}
     tar_file=fv3gfs-compiled-${tag}.tar

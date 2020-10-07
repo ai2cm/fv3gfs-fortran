@@ -19,7 +19,7 @@ pip install -r requirements.txt
 
 # Run c12 regression test on each Docker image
 module load sarus
-declare -a tags=("$tagname" "$(tagname)-serialize")
+declare -a tags=("$tagname" "${tagname}-serialize")
 for tag in ${tags}; do
     # Copy archived version of the Docker image from a Google Storage Bucket
     tar_file=fv3gfs-compiled-${tag}.tar
