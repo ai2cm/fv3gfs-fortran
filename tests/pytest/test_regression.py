@@ -64,20 +64,20 @@ def test_regression(config, model_image, reference_dir, run_dir, image_runner):
         shutil.rmtree(run_dir)
     os.makedirs(run_dir)
     write_run_directory(config, run_dir)
-    #if image_runner == "docker":
-    #    run_model_docker(run_dir, model_image)
-    #elif image_runner == "sarus":
-    #    run_model_sarus(run_dir, model_image)
-    #else:
-    #    raise NotImplementedError("image_runner must be one of 'docker' or 'sarus'")
-    #md5sum_filename = os.path.join(run_reference_dir, MD5SUM_FILENAME)
-    #check_rundir_md5sum(run_dir, md5sum_filename)
-    #if 'serialize' in model_image:
-    #    serialize_md5sum_filename = os.path.join(
-    #        run_reference_dir, SERIALIZE_MD5SUM_FILENAME
-    #    )
-    #    check_rundir_md5sum(run_dir, serialize_md5sum_filename)
-    #shutil.rmtree(run_dir)
+    if image_runner == "docker":
+        run_model_docker(run_dir, model_image)
+    elif image_runner == "sarus":
+        run_model_sarus(run_dir, model_image)
+    else:
+        raise NotImplementedError("image_runner must be one of 'docker' or 'sarus'")
+    md5sum_filename = os.path.join(run_reference_dir, MD5SUM_FILENAME)
+    check_rundir_md5sum(run_dir, md5sum_filename)
+    if 'serialize' in model_image:
+        serialize_md5sum_filename = os.path.join(
+            run_reference_dir, SERIALIZE_MD5SUM_FILENAME
+        )
+        check_rundir_md5sum(run_dir, serialize_md5sum_filename)
+    shutil.rmtree(run_dir)
 
 
 def check_rundir_md5sum(run_dir, md5sum_filename):
