@@ -10,11 +10,6 @@
 ## a local Docker repo on Daint.  The Docker images can then be run as normal
 ## via Sarus.
 ##
-## User is required to enter a valid tag as an input argument.  This tag will
-## be appended to the two Docker images used for the C12 reference tests. The 
-## Docker image with Serialization support enabled will have '-serialize' 
-## appended to its image name.
-##
 ##   Mark Cheeseman, VCM 
 ##   October 8, 2020
 ##
@@ -28,14 +23,6 @@
 
 set -e
 set -x
-
-# Read in tag name used for the Docker images to be tested
-awk '{$1=$1};1'
-tagname=$1
-if [ -z "${tagname}" ] ; then
-  echo "Error: must supply a valid tagname to $0."
-  exit 1
-fi
 
 # Set up the compute node environment
 module load daint-mc
@@ -51,16 +38,19 @@ pip install -r requirements.txt
 
 # Run c12 regression test on each Docker image
 module load sarus
-declare -a tags=("$tagname" "${tagname}-serialize")
-for tag in ${tags}; do
-    # Copy archived version of the Docker image from a Google Storage Bucket
-    tar_file=fv3gfs-compiled-${tag}.tar
-    gsutil copy gs://vcm-jenkins/${tar_file}.gz .
-    gunzip ${tar_file}.gz
-    # Load archive Docker image into the local Sarus container registry
-    export FV3_CONTAINER=fv3gfs-compiled:${tag}
-    sarus load ./${tar_file} ${FV3_CONTAINER}
-done
+
+tar_file=fv3gfs-compiled-gnu9-mpich314-nocuda.tar
+gsutil copy gs://vcm-jenkins/${tar_file}.gz .
+gunzip ${tar_file}.gz
+export FV3_CONTAINER=fv3gfs-compiled:gnu9-mpich314-nocuda
+sarus load ./${tar_file} ${FV3_CONTAINER}
+
+tar_file=fv3gfs-compiled-gnu9-mpich314-nocuda-serialize.tar
+gsutil copy gs://vcm-jenkins/${tar_file}.gz .
+gunzip ${tar_file}.gz
+export FV3_CONTAINER=fv3gfs-compiled:gnu9-mpich314-nocuda-serialize
+sarus load ./${tar_file} ${FV3_CONTAINER}
+
 module unload sarus
 
 # Launch SLURM job

@@ -7,10 +7,6 @@
 ## libraries. (This behaviour can be overridden by setting BUILD_FROM_INTERMEDIATE
 ## to n).
 ##
-## User is required to enter a valid tag as an input argument.  This tag will
-## be appended to the two Docker images built. The Docker image with Serialization
-## support enabled will have '-serialize' appended to the final image name.
-##
 ## Each newly build Docker image is pushed to the VCM Google Container Registry.
 ## A compressed archive of each new Docker image is created and stored in
 ## Google Storage 
@@ -22,14 +18,6 @@
 set -e
 set -x
 
-# Read in tag name used for the Docker images to be tested
-awk '{$1=$1};1'
-tagname=$1
-if [ -z "${tagname}" ] ; then
-  echo "Error: must supply a valid tagname to $0."
-  exit 1
-fi
-
 # Set variable to allow parallel building in the Docker image creation
 export DOCKER_BUILDKIT=1
 export BUILDKIT_PROGRESS=plain
@@ -39,18 +27,23 @@ export BUILD_FROM_INTERMEDIATE=y
 
 # Build FV3 without and with Serialbox support enabled
 make pull_deps
-make DEP_TAG_NAME=$tagname build build_serialize 
+make build build_serialize 
 
 # For each newly built Docker image:
 #   - push image to VCM's Google Container Repository (necessary?)
 #   - create a tar archive of the image
 #   - store tar archive in a Google Storage Bucket
-declare -a tags=("$tagname" "${tagname}-serialize")
-for tag in ${tags}; do
-    container=us.gcr.io/vcm-ml/fv3gfs-compiled:${tag}
-    tar_file=fv3gfs-compiled-${tag}.tar
-    docker push $container 
-    docker save $container -o $tar_file
-    gzip $tar_file
-    gsutil copy ${tar_file}.gz gs://vcm-jenkins/${tar_file}.gz
-done
+container=us.gcr.io/vcm-ml/fv3gfs-compiled:gnu9-mpich314-nocuda
+tar_file=fv3gfs-compiled-gnu9-mpich314-nocuda.tar
+docker push $container
+docker save $container -o $tar_file
+gzip $tar_file
+gsutil copy ${tar_file}.gz gs://vcm-jenkins/${tar_file}.gz
+
+container=us.gcr.io/vcm-ml/fv3gfs-compiled:gnu9-mpich314-nocuda-serialize
+tar_file=fv3gfs-compiled-gnu9-mpich314-nocuda-serialize.tar
+docker push $container
+docker save $container -o $tar_file
+gzip $tar_file
+gsutil copy ${tar_file}.gz gs://vcm-jenkins/${tar_file}.gz
+
