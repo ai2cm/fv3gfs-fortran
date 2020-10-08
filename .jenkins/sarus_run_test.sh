@@ -1,3 +1,4 @@
+#!/bin/bash
 ## sarus_run_test.sh
 ##
 ## Bash script that runs a C12 reference test using two Docker images (one with
@@ -25,7 +26,6 @@
 ##    Jeremy McGibbon, VCM
 ##    October 8, 2020
 
-#!/bin/bash
 set -e
 set -x
 

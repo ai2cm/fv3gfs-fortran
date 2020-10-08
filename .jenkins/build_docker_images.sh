@@ -1,3 +1,4 @@
+#!/bin/bash
 ## build_docker_images.sh
 ##
 ## Bash script that builds two fv3gfs-fortran Docker images: one without and
@@ -18,7 +19,6 @@
 ##  October 8, 2020
 
 
-#!/bin/bash
 set -e
 set -x
 
