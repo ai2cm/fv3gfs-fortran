@@ -23,6 +23,7 @@ set -e
 set -x
 
 # Read in tag name used for the Docker images to be tested
+awk '{$1=$1};1'
 tagname=$1
 if [ -z "${tagname}" ] ; then
   echo "Error: must supply a valid tagname to $0."
