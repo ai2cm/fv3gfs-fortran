@@ -1,8 +1,28 @@
 #!/bin/bash
+## sarus_run_test.sh
+##
+## Bash script that runs a C12 reference test using two Docker images (one with
+## Serialization support and one without).  
+##
+## Sarus cannot pull Docker images directly from the Google Container Registry.
+## The work-around is to download compressed archive files of the desired
+## Docker images from Google Storage, uncompress the archives and add them in
+## a local Docker repo on Daint.  The Docker images can then be run as normal
+## via Sarus.
+##
+##   Mark Cheeseman, VCM 
+##   October 8, 2020
+##
+##
+## C12 runs and MD5 checksum verification is performed under pytest.  The
+## user needs to tell pytest that Sarus will be used for Docker image 
+## deployment via the --image_runner option.
+##
+##    Jeremy McGibbon, VCM
+##    October 8, 2020
+
 set -e
 set -x
-
-tags="hpc hpc-serialize"
 
 # Set up the compute node environment
 module load daint-mc
@@ -17,18 +37,21 @@ gcloud auth configure-docker
 pip install -r requirements.txt
 
 # Run c12 regression test on each Docker image
-declare -a tags=("hpc" "hpc-serialize")
-for tag in ${tags}; do
-    # Copy archived version of the Docker image from a Google Storage Bucket
-    tar_file=fv3gfs-compiled-${tag}.tar
-    gsutil copy gs://vcm-jenkins/${tar_file}.gz .
-    gunzip ${tar_file}.gz
-    # Load archive Docker image into the local Sarus container registry
-    export FV3_CONTAINER=fv3gfs-compiled:${tag}
-    module load sarus
-    sarus load ./${tar_file} ${FV3_CONTAINER}
-    module unload sarus
-done
+module load sarus
+
+tar_file=fv3gfs-compiled-gnu9-mpich314-nocuda.tar
+gsutil copy gs://vcm-jenkins/${tar_file}.gz .
+gunzip ${tar_file}.gz
+export FV3_CONTAINER=fv3gfs-compiled:gnu9-mpich314-nocuda
+sarus load ./${tar_file} ${FV3_CONTAINER}
+
+tar_file=fv3gfs-compiled-gnu9-mpich314-nocuda-serialize.tar
+gsutil copy gs://vcm-jenkins/${tar_file}.gz .
+gunzip ${tar_file}.gz
+export FV3_CONTAINER=fv3gfs-compiled:gnu9-mpich314-nocuda-serialize
+sarus load ./${tar_file} ${FV3_CONTAINER}
+
+module unload sarus
 
 # Launch SLURM job
-pytest --image_runner=sarus --image=fv3gfs-compiled --image_version=hpc --refdir=$(pwd)/tests/pytest/reference/circleci --maxfail=1 tests/pytest
+pytest --image_runner=sarus --image=fv3gfs-compiled --image_version=gnu9-mpich314-nocuda --refdir=$(pwd)/tests/pytest/reference/circleci --maxfail=1 tests/pytest
