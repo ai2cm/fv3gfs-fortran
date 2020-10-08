@@ -2,7 +2,10 @@
 
 # Read in tag name used for the Docker images to be tested
 tagname=$1
-
+if [ -z "${tagname}" ] ; then
+  echo "Error: must supply a valid tagname to $0."
+  exit 1
+fi
 # Set variable to allow parallel building in the Docker image creation
 export DOCKER_BUILDKIT=1
 export BUILDKIT_PROGRESS=plain
