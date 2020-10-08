@@ -140,7 +140,7 @@ RUN git clone -b ESMF_8_0_0 --depth 1 https://git.code.sf.net/p/esmf/esmf $ESMF_
 
 ## Copy FV3GFS sources for non-serialize image
 ##---------------------------------------------------------------------------------
-FROM ubuntu:19.10 AS fv3gfs-src-serialize-false
+FROM ubuntu:20.04 AS fv3gfs-src-serialize-false
 
 ARG compile_option
 ARG configure_file=configure.fv3.gnu_docker

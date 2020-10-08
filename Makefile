@@ -22,7 +22,7 @@ SERIALBOX_IMAGE ?= $(GCR_URL)/serialbox-build:$(DEP_TAG_NAME)
 
 # base images w/ or w/o CUDA
 ifeq ($(CUDA),n)
-	BASE_IMAGE ?= ubuntu:19.10
+	BASE_IMAGE ?= ubuntu:20:04
 	DEP_TAG_NAME ?= gnu9-mpich314-nocuda
 else
 	BASE_IMAGE ?= nvidia/cuda:10.2-devel-ubuntu18.04
