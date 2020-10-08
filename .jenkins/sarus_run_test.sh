@@ -54,4 +54,5 @@ sarus load ./${tar_file} ${FV3_CONTAINER}
 module unload sarus
 
 # Launch SLURM job
-pytest --image_runner=sarus --image=fv3gfs-compiled --image_version=${tagname} --refdir=$(pwd)/tests/pytest/reference/circleci --maxfail=1 tests/pytest
+pytest --image_runner=sarus --image=fv3gfs-compiled --image_version=gnu9-mpich314-nocuda --refdir=$(pwd)/tests/pytest/reference/circleci --maxfail=1 tests/pytest
+pytest --image_runner=sarus --image=fv3gfs-compiled --image_version=gnu9-mpich314-nocuda-serialize --refdir=$(pwd)/tests/pytest/reference/circleci --maxfail=1 tests/pytest
