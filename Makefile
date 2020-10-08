@@ -79,7 +79,7 @@ push_deps: ## push container images of dependencies to GCP
 	docker push $(ESMF_IMAGE)
 	docker push $(SERIALBOX_IMAGE)
 
-pull_deps: ## pull container images of dependnecies from GCP (for faster builds)
+pull_deps: ## pull container images of dependencies from GCP (for faster builds)
 	docker pull $(MPI_IMAGE)
 	docker pull $(FMS_IMAGE)
 	docker pull $(ESMF_IMAGE)

@@ -28,10 +28,7 @@ if [ -z "${tagname}" ] ; then
   echo "Error: must supply a valid tagname to $0."
   exit 1
 fi
-<<<<<<< HEAD
 
-=======
->>>>>>> c85b0deb8144beb33c72d25b8995fd8c667978d4
 # Set variable to allow parallel building in the Docker image creation
 export DOCKER_BUILDKIT=1
 export BUILDKIT_PROGRESS=plain
