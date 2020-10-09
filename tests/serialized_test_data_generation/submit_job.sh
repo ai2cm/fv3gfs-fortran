@@ -22,7 +22,7 @@ ulimit -s unlimited
 # note: we want to catch errors, hence the set +e/-e logic
 echo ">>> Running model, inspect stdout.out / stderr.out in rundir for details"
 set +e
-mpirun -l -np $NUM_RANKS $RUNDIR/fv3.exe 2>$RUNDIR/stderr.out 1>$RUNDIR/stdout.out
+mpirun -l -np $NUM_RANKS ${OTHER_MPI_FLAGS} $RUNDIR/fv3.exe 2>$RUNDIR/stderr.out 1>$RUNDIR/stdout.out
 if [ $? -ne 0 ] ; then
     echo ">>> Error occurred while running the model"
     echo ">>>>> cmd:"

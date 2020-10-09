@@ -8,17 +8,24 @@ BUILD_ARGS ?=
 BUILD_FROM_INTERMEDIATE ?= n
 ENVIRONMENT_TARGET ?= fv3gfs-environment
 CUDA ?= n
+MPI ?= mpich
 OTHER_MOUNTS ?= 
 
 # base images w/ or w/o CUDA
+# define DEP_TAG_NAME based on MPI flavour
 ifeq ($(CUDA),n)
-	BASE_IMAGE ?=ubuntu:19.10
+	BASE_IMAGE ?=ubuntu:20.04
 	DEP_TAG_NAME ?=gnu9-mpich314-nocuda
 else
 	BASE_IMAGE ?=nvidia/cuda:10.2-devel-ubuntu18.04
+ifeq ($(MPI),mpich)
 	DEP_TAG_NAME ?=gnu8-mpich314-cuda102
+else
+	DEP_TAG_NAME ?=gnu8-openmpi405-cuda102
+endif
 endif
 BUILD_ARGS += --build-arg BASE_IMAGE=$(BASE_IMAGE)
+
 
 # image names (use XXX_IMAGE=<name> make <target> to override)
 COMPILED_TAG_NAME ?=$(DEP_TAG_NAME)
@@ -67,7 +74,7 @@ build_coverage: build_environment ## build container image for code coverage ana
 	COMPILED_TAG_NAME=gcov COMPILED_IMAGE=$(GCR_URL)/$(COMPILE_TARGET):gcov \
 	COMPILE_OPTION="OPENMP=\\\nREPRO=\\\nDEBUG=Y\\\nGCOV=Y" $(MAKE) build
 
-build_deps: ## build container images of dependnecies (FMS, ESMF, SerialBox)
+build_deps: ## build container images of dependencies (MPI, FMS, ESMF, SerialBox)
 	docker build -f $(DOCKERFILE) -t $(MPI_IMAGE) $(BUILD_ARGS) --target fv3gfs-mpi .
 	docker build -f $(DOCKERFILE) -t $(FMS_IMAGE) $(BUILD_ARGS) --target fv3gfs-fms .
 	docker build -f $(DOCKERFILE) -t $(ESMF_IMAGE) $(BUILD_ARGS) --target fv3gfs-esmf .

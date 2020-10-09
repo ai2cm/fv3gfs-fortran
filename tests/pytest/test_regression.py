@@ -57,7 +57,12 @@ def run_dir(model_image_tag, config):
     return os.path.join(OUTPUT_DIR, model_image_tag, run_name)
 
 
-def test_regression(config, model_image, reference_dir, run_dir, image_runner):
+@pytest.fixture
+def mpi_flavor(request):
+    return request.config.getoption("--mpi_flavor")
+
+
+def test_regression(config, model_image, reference_dir, run_dir, image_runner, mpi_flavor):
     run_name = config['experiment_name']
     run_reference_dir = os.path.join(reference_dir, run_name)
     if os.path.isdir(run_dir):
@@ -65,7 +70,11 @@ def test_regression(config, model_image, reference_dir, run_dir, image_runner):
     os.makedirs(run_dir)
     write_run_directory(config, run_dir)
     if image_runner == "docker":
-        run_model_docker(run_dir, model_image)
+        if mpi_flavor == "mpich":
+           other_mpi_flags = ""
+        else
+           other_mpi_flags = "--allow-run-as-root --mca btl_vader_single_copy_mechanism none --oversubscribe" 
+        run_model_docker(run_dir, model_image, other_mpi_flags)
     elif image_runner == "sarus":
         run_model_sarus(run_dir, model_image)
     else:
@@ -93,7 +102,7 @@ def ensure_reference_exists(filename):
         )
 
 
-def run_model_docker(rundir, model_image):
+def run_model_docker(rundir, model_image, other_mpi_flags):
     if USE_LOCAL_ARCHIVE:
         archive = fv3config.get_cache_dir()
         archive_mount = ['-v', f'{archive}:{archive}']
@@ -108,6 +117,7 @@ def run_model_docker(rundir, model_image):
     data_mount = ['-v', f'{data_abs}:' + docker_runpath + '/rundir/test_data']
     fv3out_filename = join(rundir, 'stdout.log')
     fv3err_filename = join(rundir, 'stderr.log')
+    env["OTHER_MPI_FLAGS"] = other_mpi_flags 
     with open(fv3out_filename, 'w') as fv3out_f, open(fv3err_filename, 'w') as fv3err_f:
         subprocess.check_call(
             docker_run + rundir_mount + archive_mount + data_mount + [model_image] + ["bash", "/rundir/submit_job.sh"],

@@ -1,11 +1,11 @@
 ARG serialize=false
 ARG BASE_IMAGE
-ARG MPI_IMAGE=fv3gfs-mpi
+ARG MPI_IMAGE=fv3gfs-mpich
 ARG FMS_IMAGE=fv3gfs-fms
 ARG ESMF_IMAGE=fv3gfs-esmf
 ARG SERIALBOX_IMAGE=fv3gfs-environment-serialbox
 
-FROM $BASE_IMAGE AS fv3gfs-mpi
+FROM $BASE_IMAGE AS fv3gfs-mpich
 
 RUN apt-get update && apt-get install -y \
     wget \
@@ -16,8 +16,25 @@ RUN apt-get update && apt-get install -y \
 
 RUN wget -q http://www.mpich.org/static/downloads/3.1.4/mpich-3.1.4.tar.gz && \
     tar xzf mpich-3.1.4.tar.gz && \
-    cd mpich-3.1.4 && \
+    mv mpich-3.1.4 mpi && \
+    cd mpi && \
     ./configure --enable-fortran --enable-cxx --prefix=/usr --enable-fast=all,O3 && \
+    make -j24
+
+FROM $BASE_IMAGE AS fv3gfs-openmpi
+
+RUN apt-get update && apt-get install -y \
+    wget \
+    gcc \
+    g++ \
+    gfortran \
+    make
+
+RUN wget -q https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.5.tar.bz2 && \
+    tar xjf openmpi-4.0.5.tar.bz2 && \
+    mv openmpi-4.0.5 mpi && \
+    cd mpi && \
+    ./configure --enable-mpi-fortran=yes --enable-mpi-cxx --prefix=/usr --with-cuda=/usr/local/cuda-10.2 && \
     make -j24
 
 FROM $MPI_IMAGE AS mpi_image
@@ -41,9 +58,9 @@ RUN apt-get update && apt-get install -y \
     libffi-dev \
     openssl
 
-COPY --from=mpi_image /mpich-3.1.4 /mpich-3.1.4
+COPY --from=mpi_image /mpi /mpi
 
-RUN cd /mpich-3.1.4 && make install && ldconfig
+RUN cd /mpi && make install && ldconfig
 
 # download and install NCEP libraries
 RUN git config --global http.sslverify false && \
@@ -71,13 +88,9 @@ RUN apt-get update && apt-get install -y \
     python3-nose \
     python3-sphinx
 
-# RUN wget -q https://github.com/Kitware/CMake/releases/download/v3.18.3/cmake-3.18.3-Linux-x86_64.sh && \
-#     chmod +x ./cmake-3.18.3-Linux-x86_64.sh && \
-#     cmake-3.18.3-Linux-x86_64.sh
-
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.17.3/cmake-3.17.3.tar.gz && \
-    tar xzf cmake-3.17.3.tar.gz && \
-    cd cmake-3.17.3 && \
+RUN wget https://github.com/Kitware/CMake/releases/download/v3.18.4/cmake-3.18.4.tar.gz && \
+    tar xzf cmake-3.18.4.tar.gz && \
+    cd cmake-3.18.4 && \
     ./bootstrap && make -j4 && make install
 
 # Install headers from the Boost library
