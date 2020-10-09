@@ -34,12 +34,16 @@ RUN wget -q https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.5.ta
     tar xjf openmpi-4.0.5.tar.bz2 && \
     mv openmpi-4.0.5 mpi && \
     cd mpi && \
-    ./configure --enable-mpi-fortran=yes --enable-mpi-cxx --prefix=/usr --with-cuda=/usr/local/cuda-10.2 && \
+    ./configure --enable-mpi-fortran=yes --enable-mpi-cxx --prefix=/usr --with-cuda=/usr/local/cuda-11.1 && \
     make -j24
 
 FROM $MPI_IMAGE AS mpi_image
 
 FROM $BASE_IMAGE AS fv3gfs-environment
+ENV DEBIAN_FRONTEND=noninteractive TZ=US/Pacific
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN apt-get update && apt-get install -y --no-install-recommends tzdata
 
 RUN apt-get update && apt-get install -y \
     wget \
@@ -57,6 +61,9 @@ RUN apt-get update && apt-get install -y \
     rsync \
     libffi-dev \
     openssl
+# set TZ
+#ENV DEBIAN_FRONTEND=noninteractive TZ=US/Pacific
+#RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 COPY --from=mpi_image /mpi /mpi
 
@@ -73,25 +80,28 @@ RUN git config --global http.sslverify false && \
 ##
 ## Setup environment for Serialbox
 ##---------------------------------------------------------------------------------
-FROM fv3gfs-environment as fv3gfs-environment-serialbox
+FROM ubuntu:20.04 as fv3gfs-environment-serialbox
 # set TZ
 ENV DEBIAN_FRONTEND=noninteractive TZ=US/Pacific
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
+RUN apt-get update && apt-get install -y --no-install-recommends tzdata
 # install dependencies for serialbox
 RUN apt-get update && apt-get install -y \
+    wget \
+    gcc \
+    g++ \
+    gfortran \
     libssl-dev \
+    cmake \
     clang \
     clang-format \
     clang-tidy \
+    libnetcdf-dev \
+    libnetcdff-dev \
     python3-numpy \
     python3-nose \
-    python3-sphinx
-
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.18.4/cmake-3.18.4.tar.gz && \
-    tar xzf cmake-3.18.4.tar.gz && \
-    cd cmake-3.18.4 && \
-    ./bootstrap && make -j4 && make install
+    python3-sphinx 
 
 # Install headers from the Boost library
 RUN wget -q https://dl.bintray.com/boostorg/release/1.74.0/source/boost_1_74_0.tar.gz && \

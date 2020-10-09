@@ -7,22 +7,15 @@ COMPILE_TARGET ?= fv3gfs-compiled
 BUILD_ARGS ?=
 BUILD_FROM_INTERMEDIATE ?= n
 ENVIRONMENT_TARGET ?= fv3gfs-environment
-CUDA ?= n
 MPI ?= mpich
 OTHER_MOUNTS ?= 
 
-# base images w/ or w/o CUDA
 # define DEP_TAG_NAME based on MPI flavour
-ifeq ($(CUDA),n)
-	BASE_IMAGE ?=ubuntu:20.04
-	DEP_TAG_NAME ?=gnu9-mpich314-nocuda
-else
-	BASE_IMAGE ?=nvidia/cuda:10.2-devel-ubuntu18.04
+BASE_IMAGE ?=nvidia/cuda:11.1-devel-ubuntu20.04
 ifeq ($(MPI),mpich)
-	DEP_TAG_NAME ?=gnu8-mpich314-cuda102
+	DEP_TAG_NAME ?=gnu9-mpich314-cuda111
 else
-	DEP_TAG_NAME ?=gnu8-openmpi405-cuda102
-endif
+	DEP_TAG_NAME ?=gnu9-openmpi405-cuda111
 endif
 BUILD_ARGS += --build-arg BASE_IMAGE=$(BASE_IMAGE)
 
@@ -35,7 +28,7 @@ ENVIRONMENT_IMAGE ?= $(GCR_URL)/$(ENVIRONMENT_TARGET):$(ENVIRONMENT_TAG_NAME)
 MPI_IMAGE ?= $(GCR_URL)/mpi-build:$(DEP_TAG_NAME)
 FMS_IMAGE ?= $(GCR_URL)/fms-build:$(DEP_TAG_NAME)
 ESMF_IMAGE ?= $(GCR_URL)/esmf-build:$(DEP_TAG_NAME)
-SERIALBOX_IMAGE ?= $(GCR_URL)/serialbox-build:$(DEP_TAG_NAME)
+SERIALBOX_IMAGE ?= $(GCR_URL)/serialbox-build:gnu9
 
 # used to shorten build times in CircleCI
 ifeq ($(BUILD_FROM_INTERMEDIATE),y)
@@ -75,7 +68,7 @@ build_coverage: build_environment ## build container image for code coverage ana
 	COMPILE_OPTION="OPENMP=\\\nREPRO=\\\nDEBUG=Y\\\nGCOV=Y" $(MAKE) build
 
 build_deps: ## build container images of dependencies (MPI, FMS, ESMF, SerialBox)
-	docker build -f $(DOCKERFILE) -t $(MPI_IMAGE) $(BUILD_ARGS) --target fv3gfs-mpi .
+	docker build -f $(DOCKERFILE) -t $(MPI_IMAGE) $(BUILD_ARGS) --target fv3gfs-$(MPI) .
 	docker build -f $(DOCKERFILE) -t $(FMS_IMAGE) $(BUILD_ARGS) --target fv3gfs-fms .
 	docker build -f $(DOCKERFILE) -t $(ESMF_IMAGE) $(BUILD_ARGS) --target fv3gfs-esmf .
 	docker build -f $(DOCKERFILE) -t $(SERIALBOX_IMAGE) $(BUILD_ARGS) --target fv3gfs-environment-serialbox .
