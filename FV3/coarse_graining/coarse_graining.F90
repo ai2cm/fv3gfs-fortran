@@ -12,7 +12,7 @@ module coarse_graining_mod
        get_coarse_array_bounds, coarse_graining_init, weighted_block_average, &
        weighted_block_edge_average_x, weighted_block_edge_average_y, MODEL_LEVEL, &
        block_upsample, mask_area_weights, PRESSURE_LEVEL, vertical_remapping_requirements, &
-       vertically_remap_field
+       vertically_remap_field, mask_mass_weights
 
   interface block_sum
      module procedure block_sum_2d
@@ -349,12 +349,12 @@ contains
 
   subroutine block_upsample_3d(coarse, fine, nz)
     integer, intent(in) :: nz
-    real, intent(in) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:nz+1)
-    real, intent(out) :: fine(is:ie,js:je,1:nz+1)
+    real, intent(in) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:nz)
+    real, intent(out) :: fine(is:ie,js:je,1:nz)
 
     integer :: k
 
-    do k = 1, nz + 1
+    do k = 1, nz
       call block_upsample_2d(coarse(is_coarse:ie_coarse,js_coarse:je_coarse,k), fine(is:ie,js:je,k))
     enddo
   end subroutine block_upsample_3d
@@ -491,7 +491,6 @@ contains
     call weighted_block_average(area(is:ie,js:je), delp(is:ie,js:je,1:npz), coarse_delp)
     call compute_phalf_from_delp(coarse_delp, ptop, is_coarse, ie_coarse, js_coarse, je_coarse, coarse_phalf)
     call block_upsample(coarse_phalf, upsampled_coarse_phalf, npz+1)
-
     deallocate(coarse_delp)
     deallocate(coarse_phalf)
    end subroutine vertical_remapping_requirements
@@ -512,5 +511,24 @@ contains
       endwhere
     enddo
    end subroutine mask_area_weights
+
+   subroutine mask_mass_weights(area, delp, phalf, upsampled_coarse_phalf, &
+    masked_mass_weights)
+    real, intent(in) :: area(is:ie,js:je)
+    real, intent(in) :: delp(is:ie,js:je,1:npz)
+    real, intent(in) :: phalf(is:ie,js:je,1:npz+1)
+    real, intent(in) :: upsampled_coarse_phalf(is:ie,js:je,1:npz+1)
+    real, intent(out) :: masked_mass_weights(is:ie,js:je,1:npz)
+
+    integer :: k
+
+    do k = 1, npz
+      where (upsampled_coarse_phalf(:,:,k+1) .lt. phalf(is:ie,js:je,npz+1))
+        masked_mass_weights(:,:,k) = delp(:,:,k) * area(:,:)
+      elsewhere
+        masked_mass_weights(:,:,k) = 0.0
+      endwhere
+    enddo
+   end subroutine mask_mass_weights
 
 end module coarse_graining_mod

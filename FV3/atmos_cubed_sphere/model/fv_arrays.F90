@@ -1275,8 +1275,8 @@ module fv_arrays_mod
     real, _ALLOCATABLE :: v(:,:,:)    _NULL  !< D grid meridional wind (m/s)
     real, _ALLOCATABLE :: pt(:,:,:)   _NULL  !< temperature (K)
     real, _ALLOCATABLE :: delp(:,:,:) _NULL  !< pressure thickness (pascal)
-    real, _ALLOCATABLE :: q(:,:,:,:)  _NULL  !< specific humidity and prognostic constituents
-    real, _ALLOCATABLE :: qdiag(:,:,:,:)  _NULL  !< diagnostic tracers
+    real, pointer :: q(:,:,:,:)  => null()   !< specific humidity and prognostic constituents
+    real, pointer :: qdiag(:,:,:,:) => null()  !< diagnostic tracers
 
 !----------------------
 ! non-hydrostatic state:
@@ -1310,9 +1310,10 @@ module fv_arrays_mod
 ! Others:
 !-----------------------------------------------------------------------
     real, _ALLOCATABLE :: phis(:,:)     _NULL  !< Surface geopotential (g*Z_surf)
-    real, _ALLOCATABLE :: omga(:,:,:)   _NULL  !< Vertical pressure velocity (pa/s)
-    real, _ALLOCATABLE :: ua(:,:,:)     _NULL  !< (ua, va) are mostly used as the A grid winds
-    real, _ALLOCATABLE :: va(:,:,:)     _NULL
+    real, pointer :: omga(:,:,:) => null()
+    ! real, _ALLOCATABLE :: omga(:,:,:)   _NULL  !< Vertical pressure velocity (pa/s)
+    real, pointer :: ua(:,:,:) => null()         !< (ua, va) are mostly used as the A grid winds
+    real, pointer :: va(:,:,:) => null()
     real, _ALLOCATABLE :: uc(:,:,:)     _NULL  !< (uc, vc) are mostly used as the C grid winds
     real, _ALLOCATABLE :: vc(:,:,:)     _NULL
 
