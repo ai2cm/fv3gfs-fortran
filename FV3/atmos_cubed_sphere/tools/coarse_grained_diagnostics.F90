@@ -202,7 +202,6 @@ contains
     type(time_type), intent(in) :: Time
     
     real, allocatable :: work_2d_coarse(:,:), work_3d_coarse(:,:,:), mass(:,:,:)
-    real, allocatable :: work_2d(:,:)
     integer :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz
     logical :: used
     logical :: need_2d_work_array, need_3d_work_array, need_mass_array
@@ -218,7 +217,6 @@ contains
     npz = Atm(tile_count)%npz
 
     if (need_2d_work_array) then
-      allocate(work_2d(is:ie,js:je))
       allocate(work_2d_coarse(is_coarse:ie_coarse,js_coarse:je_coarse))
     endif
 
@@ -360,7 +358,6 @@ contains
               work_3d_coarse &
             )
           elseif (trim(coarse_diagnostics(index)%reduction_method) .eq. MASS_WEIGHTED) then
-            write(*,*) 'Mass weighted', coarse_diagnostics(index)%name
             call weighted_block_average( &
               masked_mass_weights(is:ie,js:je,1:npz), &
               remapped_field(is:ie,js:je,1:npz), &
