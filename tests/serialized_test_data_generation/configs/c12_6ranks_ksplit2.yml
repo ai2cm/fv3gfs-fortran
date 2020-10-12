@@ -1,7 +1,7 @@
 data_table: default
 diag_table: default
 field_table: gs://vcm-fv3config/config/field_table/TKE-EDMF/v1.0/field_table
-experiment_name: c12_6ranks_aam
+experiment_name: c12_6ranks_ksplit2
 forcing: gs://vcm-fv3config/data/base_forcing/v1.1/
 orographic_forcing: gs://vcm-fv3config/data/orographic_data/v1.0
 initial_conditions: gs://vcm-fv3config/data/initial_conditions/gfs_c12_example/v1.0 
@@ -104,7 +104,7 @@ namelist:
     a_imp: 1.0
     adjust_dry_mass: false
     beta: 0.0
-    consv_am: true
+    consv_am: false
     consv_te: 0.0
     d2_bg: 0.0
     d2_bg_k1: 0.2
@@ -133,7 +133,7 @@ namelist:
     io_layout:
     - 1
     - 1
-    k_split: 1
+    k_split: 2
     ke_bg: 0.0
     kord_mt: 9
     kord_tm: -9

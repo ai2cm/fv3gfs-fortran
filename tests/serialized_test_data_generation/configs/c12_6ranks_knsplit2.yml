@@ -1,10 +1,10 @@
 data_table: default
 diag_table: default
 field_table: gs://vcm-fv3config/config/field_table/TKE-EDMF/v1.0/field_table
-experiment_name: c48_6ranks_standard
+experiment_name: c12_6ranks_ksplit2
 forcing: gs://vcm-fv3config/data/base_forcing/v1.1/
 orographic_forcing: gs://vcm-fv3config/data/orographic_data/v1.0
-initial_conditions: gs://vcm-fv3config/data/initial_conditions/gfs_initial_conditions/v1.0 
+initial_conditions: gs://vcm-fv3config/data/initial_conditions/gfs_c12_example/v1.0 
 namelist:
   amip_interp_nml:
     data_set: hurrell
@@ -76,7 +76,7 @@ namelist:
     dt_ocean: 225
     hours: 0
     memuse_verbose: false
-    minutes: 3
+    minutes: 3 
     months: 0
     ncores_per_node: 32
     seconds: 45
@@ -133,7 +133,7 @@ namelist:
     io_layout:
     - 1
     - 1
-    k_split: 1
+    k_split: 2
     ke_bg: 0.0
     kord_mt: 9
     kord_tm: -9
@@ -144,14 +144,14 @@ namelist:
     - 1
     make_nh: true
     mountain: false
-    n_split: 1
+    n_split: 2
     n_sponge: 48
     na_init: 1
     ncep_ic: false
     nggps_ic: true
     nord: 3
-    npx: 49
-    npy: 49
+    npx: 13
+    npy: 13
     npz: 79
     ntiles: 6
     nudge: false
