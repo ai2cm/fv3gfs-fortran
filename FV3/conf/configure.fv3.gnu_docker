@@ -2,10 +2,10 @@
 ############
 # commands #
 ############
-FC = FC=gfortran mpifort
-CC = CC=gcc mpicc
+FC = mpif90
+CC = mpicc
 CXX = g++
-LD = mpifort
+LD = mpif90
 
 NETCDF_DIR = /usr
 
@@ -17,7 +17,7 @@ DEBUG =
 REPRO = Y
 VERBOSE =
 OPENMP = Y
-AVX2 = N
+AVX2 = Y
 HYDRO = N
 32BIT = N
 
@@ -63,8 +63,8 @@ FFLAGS += -fdefault-double-8 -fdefault-real-8
 endif
 
 ifeq ($(AVX2),Y)
-FFLAGS += -xCORE-AVX2 -qno-opt-dynamic-align
-CFLAGS += -xCORE-AVX2 -qno-opt-dynamic-align
+FFLAGS += -mavx
+CFLAGS += -mavx
 endif
 
 FFLAGS_OPT = -O2 
@@ -84,19 +84,13 @@ CFLAGS_OPENMP = -fopenmp
 CFLAGS_DEBUG = -O0 -g 
 CFLAGS_GCOV = --coverage
 
-# Optional Testing compile flags.  Mutually exclusive from DEBUG, REPRO, and OPT
-# *_TEST will match the production if no new option(s) is(are) to be tested.
-FFLAGS_TEST = -O3 -debug minimal -fp-model source -qoverride-limits
-CFLAGS_TEST = -O2
-
-LDFLAGS := -L${ESMF_DIR}/lib/libO3/Linux.gfortran.64.mpiuni.default/ -L${FMS_DIR}/libFMS/.libs/
+LDFLAGS := -L${ESMF_DIR}/lib -L${FMS_DIR}/libFMS/.libs/
 LDFLAGS_OPENMP := -fopenmp
 LDFLAGS_VERBOSE := -Wl,-V,--verbose,-cref,-M
 LDFLAGS_GCOV = --coverage
 
 # start with blank LIBS
 LIBS :=
-
 LIBS += -lgfortran
 
 ifneq ($(REPRO),)
@@ -127,9 +121,6 @@ ifneq ($(OPENMP),)
 CFLAGS += $(CFLAGS_OPENMP)
 FFLAGS += $(FFLAGS_OPENMP)
 LDFLAGS += $(LDFLAGS_OPENMP)
-# to correct a loader bug on gaea: envars below set by module load intel
-#LIBS += -L$(INTEL_PATH)/$(INTEL_MAJOR_VERSION)/$(INTEL_MINOR_VERSION)/lib/intel64 -lifcoremt
-#LIBS += -lifcoremt
 endif
 
 ifneq ($(VERBOSE),)
@@ -138,6 +129,6 @@ FFLAGS += $(FFLAGS_VERBOSE)
 LDFLAGS += $(LDFLAGS_VERBOSE)
 endif
 
-LIBS += -lFMS -lesmf -lnetcdff -lnetcdf -llapack -lblas -lc -lrt
+LIBS += -lFMS -L/usr/local/esmf/lib -lesmf -lnetcdff -lnetcdf -llapack -lblas -lc -lrt
 
 LDFLAGS += $(LIBS)

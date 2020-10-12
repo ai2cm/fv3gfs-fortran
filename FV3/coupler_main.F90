@@ -134,10 +134,17 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
  call fms_init
  call constants_init
  call sat_vapor_pres_init
+
  !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, mpi_rank,ier)
  !$ser init directory='./test_data/' prefix='Generator' mpi_rank=mpi_rank unique_id=.true.
  !$ser mode write
  !$ser off
+
+#ifdef GT4PY_DEV
+ if (mpp_pe() == mpp_root_pe()) &
+   write(*,*) '>>> WARNING: RUNNING WITH GT4PY_DEV ON'
+#endif
+
  call coupler_init
  call print_memuse_stats('after coupler init')
 

@@ -45,6 +45,10 @@ FFLAGS := $(INCLUDE) -fno-alias -auto -safe-cray-ptr -ftz -assume byterecl -nowa
 CPPDEFS += -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO -DUSE_GFSL63 -DGFS_PHYS 
 CPPDEFS += -DNEW_TAUCTMAX -DINTERNAL_FILE_NML
 
+ifeq ($(GT4PY_DEV),Y)
+CPPDEFS += -DGT4PY_DEV
+endif
+
 ifeq ($(HYDRO),Y)
 CPPDEFS += 
 else

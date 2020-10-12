@@ -26,7 +26,7 @@ SRCS_f90 =
 
 SRCS_F   =
 
-SRCS_F90 = ./coarse_graining.F90
+SRCS_F90 = ./coarse_graining.F90 ./mappm.F90
 
 SRCS_c   = 
 
