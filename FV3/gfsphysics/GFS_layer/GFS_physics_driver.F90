@@ -3820,6 +3820,9 @@ module module_physics_driver
         endif ! if (ldiag3d)
 
         if (ignore_deep_thermo) then
+
+          Diag%rainc = 0.0
+
           do k=1,levs
             do i=1,im
               Stateout%gt0(i,k) = savet(i,k)
