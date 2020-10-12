@@ -417,7 +417,7 @@ contains
 !-----------------------------------------------------
   do it=1,n_split
 !-----------------------------------------------------
-     !$ser verbatim if (it > 1) then
+     !$ser verbatim if (it < n_split) then
      !$ser off
      !$ser verbatim endif
      n_step = it
