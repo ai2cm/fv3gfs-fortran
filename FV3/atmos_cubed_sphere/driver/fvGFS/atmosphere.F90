@@ -1467,7 +1467,7 @@ contains
 !! and compute a consistent prognostic state.
  subroutine atmosphere_state_update (Time, IPD_Data, IAU_Data, Atm_block, flip_vc)
    type(time_type),              intent(in) :: Time
-   type(IPD_data_type),          intent(in) :: IPD_Data(:)
+   type(IPD_data_type),          intent(inout) :: IPD_Data(:)
    type(IAU_external_data_type), intent(in) :: IAU_Data
    type(block_control_type),     intent(in) :: Atm_block
    logical,                      intent(in) :: flip_vc
@@ -1663,6 +1663,8 @@ contains
 
        call timing_off('FV_UPDATE_PHYS')
    call mpp_clock_end (id_dynam)
+
+   if (Atm(n)%flagstruct%nudge) call update_physics_precipitation_for_qv_nudging(Atm_block, IPD_Data)
 
 !--- nesting update after updating atmospheric variables with
 !--- physics tendencies
@@ -2040,14 +2042,6 @@ contains
        IPD_Data(nb)%Statein%atm_ts(ix) = _DBL_(_RL_(Atm(mytile)%ts(i,j)))
      enddo
 
-     if (Atm(mytile)%flagstruct%nudge) then
-       do ix = 1, blen
-        i = Atm_block%index(nb)%ii(ix)
-        j = Atm_block%index(nb)%jj(ix)
-        IPD_Data(nb)%Statein%column_moistening_implied_by_nudging(ix) = _DBL_(_RL_(Atm(mytile)%column_moistening_implied_by_nudging(i,j)))
-       enddo
-     endif
-
      do k = 1, npz
        !Indices for FV's vertical coordinate, for which 1 = top
        !here, k is the index for GFS's vertical coordinate, for which 1 =
@@ -2190,7 +2184,6 @@ contains
     endif
     IPD_Data(nb)%Statein%dycore_hydrostatic = Atm(mytile)%flagstruct%hydrostatic
     IPD_Data(nb)%Statein%nwat = Atm(mytile)%flagstruct%nwat
-    IPD_Data(nb)%Statein%dycore_nudge = Atm(mytile)%flagstruct%nudge
   enddo
 
  end subroutine atmos_phys_driver_statein
@@ -2212,5 +2205,56 @@ contains
       if (allocated(physics_tendency_diag%qv_dt)) physics_tendency_diag%qv_dt = (q(isc:iec,jsc:jec,1:npz,sphum) - physics_tendency_diag%qv_dt) / dt
    endif
  end subroutine atmos_phys_qdt_diag
+
+ subroutine atmosphere_column_moistening_implied_by_nudging(nb, im, Atm_block, column_moistening_implied_by_nudging)
+   integer, intent(in) :: nb, im
+   type (block_control_type), intent(in) :: Atm_block
+   real(kind=kind_phys) :: column_moistening_implied_by_nudging(1:im)
+
+   integer :: i, j, ix
+
+   do ix = 1, im
+      i = Atm_block%index(nb)%ii(ix)
+      j = Atm_block%index(nb)%jj(ix)
+      column_moistening_implied_by_nudging(ix) = _DBL_(_RL_(Atm(mytile)%column_moistening_implied_by_nudging(i,j)))
+   enddo
+ end subroutine atmosphere_column_moistening_implied_by_nudging
+
+! If nudging the specific humidity to NCEP analysis, subtract the column-integrated
+! specific humidity nudging tendency from the precipitation felt by the surface.
+ subroutine subtract_column_moistening_from_precipitation(moistening, im, timestep, precipitation)
+   integer, intent(in) :: im
+   real(kind=kind_phys), intent(in) :: timestep
+   real(kind=kind_phys), intent(in) :: moistening(1:im)
+   real(kind=kind_phys), intent(inout) :: precipitation(1:im)
+   real(kind=kind_phys) :: m_per_mm
+
+   m_per_mm = 1.0 / 1000.0
+
+   precipitation = precipitation - moistening * timestep * m_per_mm
+   where (precipitation .lt. 0.0)
+      precipitation = 0.0
+   endwhere
+ end subroutine subtract_column_moistening_from_precipitation
+
+ subroutine update_physics_precipitation_for_qv_nudging(Atm_block, IPD_Data)
+   type(block_control_type), intent(in) :: Atm_block
+   type(IPD_data_type), intent(inout) :: IPD_Data(:)
+
+   real(kind=kind_phys), allocatable :: column_moistening_implied_by_nudging(:)
+   integer :: nb, im
+
+   do nb = 1, Atm_block%nblks
+     im = Atm_block%blksz(nb)
+     allocate(column_moistening_implied_by_nudging(1:im))
+     call atmosphere_column_moistening_implied_by_nudging(nb, im, Atm_block, column_moistening_implied_by_nudging)
+     call subtract_column_moistening_from_precipitation( &
+       column_moistening_implied_by_nudging, &
+       im, &
+       dt_atmos, &
+       IPD_Data(nb)%Sfcprop%tprcp)
+     deallocate(column_moistening_implied_by_nudging)
+   enddo
+ end subroutine update_physics_precipitation_for_qv_nudging
 
 end module atmosphere_mod

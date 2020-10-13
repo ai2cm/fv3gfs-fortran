@@ -39,6 +39,11 @@ def reference_dir(request):
     return request.config.getoption("--refdir")
 
 
+@pytest.fixture
+def image_runner(request):
+    return request.config.getoption("--image_runner")
+
+
 @pytest.fixture(params=config_filenames)
 def config(request):
     config_filename = os.path.join(CONFIG_DIR, request.param)
@@ -52,14 +57,19 @@ def run_dir(model_image_tag, config):
     return os.path.join(OUTPUT_DIR, model_image_tag, run_name)
 
 
-def test_regression(config, model_image, reference_dir, run_dir):
+def test_regression(config, model_image, reference_dir, run_dir, image_runner):
     run_name = config['experiment_name']
     run_reference_dir = os.path.join(reference_dir, run_name)
     if os.path.isdir(run_dir):
         shutil.rmtree(run_dir)
     os.makedirs(run_dir)
     write_run_directory(config, run_dir)
-    run_model(run_dir, model_image)
+    if image_runner == "docker":
+        run_model_docker(run_dir, model_image)
+    elif image_runner == "sarus":
+        run_model_sarus(run_dir, model_image)
+    else:
+        raise NotImplementedError("image_runner must be one of 'docker' or 'sarus'")
     md5sum_filename = os.path.join(run_reference_dir, MD5SUM_FILENAME)
     check_rundir_md5sum(run_dir, md5sum_filename)
     if 'serialize' in model_image:
@@ -83,7 +93,7 @@ def ensure_reference_exists(filename):
         )
 
 
-def run_model(rundir, model_image):
+def run_model_docker(rundir, model_image):
     if USE_LOCAL_ARCHIVE:
         archive = fv3config.get_cache_dir()
         archive_mount = ['-v', f'{archive}:{archive}']
@@ -104,6 +114,15 @@ def run_model(rundir, model_image):
             stdout=fv3out_f,
             stderr=fv3err_f
         )
+
+
+def run_model_sarus(rundir, model_image):
+    shutil.copy(os.path.join(TEST_DIR, "run_files/job_jenkins_sarus"), os.path.join(rundir, "job_jenkins_sarus"))
+    # run job_jenkins_sarus with env var FV3_CONTAINER set to model_image
+    env = os.environ.copy()
+    env["FV3_CONTAINER"] = model_image
+    env["SCRATCH_DIR"] = rundir
+    subprocess.check_call(["sbatch", "--wait", "job_jenkins_sarus"], env=env, cwd=rundir)
 
 
 def check_md5sum(run_dir, md5sum_filename):
