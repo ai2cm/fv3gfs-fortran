@@ -3375,12 +3375,25 @@ end subroutine ytp_v
    real, intent(in) :: ua(4)
    real, intent(in) :: dxa(4)
    real:: t1, t2
-
+#ifdef GT4PY_DEV
+   real:: n1, n2, n1a, n1b, n2a, n2b, c1, c2
    t1 = dxa(1) + dxa(2)
    t2 = dxa(3) + dxa(4)
+   n1a = (t1+dxa(2))*ua(2)
+   n1b = dxa(2)*ua(1)
+   n2a = (t2+dxa(3))*ua(3)
+   n2b = dxa(3)*ua(4)
+   c1 = (n1a - n1b) / t1
+   c2 = (n2a - n2b) / t2
+   edge_interpolate4 = 0.5*( c1 + c2 )
+                    
+#else
+   t1 = dxa(1) + dxa(2)
+   t2 = dxa(3) + dxa(4)
+
    edge_interpolate4 = 0.5*( ((t1+dxa(2))*ua(2)-dxa(2)*ua(1)) / t1 + &
                              ((t2+dxa(3))*ua(3)-dxa(3)*ua(4)) / t2 )
-
+#endif
  end function edge_interpolate4
 
 !>@brief The subroutine 'fill3_4corners' fills the 4 corners of the scalar fileds only as needed by 'c_core'.
