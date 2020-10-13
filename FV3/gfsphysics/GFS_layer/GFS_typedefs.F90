@@ -1079,7 +1079,7 @@ module GFS_typedefs
     character(len=240)   :: iau_inc_files(7)! list of increment files
     real(kind=kind_phys) :: iaufhrs(7)      ! forecast hours associated with increment files
     logical :: iau_filter_increments
-
+    real(kind=kind_phys) :: sst_perturbation  ! SST perturbation to climatology or nudging SST (default 0.0)
 #ifdef CCPP
     ! From physcons.F90, updated/set in control_initialize
     real(kind=kind_phys) :: dxinv           ! inverse scaling factor for critical relative humidity, replaces dxinv in physcons.F90
@@ -3105,6 +3105,7 @@ module GFS_typedefs
 !--- aerosol scavenging factors
     character(len=20) :: fscav_aero(20) = 'default'
 
+    real(kind=kind_phys) :: sst_perturbation = 0.0  ! SST perturbation
 !--- END NAMELIST VARIABLES
 
     NAMELIST /gfs_physics_nml/                                                              &
@@ -3194,7 +3195,8 @@ module GFS_typedefs
                                max_lon, max_lat, min_lon, min_lat, rhcmax,                  &
                                phys_version,                                                &
                           !--- aerosol scavenging factors ('name:value' string array)
-                               fscav_aero
+                               fscav_aero, &
+                               sst_perturbation
 
 !--- other parameters 
     integer :: nctp    =  0                !< number of cloud types in CS scheme
@@ -3661,6 +3663,7 @@ module GFS_typedefs
     Model%iau_filter_increments = iau_filter_increments
     if(Model%me==0) print *,' model init,iaufhrs=',Model%iaufhrs
 
+    Model%sst_perturbation = sst_perturbation
 !--- tracer handling
     Model%ntrac            = size(tracer_names)
 #ifdef CCPP
@@ -4463,7 +4466,7 @@ module GFS_typedefs
 #endif
       print *, ' ivegsrc           : ', Model%ivegsrc
       print *, ' isot              : ', Model%isot
-
+      print *, ' sst_perturbation  : ', Model%sst_perturbation
       if (Model%lsm == Model%lsm_noahmp) then
       print *, ' Noah MP LSM is used, the options are'
       print *, ' iopt_dveg         : ', Model%iopt_dveg
