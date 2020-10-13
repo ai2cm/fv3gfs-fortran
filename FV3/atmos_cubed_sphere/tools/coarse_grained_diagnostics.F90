@@ -43,7 +43,7 @@ module coarse_grained_diagnostics_mod
 contains
 
   subroutine populate_coarse_diag_type(Atm, coarse_diagnostics)
-    type(fv_atmos_type), intent(in) :: Atm(:)
+    type(fv_atmos_type), intent(in), target :: Atm(:)
     type(coarse_diag_type), intent(out) :: coarse_diagnostics(:)
 
     integer :: is, ie, js, je, npz, n_tracers, n_prognostic, t
