@@ -97,7 +97,7 @@
           if ( Model%nstf_name(1) > 0 ) then
             TSFFCS(len)          = Sfcprop(nb)%tref   (ix)
           else
-            TSFFCS(len)          = Sfcprop(nb)%tsfc   (ix)
+            TSFFCS(len)          = Sfcprop(nb)%tsfco  (ix)
           endif
           SNOFCS  (len)          = Sfcprop(nb)%weasd  (ix)
           ZORFCS  (len)          = Sfcprop(nb)%zorl   (ix)
@@ -192,7 +192,7 @@
           if ( Model%nstf_name(1) > 0 ) then
              Sfcprop(nb)%tref(ix) = TSFFCS  (len)
           else
-             Sfcprop(nb)%tsfc(ix) = TSFFCS  (len)
+             Sfcprop(nb)%tsfco(ix) = TSFFCS (len)
           endif
           Sfcprop(nb)%weasd  (ix) = SNOFCS  (len)
           Sfcprop(nb)%zorl   (ix) = ZORFCS  (len)
