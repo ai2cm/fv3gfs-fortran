@@ -1059,6 +1059,15 @@ contains
         Atm(n)%nudge_diag%nudge_q_dt(isc:iec,jsc:jec,npz) = 0.0
     endif
 
+    idiag%id_column_moistening_nudge = register_diag_field('dynamics', &
+          'column_moistening_nudge', axes(1:2), Time, &
+          'column integrated moistening from nudging', &
+          'mm/s', missing_value=missing_value)
+    if (idiag%id_column_moistening_nudge > 0) then
+        allocate(Atm(n)%nudge_diag%column_moistening_nudge(isc:iec,jsc:jec))
+        Atm(n)%nudge_diag%column_moistening_nudge(isc:iec,jsc:jec) = 0.0
+    endif
+
     idiag%id_u_dt_nudge = register_diag_field('dynamics', &
           'u_dt_nudge', axes(1:3), Time, &
           'zonal wind tendency from nudging', &
