@@ -1139,6 +1139,7 @@ module fv_arrays_mod
       real, allocatable :: nudge_u_dt(:,:,:)
       real, allocatable :: nudge_v_dt(:,:,:)
       real, allocatable :: nudge_q_dt(:,:,:)
+      real, allocatable :: column_moistening(:,:)
 
    end type nudge_diag_type
 

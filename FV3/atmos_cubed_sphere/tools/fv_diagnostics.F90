@@ -1064,8 +1064,8 @@ contains
           'column integrated moistening from nudging', &
           'mm/s', missing_value=missing_value)
     if (idiag%id_column_moistening_nudge > 0) then
-        allocate(Atm(n)%nudge_diag%column_moistening_nudge(isc:iec,jsc:jec))
-        Atm(n)%nudge_diag%column_moistening_nudge(isc:iec,jsc:jec) = 0.0
+        allocate(Atm(n)%nudge_diag%column_moistening(isc:iec,jsc:jec))
+        Atm(n)%nudge_diag%column_moistening(isc:iec,jsc:jec) = 0.0
     endif
 
     idiag%id_u_dt_nudge = register_diag_field('dynamics', &
@@ -3119,6 +3119,9 @@ contains
      endif
      if (idiag%id_q_dt_nudge > 0) then
         used = send_data(idiag%id_q_dt_nudge, Atm(n)%nudge_diag%nudge_q_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+     if (idiag%id_column_moistening_nudge > 0) then
+        used = send_data(idiag%id_column_moistening_nudge, Atm(n)%nudge_diag%column_moistening(isc:iec,jsc:jec), Time)
      endif
      if (idiag%id_u_dt_nudge > 0) then
         used = send_data(idiag%id_u_dt_nudge, Atm(n)%nudge_diag%nudge_u_dt(isc:iec,jsc:jec,1:npz), Time)
