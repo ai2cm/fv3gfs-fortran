@@ -216,7 +216,7 @@ contains
     integer :: id_bk, id_pk, id_area, id_dx, id_dy, id_lon, id_lat, id_lont, id_latt, id_phalf, id_pfull
     integer :: id_hyam, id_hybm
     integer :: id_plev
-    integer :: id_a11, id_a12, id_a21, id_a22, id_ec1, id_ec2, id_vlon, id_vlat, id_sin_sg, id_component
+    integer :: id_a11, id_a12, id_a21, id_a22, id_ec1, id_ec2, id_vlon, id_vlat, id_component
     integer :: i, j, k, n, ntileMe, id_xt, id_yt, id_x, id_y, id_xe, id_ye, id_xn, id_yn
     integer :: isc, iec, jsc, jec
     logical :: used
@@ -501,10 +501,11 @@ contains
        if (id_a21 > 0) used = send_data(id_a21, Atm(n)%gridstruct%a21(isc:iec,jsc:jec), Time)
        if (id_a22 > 0) used = send_data(id_a22, Atm(n)%gridstruct%a22(isc:iec,jsc:jec), Time)
 
-       if (id_ec1 > 0 .or. id_ec2 > 0) allocate(work_vector(isc:iec,jsc:jec,1:3))
 
        ! Horizontal dimensions need to come first when writing out diagnostics, therefore we need to transpose
        ! the x and y unit vectors before sending them to the diagnostics manager.
+       if (id_ec1 > 0 .or. id_ec2 > 0) allocate(work_vector(isc:iec,jsc:jec,1:3))
+
        call transpose_unit_vector(Atm(n)%gridstruct%ec1(:,isc:iec,jsc:jec), isc, iec, jsc, jec, work_vector)
        if (id_ec1 > 0) used = send_data(id_ec1, work_vector, Time)
 
@@ -512,7 +513,7 @@ contains
        if (id_ec2 > 0) used = send_data(id_ec2, work_vector, Time)
    
        if (id_vlon > 0) used = send_data(id_vlon, Atm(n)%gridstruct%vlon(isc:iec,jsc:jec,:), Time)
-       if (id_vlat > 0) used = send_data(id_vlat, Atm(n)%gridstruct%vlon(isc:iec,jsc:jec,:), Time)
+       if (id_vlat > 0) used = send_data(id_vlat, Atm(n)%gridstruct%vlat(isc:iec,jsc:jec,:), Time)
 #ifndef DYNAMICS_ZS
        if (idiag%id_zsurf > 0) used = send_data(idiag%id_zsurf, idiag%zsurf, Time)
 #endif
