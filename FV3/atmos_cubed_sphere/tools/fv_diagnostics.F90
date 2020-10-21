@@ -501,16 +501,19 @@ contains
        if (id_a21 > 0) used = send_data(id_a21, Atm(n)%gridstruct%a21(isc:iec,jsc:jec), Time)
        if (id_a22 > 0) used = send_data(id_a22, Atm(n)%gridstruct%a22(isc:iec,jsc:jec), Time)
 
-
        ! Horizontal dimensions need to come first when writing out diagnostics, therefore we need to transpose
        ! the x and y unit vectors before sending them to the diagnostics manager.
        if (id_ec1 > 0 .or. id_ec2 > 0) allocate(work_vector(isc:iec,jsc:jec,1:3))
 
-       call transpose_unit_vector(Atm(n)%gridstruct%ec1(:,isc:iec,jsc:jec), isc, iec, jsc, jec, work_vector)
-       if (id_ec1 > 0) used = send_data(id_ec1, work_vector, Time)
+       if (id_ec1 > 0) then
+         call transpose_unit_vector(Atm(n)%gridstruct%ec1(:,isc:iec,jsc:jec), isc, iec, jsc, jec, work_vector)
+         used = send_data(id_ec1, work_vector, Time)
+       endif
 
-       call transpose_unit_vector(Atm(n)%gridstruct%ec2(:,isc:iec,jsc:jec), isc, iec, jsc, jec, work_vector)
-       if (id_ec2 > 0) used = send_data(id_ec2, work_vector, Time)
+       if (id_ec2 > 0) then
+         call transpose_unit_vector(Atm(n)%gridstruct%ec2(:,isc:iec,jsc:jec), isc, iec, jsc, jec, work_vector)
+         used = send_data(id_ec2, work_vector, Time)
+       endif
    
        if (id_vlon > 0) used = send_data(id_vlon, Atm(n)%gridstruct%vlon(isc:iec,jsc:jec,:), Time)
        if (id_vlat > 0) used = send_data(id_vlat, Atm(n)%gridstruct%vlat(isc:iec,jsc:jec,:), Time)
