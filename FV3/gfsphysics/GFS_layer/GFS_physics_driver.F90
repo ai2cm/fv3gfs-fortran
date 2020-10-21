@@ -1117,7 +1117,7 @@ module module_physics_driver
         do i = 1, IM
           frland(i) = zero
           if (islmsk(i) == 0) then
-!           Sfcprop%tsfco(i) = Sfcprop%tsfc(i)
+            Sfcprop%tsfco(i) = Sfcprop%tsfc(i)
             wet(i)  = .true.
             fice(i) = zero
           elseif (islmsk(i) == 1) then
@@ -1181,8 +1181,8 @@ module module_physics_driver
       do i=1,im
         if(wet(i)) then                    ! Water
             zorl3(i,3) = Sfcprop%zorlo(i)
-            tsfc3(i,3) = Sfcprop%tsfc(i)
-           tsurf3(i,3) = Sfcprop%tsfc(i)
+            tsfc3(i,3) = Sfcprop%tsfco(i)
+           tsurf3(i,3) = Sfcprop%tsfco(i)
 !          weasd3(i,3) = Sfcprop%weasd(i)
 !          snowd3(i,3) = Sfcprop%snowd(i)
            snowd3(i,3) = zero
