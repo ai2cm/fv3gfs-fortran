@@ -583,6 +583,8 @@ if (allocated(physics_tendency_diag%t_dt)) physics_tendency_diag%t_dt = (pt(is:i
            delp(is:ie,js:je,1:npz), &
            is, ie, js, je, npz, &
            column_moistening_implied_by_nudging(is:ie,js:je))
+
+         if (allocated(nudge_diag%column_moistening)) nudge_diag%column_moistening = column_moistening_implied_by_nudging(is:ie,js:je)
 #endif
   endif         ! end nudging       
 
