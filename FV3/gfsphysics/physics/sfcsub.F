@@ -7042,7 +7042,7 @@ cjfe
      &                 tsf(1,nn),len,iret
      &,                imsk, jmsk, slmskh, gaus,blno, blto
      &,                outlat, outlon, me)
-            tsf(1,nn) = tsf(1,nn) + sst_perturbation
+            tsf(:,nn) = tsf(:,nn) + sst_perturbation
           enddo
 !
 !  tsf at the begining of forecast i.e. fh=0
@@ -7394,7 +7394,7 @@ cjfe
      &               tsf(1,nn),len,iret
      &,              imsk, jmsk, slmskh, gaus,blno, blto
      &,              outlat, outlon, me)
-          tsf(1,nn) = tsf(1,nn) + sst_perturbation
+          tsf(:,nn) = tsf(:,nn) + sst_perturbation
 !     if(lprnt) print *,' tsf=',tsf(iprnt,nn),' nn=',nn
 !
 !  tsf...at time t-deltsfc
@@ -7596,7 +7596,7 @@ cjfe
      &               tsf(1,k1),len,iret
      &,              imsk, jmsk, slmskh, gaus,blno, blto
      &,              outlat, outlon, me)
-          tsf(1,k1) = tsf(1,k1) + sst_perturbation
+          tsf(:,k1) = tsf(:,k1) + sst_perturbation
         endif
         mon2s = mon1s + 1
 !       if (mon2s .eq. 1) mon2s = 13
@@ -7680,7 +7680,7 @@ cjfe
      &               tsf(1,nn),len,iret
      &,              imsk, jmsk, slmskh, gaus,blno, blto
      &,              outlat, outlon, me)
-          tsf(1,nn) = tsf(1,nn) + sst_perturbation
+          tsf(:,nn) = tsf(:,nn) + sst_perturbation
 !
 !  soil wetness
 !
