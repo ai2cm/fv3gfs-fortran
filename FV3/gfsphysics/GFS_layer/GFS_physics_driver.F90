@@ -2116,9 +2116,9 @@ module module_physics_driver
       if (Model%use_analysis_sst) then
         do i = 1, im
           if (islmsk(i) == 0 ) then
-            Sfcprop%tsfc(i) = Statein%atm_ts(i)
-            Sfcprop%tsfco(i) = Statein%atm_ts(i)
-            tsfc3(i,3) = Statein%atm_ts(i)
+            Sfcprop%tsfc(i) = Statein%atm_ts(i) + Model%sst_perturbation
+            Sfcprop%tsfco(i) = Statein%atm_ts(i) + Model%sst_perturbation
+            tsfc3(i,3) = Statein%atm_ts(i) + Model%sst_perturbation
           endif
         enddo
       endif
