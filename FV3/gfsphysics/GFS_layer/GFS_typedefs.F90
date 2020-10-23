@@ -1077,7 +1077,7 @@ module GFS_typedefs
     character(len=240)   :: iau_inc_files(7)! list of increment files
     real(kind=kind_phys) :: iaufhrs(7)      ! forecast hours associated with increment files
     logical :: iau_filter_increments
-    real(kind=kind_phys) :: sst_perturbation  ! SST perturbation to climatology or nudging SST (default 0.0)
+    real(kind=kind_phys) :: sst_perturbation  ! Sea surface temperature perturbation to climatology or nudging SST (default 0.0 K)
 #ifdef CCPP
     ! From physcons.F90, updated/set in control_initialize
     real(kind=kind_phys) :: dxinv           ! inverse scaling factor for critical relative humidity, replaces dxinv in physcons.F90
@@ -3097,7 +3097,7 @@ module GFS_typedefs
 !--- aerosol scavenging factors
     character(len=20) :: fscav_aero(20) = 'default'
 
-    real(kind=kind_phys) :: sst_perturbation = 0.0  ! SST perturbation
+    real(kind=kind_phys) :: sst_perturbation = 0.0  ! Sea surface temperature perturbation [K]
 !--- END NAMELIST VARIABLES
 
     NAMELIST /gfs_physics_nml/                                                              &
