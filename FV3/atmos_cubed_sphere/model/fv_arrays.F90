@@ -113,7 +113,7 @@ module fv_arrays_mod
 
      integer :: id_t_dt_nudge, id_ps_dt_nudge, id_delp_dt_nudge
      integer :: id_u_dt_nudge, id_v_dt_nudge, id_q_dt_nudge
-     integer :: id_t_dt_phys, id_qv_dt_phys
+     integer :: id_t_dt_phys, id_qv_dt_phys, id_column_moistening_nudge
 
   end type fv_diag_type
 
@@ -1139,6 +1139,7 @@ module fv_arrays_mod
       real, allocatable :: nudge_u_dt(:,:,:)
       real, allocatable :: nudge_v_dt(:,:,:)
       real, allocatable :: nudge_q_dt(:,:,:)
+      real, allocatable :: column_moistening(:,:)
 
    end type nudge_diag_type
 

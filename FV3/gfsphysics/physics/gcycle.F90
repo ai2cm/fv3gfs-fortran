@@ -179,7 +179,8 @@
                      size(Model%input_nml_file),                  &
                      Model%input_nml_file,                        &
                      Model%ialb, Model%isot, Model%ivegsrc,       &
-                     trim(tile_num_ch), i_index, j_index)
+                     trim(tile_num_ch), i_index, j_index,         &
+                     Model%sst_perturbation)
 #ifndef INTERNAL_FILE_NML
       close (Model%nlunit)
 #endif
