@@ -1,8 +1,10 @@
 module coarse_grained_diagnostics_mod
 
+  use constants_mod, only: rdgas, grav
   use diag_manager_mod, only: diag_axis_init, register_diag_field, register_static_field, send_data
   use field_manager_mod,  only: MODEL_ATMOS
   use fv_arrays_mod, only: fv_atmos_type, fv_coarse_diag_type, fv_coarse_graining_type
+  use fv_diagnostics_mod, only: cs3_interpolator
   use mpp_domains_mod, only: domain2d
   use mpp_mod, only: FATAL, mpp_error
   use coarse_graining_mod, only: block_sum, get_fine_array_bounds, get_coarse_array_bounds, MODEL_LEVEL, &
@@ -27,6 +29,8 @@ module coarse_grained_diagnostics_mod
     character(len=128) :: description
     character(len=64) :: units
     character(len=64) :: reduction_method
+    real :: pressure_level = -1.0  ! If greater than 0, interpolate to this pressure level (in Pa)
+    integer :: iv = 0  ! Controls type of pressure-level interpolation performed (-1, 0, or 1)
     type(data_subtype) :: data
   end type coarse_diag_type
 
@@ -39,6 +43,7 @@ module coarse_grained_diagnostics_mod
   ! Reduction methods
   character(len=11) :: AREA_WEIGHTED = 'area_weighted'
   character(len=11) :: MASS_WEIGHTED = 'mass_weighted'
+  character(len=4) :: pressure_level_label
 
 contains
 
@@ -46,12 +51,15 @@ contains
     type(fv_atmos_type), intent(in), target :: Atm(:)
     type(coarse_diag_type), intent(out) :: coarse_diagnostics(:)
 
-    integer :: is, ie, js, je, npz, n_tracers, n_prognostic, t
+    integer :: is, ie, js, je, npz, n_tracers, n_prognostic, t, p, n_pressure_levels
     integer :: index = 1
     character(len=128) :: tracer_name
     character(len=256) :: tracer_long_name, tracer_units
     character(len=8) :: DYNAMICS = 'dynamics'
+    integer :: pressure_levels(3)
 
+    n_pressure_levels = size(pressure_levels, 1)
+    pressure_levels = (/ 200, 500, 850/)
     npz = Atm(tile_count)%npz
     n_prognostic = size(Atm(tile_count)%q, 4)
     n_tracers = Atm(tile_count)%ncnst
@@ -97,6 +105,35 @@ contains
       else
         coarse_diagnostics(index)%data%var3 => Atm(tile_count)%q(is:ie,js:je,1:npz,t)
       endif
+    enddo
+
+    ! iv =-1: winds
+    ! iv = 0: positive definite scalars
+    ! iv = 1: temperature
+    do p = 1, n_pressure_levels
+      write(pressure_level_label, '(I5)') pressure_levels(p)
+
+      index = index + 1
+      coarse_diagnostics(index)%pressure_level = 100 * real(pressure_levels(p))
+      coarse_diagnostics(index)%axes = 2
+      coarse_diagnostics(index)%module_name = DYNAMICS
+      coarse_diagnostics(index)%name = 'ucomp_' // trim(pressure_level_label) // '_coarse'
+      coarse_diagnostics(index)%description = 'coarse-grained zonal wind at ' // trim(pressure_level_label) // 'hPa'
+      coarse_diagnostics(index)%units = 'm/s'
+      coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+      coarse_diagnostics(index)%data%var3 => Atm(tile_count)%ua(is:ie,js:je,1:npz)
+      coarse_diagnostics(index)%iv = -1
+
+      index = index + 1
+      coarse_diagnostics(index)%pressure_level = 100 * real(pressure_levels(p))
+      coarse_diagnostics(index)%axes = 2
+      coarse_diagnostics(index)%module_name = DYNAMICS
+      coarse_diagnostics(index)%name = 'vcomp_' // trim(pressure_level_label) // '_coarse'
+      coarse_diagnostics(index)%description = 'coarse-grained meridional wind at ' // trim(pressure_level_label) // 'hPa'
+      coarse_diagnostics(index)%units = 'm/s'
+      coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+      coarse_diagnostics(index)%data%var3 => Atm(tile_count)%va(is:ie,js:je,1:npz)
+      coarse_diagnostics(index)%iv = -1
     enddo
   end subroutine populate_coarse_diag_type
 
@@ -201,16 +238,17 @@ contains
     type(fv_atmos_type), intent(in), target :: Atm(:)
     type(time_type), intent(in) :: Time
     
-    real, allocatable :: work_2d_coarse(:,:), work_3d_coarse(:,:,:), mass(:,:,:)
+    real, allocatable :: work_2d(:,:), work_2d_coarse(:,:), work_3d_coarse(:,:,:), mass(:,:,:), height_on_interfaces(:,:,:)
     integer :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz
     logical :: used
-    logical :: need_2d_work_array, need_3d_work_array, need_mass_array
+    logical :: need_2d_work_array, need_3d_work_array, need_mass_array, need_height_array
     integer :: index, i, j
     character(len=256) :: error_message
 
     call get_need_nd_work_array(2, need_2d_work_array)
     call get_need_nd_work_array(3, need_3d_work_array)
     call get_need_mass_array(need_mass_array)
+    call get_need_height_array(need_height_array)
 
     call get_fine_array_bounds(is, ie, js, je)
     call get_coarse_array_bounds(is_coarse, ie_coarse, js_coarse, je_coarse)
@@ -229,6 +267,34 @@ contains
       call compute_mass(Atm(tile_count), is, ie, js, je, npz, mass)
     endif
 
+    if (need_height_array) then
+      allocate(height_on_interfaces(is:ie,js:je,1:npz+1))
+      if(Atm(tile_count)%flagstruct%hydrostatic) then
+        call compute_height_on_interfaces_hydrostatic( &
+          is, &
+          ie, &
+          js, &
+          je, &
+          npz, &
+          Atm(tile_count)%pt(is:ie,js:je,1:npz), &
+          Atm(tile_count)%peln(is:ie,1:npz+1,js:je), &
+          height_on_interfaces(is:ie,js:je,1:npz) &
+        )
+      else
+        call compute_height_on_interfaces_nonhydrostatic( &
+          is, &
+          ie, &
+          js, &
+          je, &
+          npz, &
+          Atm(tile_count)%delz(is:ie,js:je,1:npz), &
+          height_on_interfaces(is:ie,js:je,1:npz) &
+        )
+      endif
+      if (.not. allocated(work_2d_coarse)) allocate(work_2d_coarse(is_coarse:ie_coarse,js_coarse:je_coarse))
+      allocate(work_2d(is:ie,js:je))
+    endif
+
     do index = 1, DIAG_SIZE
       if (coarse_diagnostics(index)%id .gt. 0) then
         if (coarse_diagnostics(index)%axes .eq. 2) then
@@ -245,7 +311,7 @@ contains
             call mpp_error(FATAL, error_message)
           endif
           used = send_data(coarse_diagnostics(index)%id, work_2d_coarse, Time)
-        elseif (coarse_diagnostics(index)%axes .eq. 3) then
+        elseif ((coarse_diagnostics(index)%axes .eq. 3) .and. (coarse_diagnostics(index)%pressure_level < 0.0)) then
           if (trim(coarse_diagnostics(index)%reduction_method) .eq. AREA_WEIGHTED) then
             call weighted_block_average( &
               Atm(tile_count)%gridstruct%area(is:ie,js:je), &
@@ -265,6 +331,33 @@ contains
             call mpp_error(FATAL, error_message)
           endif
           used = send_data(coarse_diagnostics(index)%id, work_3d_coarse, Time)
+        elseif ((coarse_diagnostics(index)%axes .eq. 3) .and. (coarse_diagnostics(index)%pressure_level > 0.0)) then
+          if (trim(coarse_diagnostics(index)%reduction_method) .eq. AREA_WEIGHTED) then
+            call interpolate_to_pressure_level( &
+              is, &
+              ie, &
+              js, &
+              je, &
+              npz, &
+              coarse_diagnostics(index)%data%var3, &
+              height_on_interfaces(is:ie,js:je,1:npz+1), &
+              Atm(tile_count)%peln(is:ie,1:npz+1,js:je), &
+              coarse_diagnostics(index)%pressure_level, &
+              coarse_diagnostics(index)%iv, &
+              work_2d(is:ie,js:je) &
+            )
+            call weighted_block_average( &
+              Atm(tile_count)%gridstruct%area(is:ie,js:je), &
+              work_2d, &
+              work_2d_coarse &
+            )
+            used = send_data(coarse_diagnostics(index)%id, work_2d_coarse, Time)
+          else
+            write(error_message, *) 'fv_coarse_diag_model_levels: invalid reduction_method, ' // &
+              trim(coarse_diagnostics(index)%reduction_method) // ', provided for pressure interpolated variable, ' // &
+              trim(coarse_diagnostics(index)%name)
+            call mpp_error(FATAL, error_message)
+          endif
         endif
       endif
     enddo 
@@ -406,6 +499,24 @@ contains
      enddo
   end subroutine get_need_mass_array
 
+  ! If we are interpolating the surfaces of constant pressure, we need
+  ! to compute the height on model level interfaces.
+  subroutine get_need_height_array(need_height_array)
+    logical, intent(out) :: need_height_array
+
+    integer :: index
+
+    need_height_array = .false.
+    do index = 1, DIAG_SIZE
+      if ((coarse_diagnostics(index)%axes == 3) .and. & 
+          (coarse_diagnostics(index)%pressure_level > 0.0) .and. &
+          (coarse_diagnostics(index)%id > 0)) then
+          need_height_array = .true.
+          exit
+      endif
+    enddo
+ end subroutine get_need_height_array
+
   subroutine get_need_masked_area_array(need_masked_area_array)
     logical, intent(out) :: need_masked_area_array
 
@@ -434,4 +545,58 @@ contains
     enddo
   end subroutine compute_mass
 
+  subroutine interpolate_to_pressure_level(is, ie, js, je, npz, field, height, phalf, pressure_level, iv, result)
+    integer, intent(in) :: is, ie, js, je, npz, iv
+    real, intent(in) :: field(is:ie,js:je,1:npz), height(is:ie,js:je,1:npz+1), phalf(is:ie,1:npz+1,js:je)
+    real, intent(in) :: pressure_level
+    real, intent(out) :: result(is:ie,js:je)
+
+    real, allocatable :: work(:,:,:)
+    integer :: n_pressure_levels = 1
+    real :: output_pressures(1)
+    integer :: ids(1) = 1  ! Set > 0
+
+    output_pressures = pressure_level
+    allocate(work(is:ie,js:je,n_pressure_levels))
+
+    call cs3_interpolator(is, ie, js, je, npz, field, n_pressure_levels, output_pressures, height, phalf, ids, work, iv)
+    result = work(is:ie,js:je,1)
+  end subroutine interpolate_to_pressure_level
+
+  subroutine compute_height_on_interfaces_hydrostatic(is, ie, js, je, npz, temperature, phalf, height)
+    integer, intent(in) :: is, ie, js, je, npz
+    real, intent(in) :: temperature(is:ie,js:je,1:npz), phalf(is:ie,1:npz+1,js:je)
+    real, intent(out) :: height(is:ie,js:je,1:npz+1)
+
+    integer :: i, j, k
+    real :: rgrav
+
+    rgrav = 1.0 / grav
+
+    do j = js, je
+      do i = is, ie
+        height(i,j,npz+1) = 0.0
+        do k = npz, 1, -1
+          height(i,j,k) = height(i,j,k+1) - (rdgas / grav) * temperature(i,j,k) * (phalf(i,k,j) - phalf(i,k+1,j))
+        enddo
+      enddo
+    enddo
+  end subroutine compute_height_on_interfaces_hydrostatic
+
+  subroutine compute_height_on_interfaces_nonhydrostatic(is, ie, js, je, npz, delz, height)
+    integer, intent(in) :: is, ie, js, je, npz
+    real, intent(in) :: delz(is:ie,js:je,1:npz)
+    real, intent(out) :: height(is:ie,js:je,1:npz+1)
+
+    integer :: i, j, k
+
+    do j = js, je
+      do i = is, ie
+        height(i,j,npz+1) = 0.0
+        do k = npz, 1, -1
+          height(i,j,k) = height(i,j,k+1) - delz(i,j,k)
+        enddo
+      enddo
+    enddo
+  end subroutine compute_height_on_interfaces_nonhydrostatic
 end module coarse_grained_diagnostics_mod
