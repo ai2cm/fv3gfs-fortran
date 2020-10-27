@@ -186,7 +186,7 @@ module fv_diagnostics_mod
  public :: prt_height, prt_gb_nh_sh, interpolate_vertical, rh_calc, get_height_field, dbzcalc
  public :: max_vv,get_vorticity,max_uh 
  public :: max_vorticity,max_vorticity_hy1,bunkers_vector
- public :: helicity_relative_CAPS, cs3_interpolator
+ public :: helicity_relative_CAPS, cs3_interpolator, get_height_given_pressure
 
  integer, parameter :: nplev = 31
  integer :: levs(nplev)

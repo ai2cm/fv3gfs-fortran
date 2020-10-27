@@ -4,7 +4,7 @@ module coarse_grained_diagnostics_mod
   use diag_manager_mod, only: diag_axis_init, register_diag_field, register_static_field, send_data
   use field_manager_mod,  only: MODEL_ATMOS
   use fv_arrays_mod, only: fv_atmos_type, fv_coarse_diag_type, fv_coarse_graining_type
-  use fv_diagnostics_mod, only: cs3_interpolator
+  use fv_diagnostics_mod, only: cs3_interpolator, get_height_given_pressure
   use mpp_domains_mod, only: domain2d
   use mpp_mod, only: FATAL, mpp_error
   use coarse_graining_mod, only: block_sum, get_fine_array_bounds, get_coarse_array_bounds, MODEL_LEVEL, &
@@ -31,6 +31,7 @@ module coarse_grained_diagnostics_mod
     character(len=64) :: reduction_method
     integer :: pressure_level = -1  ! If greater than 0, interpolate to this pressure level (in hPa)
     integer :: iv = 0  ! Controls type of pressure-level interpolation performed (-1, 0, or 1)
+    character(len=64) :: special_case  ! E.g. height is computed differently on pressure surfaces
     type(data_subtype) :: data
   end type coarse_diag_type
 
@@ -156,6 +157,16 @@ contains
       coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
       coarse_diagnostics(index)%data%var3 => Atm(tile_count)%omga(is:ie,js:je,1:npz)
       coarse_diagnostics(index)%iv = -1
+     
+      index = index + 1
+      coarse_diagnostics(index)%pressure_level = pressure_levels(p)
+      coarse_diagnostics(index)%axes = 2
+      coarse_diagnostics(index)%module_name = DYNAMICS
+      coarse_diagnostics(index)%name = 'h' // trim(adjustl(pressure_level_label)) // '_coarse'
+      coarse_diagnostics(index)%description = 'coarse-grained ' // trim(adjustl(pressure_level_label)) // '-mb height'
+      coarse_diagnostics(index)%units = 'm'
+      coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+      coarse_diagnostics(index)%special_case = 'height'
 
       do t = 1, n_tracers
         call get_tracer_names(MODEL_ATMOS, t, tracer_name, tracer_long_name, tracer_units)
@@ -345,6 +356,23 @@ contains
                 coarse_diagnostics(index)%data%var2, &
                 work_2d_coarse &
               )
+            elseif (trim(coarse_diagnostics(index)%special_case) .eq. 'height') then
+              call height_given_pressure_level( &
+                is, &
+                ie, &
+                js, &
+                je, &
+                npz, &
+                height_on_interfaces(is:ie,js:je,1:npz+1), &
+                Atm(tile_count)%peln(is:ie,1:npz+1,js:je), &
+                coarse_diagnostics(index)%pressure_level, &
+                work_2d(is:ie,js:je) &
+              )
+              call weighted_block_average( &
+                Atm(tile_count)%gridstruct%area(is:ie,js:je), &
+                work_2d, &
+                work_2d_coarse &
+              )
             else
               call interpolate_to_pressure_level( &
                 is, &
@@ -493,6 +521,23 @@ contains
               call weighted_block_average( &
                 Atm(tile_count)%gridstruct%area(is:ie,js:je), &
                 coarse_diagnostics(index)%data%var2, &
+                work_2d_coarse &
+              )
+            elseif (trim(coarse_diagnostics(index)%special_case) .eq. 'height') then
+              call height_given_pressure_level( &
+                is, &
+                ie, &
+                js, &
+                je, &
+                npz, &
+                height_on_interfaces(is:ie,js:je,1:npz+1), &
+                Atm(tile_count)%peln(is:ie,1:npz+1,js:je), &
+                coarse_diagnostics(index)%pressure_level, &
+                work_2d(is:ie,js:je) &
+              )
+              call weighted_block_average( &
+                Atm(tile_count)%gridstruct%area(is:ie,js:je), &
+                work_2d, &
                 work_2d_coarse &
               )
             else
@@ -684,4 +729,21 @@ contains
       enddo
     enddo
   end subroutine compute_height_on_interfaces_nonhydrostatic
+
+  subroutine height_given_pressure_level(is, ie, js, je, npz, height, phalf, pressure_level, result)
+    integer, intent(in) :: is, ie, js, je, npz, pressure_level
+    real, intent(in) :: height(is:ie,js:je,1:npz+1), phalf(is:ie,1:npz+1,js:je)
+    real, intent(out) :: result(is:ie,js:je)
+
+    real, allocatable :: work(:,:,:)
+    integer :: n_pressure_levels = 1
+    real :: output_pressures(1)
+    integer :: ids(1) = 1  ! Set > 0
+
+    output_pressures = log(100 * real(pressure_level))
+    allocate(work(is:ie,js:je,n_pressure_levels))
+
+    call get_height_given_pressure(is, ie, js, je, npz, height, n_pressure_levels, ids, output_pressures, phalf, work)
+    result(is:ie,js:je) = work(is:ie,js:je,1)
+  end subroutine height_given_pressure_level
 end module coarse_grained_diagnostics_mod
