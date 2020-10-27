@@ -29,7 +29,7 @@ module coarse_grained_diagnostics_mod
     character(len=128) :: description
     character(len=64) :: units
     character(len=64) :: reduction_method
-    real :: pressure_level = -1.0  ! If greater than 0, interpolate to this pressure level (in Pa)
+    integer :: pressure_level = -1  ! If greater than 0, interpolate to this pressure level (in hPa)
     integer :: iv = 0  ! Controls type of pressure-level interpolation performed (-1, 0, or 1)
     type(data_subtype) :: data
   end type coarse_diag_type
@@ -37,13 +37,13 @@ module coarse_grained_diagnostics_mod
   public :: fv_coarse_diag_init, fv_coarse_diag
 
   integer :: tile_count = 1  ! Following fv_diagnostics.F90
-  integer :: DIAG_SIZE = 64
-  type(coarse_diag_type), dimension(64) :: coarse_diagnostics
+  integer :: DIAG_SIZE = 512
+  type(coarse_diag_type), dimension(512) :: coarse_diagnostics
 
   ! Reduction methods
   character(len=11) :: AREA_WEIGHTED = 'area_weighted'
   character(len=11) :: MASS_WEIGHTED = 'mass_weighted'
-  character(len=4) :: pressure_level_label
+  character(len=5) :: pressure_level_label
 
 contains
 
@@ -58,7 +58,7 @@ contains
     character(len=8) :: DYNAMICS = 'dynamics'
     integer :: pressure_levels(3)
 
-    n_pressure_levels = size(pressure_levels, 1)
+    n_pressure_levels = 3
     pressure_levels = (/ 200, 500, 850/)
     npz = Atm(tile_count)%npz
     n_prognostic = size(Atm(tile_count)%q, 4)
@@ -114,26 +114,66 @@ contains
       write(pressure_level_label, '(I5)') pressure_levels(p)
 
       index = index + 1
-      coarse_diagnostics(index)%pressure_level = 100 * real(pressure_levels(p))
+      coarse_diagnostics(index)%pressure_level = pressure_levels(p)
       coarse_diagnostics(index)%axes = 2
       coarse_diagnostics(index)%module_name = DYNAMICS
-      coarse_diagnostics(index)%name = 'ucomp_' // trim(pressure_level_label) // '_coarse'
-      coarse_diagnostics(index)%description = 'coarse-grained zonal wind at ' // trim(pressure_level_label) // 'hPa'
+      coarse_diagnostics(index)%name = 'u' // trim(adjustl(pressure_level_label)) // '_coarse'
+      coarse_diagnostics(index)%description = 'coarse-grained ' // trim(adjustl(pressure_level_label)) // '-mb u'
       coarse_diagnostics(index)%units = 'm/s'
       coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
       coarse_diagnostics(index)%data%var3 => Atm(tile_count)%ua(is:ie,js:je,1:npz)
       coarse_diagnostics(index)%iv = -1
 
       index = index + 1
-      coarse_diagnostics(index)%pressure_level = 100 * real(pressure_levels(p))
+      coarse_diagnostics(index)%pressure_level = pressure_levels(p)
       coarse_diagnostics(index)%axes = 2
       coarse_diagnostics(index)%module_name = DYNAMICS
-      coarse_diagnostics(index)%name = 'vcomp_' // trim(pressure_level_label) // '_coarse'
-      coarse_diagnostics(index)%description = 'coarse-grained meridional wind at ' // trim(pressure_level_label) // 'hPa'
+      coarse_diagnostics(index)%name = 'v' // trim(adjustl(pressure_level_label)) // '_coarse'
+      coarse_diagnostics(index)%description = 'coarse-grained ' // trim(adjustl(pressure_level_label)) // '-mb v'
       coarse_diagnostics(index)%units = 'm/s'
       coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
       coarse_diagnostics(index)%data%var3 => Atm(tile_count)%va(is:ie,js:je,1:npz)
       coarse_diagnostics(index)%iv = -1
+
+      index = index + 1
+      coarse_diagnostics(index)%pressure_level = pressure_levels(p)
+      coarse_diagnostics(index)%axes = 2
+      coarse_diagnostics(index)%module_name = DYNAMICS
+      coarse_diagnostics(index)%name = 't' // trim(adjustl(pressure_level_label)) // '_coarse'
+      coarse_diagnostics(index)%description = 'coarse-grained ' // trim(adjustl(pressure_level_label)) // '-mb temperature'
+      coarse_diagnostics(index)%units = 'K'
+      coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+      coarse_diagnostics(index)%data%var3 => Atm(tile_count)%pt(is:ie,js:je,1:npz)
+      coarse_diagnostics(index)%iv = 1
+
+      index = index + 1
+      coarse_diagnostics(index)%pressure_level = pressure_levels(p)
+      coarse_diagnostics(index)%axes = 2
+      coarse_diagnostics(index)%module_name = DYNAMICS
+      coarse_diagnostics(index)%name = 'omg' // trim(adjustl(pressure_level_label)) // '_coarse'
+      coarse_diagnostics(index)%description = 'coarse-grained ' // trim(adjustl(pressure_level_label)) // '-mb omega'
+      coarse_diagnostics(index)%units = 'Pa/s'
+      coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+      coarse_diagnostics(index)%data%var3 => Atm(tile_count)%omga(is:ie,js:je,1:npz)
+      coarse_diagnostics(index)%iv = -1
+
+      do t = 1, n_tracers
+        call get_tracer_names(MODEL_ATMOS, t, tracer_name, tracer_long_name, tracer_units)
+        index = index + 1
+        coarse_diagnostics(index)%pressure_level = pressure_levels(p)
+        coarse_diagnostics(index)%axes = 2
+        coarse_diagnostics(index)%module_name = DYNAMICS
+        coarse_diagnostics(index)%name = trim(tracer_name) // trim(adjustl(pressure_level_label)) // '_coarse'
+        coarse_diagnostics(index)%description = 'coarse-grained ' // trim(adjustl(pressure_level_label)) // '-mb ' // trim(tracer_long_name)
+        coarse_diagnostics(index)%units = tracer_units
+        coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+        if (t .gt. n_prognostic) then
+          coarse_diagnostics(index)%data%var3 => Atm(tile_count)%qdiag(is:ie,js:je,1:npz,t)
+        else
+          coarse_diagnostics(index)%data%var3 => Atm(tile_count)%q(is:ie,js:je,1:npz,t)
+        endif
+        coarse_diagnostics(index)%iv = 0
+      enddo
     enddo
   end subroutine populate_coarse_diag_type
 
@@ -299,11 +339,32 @@ contains
       if (coarse_diagnostics(index)%id .gt. 0) then
         if (coarse_diagnostics(index)%axes .eq. 2) then
           if (trim(coarse_diagnostics(index)%reduction_method) .eq. AREA_WEIGHTED) then
-            call weighted_block_average( &
-              Atm(tile_count)%gridstruct%area(is:ie,js:je), &
-              coarse_diagnostics(index)%data%var2, &
-              work_2d_coarse &
-            )
+            if (coarse_diagnostics(index)%pressure_level < 0) then
+              call weighted_block_average( &
+                Atm(tile_count)%gridstruct%area(is:ie,js:je), &
+                coarse_diagnostics(index)%data%var2, &
+                work_2d_coarse &
+              )
+            else
+              call interpolate_to_pressure_level( &
+                is, &
+                ie, &
+                js, &
+                je, &
+                npz, &
+                coarse_diagnostics(index)%data%var3, &
+                height_on_interfaces(is:ie,js:je,1:npz+1), &
+                Atm(tile_count)%peln(is:ie,1:npz+1,js:je), &
+                coarse_diagnostics(index)%pressure_level, &
+                coarse_diagnostics(index)%iv, &
+                work_2d(is:ie,js:je) &
+              )
+              call weighted_block_average( &
+                Atm(tile_count)%gridstruct%area(is:ie,js:je), &
+                work_2d, &
+                work_2d_coarse &
+              )
+            endif
           else
             write(error_message, *) 'fv_coarse_diag_model_levels: invalid reduction_method, ' // &
               trim(coarse_diagnostics(index)%reduction_method) // ', provided for 2D variable, ' // &
@@ -311,7 +372,7 @@ contains
             call mpp_error(FATAL, error_message)
           endif
           used = send_data(coarse_diagnostics(index)%id, work_2d_coarse, Time)
-        elseif ((coarse_diagnostics(index)%axes .eq. 3) .and. (coarse_diagnostics(index)%pressure_level < 0.0)) then
+        elseif (coarse_diagnostics(index)%axes .eq. 3) then
           if (trim(coarse_diagnostics(index)%reduction_method) .eq. AREA_WEIGHTED) then
             call weighted_block_average( &
               Atm(tile_count)%gridstruct%area(is:ie,js:je), &
@@ -331,33 +392,6 @@ contains
             call mpp_error(FATAL, error_message)
           endif
           used = send_data(coarse_diagnostics(index)%id, work_3d_coarse, Time)
-        elseif ((coarse_diagnostics(index)%axes .eq. 3) .and. (coarse_diagnostics(index)%pressure_level > 0.0)) then
-          if (trim(coarse_diagnostics(index)%reduction_method) .eq. AREA_WEIGHTED) then
-            call interpolate_to_pressure_level( &
-              is, &
-              ie, &
-              js, &
-              je, &
-              npz, &
-              coarse_diagnostics(index)%data%var3, &
-              height_on_interfaces(is:ie,js:je,1:npz+1), &
-              Atm(tile_count)%peln(is:ie,1:npz+1,js:je), &
-              coarse_diagnostics(index)%pressure_level, &
-              coarse_diagnostics(index)%iv, &
-              work_2d(is:ie,js:je) &
-            )
-            call weighted_block_average( &
-              Atm(tile_count)%gridstruct%area(is:ie,js:je), &
-              work_2d, &
-              work_2d_coarse &
-            )
-            used = send_data(coarse_diagnostics(index)%id, work_2d_coarse, Time)
-          else
-            write(error_message, *) 'fv_coarse_diag_model_levels: invalid reduction_method, ' // &
-              trim(coarse_diagnostics(index)%reduction_method) // ', provided for pressure interpolated variable, ' // &
-              trim(coarse_diagnostics(index)%name)
-            call mpp_error(FATAL, error_message)
-          endif
         endif
       endif
     enddo 
@@ -367,18 +401,20 @@ contains
      type(fv_atmos_type), intent(in), target :: Atm(:)
      type(time_type), intent(in) :: Time
      
-     real, allocatable, dimension(:,:) :: work_2d_coarse
+     real, allocatable, dimension(:,:) :: work_2d, work_2d_coarse
      real, allocatable, dimension(:,:,:) :: work_3d_coarse
      real, allocatable, dimension(:,:,:) :: remapped_field, phalf, upsampled_coarse_phalf
-     real, allocatable, dimension(:,:,:) :: masked_area_weights, masked_mass_weights
+     real, allocatable, dimension(:,:,:) :: masked_area_weights, masked_mass_weights, height_on_interfaces
      integer :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz, index
      logical :: need_2d_work_array, need_3d_work_array, need_masked_area_array, need_masked_mass_array, used
+     logical :: need_height_array
      character(len=256) :: error_message
  
      call get_need_nd_work_array(2, need_2d_work_array)
      call get_need_nd_work_array(3, need_3d_work_array)
      call get_need_mass_array(need_masked_mass_array)
      call get_need_masked_area_array(need_masked_area_array)
+     call get_need_height_array(need_height_array)
  
      call get_fine_array_bounds(is, ie, js, je)
      call get_coarse_array_bounds(is_coarse, ie_coarse, js_coarse, je_coarse)
@@ -421,15 +457,64 @@ contains
              masked_mass_weights)
      endif
 
+     if (need_height_array) then
+      allocate(height_on_interfaces(is:ie,js:je,1:npz+1))
+      if(Atm(tile_count)%flagstruct%hydrostatic) then
+        call compute_height_on_interfaces_hydrostatic( &
+          is, &
+          ie, &
+          js, &
+          je, &
+          npz, &
+          Atm(tile_count)%pt(is:ie,js:je,1:npz), &
+          Atm(tile_count)%peln(is:ie,1:npz+1,js:je), &
+          height_on_interfaces(is:ie,js:je,1:npz) &
+        )
+      else
+        call compute_height_on_interfaces_nonhydrostatic( &
+          is, &
+          ie, &
+          js, &
+          je, &
+          npz, &
+          Atm(tile_count)%delz(is:ie,js:je,1:npz), &
+          height_on_interfaces(is:ie,js:je,1:npz) &
+        )
+      endif
+      if (.not. allocated(work_2d_coarse)) allocate(work_2d_coarse(is_coarse:ie_coarse,js_coarse:je_coarse))
+      allocate(work_2d(is:ie,js:je))
+    endif
+
      do index = 1, DIAG_SIZE
       if (coarse_diagnostics(index)%id .gt. 0) then
         if (coarse_diagnostics(index)%axes .eq. 2) then
           if (trim(coarse_diagnostics(index)%reduction_method) .eq. AREA_WEIGHTED) then
-            call weighted_block_average( &
-              Atm(tile_count)%gridstruct%area(is:ie,js:je), &
-              coarse_diagnostics(index)%data%var2, &
-              work_2d_coarse &
-            ) 
+            if (coarse_diagnostics(index)%pressure_level < 0) then
+              call weighted_block_average( &
+                Atm(tile_count)%gridstruct%area(is:ie,js:je), &
+                coarse_diagnostics(index)%data%var2, &
+                work_2d_coarse &
+              )
+            else
+              call interpolate_to_pressure_level( &
+                is, &
+                ie, &
+                js, &
+                je, &
+                npz, &
+                coarse_diagnostics(index)%data%var3, &
+                height_on_interfaces(is:ie,js:je,1:npz+1), &
+                Atm(tile_count)%peln(is:ie,1:npz+1,js:je), &
+                coarse_diagnostics(index)%pressure_level, &
+                coarse_diagnostics(index)%iv, &
+                work_2d(is:ie,js:je) &
+              )
+              call weighted_block_average( &
+                Atm(tile_count)%gridstruct%area(is:ie,js:je), &
+                work_2d, &
+                work_2d_coarse &
+              )
+            endif
           else
             write(error_message, *) 'fv_coarse_diag_pressure_levels: invalid reduction_method, ' // &
               trim(coarse_diagnostics(index)%reduction_method) // ', provided for 2D variable, ' // &
@@ -508,8 +593,8 @@ contains
 
     need_height_array = .false.
     do index = 1, DIAG_SIZE
-      if ((coarse_diagnostics(index)%axes == 3) .and. & 
-          (coarse_diagnostics(index)%pressure_level > 0.0) .and. &
+      if ((coarse_diagnostics(index)%axes == 2) .and. & 
+          (coarse_diagnostics(index)%pressure_level > 0) .and. &
           (coarse_diagnostics(index)%id > 0)) then
           need_height_array = .true.
           exit
@@ -548,7 +633,7 @@ contains
   subroutine interpolate_to_pressure_level(is, ie, js, je, npz, field, height, phalf, pressure_level, iv, result)
     integer, intent(in) :: is, ie, js, je, npz, iv
     real, intent(in) :: field(is:ie,js:je,1:npz), height(is:ie,js:je,1:npz+1), phalf(is:ie,1:npz+1,js:je)
-    real, intent(in) :: pressure_level
+    integer, intent(in) :: pressure_level
     real, intent(out) :: result(is:ie,js:je)
 
     real, allocatable :: work(:,:,:)
@@ -556,7 +641,7 @@ contains
     real :: output_pressures(1)
     integer :: ids(1) = 1  ! Set > 0
 
-    output_pressures = pressure_level
+    output_pressures = log(100.0 * real(pressure_level))  ! convert to Pa then take log to match expectation of cs3_interpolator
     allocate(work(is:ie,js:je,n_pressure_levels))
 
     call cs3_interpolator(is, ie, js, je, npz, field, n_pressure_levels, output_pressures, height, phalf, ids, work, iv)
