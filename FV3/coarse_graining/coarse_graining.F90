@@ -12,7 +12,7 @@ module coarse_graining_mod
        get_coarse_array_bounds, coarse_graining_init, weighted_block_average, &
        weighted_block_edge_average_x, weighted_block_edge_average_y, MODEL_LEVEL, &
        block_upsample, mask_area_weights, PRESSURE_LEVEL, vertical_remapping_requirements, &
-       vertically_remap_field, mask_mass_weights
+       vertically_remap_field, mask_mass_weights, mask_area_weights_single_pressure
 
   interface block_sum
      module procedure block_sum_2d
@@ -511,6 +511,19 @@ contains
       endwhere
     enddo
    end subroutine mask_area_weights
+
+   subroutine mask_area_weights_single_pressure(area, log_surface_pressure, log_pressure_level, masked_area_weights)
+    real, intent(in) :: area(is:ie,js:je)
+    real, intent(in) :: log_surface_pressure(is:ie,js:je)
+    real, intent(in) :: log_pressure_level
+    real, intent(out) :: masked_area_weights(is:ie,js:je)
+
+    where (log_pressure_level .gt. log_surface_pressure)
+      masked_area_weights = 0.0
+    elsewhere 
+      masked_area_weights = area
+    endwhere
+   end subroutine mask_area_weights_single_pressure
 
    subroutine mask_mass_weights(area, delp, phalf, upsampled_coarse_phalf, &
     masked_mass_weights)
