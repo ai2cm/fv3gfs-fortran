@@ -1276,8 +1276,8 @@ module fv_arrays_mod
     real, _ALLOCATABLE :: v(:,:,:)    _NULL  !< D grid meridional wind (m/s)
     real, _ALLOCATABLE :: pt(:,:,:)   _NULL  !< temperature (K)
     real, _ALLOCATABLE :: delp(:,:,:) _NULL  !< pressure thickness (pascal)
-    real, _ALLOCATABLE :: q(:,:,:,:)  _NULL   !< specific humidity and prognostic constituents
-    real, _ALLOCATABLE :: qdiag(:,:,:,:) _NULL !< diagnostic tracers
+    real, _ALLOCATABLE :: q(:,:,:,:)  _NULL  !< specific humidity and prognostic constituents
+    real, _ALLOCATABLE :: qdiag(:,:,:,:)  _NULL  !< diagnostic tracers
 
 !----------------------
 ! non-hydrostatic state:
