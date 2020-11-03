@@ -277,7 +277,8 @@ contains
     type(fv_atmos_type), intent(in), target :: Atm(:)
     type(time_type), intent(in) :: Time
     
-    real, allocatable :: work_2d(:,:), work_2d_coarse(:,:), work_3d_coarse(:,:,:), mass(:,:,:), height_on_interfaces(:,:,:), masked_area(:,:,:)
+    real, allocatable :: work_2d(:,:), work_2d_coarse(:,:), work_3d_coarse(:,:,:)
+    real, allocatable :: mass(:,:,:), height_on_interfaces(:,:,:), masked_area(:,:,:)
     real, allocatable :: phalf(:,:,:), upsampled_coarse_phalf(:,:,:)
     integer :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz
     logical :: used
@@ -385,6 +386,10 @@ contains
             call coarse_grain_3D_field_on_pressure_levels(is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz, &
                                                           coarse_diagnostics(index), masked_area, mass, phalf, &
                                                           upsampled_coarse_phalf, Atm(tile_count)%ptop, work_3d_coarse)
+          else
+            write(error_message, *) 'fv_coarse_diag: invalid coarse-graining strategy provided for 3D variables, ' // &
+            trim(Atm(tile_count)%coarse_graining%strategy)
+            call mpp_error(FATAL, error_message)
           endif
           used = send_data(coarse_diagnostics(index)%id, work_3d_coarse, Time)
         endif
@@ -414,7 +419,7 @@ contains
         result &
       )
     else
-      write(error_message, *) 'fv_coarse_diag_model_levels: invalid reduction_method, ' // &
+      write(error_message, *) 'coarse_grain_3D_field_on_model_levels: invalid reduction_method, ' // &
         trim(coarse_diag%reduction_method) // ', provided for 3D variable, ' // &
         trim(coarse_diag%name)
       call mpp_error(FATAL, error_message)
@@ -422,10 +427,12 @@ contains
    end subroutine coarse_grain_3D_field_on_model_levels
 
    subroutine coarse_grain_3D_field_on_pressure_levels(is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, &
-                                                       npz, coarse_diag, masked_area, masked_mass, phalf, upsampled_coarse_phalf, ptop, result)
+                                                       npz, coarse_diag, masked_area, masked_mass, phalf, upsampled_coarse_phalf, &
+                                                       ptop, result)
     integer, intent(in) :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz
     type(coarse_diag_type) :: coarse_diag
-    real, intent(in) :: masked_mass(is:ie,js:je,1:npz), masked_area(is:ie,js:je,1:npz), phalf(is:ie,js:je,1:npz+1), upsampled_coarse_phalf(is:ie,js:je,1:npz+1)
+    real, intent(in) :: masked_mass(is:ie,js:je,1:npz), masked_area(is:ie,js:je,1:npz), 
+    real, intent(in) :: phalf(is:ie,js:je,1:npz+1), upsampled_coarse_phalf(is:ie,js:je,1:npz+1)
     real, intent(in) :: ptop
     real, intent(out) :: result(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz)
 
@@ -453,7 +460,7 @@ contains
         result &
       )
     else
-      write(error_message, *) 'fv_coarse_diag_pressure_levels: invalid reduction_method, ' // &
+      write(error_message, *) 'coarse_grain_3D_field_on_pressure_levels: invalid reduction_method, ' // &
         trim(coarse_diag%reduction_method) // ', provided for 3D variable, ' // &
         trim(coarse_diag%name)
       call mpp_error(FATAL, error_message)
@@ -525,7 +532,7 @@ contains
         )
       endif
     else
-      write(error_message, *) 'fv_coarse_diag: invalid reduction_method, ' // &
+      write(error_message, *) 'coarse_grain_2D_field: invalid reduction_method, ' // &
         trim(coarse_diag%reduction_method) // ', provided for 2D variable, ' // &
         trim(coarse_diag%name)
       call mpp_error(FATAL, error_message)
