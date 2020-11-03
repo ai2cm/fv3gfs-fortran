@@ -93,6 +93,15 @@ contains
     coarse_diagnostics(index)%reduction_method = MASS_WEIGHTED
     coarse_diagnostics(index)%data%var3 => Atm(tile_count)%va(is:ie,js:je,1:npz)
 
+    index = index + 1
+    coarse_diagnostics(index)%axes = 3
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'temp_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained temperature'
+    coarse_diagnostics(index)%units = 'K'
+    coarse_diagnostics(index)%reduction_method = MASS_WEIGHTED
+    coarse_diagnostics(index)%data%var3 => Atm(tile_count)%pt(is:ie,js:je,1:npz)
+
     do t = 1, n_tracers
       call get_tracer_names(MODEL_ATMOS, t, tracer_name, tracer_long_name, tracer_units)
       index = index + 1
