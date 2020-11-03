@@ -9,7 +9,8 @@ module coarse_grained_diagnostics_mod
   use mpp_mod, only: FATAL, mpp_error
   use coarse_graining_mod, only: block_sum, get_fine_array_bounds, get_coarse_array_bounds, MODEL_LEVEL, &
                                  weighted_block_average, PRESSURE_LEVEL, vertically_remap_field, &
-                                 vertical_remapping_requirements, mask_area_weights, mask_mass_weights, mask_area_weights_single_pressure
+                                 vertical_remapping_requirements, mask_area_weights, mask_mass_weights, &
+                                 mask_area_weights_single_pressure
   use time_manager_mod, only: time_type
   use tracer_manager_mod, only: get_tracer_names
   
@@ -275,24 +276,12 @@ contains
   subroutine fv_coarse_diag(Atm, Time)
     type(fv_atmos_type), intent(in), target :: Atm(:)
     type(time_type), intent(in) :: Time
- 
-    character(len=256) :: error_message
-
-    if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. MODEL_LEVEL) then
-       call fv_coarse_diag_model_levels(Atm, Time)
-    else if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL) then
-       call fv_coarse_diag_pressure_levels(Atm, Time)
-    endif
-  end subroutine fv_coarse_diag
-  
-  subroutine fv_coarse_diag_model_levels(Atm, Time)
-    type(fv_atmos_type), intent(in), target :: Atm(:)
-    type(time_type), intent(in) :: Time
     
-    real, allocatable :: work_2d(:,:), work_2d_coarse(:,:), work_3d_coarse(:,:,:), mass(:,:,:), height_on_interfaces(:,:,:)
+    real, allocatable :: work_2d(:,:), work_2d_coarse(:,:), work_3d_coarse(:,:,:), mass(:,:,:), height_on_interfaces(:,:,:), masked_area(:,:,:)
+    real, allocatable :: phalf(:,:,:), upsampled_coarse_phalf(:,:,:)
     integer :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz
     logical :: used
-    logical :: need_2d_work_array, need_3d_work_array, need_mass_array, need_height_array
+    logical :: need_2d_work_array, need_3d_work_array, need_mass_array, need_height_array, need_masked_area_array
     integer :: index, i, j
     character(len=256) :: error_message
 
@@ -300,6 +289,12 @@ contains
     call get_need_nd_work_array(3, need_3d_work_array)
     call get_need_mass_array(need_mass_array)
     call get_need_height_array(need_height_array)
+
+    if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL) then
+      call get_need_masked_area_array(need_masked_area_array)
+    else
+      need_masked_area_array = .false.
+    endif
 
     call get_fine_array_bounds(is, ie, js, je)
     call get_coarse_array_bounds(is_coarse, ie_coarse, js_coarse, je_coarse)
@@ -310,12 +305,41 @@ contains
     endif
 
     if (need_3d_work_array) then
-       allocate(work_3d_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz))       
+       allocate(work_3d_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz))   
+       if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL) then
+        allocate(phalf(is:ie,js:je,1:npz+1))      
+        allocate(upsampled_coarse_phalf(is:ie,js:je,1:npz+1))
+
+        call vertical_remapping_requirements( &
+              Atm(tile_count)%delp(is:ie,js:je,1:npz), &
+              Atm(tile_count)%gridstruct%area(is:ie,js:je), &
+              Atm(tile_count)%ptop, &
+              phalf, &
+              upsampled_coarse_phalf)
+       endif
     endif
 
     if (need_mass_array) then
       allocate(mass(is:ie,js:je,1:npz))
-      call compute_mass(Atm(tile_count), is, ie, js, je, npz, mass)
+      if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. MODEL_LEVEL) then
+        call compute_mass(Atm(tile_count), is, ie, js, je, npz, mass)
+      else if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL) then
+        call mask_mass_weights( &
+             Atm(tile_count)%gridstruct%area(is:ie,js:je), &
+             Atm(tile_count)%delp(is:ie,js:je,1:npz), &
+             phalf, &
+             upsampled_coarse_phalf, &
+             mass)
+      endif
+    endif
+
+    if (need_masked_area_array) then
+      allocate(masked_area(is:ie,js:je,1:npz))
+      call mask_area_weights( &
+           Atm(tile_count)%gridstruct%area(is:ie,js:je), &
+           phalf, &
+           upsampled_coarse_phalf, &
+           masked_area)
     endif
 
     if (need_height_array) then
@@ -353,154 +377,88 @@ contains
                                      Atm(tile_count), coarse_diagnostics(index), height_on_interfaces, work_2d_coarse)
           used = send_data(coarse_diagnostics(index)%id, work_2d_coarse, Time)
         elseif (coarse_diagnostics(index)%axes .eq. 3) then
-          if (trim(coarse_diagnostics(index)%reduction_method) .eq. AREA_WEIGHTED) then
-            call weighted_block_average( &
-              Atm(tile_count)%gridstruct%area(is:ie,js:je), &
-              coarse_diagnostics(index)%data%var3, &
-              work_3d_coarse &
-            )
-          elseif (trim(coarse_diagnostics(index)%reduction_method) .eq. MASS_WEIGHTED) then
-            call weighted_block_average( &
-              mass(is:ie,js:je,1:npz), &
-              coarse_diagnostics(index)%data%var3, &
-              work_3d_coarse &
-            )
-          else
-            write(error_message, *) 'fv_coarse_diag_model_levels: invalid reduction_method, ' // &
-              trim(coarse_diagnostics(index)%reduction_method) // ', provided for 3D variable, ' // &
-              trim(coarse_diagnostics(index)%name)
-            call mpp_error(FATAL, error_message)
+          if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. MODEL_LEVEL) then
+            call coarse_grain_3D_field_on_model_levels(is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz, &
+                                                       coarse_diagnostics(index), Atm(tile_count)%gridstruct%area(is:ie,js:je),&
+                                                      mass, work_3d_coarse)
+          else if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL) then
+            call coarse_grain_3D_field_on_pressure_levels(is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz, &
+                                                          coarse_diagnostics(index), masked_area, mass, phalf, &
+                                                          upsampled_coarse_phalf, Atm(tile_count)%ptop, work_3d_coarse)
           endif
           used = send_data(coarse_diagnostics(index)%id, work_3d_coarse, Time)
         endif
       endif
     enddo 
-  end subroutine fv_coarse_diag_model_levels
-  
-  subroutine fv_coarse_diag_pressure_levels(Atm, Time)
-     type(fv_atmos_type), intent(in), target :: Atm(:)
-     type(time_type), intent(in) :: Time
-     
-     real, allocatable, dimension(:,:) :: work_2d, work_2d_coarse
-     real, allocatable, dimension(:,:,:) :: work_3d_coarse
-     real, allocatable, dimension(:,:,:) :: remapped_field, phalf, upsampled_coarse_phalf
-     real, allocatable, dimension(:,:,:) :: masked_area_weights, masked_mass_weights, height_on_interfaces
-     integer :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz, index
-     logical :: need_2d_work_array, need_3d_work_array, need_masked_area_array, need_masked_mass_array, used
-     logical :: need_height_array
-     character(len=256) :: error_message
- 
-     call get_need_nd_work_array(2, need_2d_work_array)
-     call get_need_nd_work_array(3, need_3d_work_array)
-     call get_need_mass_array(need_masked_mass_array)
-     call get_need_masked_area_array(need_masked_area_array)
-     call get_need_height_array(need_height_array)
- 
-     call get_fine_array_bounds(is, ie, js, je)
-     call get_coarse_array_bounds(is_coarse, ie_coarse, js_coarse, je_coarse)
-     npz = Atm(tile_count)%npz
- 
-     if (need_2d_work_array) then
-       allocate(work_2d_coarse(is_coarse:ie_coarse,js_coarse:je_coarse))
-     endif
+  end subroutine fv_coarse_diag
 
-     if (need_3d_work_array) then
-        allocate(work_3d_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz))
-        allocate(remapped_field(is:ie,js:je,1:npz))
-        allocate(phalf(is:ie,js:je,1:npz+1))      
-        allocate(upsampled_coarse_phalf(is:ie,js:je,1:npz+1))
+   subroutine coarse_grain_3D_field_on_model_levels(is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, &
+                                                    npz, coarse_diag, area, mass, result)
+    integer, intent(in) :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz
+    type(coarse_diag_type) :: coarse_diag
+    real, intent(in) :: mass(is:ie,js:je,1:npz), area(is:ie,js:je)
+    real, intent(out) :: result(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz)
 
-        call vertical_remapping_requirements( &
-             Atm(tile_count)%delp(is:ie,js:je,1:npz), &
-             Atm(tile_count)%gridstruct%area(is:ie,js:je), &
-             Atm(tile_count)%ptop, &
-             phalf, &
-             upsampled_coarse_phalf)
-     endif
+    character(len=256) :: error_message
 
-     if (need_masked_area_array) then
-        allocate(masked_area_weights(is:ie,js:je,1:npz))
-        call mask_area_weights( &
-             Atm(tile_count)%gridstruct%area(is:ie,js:je), &
-             phalf, &
-             upsampled_coarse_phalf, &
-             masked_area_weights)
-     endif
-
-     if (need_masked_mass_array) then
-        allocate(masked_mass_weights(is:ie,js:je,1:npz))
-        call mask_mass_weights( &
-             Atm(tile_count)%gridstruct%area(is:ie,js:je), &
-             Atm(tile_count)%delp(is:ie,js:je,1:npz), &
-             phalf, &
-             upsampled_coarse_phalf, &
-             masked_mass_weights)
-     endif
-
-     if (need_height_array) then
-      allocate(height_on_interfaces(is:ie,js:je,1:npz+1))
-      if(Atm(tile_count)%flagstruct%hydrostatic) then
-        call compute_height_on_interfaces_hydrostatic( &
-          is, &
-          ie, &
-          js, &
-          je, &
-          npz, &
-          Atm(tile_count)%pt(is:ie,js:je,1:npz), &
-          Atm(tile_count)%peln(is:ie,1:npz+1,js:je), &
-          height_on_interfaces(is:ie,js:je,1:npz) &
-        )
-      else
-        call compute_height_on_interfaces_nonhydrostatic( &
-          is, &
-          ie, &
-          js, &
-          je, &
-          npz, &
-          Atm(tile_count)%delz(is:ie,js:je,1:npz), &
-          height_on_interfaces(is:ie,js:je,1:npz) &
-        )
-      endif
-      if (.not. allocated(work_2d_coarse)) allocate(work_2d_coarse(is_coarse:ie_coarse,js_coarse:je_coarse))
-      allocate(work_2d(is:ie,js:je))
+    if (trim(coarse_diag%reduction_method) .eq. AREA_WEIGHTED) then
+      call weighted_block_average( &
+        area(is:ie,js:je), &
+        coarse_diag%data%var3, &
+        result &
+      )
+    elseif (trim(coarse_diag%reduction_method) .eq. MASS_WEIGHTED) then
+      call weighted_block_average( &
+        mass(is:ie,js:je,1:npz), &
+        coarse_diag%data%var3, &
+        result &
+      )
+    else
+      write(error_message, *) 'fv_coarse_diag_model_levels: invalid reduction_method, ' // &
+        trim(coarse_diag%reduction_method) // ', provided for 3D variable, ' // &
+        trim(coarse_diag%name)
+      call mpp_error(FATAL, error_message)
     endif
+   end subroutine coarse_grain_3D_field_on_model_levels
 
-     do index = 1, DIAG_SIZE
-      if (coarse_diagnostics(index)%id .gt. 0) then
-        if (coarse_diagnostics(index)%axes .eq. 2) then
-          call coarse_grain_2D_field(is, ie, js, je, npz, is_coarse, ie_coarse, js_coarse, je_coarse, &
-                                     Atm(tile_count), coarse_diagnostics(index), height_on_interfaces, work_2d_coarse)
-          used = send_data(coarse_diagnostics(index)%id, work_2d_coarse, Time)
-        elseif (coarse_diagnostics(index)%axes .eq. 3) then
-          call vertically_remap_field( &
-            phalf, &
-            coarse_diagnostics(index)%data%var3, &
-            upsampled_coarse_phalf, &
-            Atm(tile_count)%ptop, &
-            remapped_field)
-          if (trim(coarse_diagnostics(index)%reduction_method) .eq. AREA_WEIGHTED) then
-            call weighted_block_average( &
-              masked_area_weights(is:ie,js:je,1:npz), &
-              remapped_field(is:ie,js:je,1:npz), &
-              work_3d_coarse &
-            )
-          elseif (trim(coarse_diagnostics(index)%reduction_method) .eq. MASS_WEIGHTED) then
-            call weighted_block_average( &
-              masked_mass_weights(is:ie,js:je,1:npz), &
-              remapped_field(is:ie,js:je,1:npz), &
-              work_3d_coarse &
-            )
-          else
-            write(error_message, *) 'fv_coarse_diag_pressure_levels: invalid reduction_method, ' // &
-              trim(coarse_diagnostics(index)%reduction_method) // ', provided for 3D variable, ' // &
-              trim(coarse_diagnostics(index)%name)
-            call mpp_error(FATAL, error_message)
-          endif
-          used = send_data(coarse_diagnostics(index)%id, work_3d_coarse, Time)
-        endif
-      endif
-    enddo 
-   end subroutine fv_coarse_diag_pressure_levels
+   subroutine coarse_grain_3D_field_on_pressure_levels(is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, &
+                                                       npz, coarse_diag, masked_area, masked_mass, phalf, upsampled_coarse_phalf, ptop, result)
+    integer, intent(in) :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz
+    type(coarse_diag_type) :: coarse_diag
+    real, intent(in) :: masked_mass(is:ie,js:je,1:npz), masked_area(is:ie,js:je,1:npz), phalf(is:ie,js:je,1:npz+1), upsampled_coarse_phalf(is:ie,js:je,1:npz+1)
+    real, intent(in) :: ptop
+    real, intent(out) :: result(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz)
+
+    real, allocatable :: remapped_field(:,:,:)
+    character(len=256) :: error_message
+
+    allocate(remapped_field(is:ie,js:je,1:npz))
+
+    call vertically_remap_field( &
+      phalf, &
+      coarse_diag%data%var3, &
+      upsampled_coarse_phalf, &
+      ptop, &
+      remapped_field)
+    if (trim(coarse_diag%reduction_method) .eq. AREA_WEIGHTED) then
+      call weighted_block_average( &
+        masked_area(is:ie,js:je,1:npz), &
+        remapped_field(is:ie,js:je,1:npz), &
+        result &
+      )
+    elseif (trim(coarse_diag%reduction_method) .eq. MASS_WEIGHTED) then
+      call weighted_block_average( &
+        masked_mass(is:ie,js:je,1:npz), &
+        remapped_field(is:ie,js:je,1:npz), &
+        result &
+      )
+    else
+      write(error_message, *) 'fv_coarse_diag_pressure_levels: invalid reduction_method, ' // &
+        trim(coarse_diag%reduction_method) // ', provided for 3D variable, ' // &
+        trim(coarse_diag%name)
+      call mpp_error(FATAL, error_message)
+    endif
+   end subroutine coarse_grain_3D_field_on_pressure_levels
 
    subroutine coarse_grain_2D_field(is, ie, js, je, npz, is_coarse, ie_coarse, js_coarse, je_coarse, &
                                     Atm, coarse_diag, height_on_interfaces, result)
