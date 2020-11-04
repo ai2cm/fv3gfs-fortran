@@ -9,8 +9,7 @@ module coarse_grained_diagnostics_mod
   use mpp_mod, only: FATAL, mpp_error
   use coarse_graining_mod, only: block_sum, get_fine_array_bounds, get_coarse_array_bounds, MODEL_LEVEL, &
                                  weighted_block_average, PRESSURE_LEVEL, vertically_remap_field, &
-                                 vertical_remapping_requirements, mask_area_weights, mask_mass_weights, &
-                                 mask_area_weights_single_pressure
+                                 vertical_remapping_requirements, mask_area_weights, mask_mass_weights
   use time_manager_mod, only: time_type
   use tracer_manager_mod, only: get_tracer_names
   
@@ -484,16 +483,11 @@ contains
     real, intent(in) :: height_on_interfaces(is:ie,js:je,1:npz+1)
     real, intent(out) :: result(is_coarse:ie_coarse,js_coarse:je_coarse)
 
-    real :: log_pressure_level
     character(len=256) :: error_message
-    real, allocatable :: work_2d(:,:), masked_area_weights(:,:)
+    real, allocatable :: work_2d(:,:)
 
     if (coarse_diag%pressure_level > 0) then 
-      log_pressure_level = log(100.0 * real(coarse_diag%pressure_level))
       allocate(work_2d(is:ie,js:je))
-      allocate(masked_area_weights(is:ie,js:je))
-      call mask_area_weights_single_pressure(Atm%gridstruct%area(is:ie,js:je), Atm%peln(is:ie,npz+1,js:je), &
-                                             log_pressure_level, masked_area_weights)
     endif
 
     if (trim(coarse_diag%reduction_method) .eq. AREA_WEIGHTED) then
@@ -516,7 +510,7 @@ contains
           work_2d(is:ie,js:je) &
         )
         call weighted_block_average( &
-          masked_area_weights(is:ie,js:je), &
+          Atm%gridstruct%area(is:ie,js:je), &
           work_2d, &
           result &
         )
@@ -535,7 +529,7 @@ contains
           work_2d &
         )
         call weighted_block_average( &
-          masked_area_weights(is:ie,js:je), &
+          Atm%gridstruct%area(is:ie,js:je), &
           work_2d, &
           result &
         )
