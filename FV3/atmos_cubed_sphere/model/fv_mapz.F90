@@ -741,7 +741,7 @@ contains
 #else
 !$OMP parallel default(none) shared(is,ie,js,je,km,kmp,ptop,u,v,pe,ua,isd,ied,jsd,jed,kord_mt, &
 #ifdef SERIALIZE
-!$OMP  ppser_savepoint, ppser_serializer, ppser_serializer_ref, ppser_zrperturb,mode,js2d, &
+!$OMP  ppser_savepoint, ppser_serializer, ppser_serializer_ref, ppser_zrperturb,mode,js2d,pfull, &
 #endif
 !$OMP                               te_2d,te,delp,hydrostatic,hs,rg,pt,peln, adiabatic,        &
 !$OMP                               cp,delz,nwat,rainwat,liq_wat,ice_wat,snowwat,              &
@@ -919,7 +919,7 @@ endif        ! end last_step check
 #else
     
 !$ser savepoint SatAdjust3d-In
-!$ser data dpln=dpln peln=peln mdt=mdt r_vir=r_vir fast_mp_consv=fast_mp_consv te=te  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel)  qcld=q(:,:,:,cld_amt)  hs=hs delz=delz pt=pt delp=delp q_con=q_con cappa=cappa  out_dt=out_dt last_step=last_step  pkz=pkz rrg=rrg akap=akap kmp=kmp
+!$ser data dpln=dpln peln=peln mdt=mdt r_vir=r_vir fast_mp_consv=fast_mp_consv te=te  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel)  qcld=q(:,:,:,cld_amt)  hs=hs delz=delz pt=pt delp=delp q_con=q_con cappa=cappa  out_dt=out_dt last_step=last_step  pkz=pkz rrg=rrg akap=akap kmp=kmp pfull=pfull
 !$OMP do
            do k=kmp,km
               do j=js,je
