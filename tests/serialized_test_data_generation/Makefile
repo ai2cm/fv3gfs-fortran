@@ -41,6 +41,7 @@ help:
 
 build_model: ## build Docker image with compiled model code for serialization
 	cd $(FORTRAN_DIR) && \
+		$(MAKE) build_deps && \
 		BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
 		COMPILED_IMAGE=$(COMPILED_IMAGE) \
 		COMPILE_OPTION="GT4PY_DEV=Y" \
