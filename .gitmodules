@@ -6,4 +6,4 @@
 	url = https://github.com/VulcanClimateModeling/buildenv.git
 [submodule "FV3/call_py_fort"]
 	path = FV3/call_py_fort
-	url = https://github.com/nbren12/call_py_fort
+	url = git@github.com:VulcanClimateModeling/call_py_fort.git
