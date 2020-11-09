@@ -141,3 +141,5 @@ endif
 LIBS += -lFMS -lesmf -lnetcdff -lnetcdf -llapack -lblas -lc -lrt
 
 LDFLAGS += $(LIBS)
+
+FFLAGS += -I/usr/local/include

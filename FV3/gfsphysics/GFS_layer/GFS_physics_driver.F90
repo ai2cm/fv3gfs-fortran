@@ -1,5 +1,6 @@
 module module_physics_driver
 
+  use callpy_mod
   use machine,               only: kind_phys
   use physcons,              only: con_cp, con_fvirt, con_g, con_rd,    &
                                    con_rv, con_hvap, con_hfus,          &
@@ -2266,6 +2267,9 @@ module module_physics_driver
         else
           if (Model%satmedmf) then
              if (Model%isatmedmf == 0) then   ! initial version of satmedmfvdif (Nov 2018)
+
+                call set_state("prsi", Statein%prsi)
+                
                 call satmedmfvdif(ix, im, levs, nvdiff, ntcw, ntiw, ntke,           &
                        dvdt, dudt, dtdt, dqdt,                                      &
                        Statein%ugrs, Statein%vgrs, Statein%tgrs, Statein%qgrs,      &
@@ -2276,6 +2280,8 @@ module module_physics_driver
                        Statein%prslk, Statein%phii, Statein%phil, dtp,              &
                        Model%dspheat, dusfc1, dvsfc1, dtsfc1, dqsfc1, Diag%hpbl,    &
                        kinver, Model%xkzm_m, Model%xkzm_h, Model%xkzm_s)
+
+
              elseif (Model%isatmedmf == 1) then   ! updated version of satmedmfvdif (May 2019)
                 call satmedmfvdifq(ix, im, levs, nvdiff, ntcw, ntiw, ntke,          &
                        dvdt, dudt, dtdt, dqdt,                                      &
