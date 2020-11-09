@@ -17,6 +17,7 @@ STDOUT_FILENAME = 'stdout.log'
 STDERR_FILENAME = 'stderr.log'
 MD5SUM_FILENAME = "md5.txt"
 SERIALIZE_MD5SUM_FILENAME = "md5_serialize.txt"
+GOOGLE_APP_CREDS = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", None)
 
 USE_LOCAL_ARCHIVE = True
 
@@ -99,6 +100,13 @@ def run_model_docker(rundir, model_image):
         archive_mount = ['-v', f'{archive}:{archive}']
     else:
         archive_mount = []
+    
+    if GOOGLE_APP_CREDS is not None:
+        secret_mount = ["-v", f"{GOOGLE_APP_CREDS}:/tmp/key.json"]
+        env_vars = ["--env", "GOOGLE_APPLICATION_CREDENTIALS"]
+    else:
+        secret_mount = []
+        env_vars = []
     docker_runpath = ""
     docker_run = ['docker', 'run', '--rm']
     rundir_abs = os.path.abspath(rundir)
@@ -110,7 +118,7 @@ def run_model_docker(rundir, model_image):
     fv3err_filename = join(rundir, 'stderr.log')
     with open(fv3out_filename, 'w') as fv3out_f, open(fv3err_filename, 'w') as fv3err_f:
         subprocess.check_call(
-            docker_run + rundir_mount + archive_mount + data_mount + [model_image] + ["bash", "/rundir/submit_job.sh"],
+            docker_run + rundir_mount + archive_mount + data_mount + secret_mount + env_vars + [model_image] + ["bash", "/rundir/submit_job.sh"],
             stdout=fv3out_f,
             stderr=fv3err_f
         )
