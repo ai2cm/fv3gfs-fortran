@@ -41,16 +41,16 @@ if [ -z "${EXPERIMENTS}" ] ; then
     echo "Error: No matching experiment files for pattern ${EXPERIMENT_PATTERN} in ${EXPERIMENT_DIR} found."
     exit 1
 fi
-
+export CUDA=y
 # loop over experiments
 for exp_file in ${EXPERIMENTS} ; do
   exp_name=`basename ${exp_file} .yml`
   echo "====================================================="
   echo "Generating data for ${exp_name} ..."
   if [ "${VALIDATE_ONLY}" == "true" ] ; then
-      EXPERIMENT=${exp_name} CUDA=y make generate_data validate_data
+      EXPERIMENT=${exp_name} make generate_data validate_data
   else
-      EXPERIMENT=${exp_name} CUDA=y make generate_data pack_data push_data
+      EXPERIMENT=${exp_name} make generate_data pack_data push_data
   fi
   echo "====================================================="
   echo ""
