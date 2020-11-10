@@ -2269,6 +2269,8 @@ module module_physics_driver
              if (Model%isatmedmf == 0) then   ! initial version of satmedmfvdif (Nov 2018)
 
                 call set_state("prsi", Statein%prsi)
+                call call_function("builtins", "print")
+                call get_state("prsi", Statein%prsi)
                 
                 call satmedmfvdif(ix, im, levs, nvdiff, ntcw, ntiw, ntke,           &
                        dvdt, dudt, dtdt, dqdt,                                      &
