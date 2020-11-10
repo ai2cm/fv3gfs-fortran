@@ -759,6 +759,10 @@ module module_physics_driver
 
       nncl = ncld
 
+      call set_state("prsi", Statein%prsi)
+      call call_function("builtins", "print")
+      call get_state("prsi", Statein%prsi)
+
       ! perform aerosol convective transport and PBL diffusion
       trans_aero = Model%cplchm .and. Model%trans_trac
 
@@ -2268,9 +2272,6 @@ module module_physics_driver
           if (Model%satmedmf) then
              if (Model%isatmedmf == 0) then   ! initial version of satmedmfvdif (Nov 2018)
 
-                call set_state("prsi", Statein%prsi)
-                call call_function("builtins", "print")
-                call get_state("prsi", Statein%prsi)
                 
                 call satmedmfvdif(ix, im, levs, nvdiff, ntcw, ntiw, ntke,           &
                        dvdt, dudt, dtdt, dqdt,                                      &
