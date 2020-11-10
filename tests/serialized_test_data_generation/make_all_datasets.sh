@@ -41,7 +41,6 @@ if [ -z "${EXPERIMENTS}" ] ; then
     echo "Error: No matching experiment files for pattern ${EXPERIMENT_PATTERN} in ${EXPERIMENT_DIR} found."
     exit 1
 fi
-export CUDA=y
 # loop over experiments
 for exp_file in ${EXPERIMENTS} ; do
   exp_name=`basename ${exp_file} .yml`
