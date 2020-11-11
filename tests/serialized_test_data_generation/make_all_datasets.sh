@@ -10,7 +10,7 @@
 
 # stop on all errors
 set -e
-
+export CUDA=y
 # directory containing the experiment files
 EXPERIMENT_DIR=configs
 
