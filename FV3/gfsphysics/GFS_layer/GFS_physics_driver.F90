@@ -542,7 +542,7 @@ module module_physics_driver
            dtsfc_cice, dqsfc_cice, dusfc_cice, dvsfc_cice,              &
 !          dtsfc_cice, dqsfc_cice, dusfc_cice, dvsfc_cice, ulwsfc_cice, &
 !--- for CS-convection
-           wcbmax
+           wcbmax, psk
 
 !  1 - land, 2 - ice, 3 - ocean
       real(kind=kind_phys), dimension(size(Grid%xlon,1),3)  ::           &
@@ -762,7 +762,7 @@ module module_physics_driver
       call set_state("prsi", Statein%prsi)
       call call_function("builtins", "print")
       call get_state("prsi", Statein%prsi)
-
+      
       ! perform aerosol convective transport and PBL diffusion
       trans_aero = Model%cplchm .and. Model%trans_trac
 
@@ -2247,6 +2247,40 @@ module module_physics_driver
 
 !     write(0,*)' before monsho hflx=',hflx,' me=',me
 !     write(0,*)' before monsho evap=',evap,' me=',me
+      
+      do i=1,ix
+          psk(i) = Statein%prsik(i,1)
+      enddo
+
+      call set_state("tdt", dtdt)
+      call set_state("u1", Statein%ugrs)
+      call set_state("v1", Statein%vgrs)
+      call set_state("q1", Statein%qgrs)
+      call set_state("swh", Radtend%htrsw)
+      call set_state("hlw", Radtend%htrlw)
+      call set_state("xmu", xmu)
+      call set_state("garea", garea)
+      call set_state("psk", psk)
+      call set_state("rbsoil", rb)
+      call set_state("zorl", Sfcprop%zorl)
+      call set_state("u10m", Diag%u10m)
+      call set_state("v10m", Diag%v10m)
+      call set_state("fm", Sfcprop%ffmm)
+      call set_state("fh", Sfcprop%ffhh)
+      call set_state("tsea", Sfcprop%tsfc)
+      call set_state("heat", hflx)
+      call set_state("evap", evap)
+      call set_state("stress", stress)
+      call set_state("spd1", wind)
+      call set_state("prsi", Statein%prsi)
+      call set_state("del", del)
+      call set_state("prsl", Statein%prsl)
+      call set_state("prslk", Statein%prslk)
+      call set_state("phii", Statein%phii)
+      call set_state("phil", Statein%phil)
+      call set_state("t1", Statein%tgrs)
+      call call_function("fv3fit.emulation.call", "tke_emulator")
+
       if (nvdiff == ntrac .or. Model%do_ysu .or. Model%shinhong) then
 !
         ntiwx = 0
@@ -2271,7 +2305,6 @@ module module_physics_driver
         else
           if (Model%satmedmf) then
              if (Model%isatmedmf == 0) then   ! initial version of satmedmfvdif (Nov 2018)
-
                 
                 call satmedmfvdif(ix, im, levs, nvdiff, ntcw, ntiw, ntke,           &
                        dvdt, dudt, dtdt, dqdt,                                      &
