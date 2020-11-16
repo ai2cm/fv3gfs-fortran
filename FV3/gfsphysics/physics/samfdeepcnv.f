@@ -269,6 +269,7 @@ c     data acritt/.203,.515,.521,.566,.625,.665,.659,.688,
 c    &            .743,.813,.886,.947,1.138,1.377,1.896/
       real(kind=kind_phys) tf, tcr, tcrf
       parameter (tf=233.16, tcr=263.16, tcrf=1.0/(tcr-tf))
+      logical, parameter :: ignore_cin_triggers = .true.
 !
 c-----------------------------------------------------------------------
 !>  ## Determine whether to perform aerosol transport
@@ -695,7 +696,9 @@ c
           cinpcr = cinpcrmx - ptem * ptem1
           tem1 = pfld(i,kb(i)) - pfld(i,kbcon(i))
           if(tem1 > cinpcr) then
-             cnvflg(i) = .false.
+            if (.not. ignore_cin_triggers) then
+              cnvflg(i) = .false.
+            end if
           endif
         endif
       enddo
@@ -975,7 +978,9 @@ c
         if(cnvflg(i)) then
           tem = pfld(i,kbcon(i)) - pfld(i,kbcon1(i))
           if(tem > dthk) then
-             cnvflg(i) = .false.
+            if (.not. ignore_cin_triggers) then
+              cnvflg(i) = .false.
+            end if
           endif
         endif
       enddo
@@ -1044,7 +1049,9 @@ c
           cinacr = cinacrmx - tem * tem1
 !
 !         cinacr = cinacrmx
-          if(cina(i) < cinacr) cnvflg(i) = .false.
+            if (.not. ignore_cin_triggers) then
+              if(cina(i) < cinacr) cnvflg(i) = .false.
+            end if
         endif
       enddo
 !!
