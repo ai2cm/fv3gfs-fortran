@@ -2,11 +2,13 @@ module coarse_grained_restart_files_mod
 
   use coarse_graining_mod, only: compute_mass_weights, get_coarse_array_bounds,&
        get_fine_array_bounds, MODEL_LEVEL, weighted_block_average, &
-       weighted_block_edge_average_x, weighted_block_edge_average_y
+       weighted_block_edge_average_x, weighted_block_edge_average_y, &
+       mask_area_weights, mask_mass_weights, block_upsample, remap_edges_along_x, &
+       remap_edges_along_y
   use field_manager_mod, only: MODEL_ATMOS
   use fms_io_mod,      only: register_restart_field, save_restart
   use fv_arrays_mod, only: coarse_restart_type, fv_atmos_type
-  use mpp_domains_mod, only: domain2d, EAST, NORTH
+  use mpp_domains_mod, only: domain2d, EAST, NORTH, mpp_update_domains
   use mpp_mod, only: FATAL, mpp_error
   use tracer_manager_mod, only: get_tracer_names, set_tracer_profile
 
@@ -300,6 +302,29 @@ contains
     endif
   end subroutine coarse_grain_restart_data_on_model_levels
 
+  subroutine coarse_grain_restart_data_on_pressure_levels(Atm)
+     type(fv_atmos_type), intent(inout) :: Atm
+
+     real, allocatable, dimension(:,:,:):: phalf, coarse_phalf, coarse_phalf_on_fine
+     real, allocatable, dimension(:,:,:) :: masked_mass_weights, masked_area_weights
+
+     allocate(phalf(is-1:ie+1,js-1:je+1,1:npz+1))  ! Require the halo here for the winds
+     allocate(coarse_phalf(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz+1))
+     allocate(coarse_phalf_on_fine(is:ie,js:je,1:npz+1))
+     allocate(masked_mass_weights(is:ie,js:je,1:npz))
+     allocate(masked_area_weights(is:ie,js:je,1:npz))
+
+     ! delp and delz are coarse-grained on model levels; u, v, W, T, and all the tracers
+     ! are all remapped to surfaces of constant pressure within coarse grid cells before
+     ! coarse graining.
+
+     call compute_pressure_level_coarse_graining_requirements( &
+       Atm, phalf, coarse_phalf, coarse_phalf_on_fine, masked_mass_weights, masked_area_weights)
+     call coarse_grain_fv_core_restart_data_on_pressure_levels( &
+       Atm, phalf, coarse_phalf, coarse_phalf_on_fine, masked_mass_weights, masked_area_weights)
+
+  end subroutine coarse_grain_restart_data_on_pressure_levels
+
   subroutine coarse_grain_fv_core_restart_data_on_model_levels(Atm, mass)
     type(fv_atmos_type), intent(inout) :: Atm
     real, intent(in) :: mass(is:ie,js:je,1:npz)
@@ -387,4 +412,79 @@ contains
          Atm%oro(is:ie,js:je), Atm%coarse_graining%restart%oro)
   end subroutine coarse_grain_fv_land_restart_data_on_model_levels
 
+  subroutine coarse_grain_fv_core_restart_data_on_pressure_levels(& 
+     Atm, phalf, coarse_phalf, coarse_phalf_on_fine, masked_mass_weights, masked_area_weights)
+     type(fv_atmos_type), intent(inout) :: Atm
+     real, intent(in) :: phalf(is-1:ie+1,js-1:je+1,1:npz+1)
+     real, intent(in) :: coarse_phalf(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz+1)
+     real, intent(in) :: coarse_phalf_on_fine(is:ie,js:je,1:npz+1)
+     real, intent(in), dimension(is:ie,js:je,1:npz) :: masked_mass_weights, masked_area_weights
+
+     real, allocatable :: remapped(:,:,:)  ! Will re-use this to save memory
+
+     allocate(remapped(is:ie,js:je,1:npz))
+
+     call remap_edges_along_x(Atm%u(is:ie,js:je+1,1:npz), &
+       phalf(is-1:ie+1,js-1:je+1,1:npz+1), &
+       Atm%gridstruct%dx(is:ie,js:je+1), &
+       Atm%ptop, &
+       Atm%coarse_graining%restart%u)
+     call remap_edges_along_y(Atm%v(is:ie+1,js:je,1:npz), &
+       phalf(is-1:ie+1,js-1:je+1,1:npz+1), &
+       Atm%gridstruct%dy(is:ie+1,js:je), &
+       Atm%ptop, &
+       Atm%coarse_graining%restart%v)
+
+     call vertically_remap_field(phalf(is:ie,js:je,1:npz+1), Atm%pt(is:ie,js:je,1:npz), coarse_phalf_on_fine, Atm%ptop, remapped)
+     call weighted_block_average(masked_mass_weights, remapped, Atm%coarse_graining%restart%pt)
+
+     if (.not. Atm%flagstruct%hydrostatic) then
+       call vertically_remap_field(phalf(is:ie,js:je,1:npz+1), Atm%w(is:ie,js:je,1:npz), coarse_phalf_on_fine, Atm%ptop, remapped)
+       call weighted_block_average(masked_mass_weights, remapped, Atm%coarse_graining%restart%w)
+       call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), Atm%delz(is:ie,js:je,1:npz), Atm%coarse_graining%restart%delz)
+       if (Atm%flagstruct%hybrid_z) then
+          call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), Atm%ze0(is:ie,js:je,1:npz), Atm%coarse_graining%restart%ze0)
+       endif
+     endif
+
+     call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), Atm%phis(is:ie,js:je), Atm%coarse_graining%restart%phis)
+
+     if (Atm%coarse_graining%write_coarse_agrid_vel_rst) then
+       call vertically_remap_field(phalf(is:ie,js:je,1:npz+1), Atm%ua(is:ie,js:je,1:npz), coarse_phalf_on_fine, Atm%ptop, remapped)
+       call weighted_block_average(masked_mass_weights, remapped, Atm%coarse_graining%restart%ua)
+       call vertically_remap_field(phalf(is:ie,js:je,1:npz+1), Atm%va(is:ie,js:je,1:npz), coarse_phalf_on_fine, Atm%ptop, remapped)
+       call weighted_block_average(masked_mass_weights, remapped, Atm%coarse_graining%restart%va)
+     endif
+  end subroutine coarse_grain_fv_core_restart_data_on_pressure_levels
+
+  subroutine compute_pressure_level_coarse_graining_requirements(&
+     Atm, phalf, coarse_phalf, coarse_phalf_on_fine, masked_mass_weights, masked_area_weights)
+     type(fv_atmos_type), intent(inout) :: Atm
+     real, intent(out) :: phalf(is-1:ie+1,js-1:je+1,1:npz+1)
+     real, intent(out) :: coarse_phalf(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz+1)
+     real, intent(out) :: coarse_phalf_on_fine(is:ie,js:je,1:npz+1)
+     real, intent(out), dimension(is:ie,js:je,1:npz) :: masked_mass_weights, masked_area_weights
+     
+     ! Do a halo update on delp before proceeding here, because the remapping procedure
+     ! for the winds requires interpolating across tile edges.
+     call mpp_update_domains(Atm%delp, Atm%domain, complete=.true.)
+     call compute_phalf_with_halo(Atm%delp(is-1:ie+1,js-1:je+1,1:npz), Atm%ptop, phalf)
+     call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), Atm%delp(is:ie,js:je,1:npz), coarse_phalf)
+     call block_upsample(coarse_phalf, coarse_phalf_on_fine, npz+1)
+     call mask_mass_weights(Atm%gridstruct%area(is:ie,js:je), Atm%delp(is:ie,js:je,1:npz), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine, masked_mass_weights)
+     call mask_area_weights(Atm%gridstruct%area(is:ie,js:je), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine, masked_area_weights)
+  end subroutine compute_pressure_level_coarse_graining_requirements
+
+  subroutine compute_phalf_with_halo(delp, ptop, phalf)
+     real, intent(in) :: delp(is-1:ie+1,js-1:je+1,1:npz)
+     real, intent(in) :: ptop
+     real, intent(out) :: phalf(is-1:ie+1,js-1:je+1,1:npz+1)
+
+     integer :: k
+
+     phalf(:,:,1) = ptop
+     do k = 2, npz + 1
+       phalf(:,:,k) = phalf(:,:,k-1) + delp(:,:,k-1)
+     enddo
+  end subroutine compute_phalf_with_halo
 end module coarse_grained_restart_files_mod
