@@ -213,6 +213,8 @@ c  cloud water
 !
       real(kind=kind_phys) tf, tcr, tcrf
       parameter (tf=233.16, tcr=263.16, tcrf=1.0/(tcr-tf))
+
+      logical, parameter :: ignore_trigger = .true.
 !
 c-----------------------------------------------------------------------
 !>  ## Determine whether to perform aerosol transport
@@ -597,7 +599,7 @@ c
           cinpcr = cinpcrmx - ptem * ptem1
           tem1 = pfld(i,kb(i)) - pfld(i,kbcon(i))
           if(tem1 > cinpcr) then
-             cnvflg(i) = .false.
+            if (.not. ignore_trigger) cnvflg(i) = .false.
           endif
         endif
       enddo
@@ -820,7 +822,7 @@ c
         if(cnvflg(i)) then
           tem = pfld(i,kbcon(i)) - pfld(i,kbcon1(i))
           if(tem > dthk) then
-             cnvflg(i) = .false.
+             if (.not. ignore_trigger) cnvflg(i) = .false.
           endif
         endif
       enddo
@@ -889,7 +891,9 @@ c
           cinacr = cinacrmx - tem * tem1
 !
 !         cinacr = cinacrmx
-          if(cina(i) < cinacr) cnvflg(i) = .false.
+          if (.not. ignore_trigger) then
+            if(cina(i) < cinacr) cnvflg(i) = .false.
+          end if
         endif
       enddo
 !!
