@@ -758,10 +758,6 @@ module module_physics_driver
       imp_physics = Model%imp_physics
 
       nncl = ncld
-
-      call set_state("prsi", Statein%prsi)
-      call call_function("builtins", "print")
-      call get_state("prsi", Statein%prsi)
       
       ! perform aerosol convective transport and PBL diffusion
       trans_aero = Model%cplchm .and. Model%trans_trac
@@ -2247,39 +2243,6 @@ module module_physics_driver
 
 !     write(0,*)' before monsho hflx=',hflx,' me=',me
 !     write(0,*)' before monsho evap=',evap,' me=',me
-      
-      do i=1,ix
-          psk(i) = Statein%prsik(i,1)
-      enddo
-
-      call set_state("tdt_input", dtdt)
-      call set_state("u1_input", Statein%ugrs)
-      call set_state("v1_input", Statein%vgrs)
-      call set_state("q1_input", Statein%qgrs)
-      call set_state("swh_input", Radtend%htrsw)
-      call set_state("hlw_input", Radtend%htrlw)
-      call set_state("xmu_input", xmu)
-      call set_state("garea_input", garea)
-      call set_state("psk_input", psk)
-      call set_state("rbsoil_input", rb)
-      call set_state("zorl_input", Sfcprop%zorl)
-      call set_state("u10m_input", Diag%u10m)
-      call set_state("v10m_input", Diag%v10m)
-      call set_state("fm_input", Sfcprop%ffmm)
-      call set_state("fh_input", Sfcprop%ffhh)
-      call set_state("tsea_input", Sfcprop%tsfc)
-      call set_state("heat_input", hflx)
-      call set_state("evap_input", evap)
-      call set_state("stress_input", stress)
-      call set_state("spd1_input", wind)
-      call set_state("prsi_input", Statein%prsi)
-      call set_state("del_input", del)
-      call set_state("prsl_input", Statein%prsl)
-      call set_state("prslk_input", Statein%prslk)
-      call set_state("phii_input", Statein%phii)
-      call set_state("phil_input", Statein%phil)
-      call set_state("t1_input", Statein%tgrs)
-      call call_function("emulation_slim.debug", "print_arr_info")
 
       if (nvdiff == ntrac .or. Model%do_ysu .or. Model%shinhong) then
 !
@@ -2549,16 +2512,57 @@ module module_physics_driver
         else
           if (Model%satmedmf) then
              if (Model%isatmedmf == 0) then   ! initial version of satmedmfvdif (Nov 2018)
-                call satmedmfvdif(ix, im, levs, nvdiff, ntcw, ntiwx, ntkev,           &
-                         dvdt, dudt, dtdt, dvdftra,                                   &
-                         Statein%ugrs, Statein%vgrs, Statein%tgrs, vdftra,            &
-                         Radtend%htrsw, Radtend%htrlw, xmu, garea,                    &
-                         Statein%prsik(1,1), rb, Sfcprop%zorl, Diag%u10m, Diag%v10m,  &
-                         Sfcprop%ffmm, Sfcprop%ffhh, Sfcprop%tsfc, hflx, evap,        &
-                         stress, wind, kpbl, Statein%prsi, del, Statein%prsl,         &
-                         Statein%prslk, Statein%phii, Statein%phil, dtp,              &
-                         Model%dspheat, dusfc1, dvsfc1, dtsfc1, dqsfc1, Diag%hpbl,    &
-                         kinver, Model%xkzm_m, Model%xkzm_h, Model%xkzm_s)
+                psk = Statein%prsik(1, 1)
+
+                call set_state("tdt_input", dtdt)
+                call set_state("u1_input", Statein%ugrs)
+                call set_state("v1_input", Statein%vgrs)
+                call set_state("q1_input", Statein%qgrs)
+                call set_state("swh_input", Radtend%htrsw)
+                call set_state("hlw_input", Radtend%htrlw)
+                call set_state("xmu_input", xmu)
+                call set_state("garea_input", garea)
+                call set_state("psk_input", psk)
+                call set_state("rbsoil_input", rb)
+                call set_state("zorl_input", Sfcprop%zorl)
+                call set_state("u10m_input", Diag%u10m)
+                call set_state("v10m_input", Diag%v10m)
+                call set_state("fm_input", Sfcprop%ffmm)
+                call set_state("fh_input", Sfcprop%ffhh)
+                call set_state("tsea_input", Sfcprop%tsfc)
+                call set_state("heat_input", hflx)
+                call set_state("evap_input", evap)
+                call set_state("stress_input", stress)
+                call set_state("spd1_input", wind)
+                call set_state("prsi_input", Statein%prsi)
+                call set_state("del_input", del)
+                call set_state("prsl_input", Statein%prsl)
+                call set_state("prslk_input", Statein%prslk)
+                call set_state("phii_input", Statein%phii)
+                call set_state("phil_input", Statein%phil)
+                call set_state("t1_input", Statein%tgrs)
+                call call_function("emulation_slim.satmedmf", "emulator")
+                call get_state("dqsfc_output", dqsfc1)
+                call get_state("dtsfc_output", dtsfc1)
+                call get_state("dvsfc_output", dvsfc1)
+                call get_state("dusfc_output", dusfc1)
+                call get_state("du_output", dudt)
+                call get_state("dv_output", dvdt)
+                call get_state("tdt_output", dtdt)
+                call get_state("hpbl_output", Diag%hpbl)
+                call get_state("kpbl_output", kpbl)
+
+                ! call satmedmfvdif(ix, im, levs, nvdiff, ntcw, ntiwx, ntkev,           &
+                !          dvdt, dudt, dtdt, dvdftra,                                   &
+                !          Statein%ugrs, Statein%vgrs, Statein%tgrs, vdftra,            &
+                !          Radtend%htrsw, Radtend%htrlw, xmu, garea,                    &
+                !          Statein%prsik(1,1), rb, Sfcprop%zorl, Diag%u10m, Diag%v10m,  &
+                !          Sfcprop%ffmm, Sfcprop%ffhh, Sfcprop%tsfc, hflx, evap,        &
+                !          stress, wind, kpbl, Statein%prsi, del, Statein%prsl,         &
+                !          Statein%prslk, Statein%phii, Statein%phil, dtp,              &
+                !          Model%dspheat, dusfc1, dvsfc1, dtsfc1, dqsfc1, Diag%hpbl,    &
+                !          kinver, Model%xkzm_m, Model%xkzm_h, Model%xkzm_s)
+
              elseif (Model%isatmedmf == 1) then   ! updated version of satmedmfvdif (May 2019)
                 call satmedmfvdifq(ix, im, levs, nvdiff, ntcw, ntiwx, ntkev,          &
                          dvdt, dudt, dtdt, dvdftra,                                   &
