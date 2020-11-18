@@ -780,7 +780,7 @@ contains
 
   subroutine remap_edges_along_y(field, phalf, dy, ptop, result)
     real, intent(in) :: field(is:ie+1,js:je,1:npz)
-    real, intent(in) :: phalf(is-1,ie+1,js-1,je+1,1:npz+1)
+    real, intent(in) :: phalf(is-1:ie+1,js-1:je+1,1:npz+1)
     real, intent(in) :: dy(is:ie+1,js:je)
     real, intent(in) :: ptop
     real, intent(out) :: result(is_coarse:ie_coarse+1,js_coarse:je_coarse,1:npz)
@@ -793,7 +793,7 @@ contains
     allocate(phalf_d_grid(is_coarse:ie_coarse+1,js:je,1:npz+1))
     allocate(coarse_phalf_d_grid(is_coarse:ie_coarse+1,js_coarse:je_coarse,1:npz+1))
     allocate(coarse_phalf_d_grid_on_fine(is_coarse:ie_coarse+1,js:je,1:npz+1))
-    allocate(remapped(is_coarse:ie_coarse+1,js:je+1,1:npz))
+    allocate(remapped(is_coarse:ie_coarse+1,js:je,1:npz))
     allocate(mask(is_coarse:ie_coarse+1,js:je,1:npz))
 
     ! Hard-code parameters related to mappm.
@@ -812,7 +812,7 @@ contains
     call upsample_d_grid_y(coarse_phalf_d_grid, coarse_phalf_d_grid_on_fine, npz+1)
 
     do i = is, ie + 1, coarsening_factor
-      i_coarse = (j - 1) / coarsening_factor + 1
+      i_coarse = (i - 1) / coarsening_factor + 1
       call mappm(km, phalf_d_grid(i_coarse,js:je,:), field(i,js:je,:), kn, &
         coarse_phalf_d_grid_on_fine(i_coarse,js:je,:), &
         remapped(i_coarse,js:je,:), js, je, iv, kord, ptop)
