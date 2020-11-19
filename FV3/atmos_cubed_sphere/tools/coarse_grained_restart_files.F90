@@ -503,21 +503,13 @@ contains
      enddo
    end subroutine coarse_grain_fv_tracer_restart_data_on_pressure_levels
 
-  ! Compute the height at model interfaces by integrating upward from phis; all
-  ! inputs and outputs are already coarse-grained here.
-   subroutine height_at_interfaces(delz, phis, z_interfaces)
+   subroutine compute_top_height(delz, phis, top_height)
      real, intent(in) :: delz(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz)
      real, intent(in) :: phis(is_coarse:ie_coarse,js_coarse:je_coarse)
-     real, intent(out) :: z_interfaces(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz+1)
+     real, intent(out) :: top_height(is_coarse:ie_coarse,js_coarse:je_coarse)
  
-     integer :: k
- 
-     z_interfaces(:,:,npz+1) = phis / GRAV
- 
-     do k = npz, 1, -1
-        z_interfaces(:,:,k) = z_interfaces(:,:,k+1) - delz(:,:,k)
-     enddo
-   end subroutine height_at_interfaces
+     top_height = (phis / GRAV) - sum(delz, dim=3)
+   end subroutine compute_top_height
 
    subroutine hydrostatic_delz(phalf, temp, sphum, delz)
      real, intent(in) :: phalf(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz+1)
@@ -531,6 +523,9 @@ contains
      allocate(virtual_temp(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz))
      allocate(dlogp(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz))
  
+     write(*,*) 'sphum minval', minval(sphum)
+     write(*,*) 'sphum maxval', maxval(sphum)
+
      virtual_temp = temp * (1.0 + (RVGAS / RDGAS - 1.0) * sphum)
      do k = 1, npz
         dlogp(:,:,k) = log(phalf(:,:,k+1)) - log(phalf(:,:,k))
@@ -538,7 +533,6 @@ contains
      delz = -dlogp * RDGAS * virtual_temp / GRAV
    end subroutine hydrostatic_delz
 
-  ! Compute surface geopotential from model top height and layer thicknesses.
    subroutine delz_and_top_height_to_phis(top_height, delz, phis)
      real, intent(in) :: top_height(is_coarse:ie_coarse,js_coarse:je_coarse)
      real, intent(in) :: delz(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz)
@@ -552,13 +546,12 @@ contains
      real, intent(in) :: coarse_phalf(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz+1)
 
      integer :: sphum
-
-     real, allocatable :: z_interfaces(:,:,:), top_height(:,:)
-     allocate(z_interfaces(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz+1))
+     real, allocatable :: top_height(:,:)
      allocate(top_height(is_coarse:ie_coarse,js_coarse:je_coarse))
 
-     call height_at_interfaces(Atm%coarse_graining%restart%delz, Atm%coarse_graining%restart%phis, z_interfaces)
-     top_height = z_interfaces(:,:,1)
+     sphum = get_tracer_index(MODEL_ATMOS, 'sphum')
+     
+     call compute_top_height(Atm%coarse_graining%restart%delz, Atm%coarse_graining%restart%phis, top_height)
      call hydrostatic_delz(coarse_phalf, Atm%coarse_graining%restart%pt, Atm%coarse_graining%restart%q(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz,sphum), Atm%coarse_graining%restart%delz)
      call delz_and_top_height_to_phis(top_height, Atm%coarse_graining%restart%delz, Atm%coarse_graining%restart%phis)
    end subroutine impose_hydrostatic_balance
@@ -574,7 +567,7 @@ contains
      ! Do a halo update on delp before proceeding here, because the remapping procedure
      ! for the winds requires interpolating across tile edges.
      call mpp_update_domains(Atm%delp, Atm%domain, complete=.true.)
-     call compute_phalf(is - 1, ie + 1, js - 1, je + 1, Atm%delp(is-1:ie+1,js-1:je+1,1:npz), Atm%ptop, phalf)
+     call compute_phalf(is-1, ie+1, js-1, je+1, Atm%delp(is-1:ie+1,js-1:je+1,1:npz), Atm%ptop, phalf)
      call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), Atm%delp(is:ie,js:je,1:npz), Atm%coarse_graining%restart%delp)
      call compute_phalf(is_coarse, ie_coarse, js_coarse, je_coarse, Atm%coarse_graining%restart%delp, Atm%ptop, coarse_phalf)
      call block_upsample(coarse_phalf, coarse_phalf_on_fine, npz+1)
