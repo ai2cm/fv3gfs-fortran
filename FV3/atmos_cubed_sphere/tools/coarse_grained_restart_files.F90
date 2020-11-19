@@ -319,8 +319,7 @@ contains
 
      ! delp and delz are coarse-grained on model levels; u, v, W, T, and all the tracers
      ! are all remapped to surfaces of constant pressure within coarse grid cells before
-     ! coarse graining.
-
+     ! coarse graining.  At the end, delz and phis are corrected to impose hydrostatic balance.
      call compute_pressure_level_coarse_graining_requirements( &
        Atm, phalf, coarse_phalf, coarse_phalf_on_fine, masked_mass_weights, masked_area_weights)
      call coarse_grain_fv_core_restart_data_on_pressure_levels( &
@@ -518,7 +517,6 @@ contains
      do k = npz, 1, -1
         z_interfaces(:,:,k) = z_interfaces(:,:,k+1) - delz(:,:,k)
      enddo
- 
    end subroutine height_at_interfaces
 
    subroutine hydrostatic_delz(phalf, temp, sphum, delz)
@@ -558,8 +556,6 @@ contains
      real, allocatable :: z_interfaces(:,:,:), top_height(:,:)
      allocate(z_interfaces(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz+1))
      allocate(top_height(is_coarse:ie_coarse,js_coarse:je_coarse))
-
-     sphum = get_tracer_index(MODEL_ATMOS, 'sphum')
 
      call height_at_interfaces(Atm%coarse_graining%restart%delz, Atm%coarse_graining%restart%phis, z_interfaces)
      top_height = z_interfaces(:,:,1)
