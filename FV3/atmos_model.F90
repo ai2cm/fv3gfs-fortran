@@ -79,6 +79,7 @@ use atmosphere_mod,     only: atmosphere_scalar_field_halo
 use atmosphere_mod,     only: atmosphere_get_bottom_layer
 use atmosphere_mod,     only: set_atmosphere_pelist
 use atmosphere_mod,     only: Atm, mytile
+use atmosphere_mod,     only: atmosphere_coarse_graining_parameters
 use block_control_mod,  only: block_control_type, define_blocks_packed
 use DYCORE_typedefs,    only: DYCORE_data_type, DYCORE_diag_type
 #ifdef CCPP
@@ -111,7 +112,7 @@ use stochastic_physics_sfc, only: run_stochastic_physics_sfc
 use FV3GFS_io_mod,      only: FV3GFS_restart_read, FV3GFS_restart_write, &
                               FV3GFS_IPD_checksum,                       &
                               FV3GFS_diag_register, FV3GFS_diag_output,  &
-                              DIAG_SIZE
+                              DIAG_SIZE, FV3GFS_restart_write_coarse
 use fv_iau_mod,         only: iau_external_data_type,getiauforcing,iau_initialize
 use module_fv3_config,  only: output_1st_tstep_rst, first_kdt, nsout
 
@@ -157,6 +158,9 @@ public Atm_block, IPD_Data, IPD_Control
      type(time_type)               :: Time_init          ! reference time.
      type(grid_box_type)           :: grid               ! hold grid information needed for 2nd order conservative flux exchange 
      type(IPD_diag_type), pointer, dimension(:) :: Diag
+     type(domain2d)                :: coarse_domain      ! domain decomposition of the coarse grid
+     logical                       :: write_coarse_restart_files  ! whether to write coarse restart files
+     logical                       :: write_only_coarse_intermediate_restarts  ! whether to write only coarse intermediate restart files
  end type atmos_data_type
                                                          ! to calculate gradient on cubic sphere grid.
 !</PUBLICTYPE >
@@ -513,6 +517,7 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
    call atmosphere_grid_ctr (Atmos%lon, Atmos%lat)
    call atmosphere_hgt (Atmos%layer_hgt, 'layer', relative=.false., flip=flip_vc)
    call atmosphere_hgt (Atmos%level_hgt, 'level', relative=.false., flip=flip_vc)
+   call atmosphere_coarse_graining_parameters(Atmos%coarse_domain, Atmos%write_coarse_restart_files, Atmos%write_only_coarse_intermediate_restarts)
 
    Atmos%mlon = mlon
    Atmos%mlat = mlat
@@ -960,6 +965,10 @@ subroutine atmos_model_end (Atmos)
     if (.not. disable_phys_restart_write) then
        call FV3GFS_restart_write (IPD_Data, IPD_Restart, Atm_block, &
                                   IPD_Control, Atmos%domain)
+       if (Atmos%write_coarse_restart_files) then
+         call FV3GFS_restart_write_coarse(IPD_Data, IPD_Restart, Atm_block, &
+            IPD_Control, Atmos%coarse_domain)
+       endif
     endif
 
 #ifdef CCPP
@@ -984,10 +993,15 @@ subroutine atmos_model_restart(Atmos, timestamp)
 
     call atmosphere_restart(timestamp)
     if (.not. disable_phys_restart_write) then
-       call FV3GFS_restart_write (IPD_Data, IPD_Restart, Atm_block, &
-                                  IPD_Control, Atmos%domain, timestamp)
+       if (.not. Atmos%write_only_coarse_intermediate_restarts) then
+        call FV3GFS_restart_write (IPD_Data, IPD_Restart, Atm_block, &
+                                    IPD_Control, Atmos%domain, timestamp)
+       endif
+       if (Atmos%write_coarse_restart_files) then
+        call FV3GFS_restart_write_coarse(IPD_Data, IPD_Restart, Atm_block, &
+          IPD_Control, Atmos%coarse_domain, timestamp)
+       endif
     endif
-
 end subroutine atmos_model_restart
 ! </SUBROUTINE>
 
