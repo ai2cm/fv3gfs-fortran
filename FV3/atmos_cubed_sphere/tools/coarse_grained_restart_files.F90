@@ -522,9 +522,6 @@ contains
  
      allocate(virtual_temp(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz))
      allocate(dlogp(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz))
- 
-     write(*,*) 'sphum minval', minval(sphum)
-     write(*,*) 'sphum maxval', maxval(sphum)
 
      virtual_temp = temp * (1.0 + (RVGAS / RDGAS - 1.0) * sphum)
      do k = 1, npz
