@@ -2554,7 +2554,6 @@ module FV3GFS_io_mod
   
 !-------------------------------------------------------------------------      
 
-
 !-------------------------------------------------------------------------      
 !--- gfs_diag_output ---
 !-------------------------------------------------------------------------      
@@ -2592,7 +2591,7 @@ module FV3GFS_io_mod
     real(kind=kind_phys) :: rdt, rtime_int, rtime_intfull, lcnvfac
     real(kind=kind_phys) :: rtime_radsw, rtime_radlw
     logical :: used
-    logical :: require_area, require_mass
+    logical :: require_area, require_mass, coarse_3D_diagnostic_requested
     real(kind=kind_phys), allocatable :: area(:,:)
     real(kind=kind_phys), allocatable :: mass(:,:,:)
     
@@ -2944,12 +2943,18 @@ module FV3GFS_io_mod
 !
  end subroutine store_data
 
- subroutine determine_required_coarse_graining_weights(coarse_diag, require_area, require_mass)
+ subroutine determine_required_coarse_graining_weights(coarse_diag, require_area, require_mass, require_vertical_remapping)
    type(IPD_diag_type), intent(in) :: coarse_diag(:)
-   logical, intent(out) :: require_area, require_mass
+   logical, intent(out) :: require_area, require_mass, require_vertical_remapping
 
-   require_area = any(coarse_diag%coarse_graining_method .eq. AREA_WEIGHTED)
-   require_mass = any(coarse_diag%coarse_graining_method .eq. MASS_WEIGHTED)
+   require_area = any(coarse_diag%id .gt. 0 .and. coarse_diag%coarse_graining_method .eq. AREA_WEIGHTED)
+   require_mass = any(coarse_diag%id .gt. 0 .and. coarse_diag%coarse_graining_method .eq. MASS_WEIGHTED)
+
+   if (trim(strategy) .eq. PRESSURE_LEVEL) then
+     require_vertical_remapping = any(coarse_diag%id .gt. 0 .and. coarse_diag%axes .eq. 3)
+   else
+     require_vertical_remapping = .false.
+   endif
  end subroutine determine_required_coarse_graining_weights
 
  subroutine get_area(Atm_block, IPD_Data, nx, ny, area)
