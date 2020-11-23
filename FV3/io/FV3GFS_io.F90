@@ -2292,7 +2292,7 @@ module FV3GFS_io_mod
     allocate(coarsened_area_times_vfrac(is_coarse:ie_coarse,js_coarse:je_coarse))
 
     if (.not. allocated(sfc_var2_coarse)) then
-      allocate(sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,nvar2m+nvar2o))
+      allocate(sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,nvar2m))
       allocate(sfc_var3_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,Model%lsoil,nvar3))
 
       call register_coarse_sfc_prop_restart_fields(sfc_restart_coarse, &
@@ -2303,10 +2303,10 @@ module FV3GFS_io_mod
 
     if (.not. allocated(sfc_name2)) then
       !--- allocate the various containers needed for restarts
-      allocate(sfc_name2(nvar2m+nvar2o))
+      allocate(sfc_name2(nvar2m))
       allocate(sfc_name3(nvar3))
-      allocate(sfc_var2(nx,ny,nvar2m+nvar2o))
-      allocate(sfc_var3(nx,ny,Model%lsoil,nvar3))
+      allocate(sfc_var2(isc:iec,jsc:jec,nvar2m))
+      allocate(sfc_var3(isc:iec,jsc:jec,Model%lsoil,nvar3))
       sfc_var2 = -9999._kind_phys
       sfc_var3 = -9999._kind_phys
 
@@ -2351,7 +2351,6 @@ module FV3GFS_io_mod
 
    do nb = 1, Atm_block%nblks
     do ix = 1, Atm_block%blksz(nb)
-       !--- 2D variables
        i = Atm_block%index(nb)%ii(ix)
        j = Atm_block%index(nb)%jj(ix)
        sfc_var2(i,j,1)  = Sfcprop(nb)%slmsk(ix)
