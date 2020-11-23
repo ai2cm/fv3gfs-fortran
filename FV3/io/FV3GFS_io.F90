@@ -2250,6 +2250,10 @@ module FV3GFS_io_mod
     real(kind=kind_phys), pointer, dimension(:,:,:) :: var3_p_coarse => NULL()
     real(kind=kind_phys) :: FREEZING, VTYPE_LAND_ICE, STYPE_LAND_ICE, SHDMIN_CANOPY_THRESHOLD
 
+    if (Model%cplflx .or. (Model%lsm .eq. Model%lsm_noahmp) .or. (Model%nstf_name(1) > 0)) then
+      call mpp_error(FATAL, 'Coarse graining strategy not defined for land surface model configuration')
+    endif
+
     nvar2m = 32
     nvar3 = 3
 
@@ -2305,10 +2309,6 @@ module FV3GFS_io_mod
       allocate(sfc_var3(isc:iec,jsc:jec,Model%lsoil,nvar3))
       sfc_var2 = -9999._kind_phys
       sfc_var3 = -9999._kind_phys
-
-      if (Model%cplflx .or. (Model%lsm .eq. Model%lsm_noahmp) .or. (Model%nstf_name(1) > 0)) then
-        call mpp_error(FATAL, 'Coarse graining strategy not defined for land surface model configuration')
-      endif
 
       !--- names of the 2D variables to save
       sfc_name2(1)  = 'slmsk'
