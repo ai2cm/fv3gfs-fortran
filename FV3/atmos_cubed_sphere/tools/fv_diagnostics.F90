@@ -1059,6 +1059,15 @@ contains
         Atm(n)%nudge_diag%nudge_q_dt(isc:iec,jsc:jec,npz) = 0.0
     endif
 
+    idiag%id_column_moistening_nudge = register_diag_field('dynamics', &
+          'column_moistening_nudge', axes(1:2), Time, &
+          'column integrated moistening from nudging', &
+          'mm/s', missing_value=missing_value)
+    if (idiag%id_column_moistening_nudge > 0) then
+        allocate(Atm(n)%nudge_diag%column_moistening(isc:iec,jsc:jec))
+        Atm(n)%nudge_diag%column_moistening(isc:iec,jsc:jec) = 0.0
+    endif
+
     idiag%id_u_dt_nudge = register_diag_field('dynamics', &
           'u_dt_nudge', axes(1:3), Time, &
           'zonal wind tendency from nudging', &
@@ -1077,6 +1086,23 @@ contains
         Atm(n)%nudge_diag%nudge_v_dt(isc:iec,jsc:jec,npz) = 0.0
     endif
 
+    idiag%id_t_dt_phys = register_diag_field('dynamics', &
+          't_dt_phys', axes(1:3), Time, &
+          'temperature tendency from physics', 'K/s', &
+          missing_value=missing_value)
+    if (idiag%id_t_dt_phys > 0) then
+         allocate(Atm(n)%physics_tendency_diag%t_dt(isc:iec,jsc:jec,npz))
+         Atm(n)%physics_tendency_diag%t_dt = 0.0
+    endif
+
+    idiag%id_qv_dt_phys = register_diag_field('dynamics', &
+          'qv_dt_phys', axes(1:3), Time, &
+          'specific humidity tendency from physics', 'kg/kg/s', &
+          missing_value=missing_value)
+    if (idiag%id_qv_dt_phys > 0) then
+         allocate(Atm(n)%physics_tendency_diag%qv_dt(isc:iec,jsc:jec,npz))
+         Atm(n)%physics_tendency_diag%qv_dt = 0.0
+    endif
  end subroutine fv_diag_init
 
 
@@ -3094,11 +3120,21 @@ contains
      if (idiag%id_q_dt_nudge > 0) then
         used = send_data(idiag%id_q_dt_nudge, Atm(n)%nudge_diag%nudge_q_dt(isc:iec,jsc:jec,1:npz), Time)
      endif
+     if (idiag%id_column_moistening_nudge > 0) then
+        used = send_data(idiag%id_column_moistening_nudge, Atm(n)%nudge_diag%column_moistening(isc:iec,jsc:jec), Time)
+     endif
      if (idiag%id_u_dt_nudge > 0) then
         used = send_data(idiag%id_u_dt_nudge, Atm(n)%nudge_diag%nudge_u_dt(isc:iec,jsc:jec,1:npz), Time)
      endif
      if (idiag%id_v_dt_nudge > 0) then
         used = send_data(idiag%id_v_dt_nudge, Atm(n)%nudge_diag%nudge_v_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+
+     if (idiag%id_t_dt_phys > 0) then
+        used = send_data(idiag%id_t_dt_phys, Atm(n)%physics_tendency_diag%t_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+     if (idiag%id_qv_dt_phys > 0) then
+        used = send_data(idiag%id_qv_dt_phys, Atm(n)%physics_tendency_diag%qv_dt(isc:iec,jsc:jec,1:npz), Time)
      endif
    ! enddo  ! end ntileMe do-loop
 

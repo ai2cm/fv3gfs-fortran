@@ -17,6 +17,7 @@ STDOUT_FILENAME = 'stdout.log'
 STDERR_FILENAME = 'stderr.log'
 MD5SUM_FILENAME = "md5.txt"
 SERIALIZE_MD5SUM_FILENAME = "md5_serialize.txt"
+GOOGLE_APP_CREDS = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", None)
 
 USE_LOCAL_ARCHIVE = True
 
@@ -39,6 +40,11 @@ def reference_dir(request):
     return request.config.getoption("--refdir")
 
 
+@pytest.fixture
+def image_runner(request):
+    return request.config.getoption("--image_runner")
+
+
 @pytest.fixture(params=config_filenames)
 def config(request):
     config_filename = os.path.join(CONFIG_DIR, request.param)
@@ -52,14 +58,19 @@ def run_dir(model_image_tag, config):
     return os.path.join(OUTPUT_DIR, model_image_tag, run_name)
 
 
-def test_regression(config, model_image, reference_dir, run_dir):
+def test_regression(config, model_image, reference_dir, run_dir, image_runner):
     run_name = config['experiment_name']
     run_reference_dir = os.path.join(reference_dir, run_name)
     if os.path.isdir(run_dir):
         shutil.rmtree(run_dir)
     os.makedirs(run_dir)
     write_run_directory(config, run_dir)
-    run_model(run_dir, model_image)
+    if image_runner == "docker":
+        run_model_docker(run_dir, model_image)
+    elif image_runner == "sarus":
+        run_model_sarus(run_dir, model_image)
+    else:
+        raise NotImplementedError("image_runner must be one of 'docker' or 'sarus'")
     md5sum_filename = os.path.join(run_reference_dir, MD5SUM_FILENAME)
     check_rundir_md5sum(run_dir, md5sum_filename)
     if 'serialize' in model_image:
@@ -83,24 +94,43 @@ def ensure_reference_exists(filename):
         )
 
 
-def run_model(rundir, model_image):
+def run_model_docker(rundir, model_image):
     if USE_LOCAL_ARCHIVE:
         archive = fv3config.get_cache_dir()
         archive_mount = ['-v', f'{archive}:{archive}']
     else:
         archive_mount = []
+    
+    if GOOGLE_APP_CREDS is not None:
+        secret_mount = ["-v", f"{GOOGLE_APP_CREDS}:/tmp/key.json"]
+        env_vars = ["--env", "GOOGLE_APPLICATION_CREDENTIALS"]
+    else:
+        secret_mount = []
+        env_vars = []
     docker_runpath = ""
     docker_run = ['docker', 'run', '--rm']
     rundir_abs = os.path.abspath(rundir)
     rundir_mount = ['-v', f'{rundir_abs}:' + docker_runpath + '/rundir']
+    data_abs = os.path.abspath(os.path.join(rundir_abs, 'test_data'))
+    os.makedirs(data_abs, exist_ok=True)
+    data_mount = ['-v', f'{data_abs}:' + docker_runpath + '/rundir/test_data']
     fv3out_filename = join(rundir, 'stdout.log')
     fv3err_filename = join(rundir, 'stderr.log')
     with open(fv3out_filename, 'w') as fv3out_f, open(fv3err_filename, 'w') as fv3err_f:
         subprocess.check_call(
-            docker_run + rundir_mount + archive_mount + [model_image] + ["bash", "/rundir/submit_job.sh"],
+            docker_run + rundir_mount + archive_mount + data_mount + secret_mount + env_vars + [model_image] + ["bash", "/rundir/submit_job.sh"],
             stdout=fv3out_f,
             stderr=fv3err_f
         )
+
+
+def run_model_sarus(rundir, model_image):
+    shutil.copy(os.path.join(TEST_DIR, "run_files/job_jenkins_sarus"), os.path.join(rundir, "job_jenkins_sarus"))
+    # run job_jenkins_sarus with env var FV3_CONTAINER set to model_image
+    env = os.environ.copy()
+    env["FV3_CONTAINER"] = model_image
+    env["SCRATCH_DIR"] = rundir
+    subprocess.check_call(["sbatch", "--wait", "job_jenkins_sarus"], env=env, cwd=rundir)
 
 
 def check_md5sum(run_dir, md5sum_filename):

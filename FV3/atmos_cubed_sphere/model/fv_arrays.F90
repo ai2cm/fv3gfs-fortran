@@ -113,6 +113,7 @@ module fv_arrays_mod
 
      integer :: id_t_dt_nudge, id_ps_dt_nudge, id_delp_dt_nudge
      integer :: id_u_dt_nudge, id_v_dt_nudge, id_q_dt_nudge
+     integer :: id_t_dt_phys, id_qv_dt_phys, id_column_moistening_nudge
 
   end type fv_diag_type
 
@@ -835,6 +836,8 @@ module fv_arrays_mod
  
    logical :: fv_debug = .false.   !< Whether to turn on additional diagnostics in fv_dynamics. 
                                    !< The default is .false.
+   logical :: disable_fv_restart_write = .false.   !< Whether to disable saving fv_* restart files during a run.
+                                                   !< The default is .false.
    logical :: srf_init = .false.
    logical :: mountain = .true.   !< Takes topography into account when initializing the
                                   !< model. Set this to .true. to apply the terrain filter (if n_zs_filter = 2
@@ -1136,9 +1139,16 @@ module fv_arrays_mod
       real, allocatable :: nudge_u_dt(:,:,:)
       real, allocatable :: nudge_v_dt(:,:,:)
       real, allocatable :: nudge_q_dt(:,:,:)
+      real, allocatable :: column_moistening(:,:)
 
    end type nudge_diag_type
 
+   type physics_tendency_diag_type
+
+      real, allocatable :: t_dt(:,:,:)
+      real, allocatable :: qv_dt(:,:,:)
+
+   end type physics_tendency_diag_type
 !>@brief 'allocate_fv_nest_BC_type' is an interface to subroutines
 !! that allocate the 'fv_nest_BC_type' structure that holds the nested-grid BCs.
 !>@details The subroutines can pass the array bounds explicitly or not.
@@ -1331,6 +1341,10 @@ module fv_arrays_mod
     type(fv_regional_bc_bounds_type) :: regional_bc_bounds
 
     type(domain2D) :: domain
+
+    ! Column moistening implied from nudging specific humidity (only
+    ! allocated if nudging is active).
+    real, _ALLOCATABLE :: column_moistening_implied_by_nudging(:,:) _NULL
 #if defined(SPMD)
 
     type(domain2D) :: domain_for_coupler !< domain used in coupled model with halo = 1.
@@ -1381,6 +1395,8 @@ module fv_arrays_mod
   integer :: atmos_axes(4)
 
   type(nudge_diag_type) :: nudge_diag
+
+  type(physics_tendency_diag_type) :: physics_tendency_diag
 
   type(fv_coarse_graining_type) :: coarse_graining
 
