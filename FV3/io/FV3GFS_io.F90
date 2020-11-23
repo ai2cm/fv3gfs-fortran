@@ -192,13 +192,9 @@ module FV3GFS_io_mod
     if (present(timestamp)) then
       call sfc_prop_restart_write_coarse (IPD_Data%Sfcprop, Atm_block, Model, &
             coarse_domain, IPD_Data%Grid, timestamp)
-      ! call phys_restart_write_coarse (IPD_Restart, Atm_block, Model,&
-      !      & fv_domain, IPD_Data%Grid, timestamp)
     else
       call sfc_prop_restart_write_coarse (IPD_Data%Sfcprop, Atm_block, Model, &
             coarse_domain, IPD_Data%Grid)
-      ! call phys_restart_write_coarse (IPD_Restart, Atm_block, Model,&
-      !      & fv_domain, IPD_Data%Grid)
     endif
   end subroutine FV3GFS_restart_write_coarse
 !--------------------
