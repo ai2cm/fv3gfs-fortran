@@ -2254,9 +2254,8 @@ module FV3GFS_io_mod
     real(kind=kind_phys), pointer, dimension(:,:,:) :: var3_p_coarse => NULL()
     real(kind=kind_phys) :: FREEZING, VTYPE_LAND_ICE, STYPE_LAND_ICE, SHDMIN_CANOPY_THRESHOLD
 
-    nvar2m = 32  ! Mandatory 2D variables
-    nvar2o = 18  ! Optional 2D variablbes
-    nvar3 = 3  ! Mandatory 3D variables
+    nvar2m = 32
+    nvar3 = 3
 
     isc = Atm_block%isc
     iec = Atm_block%iec
@@ -2299,7 +2298,7 @@ module FV3GFS_io_mod
       call register_coarse_sfc_prop_restart_fields(sfc_restart_coarse, &
         sfc_var2_coarse, sfc_var3_coarse, fn_srf_coarse, &
         var2_p_coarse, var3_p_coarse, sfc_name2, sfc_name3, coarse_domain, &
-        Model, nvar2m, nvar2o, nvar3)
+        Model, nvar2m, nvar3)
     endif
 
     if (.not. allocated(sfc_name2)) then
@@ -2310,6 +2309,10 @@ module FV3GFS_io_mod
       allocate(sfc_var3(nx,ny,Model%lsoil,nvar3))
       sfc_var2 = -9999._kind_phys
       sfc_var3 = -9999._kind_phys
+
+      if (Model%cplflx .or. (Model%lsm .eq. Model%lsm_noahmp) .or. (Model%nstf_name(1) > 0)) then
+        call mpp_error(FATAL, 'Coarse graining strategy not defined for land surface model configuration')
+      endif
 
       !--- names of the 2D variables to save
       sfc_name2(1)  = 'slmsk'
@@ -2343,27 +2346,7 @@ module FV3GFS_io_mod
       sfc_name2(29) = 'shdmax'
       sfc_name2(30) = 'slope'
       sfc_name2(31) = 'snoalb'
-      !--- below here all variables are optional
       sfc_name2(32) = 'sncovr'
-      !--- NSSTM inputs only needed when (nstf_name(1) > 0) .and. (nstf_name(2)) == 0)
-      sfc_name2(33) = 'tref'
-      sfc_name2(34) = 'z_c'
-      sfc_name2(35) = 'c_0'
-      sfc_name2(36) = 'c_d'
-      sfc_name2(37) = 'w_0'
-      sfc_name2(38) = 'w_d'
-      sfc_name2(39) = 'xt'
-      sfc_name2(40) = 'xs'
-      sfc_name2(41) = 'xu'
-      sfc_name2(42) = 'xv'
-      sfc_name2(43) = 'xz'
-      sfc_name2(44) = 'zm'
-      sfc_name2(45) = 'xtts'
-      sfc_name2(46) = 'xzts'
-      sfc_name2(47) = 'd_conv'
-      sfc_name2(48) = 'ifd'
-      sfc_name2(49) = 'dt_cool'
-      sfc_name2(50) = 'qrain'
    endif
 
    do nb = 1, Atm_block%nblks
@@ -2371,116 +2354,41 @@ module FV3GFS_io_mod
        !--- 2D variables
        i = Atm_block%index(nb)%ii(ix)
        j = Atm_block%index(nb)%jj(ix)
-       !--- slmsk
        sfc_var2(i,j,1)  = Sfcprop(nb)%slmsk(ix)
-       !--- tsfc (tsea in sfc file)
        sfc_var2(i,j,2)  = Sfcprop(nb)%tsfc(ix)
-       !--- weasd (sheleg in sfc file)
        sfc_var2(i,j,3)  = Sfcprop(nb)%weasd(ix)
-       !--- tg3
        sfc_var2(i,j,4)  = Sfcprop(nb)%tg3(ix)
-       !--- zorl
        sfc_var2(i,j,5)  = Sfcprop(nb)%zorl(ix)
-       !--- alvsf
        sfc_var2(i,j,6)  = Sfcprop(nb)%alvsf(ix)
-       !--- alvwf
        sfc_var2(i,j,7)  = Sfcprop(nb)%alvwf(ix)
-       !--- alnsf
        sfc_var2(i,j,8)  = Sfcprop(nb)%alnsf(ix)
-       !--- alnwf
        sfc_var2(i,j,9)  = Sfcprop(nb)%alnwf(ix)
-       !--- facsf
        sfc_var2(i,j,10) = Sfcprop(nb)%facsf(ix)
-       !--- facwf
        sfc_var2(i,j,11) = Sfcprop(nb)%facwf(ix)
-       !--- vfrac
        sfc_var2(i,j,12) = Sfcprop(nb)%vfrac(ix)
-       !--- canopy
        sfc_var2(i,j,13) = Sfcprop(nb)%canopy(ix)
-       !--- f10m
        sfc_var2(i,j,14) = Sfcprop(nb)%f10m(ix)
-       !--- t2m
        sfc_var2(i,j,15) = Sfcprop(nb)%t2m(ix)
-       !--- q2m
        sfc_var2(i,j,16) = Sfcprop(nb)%q2m(ix)
-       !--- vtype
        sfc_var2(i,j,17) = Sfcprop(nb)%vtype(ix)
-       !--- stype
        sfc_var2(i,j,18) = Sfcprop(nb)%stype(ix)
-       !--- uustar
        sfc_var2(i,j,19) = Sfcprop(nb)%uustar(ix)
-       !--- ffmm
        sfc_var2(i,j,20) = Sfcprop(nb)%ffmm(ix)
-       !--- ffhh
        sfc_var2(i,j,21) = Sfcprop(nb)%ffhh(ix)
-       !--- hice
        sfc_var2(i,j,22) = Sfcprop(nb)%hice(ix)
-       !--- fice
        sfc_var2(i,j,23) = Sfcprop(nb)%fice(ix)
-       !--- tisfc
        sfc_var2(i,j,24) = Sfcprop(nb)%tisfc(ix)
-       !--- tprcp
        sfc_var2(i,j,25) = Sfcprop(nb)%tprcp(ix)
-       !--- srflag
        sfc_var2(i,j,26) = Sfcprop(nb)%srflag(ix)
-       !--- snowd (snwdph in the file)
        sfc_var2(i,j,27) = Sfcprop(nb)%snowd(ix)
-       !--- shdmin
        sfc_var2(i,j,28) = Sfcprop(nb)%shdmin(ix)
-       !--- shdmax
        sfc_var2(i,j,29) = Sfcprop(nb)%shdmax(ix)
-       !--- slope
        sfc_var2(i,j,30) = Sfcprop(nb)%slope(ix)
-       !--- snoalb
        sfc_var2(i,j,31) = Sfcprop(nb)%snoalb(ix)
-       !--- sncovr
        sfc_var2(i,j,32) = Sfcprop(nb)%sncovr(ix)
-       !--- NSSTM variables
-       if (Model%nstf_name(1) > 0) then
-          !--- nsstm tref
-          sfc_var2(i,j,33) = Sfcprop(nb)%tref(ix)
-          !--- nsstm z_c
-          sfc_var2(i,j,34) = Sfcprop(nb)%z_c(ix)
-          !--- nsstm c_0
-          sfc_var2(i,j,35) = Sfcprop(nb)%c_0(ix)
-          !--- nsstm c_d
-          sfc_var2(i,j,36) = Sfcprop(nb)%c_d(ix)
-          !--- nsstm w_0
-          sfc_var2(i,j,37) = Sfcprop(nb)%w_0(ix)
-          !--- nsstm w_d
-          sfc_var2(i,j,38) = Sfcprop(nb)%w_d(ix)
-          !--- nsstm xt
-          sfc_var2(i,j,39) = Sfcprop(nb)%xt(ix)
-          !--- nsstm xs
-          sfc_var2(i,j,40) = Sfcprop(nb)%xs(ix)
-          !--- nsstm xu
-          sfc_var2(i,j,41) = Sfcprop(nb)%xu(ix)
-          !--- nsstm xv
-          sfc_var2(i,j,42) = Sfcprop(nb)%xv(ix)
-          !--- nsstm xz
-          sfc_var2(i,j,43) = Sfcprop(nb)%xz(ix)
-          !--- nsstm zm
-          sfc_var2(i,j,44) = Sfcprop(nb)%zm(ix)
-          !--- nsstm xtts
-          sfc_var2(i,j,45) = Sfcprop(nb)%xtts(ix)
-          !--- nsstm xzts
-          sfc_var2(i,j,46) = Sfcprop(nb)%xzts(ix)
-          !--- nsstm d_conv
-          sfc_var2(i,j,47) = Sfcprop(nb)%d_conv(ix)
-          !--- nsstm ifd
-          sfc_var2(i,j,48) = Sfcprop(nb)%ifd(ix)
-          !--- nsstm dt_cool
-          sfc_var2(i,j,49) = Sfcprop(nb)%dt_cool(ix)
-          !--- nsstm qrain
-          sfc_var2(i,j,50) = Sfcprop(nb)%qrain(ix)
-       endif
-        !--- 3D variables
        do lsoil = 1,Model%lsoil
-        !--- stc
         sfc_var3(i,j,lsoil,1) = Sfcprop(nb)%stc(ix,lsoil)
-        !--- smc
         sfc_var3(i,j,lsoil,2) = Sfcprop(nb)%smc(ix,lsoil)
-        !--- slc
         sfc_var3(i,j,lsoil,3) = Sfcprop(nb)%slc(ix,lsoil)
       enddo
     enddo
@@ -2642,7 +2550,7 @@ module FV3GFS_io_mod
 
   subroutine register_coarse_sfc_prop_restart_fields(restart, sfc_var2_coarse, sfc_var3_coarse, filename, &
     var2_p_coarse, var3_p_coarse, variable_names_2d, variable_names_3d, domain, &
-    Model, nvar2m, nvar2o, nvar3)
+    Model, nvar2m, nvar3)
     type(restart_file_type), intent(inout) :: restart
     real(kind=kind_phys), target, intent(inout) :: sfc_var2_coarse(:,:,:)
     real(kind=kind_phys), target, intent(inout) :: sfc_var3_coarse(:,:,:,:)
@@ -2652,7 +2560,7 @@ module FV3GFS_io_mod
     character(len=32), intent(in) :: variable_names_2d(:), variable_names_3d(:)
     type(domain2d), intent(in) :: domain
     type(IPD_control_type), intent(in) :: Model
-    integer, intent(in) :: nvar2m, nvar2o, nvar3
+    integer, intent(in) :: nvar2m, nvar3
 
     integer :: num, id_restart
     logical :: mand
@@ -2667,15 +2575,6 @@ module FV3GFS_io_mod
                 variable_names_2d(num), var2_p_coarse, domain=domain)
         endif
     enddo
-    if (Model%nstf_name(1) > 0) then
-        mand = .false.
-        if (Model%nstf_name(2) ==0) mand = .true.
-        do num = nvar2m+1,nvar2m+nvar2o
-          var2_p_coarse => sfc_var2_coarse(:,:,num)
-          id_restart = register_restart_field(restart, filename, &
-                variable_names_2d(num), var2_p_coarse, domain=domain, mandatory=mand)
-        enddo
-    endif
     nullify(var2_p_coarse)
 
     do num = 1,nvar3
