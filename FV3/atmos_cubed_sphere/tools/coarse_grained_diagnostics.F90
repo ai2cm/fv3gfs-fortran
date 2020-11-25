@@ -121,6 +121,8 @@ contains
     ! iv = 0: positive definite scalars
     ! iv = 1: temperature
     do p = 1, n_pressure_levels
+      ! Note all reference data for pressure-level variables is 3D, but the diagnostics
+      ! themselves are 2D.
       write(pressure_level_label, '(I5)') pressure_levels(p)
 
       index = index + 1
