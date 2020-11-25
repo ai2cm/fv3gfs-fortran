@@ -676,6 +676,8 @@ contains
                'theta_e', 'K', missing_value=missing_value )
           idiag%id_omga = register_diag_field ( trim(field), 'omega', axes(1:3), Time,      &
                'omega', 'Pa/s', missing_value=missing_value )
+          idiag%id_vulcan_omga = register_diag_field ( trim(field), 'vulcan_omega', axes(1:3), Time,      &
+               'vulcan_omega', 'Pa/s', missing_value=missing_value )
           idiag%id_divg  = register_diag_field ( trim(field), 'divg', axes(1:3), Time,      &
                'mean divergence', '1/s', missing_value=missing_value )
           ! diagnotic output for skeb testing
@@ -2971,6 +2973,7 @@ contains
 
        if(idiag%id_pt   > 0) used=send_data(idiag%id_pt  , Atm(n)%pt  (isc:iec,jsc:jec,:), Time)
        if(idiag%id_omga > 0) used=send_data(idiag%id_omga, Atm(n)%omga(isc:iec,jsc:jec,:), Time)
+       if(idiag%id_vulcan_omga > 0) used=send_data(idiag%id_vulcan_omga, Atm(n)%vulcan_omga(isc:iec,jsc:jec,:), Time)
        if(idiag%id_diss > 0) used=send_data(idiag%id_diss, Atm(n)%diss_est(isc:iec,jsc:jec,:), Time)
        
        allocate( a3(isc:iec,jsc:jec,npz) )

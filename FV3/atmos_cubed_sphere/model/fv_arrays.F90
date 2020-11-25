@@ -67,6 +67,8 @@ module fv_arrays_mod
            id_dbz, id_maxdbz, id_basedbz, id_dbz4km, id_dbztop, id_dbz_m10C, &
            id_ctz, id_w1km, id_wmaxup, id_wmaxdn, id_cape, id_cin, id_diss
 
+ integer :: id_vulcan_omga
+
 ! Selected p-level fields from 3D variables:
  integer :: id_vort200, id_vort500, id_w500, id_w700
  integer :: id_vort850, id_w850, id_x850, id_srh25, &
@@ -1312,6 +1314,7 @@ module fv_arrays_mod
 !-----------------------------------------------------------------------
     real, _ALLOCATABLE :: phis(:,:)     _NULL  !< Surface geopotential (g*Z_surf)
     real, _ALLOCATABLE :: omga(:,:,:)   _NULL  !< Vertical pressure velocity (pa/s)
+    real, _ALLOCATABLE :: vulcan_omga(:,:,:)  _NULL !< Alternate vertical pressure velocity (pa/s)
     real, _ALLOCATABLE :: ua(:,:,:)     _NULL  !< (ua, va) are mostly used as the A grid winds
     real, _ALLOCATABLE :: va(:,:,:)     _NULL
     real, _ALLOCATABLE :: uc(:,:,:)     _NULL  !< (uc, vc) are mostly used as the C grid winds
@@ -1561,6 +1564,7 @@ contains
     allocate ( Atm%ts(is:ie,js:je) ) ; Atm%ts=real_snan
     allocate ( Atm%phis(isd:ied  ,jsd:jed  ) ) ; Atm%phis=real_snan
     allocate ( Atm%omga(isd:ied  ,jsd:jed  ,npz) ); Atm%omga=0.
+    allocate ( Atm%vulcan_omga(isd:ied  ,jsd:jed  ,npz) ); Atm%vulcan_omga=0.
     allocate (   Atm%ua(isd:ied  ,jsd:jed  ,npz) ) ; Atm%ua=real_snan
     allocate (   Atm%va(isd:ied  ,jsd:jed  ,npz) ) ; Atm%va=real_snan
     allocate (   Atm%uc(isd:ied+1,jsd:jed  ,npz) ) ; Atm%uc=real_snan
@@ -1876,6 +1880,7 @@ contains
     deallocate (  Atm%pkz )
     deallocate ( Atm%phis )
     deallocate ( Atm%omga )
+    deallocate ( Atm%vulcan_omga )
     deallocate (   Atm%ua )
     deallocate (   Atm%va )
     deallocate (   Atm%uc )

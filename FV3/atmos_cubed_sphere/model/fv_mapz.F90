@@ -141,7 +141,7 @@ contains
                       akap, cappa, kord_mt, kord_wz, kord_tr, kord_tm,  peln, te0_2d,        &
                       ng, ua, va, omga, te, ws, fill, reproduce_sum, out_dt, dtdt,      &
                       ptop, ak, bk, pfull, gridstruct, domain, do_sat_adj, &
-                      hydrostatic, hybrid_z, do_omega, adiabatic, do_adiabatic_init)
+                      hydrostatic, hybrid_z, do_omega, adiabatic, do_adiabatic_init, vulcan_omga)
   logical, intent(in):: last_step
   real,    intent(in):: mdt                    !< remap time step
   real,    intent(in):: pdt                    !< phys time step
@@ -197,6 +197,7 @@ contains
   real, intent(inout)::   ua(isd:ied,jsd:jed,km)   !< u-wind (m/s) on physics grid
   real, intent(inout)::   va(isd:ied,jsd:jed,km)   !< v-wind (m/s) on physics grid
   real, intent(inout):: omga(isd:ied,jsd:jed,km)   !< vertical press. velocity (pascal/sec)
+  real, intent(inout):: vulcan_omga(isd:ied,jsd:jed,km)   !< alternate vertical press. velocity (pascal/sec)
   real, intent(inout)::   peln(is:ie,km+1,js:je)   !< log(pe)
   real, intent(inout)::   dtdt(is:ie,js:je,km)
   real, intent(out)::    pkz(is:ie,js:je,km)       !< layer-mean pk for converting t to pt
@@ -216,7 +217,7 @@ contains
 #endif
   real, dimension(is:ie,km)  :: q2, dp2
   real, dimension(is:ie,km+1):: pe1, pe2, pk1, pk2, pn2, phis
-  real, dimension(is:ie+1,km+1):: pe0, pe3
+  real, dimension(is:ie+1,km+1):: pe0, pe3, vulcan_pe3
   real, dimension(is:ie):: gz, cvm, qv
   real rcp, rg, rrg, bkh, dtmp, k1k
 #ifndef CCPP
@@ -280,9 +281,9 @@ contains
 #ifdef MULTI_GASES
 !$OMP                                  num_gas,                                          &
 #endif
-!$OMP                                  hs,w,ws,kord_wz,do_omega,omga,rrg,kord_mt,ua)    &
+!$OMP                                  hs,w,ws,kord_wz,do_omega,omga,vulcan_omga,rrg,kord_mt,ua)    &
 !$OMP                          private(qv,gz,cvm,kp,k_next,bkh,dp2,   &
-!$OMP                                  pe0,pe1,pe2,pe3,pk1,pk2,pn2,phis,q2)
+!$OMP                                  pe0,pe1,pe2,pe3,pk1,pk2,pn2,phis,q2,vulcan_pe3)
   do 1000 j=js,je+1
 
      do k=1,km+1
@@ -535,6 +536,18 @@ contains
       enddo
    endif
 
+
+   if (last_step) then
+      do i=is,ie
+         vulcan_pe3(i,1) = 0.
+      enddo
+      do k=2,km+1
+         do i=is,ie
+            vulcan_pe3(i,k) = vulcan_omga(i,j,k-1)
+         enddo
+      enddo
+   endif
+
    do k=1,km+1
       do i=is,ie
           pe0(i,k)   = peln(i,k,j)
@@ -633,6 +646,28 @@ contains
        enddo
    enddo
    endif     ! end do_omega
+
+   if ( last_step ) then
+      do k=1,km
+         do i=is,ie
+            dp2(i,k) = 0.5*(peln(i,k,j) + peln(i,k+1,j))
+         enddo
+      enddo
+      do i=is,ie
+          k_next = 1
+          do n=1,km
+             kp = k_next
+             do k=kp,km
+                if( dp2(i,n) <= pe0(i,k+1) .and. dp2(i,n) >= pe0(i,k) ) then
+                    vulcan_omga(i,j,n) = vulcan_pe3(i,k)  +  (vulcan_pe3(i,k+1) - vulcan_pe3(i,k)) *    &
+                          (dp2(i,n)-pe0(i,k)) / (pe0(i,k+1)-pe0(i,k) )
+                    k_next = k
+                    exit
+                endif
+             enddo
+          enddo      
+      enddo
+   endif     ! end last_step
 
   endif !(j < je+1)
 
