@@ -81,7 +81,11 @@ make build_deps
 # do the work
 echo ">> Running ./make_all_datasets.sh in ./tests/serialize_test_data_generation"
 cd tests/serialized_test_data_generation
-./make_all_datasets.sh
+#./make_all_datasets.sh
+
+export CUDA=y
+make build_model
+EXPERIMENT=c12_6ranks_standard make generate_data pack_data push_data
 cd -
 
 # end timer and report time taken
