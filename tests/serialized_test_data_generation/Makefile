@@ -41,7 +41,7 @@ help:
 
 build_model: ## build Docker image with compiled model code for serialization
 	cd $(FORTRAN_DIR) && \
-		CUDA=$(CUDA) BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
+		BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
 		COMPILED_IMAGE=$(COMPILED_IMAGE) \
 		COMPILE_OPTION="GT4PY_DEV=Y" \
 		$(MAKE) build_compiled
