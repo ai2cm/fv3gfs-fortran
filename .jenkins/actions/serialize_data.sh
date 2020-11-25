@@ -73,7 +73,8 @@ pip install -r requirements.txt
 export CUDA=y
 # configure Docker builds
 export DOCKER_BUILDKIT=1
-export BUILD_ARGS="-q"
+export BUILD_ARGS=""
+# "-q"
 export BUILD_FROM_INTERMEDIATE=y
 export BUILDKIT_PROGRESS=plain
 make pull_deps
