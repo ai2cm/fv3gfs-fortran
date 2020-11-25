@@ -223,6 +223,8 @@ public :: atmosphere_resolution,   atmosphere_grid_bdry,         &
 !--- physics/radiation data exchange routines
 public :: atmos_phys_driver_statein
 
+public :: atmosphere_coarsening_strategy
+
 !-----------------------------------------------------------------------
 ! version number of this module
 ! Include variable "version" to be written to log file.
@@ -2270,4 +2272,9 @@ contains
    enddo
  end subroutine update_physics_precipitation_for_qv_nudging
 
+ subroutine atmosphere_coarsening_strategy(coarsening_strategy)
+   character(len=64), intent(out) :: coarsening_strategy
+
+   coarsening_strategy = Atm(mytile)%coarse_graining%strategy
+ end subroutine atmosphere_coarsening_strategy
 end module atmosphere_mod

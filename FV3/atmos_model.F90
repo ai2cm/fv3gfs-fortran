@@ -80,6 +80,7 @@ use atmosphere_mod,     only: atmosphere_get_bottom_layer
 use atmosphere_mod,     only: set_atmosphere_pelist
 use atmosphere_mod,     only: Atm, mytile
 use atmosphere_mod,     only: atmosphere_coarse_diag_axes
+use atmosphere_mod,     only: atmosphere_coarsening_strategy
 use block_control_mod,  only: block_control_type, define_blocks_packed
 use DYCORE_typedefs,    only: DYCORE_data_type, DYCORE_diag_type
 #ifdef CCPP
@@ -158,6 +159,7 @@ public Atm_block, IPD_Data, IPD_Control
      type(time_type)               :: Time_init          ! reference time.
      type(grid_box_type)           :: grid               ! hold grid information needed for 2nd order conservative flux exchange 
      type(IPD_diag_type), pointer, dimension(:) :: Diag
+     character(len=64)            :: coarsening_strategy            ! coarsening strategy for 3D fields
  end type atmos_data_type
                                                          ! to calculate gradient on cubic sphere grid.
 !</PUBLICTYPE >
@@ -517,6 +519,7 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
    call atmosphere_grid_ctr (Atmos%lon, Atmos%lat)
    call atmosphere_hgt (Atmos%layer_hgt, 'layer', relative=.false., flip=flip_vc)
    call atmosphere_hgt (Atmos%level_hgt, 'level', relative=.false., flip=flip_vc)
+   call atmosphere_coarsening_strategy(Atmos%coarsening_strategy)
 
    Atmos%mlon = mlon
    Atmos%mlat = mlat
@@ -910,7 +913,7 @@ subroutine update_atmos_model_state (Atmos)
                             IPD_Control%fhswr, IPD_Control%fhlwr, &
                             Atm(mytile)%coarse_graining%write_coarse_diagnostics, &
                             IPD_Diag_coarse, &
-                            Atm(mytile)%delp(is:ie,js:je,:))
+                            Atm(mytile)%delp(is:ie,js:je,:), Atmos%coarsening_strategy, Atm(mytile)%ptop)
       if (nint(IPD_Control%fhzero) > 0) then 
         if (mod(isec,3600*nint(IPD_Control%fhzero)) == 0) diag_time = Atmos%Time
       else

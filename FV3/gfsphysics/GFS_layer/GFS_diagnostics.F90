@@ -2401,6 +2401,7 @@ module GFS_diagnostics
     ExtDiag(idx)%desc = 'instantaneous temperature tendency due to longwave radiation'
     ExtDiag(idx)%unit = 'K/s'
     ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,1)
@@ -2412,6 +2413,7 @@ module GFS_diagnostics
     ExtDiag(idx)%desc = 'instantaneous temperature tendency due to shortwave radiation'
     ExtDiag(idx)%unit = 'K/s'
     ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,2)
@@ -2423,6 +2425,7 @@ module GFS_diagnostics
     ExtDiag(idx)%desc = 'instantaneous temperature tendency due to turbulence scheme'
     ExtDiag(idx)%unit = 'K/s'
     ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,3)
@@ -2434,6 +2437,7 @@ module GFS_diagnostics
     ExtDiag(idx)%desc = 'instantaneous temperature tendency due to deep convection'
     ExtDiag(idx)%unit = 'K/s'
     ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,4)
@@ -2445,6 +2449,7 @@ module GFS_diagnostics
     ExtDiag(idx)%desc = 'instantaneous temperature tendency due to shallow convection'
     ExtDiag(idx)%unit = 'K/s'
     ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,5)
@@ -2456,6 +2461,7 @@ module GFS_diagnostics
     ExtDiag(idx)%desc = 'instantaneous temperature tendency due to micro-physics'
     ExtDiag(idx)%unit = 'K/s'
     ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,6)
@@ -2467,6 +2473,7 @@ module GFS_diagnostics
     ExtDiag(idx)%desc = 'instantaneous temperature tendency due to gravity wave drag'
     ExtDiag(idx)%unit = 'K/s'
     ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,7)
@@ -2478,6 +2485,7 @@ module GFS_diagnostics
     ExtDiag(idx)%desc = 'instantaneous temperature tendency due to clear sky longwave radiation'
     ExtDiag(idx)%unit = 'K/s'
     ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,8)
@@ -2489,6 +2497,7 @@ module GFS_diagnostics
     ExtDiag(idx)%desc = 'instantaneous temperature tendency due to clear sky shortwave radiation'
     ExtDiag(idx)%unit = 'K/s'
     ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,9)

@@ -55,8 +55,9 @@ module FV3GFS_io_mod
   use IPD_typedefs,       only: IPD_control_type, IPD_data_type, &
                                 IPD_restart_type, IPD_diag_type, &
                                 kind_phys => IPD_kind_phys
-  use coarse_graining_mod, only: get_coarse_array_bounds, weighted_block_average
-!
+  use coarse_graining_mod, only: get_coarse_array_bounds, weighted_block_average, mask_area_weights, mask_mass_weights
+  use coarse_graining_mod, only: MODEL_LEVEL, PRESSURE_LEVEL, vertical_remapping_requirements, vertically_remap_field
+  !
 !--- GFS physics constants
   use physcons,           only: pi => con_pi, RADIUS => con_rerth, rd => con_rd
 !--- needed for dq3dt output
@@ -2565,7 +2566,7 @@ module FV3GFS_io_mod
   subroutine fv3gfs_diag_output(time, diag, atm_block, IPD_Data, nx, ny, levs, ntcw, ntoz, &
                                 dt, time_int, time_intfull, time_radsw, &
                                 time_radlw, write_coarse_diagnostics,&
-                                diag_coarse, delp)
+                                diag_coarse, delp, coarsening_strategy, ptop)
 !--- subroutine interface variable definitions
     type(time_type),           intent(in) :: time
     type(IPD_diag_type),       intent(in) :: diag(:)
@@ -2580,6 +2581,8 @@ module FV3GFS_io_mod
     logical, intent(in) :: write_coarse_diagnostics
     type(IPD_diag_type), intent(in) :: diag_coarse(:)
     real(kind=kind_phys),      intent(in) :: delp(isco:ieco,jsco:jeco,1:levo)
+    character(len=64),         intent(in) :: coarsening_strategy
+    real,                      intent(in) :: ptop
 !--- local variables
     integer :: i, j, k, idx, nblks, nb, ix, ii, jj
     integer :: is_in, js_in, isc, jsc
@@ -2591,9 +2594,10 @@ module FV3GFS_io_mod
     real(kind=kind_phys) :: rdt, rtime_int, rtime_intfull, lcnvfac
     real(kind=kind_phys) :: rtime_radsw, rtime_radlw
     logical :: used
-    logical :: require_area, require_mass, coarse_3D_diagnostic_requested
+    logical :: require_area, require_masked_area, require_mass, require_masked_mass, require_vertical_remapping
     real(kind=kind_phys), allocatable :: area(:,:)
-    real(kind=kind_phys), allocatable :: mass(:,:,:)
+    real(kind=kind_phys), allocatable :: mass(:,:,:), phalf(:,:,:), phalf_coarse_on_fine(:,:,:)
+    real(kind=kind_phys), allocatable :: masked_area(:,:,:)
     
      nblks         = atm_block%nblks
      rdt           = 1.0d0/dt
@@ -2608,14 +2612,24 @@ module FV3GFS_io_mod
      js_in = atm_block%jsc
 
      if (write_coarse_diagnostics) then
-        call determine_required_coarse_graining_weights(diag_coarse, require_area, require_mass)
-        if (require_area) then
-           allocate(area(nx, ny))
-           call get_area(Atm_block, IPD_Data, nx, ny, area)
-        endif
-        if (require_mass) then
-           allocate(mass(nx, ny, levs))
-           call get_mass(Atm_block, IPD_Data, delp, nx, ny, levs, mass)
+        call determine_required_coarse_graining_weights(diag_coarse, coarsening_strategy, require_area, require_masked_area, require_mass, require_vertical_remapping)
+        if (.not. require_vertical_remapping) then
+          if (require_area) then
+            allocate(area(nx, ny))
+            call get_area(Atm_block, IPD_Data, nx, ny, area)
+          endif
+          if (require_mass) then
+            allocate(mass(nx, ny, levs))
+            call get_mass(Atm_block, IPD_Data, delp, nx, ny, levs, mass)
+          endif
+        else
+          allocate(area(nx, ny))
+          allocate(phalf(nx, ny, levs + 1))
+          allocate(phalf_coarse_on_fine(nx, ny, levs + 1))
+          allocate(masked_area(nx, ny, levs))
+          call get_area(Atm_block, IPD_Data, nx, ny, area)
+          call vertical_remapping_requirements(delp, area, ptop, phalf, phalf_coarse_on_fine)
+          call mask_area_weights(area, phalf, phalf_coarse_on_fine, masked_area)
         endif
      endif
      
@@ -2775,9 +2789,17 @@ module FV3GFS_io_mod
                   call store_data3D(Diag(idx)%id, var3, Time, idx, Diag(idx)%intpl_method, Diag(idx)%name)
                endif
                if (Diag_coarse(idx)%id > 0) then
-                  call store_data3D_coarse(Diag_coarse(idx)%id, Diag_coarse(idx)%name, &
-                       Diag_coarse(idx)%coarse_graining_method, &
-                       nx, ny, levo, var3, area, mass, Time)
+                  if (trim(coarsening_strategy) .eq. MODEL_LEVEL) then
+                    call store_data3D_coarse_model_level(Diag_coarse(idx)%id, Diag_coarse(idx)%name, &
+                        Diag_coarse(idx)%coarse_graining_method, &
+                        nx, ny, levo, var3, area, mass, Time)
+                  elseif (trim(coarsening_strategy) .eq. PRESSURE_LEVEL) then
+                    call store_data3D_coarse_pressure_level(Diag_coarse(idx)%id, Diag_coarse(idx)%name, &
+                      Diag_coarse(idx)%coarse_graining_method, &
+                      nx, ny, levo, var3, phalf, phalf_coarse_on_fine, masked_area, Time, ptop)
+                  else
+                    call mpp_error(FATAL, 'Invalid coarse-graining strategy provided.')
+                  endif
                endif
             endif
 #ifdef JUNK
@@ -2943,16 +2965,19 @@ module FV3GFS_io_mod
 !
  end subroutine store_data
 
- subroutine determine_required_coarse_graining_weights(coarse_diag, require_area, require_mass, require_vertical_remapping)
+ subroutine determine_required_coarse_graining_weights(coarse_diag, coarsening_strategy, require_area, require_masked_area, require_mass, require_vertical_remapping)
    type(IPD_diag_type), intent(in) :: coarse_diag(:)
-   logical, intent(out) :: require_area, require_mass, require_vertical_remapping
+   character(len=64), intent(in) :: coarsening_strategy
+   logical, intent(out) :: require_area, require_masked_area, require_mass, require_vertical_remapping
 
    require_area = any(coarse_diag%id .gt. 0 .and. coarse_diag%coarse_graining_method .eq. AREA_WEIGHTED)
    require_mass = any(coarse_diag%id .gt. 0 .and. coarse_diag%coarse_graining_method .eq. MASS_WEIGHTED)
 
-   if (trim(strategy) .eq. PRESSURE_LEVEL) then
+   if (trim(coarsening_strategy) .eq. PRESSURE_LEVEL) then
+     require_masked_area = any(coarse_diag%id .gt. 0 .and. coarse_diag%axes .eq. 3 .and. coarse_diag%coarse_graining_method .eq. AREA_WEIGHTED)
      require_vertical_remapping = any(coarse_diag%id .gt. 0 .and. coarse_diag%axes .eq. 3)
    else
+     require_masked_area = .false.
      require_vertical_remapping = .false.
    endif
  end subroutine determine_required_coarse_graining_weights
@@ -3133,7 +3158,7 @@ module FV3GFS_io_mod
 !
  end subroutine store_data3D
 
- subroutine store_data3D_coarse(id, name, method, nx, ny, nz, full_resolution_field, &
+ subroutine store_data3D_coarse_model_level(id, name, method, nx, ny, nz, full_resolution_field, &
       area, mass, Time)
    integer, intent(in) :: id
    character(len=64), intent(in) :: name
@@ -3164,7 +3189,44 @@ module FV3GFS_io_mod
       call mpp_error(FATAL, message)
    endif
    used = send_data(id, coarse, Time)
- end subroutine store_data3D_coarse
+ end subroutine store_data3D_coarse_model_level
+
+ subroutine store_data3D_coarse_pressure_level(id, name, method, nx, ny, nz, full_resolution_field, &
+  phalf, phalf_coarse_on_fine, masked_area, Time, ptop)
+    integer, intent(in) :: id
+    character(len=64), intent(in) :: name
+    character(len=64), intent(in) :: method
+    integer, intent(in) :: nx, ny, nz
+    real(kind=kind_phys), intent(in) :: full_resolution_field(1:nx,1:ny,1:nz)
+    real(kind=kind_phys), intent(in) :: phalf(1:nx,1:ny,1:nz + 1)
+    real(kind=kind_phys), intent(in) :: phalf_coarse_on_fine(1:nx,1:ny,1:nz + 1)
+    real(kind=kind_phys), intent(in) :: masked_area(1:nx,1:ny,1:nz)
+    type(time_type), intent(in) :: Time
+    real, intent(in) :: ptop
+
+    real(kind=kind_phys), allocatable :: remapped(:,:,:), coarse(:,:,:)
+    character(len=128) :: message
+    integer :: is_coarse, ie_coarse, js_coarse, je_coarse, nx_coarse, ny_coarse
+    logical :: used
+
+    call get_coarse_array_bounds(is_coarse, ie_coarse, js_coarse, je_coarse)
+    nx_coarse = ie_coarse - is_coarse + 1
+    ny_coarse = je_coarse - js_coarse + 1
+
+    allocate(remapped(nx, ny, nz))
+    allocate(coarse(nx_coarse, ny_coarse, nz))
+
+    call vertically_remap_field(phalf, full_resolution_field, phalf_coarse_on_fine, ptop, remapped)
+
+    ! AREA_WEIGHTED and MASS_WEIGHTED are equivalent in pressure level coarse-graining
+    if (method .eq. AREA_WEIGHTED .or. method .eq. MASS_WEIGHTED) then
+      call weighted_block_average(masked_area, remapped, coarse)
+    else
+      message = 'A valid coarse_graining_method must be specified for ' // trim(name)
+      call mpp_error(FATAL, message)
+    endif
+    used = send_data(id, coarse, Time)
+end subroutine store_data3D_coarse_pressure_level
 !
 !-------------------------------------------------------------------------
 !
