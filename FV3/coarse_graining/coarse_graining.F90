@@ -545,7 +545,7 @@ contains
    ! A naive routine for interpolating a field from the A-grid to the y-boundary
    ! of the D-grid; this is a specialized function that automatically
    ! downsamples to the coarse-grid on the downsampling dimension.
-   subroutine a_grid_to_d_grid_y(field_in, field_out, nz)
+   subroutine interpolate_to_d_grid_and_downsample_along_y(field_in, field_out, nz)
     integer, intent(in) :: nz
     real, intent(in) :: field_in(is-1:ie+1,js-1:je+1,1:nz)
     real, intent(out) :: field_out(is:ie,js_coarse:je_coarse+1,1:nz)
@@ -560,7 +560,7 @@ contains
           enddo
        enddo
     enddo
-   end subroutine a_grid_to_d_grid_y
+   end subroutine interpolate_to_d_grid_and_downsample_along_y
 
    subroutine weighted_block_edge_average_x_pre_downsampled_unmasked(fine, dx, coarse, nz)
     integer, intent(in) :: nz
@@ -658,7 +658,7 @@ contains
     iv = 1
 
     ! 1. Interpolate and downsample phalf
-    call a_grid_to_d_grid_y(phalf, phalf_d_grid, npz+1)  ! TODO: better name for subroutine
+    call interpolate_to_d_grid_and_downsample_along_y(phalf, phalf_d_grid, npz+1)
 
     ! 2. Coarsen phalf on the D-grid
     call weighted_block_edge_average_x_pre_downsampled(phalf_d_grid, dx, coarse_phalf_d_grid, npz+1)
@@ -689,7 +689,7 @@ contains
   ! A naive routine for interpolating a field from the A-grid to the x-boundary
   ! of the D-grid; this is a specialized function that automatically
   ! downsamples to the coarse-grid on the downsampling dimension.
-  subroutine a_grid_to_d_grid_x(field_in, field_out, nz)
+  subroutine interpolate_to_d_grid_and_downsample_along_x(field_in, field_out, nz)
     integer, intent(in) :: nz
     real, intent(in) :: field_in(is-1:ie+1,js-1:je+1,1:nz)
     real, intent(out) :: field_out(is_coarse:ie_coarse+1,js:je,1:nz)
@@ -704,7 +704,7 @@ contains
           enddo
        enddo
     enddo
-  end subroutine a_grid_to_d_grid_x
+  end subroutine interpolate_to_d_grid_and_downsample_along_x
 
   subroutine weighted_block_edge_average_y_pre_downsampled_unmasked(fine, dy, coarse, nz)
     integer, intent(in) :: nz
@@ -803,7 +803,7 @@ contains
     iv = 1
 
     ! 1. Interpolate and downsample phalf
-    call a_grid_to_d_grid_x(phalf, phalf_d_grid, npz+1)  ! TODO: better name for subroutine
+    call interpolate_to_d_grid_and_downsample_along_x(phalf, phalf_d_grid, npz+1)
 
     ! 2. Coarsen phalf on the D-grid
     call weighted_block_edge_average_y_pre_downsampled(phalf_d_grid, dy, coarse_phalf_d_grid, npz+1)
