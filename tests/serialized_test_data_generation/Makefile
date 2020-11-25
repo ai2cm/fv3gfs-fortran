@@ -4,7 +4,7 @@ SHELL = /bin/bash
 EXPERIMENT_DIR = $(CWD)/configs
 EXPERIMENT ?= c12_6ranks_standard
 # base images w/ or w/o CUDA
-CUDA ?= n
+CUDA ?=y
 CUDA_TAG =
 ifneq ($(CUDA),n)
 	CUDA_TAG=-cuda
@@ -41,7 +41,7 @@ help:
 
 build_model: ## build Docker image with compiled model code for serialization
 	cd $(FORTRAN_DIR) && \
-		BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
+		CUDA=$(CUDA) BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
 		COMPILED_IMAGE=$(COMPILED_IMAGE) \
 		COMPILE_OPTION="GT4PY_DEV=Y" \
 		$(MAKE) build_compiled
