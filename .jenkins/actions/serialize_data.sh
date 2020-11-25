@@ -83,9 +83,9 @@ echo ">> Running ./make_all_datasets.sh in ./tests/serialize_test_data_generatio
 cd tests/serialized_test_data_generation
 #./make_all_datasets.sh
 
-export CUDA=y
 make build_model
 EXPERIMENT=c12_6ranks_standard make generate_data pack_data push_data
+docker push us.gcr.io/vcm-ml/fv3gfs-compiled:7.2.0-cuda-serialize-gt4pydev
 cd -
 
 # end timer and report time taken
