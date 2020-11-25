@@ -2286,13 +2286,6 @@ module GFS_diagnostics
     ExtDiag(idx)%unit = 'Pa'
     ExtDiag(idx)%mod_name = 'gfs_phys'
 
-    idx = idx + 1
-    ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'masked_area'
-    ExtDiag(idx)%desc = 'masked area physics'
-    ExtDiag(idx)%unit = 'm**2'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
-
 !    if(mpp_pe()==mpp_root_pe())print *,'in gfdl_diag_register,af shum_wts,idx=',idx
 
 !--- three-dimensional variables that need to be handled special when writing 

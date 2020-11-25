@@ -2768,11 +2768,7 @@ module FV3GFS_io_mod
             if (trim(Diag(idx)%name) .eq. 'delp_phys') then
                if (Diag(idx)%id > 0) then
                   call store_data3D(Diag(idx)%id, delp, Time, idx, Diag(idx)%intpl_method, Diag(idx)%name)
-               endif
-            elseif  (trim(Diag(idx)%name) .eq. 'masked_area') then
-              if (Diag(idx)%id > 0) then
-                call store_data3D(Diag(idx)%id, masked_area, Time, idx, Diag(idx)%intpl_method, Diag(idx)%name)
-              endif          
+               endif  
             else
                if(mpp_pe()==mpp_root_pe())print *,'in,fv3gfs_io. 3D fields, idx=',idx,'varname=',trim(diag(idx)%name), &
                     'lcnvfac=',lcnvfac, 'levo=',levo,'nx=',nx,'ny=',ny
