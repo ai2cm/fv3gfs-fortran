@@ -493,7 +493,7 @@ module module_physics_driver
            kbot, ktop, kcnv, soiltyp, vegtype, kpbl, slopetyp, kinver,  &
            levshc, islmsk,                                              &
 !--- coupling inputs for physics
-           islmsk_cice
+           islmsk_cice, rank_arr
 
 !--- LOGICAL VARIABLES
       logical :: lprnt, revap, mg3_as_mg2, skip_macro, trans_aero
@@ -542,7 +542,7 @@ module module_physics_driver
            dtsfc_cice, dqsfc_cice, dusfc_cice, dvsfc_cice,              &
 !          dtsfc_cice, dqsfc_cice, dusfc_cice, dvsfc_cice, ulwsfc_cice, &
 !--- for CS-convection
-           wcbmax, psk
+           wcbmax, psk, dqsfc2, dtsfc2, dvsfc2, dusfc2, curr_date
 
 !  1 - land, 2 - ice, 3 - ocean
       real(kind=kind_phys), dimension(size(Grid%xlon,1),3)  ::           &
@@ -562,7 +562,8 @@ module module_physics_driver
 
       real(kind=kind_phys), dimension(size(Grid%xlon,1),Model%levs) ::  &
           del, rhc, dtdt, dudt, dvdt, dtdtc,                            &
-          ud_mf, dd_mf, dt_mf, prnum, dkt, specific_heat
+          ud_mf, dd_mf, dt_mf, prnum, dkt, specific_heat,               &
+          dudt2, dvdt2, dtdt2, dtdt_incr
 !         ud_mf, dd_mf, dt_mf, prnum, dkt, sigmatot, sigmafrac, txa
       real(kind=kind_phys), allocatable, dimension(:,:) :: sigmatot,    &
           gwdcu, gwdcv, rainp, sigmafrac, tke
@@ -2008,6 +2009,15 @@ module module_physics_driver
             stress(i)        = fice(i)*stress3(i,2) + (one-fice(i))*stress3(i,3)
 !           Sfcprop%tprcp(i) = fice(i)*tprcp3(i,2)  + (one-fice(i))*tprcp3(i,3)
           endif
+
+          if (stress(i) < 0) then
+            print *, stress(i), 'negative stress at location ', i
+            ! print *, k, 'sfc type flag'
+            ! print *, fice(i), 'ice fraction'
+            ! print *, stress3(i, 2), 'stress 2 (ice)'
+            ! print *, stress3(i, 3), 'stress 3 (water)'
+          endif
+
           Sfcprop%zorl(i)   = zorl3(i,k)
           cd(i)             = cd3(i,k)
           cdq(i)            = cdq3(i,k)
@@ -2486,7 +2496,8 @@ module module_physics_driver
             enddo
           enddo
         endif
-!
+!       
+
         if (ntke > 0) then                                 ! prognostic TKE
           ntkev = nvdiff
           do k=1,levs
@@ -2513,7 +2524,18 @@ module module_physics_driver
           if (Model%satmedmf) then
              if (Model%isatmedmf == 0) then   ! initial version of satmedmfvdif (Nov 2018)
                 psk = Statein%prsik(1, 1)
+                rank_arr = me
+                curr_date = Model%julian
 
+                ! Check stress field
+                ! print *, minval(stress), 'minval wind stress'
+                if (stress(1187) < 0) then
+                  print *, 'Adjusting negative stress at loc 1187'
+                  stress(1187) = 0
+                endif
+                call call_function("emulation_slim.monitor", "print_rank")
+
+                call set_state("model_time", Model%jdat)
                 call set_state("tdt_input", dtdt)
                 call set_state("u1_input", Statein%ugrs)
                 call set_state("v1_input", Statein%vgrs)
@@ -2541,6 +2563,8 @@ module module_physics_driver
                 call set_state("phii_input", Statein%phii)
                 call set_state("phil_input", Statein%phil)
                 call set_state("t1_input", Statein%tgrs)
+                call set_state("current_time", curr_date)
+                ! call call_function("emulation_slim.debug", "dump_state")
                 call call_function("emulation_slim.satmedmf", "emulator")
                 call get_state("dqsfc_output", dqsfc1)
                 call get_state("dtsfc_output", dtsfc1)
@@ -2552,16 +2576,16 @@ module module_physics_driver
                 call get_state("hpbl_output", Diag%hpbl)
                 call get_state("kpbl_output", kpbl)
 
-                ! call satmedmfvdif(ix, im, levs, nvdiff, ntcw, ntiwx, ntkev,           &
-                !          dvdt, dudt, dtdt, dvdftra,                                   &
-                !          Statein%ugrs, Statein%vgrs, Statein%tgrs, vdftra,            &
-                !          Radtend%htrsw, Radtend%htrlw, xmu, garea,                    &
-                !          Statein%prsik(1,1), rb, Sfcprop%zorl, Diag%u10m, Diag%v10m,  &
-                !          Sfcprop%ffmm, Sfcprop%ffhh, Sfcprop%tsfc, hflx, evap,        &
-                !          stress, wind, kpbl, Statein%prsi, del, Statein%prsl,         &
-                !          Statein%prslk, Statein%phii, Statein%phil, dtp,              &
-                !          Model%dspheat, dusfc1, dvsfc1, dtsfc1, dqsfc1, Diag%hpbl,    &
-                !          kinver, Model%xkzm_m, Model%xkzm_h, Model%xkzm_s)
+                call satmedmfvdif(ix, im, levs, nvdiff, ntcw, ntiwx, ntkev,           &
+                         dvdt2, dudt2, dtdt2, dvdftra,                                &
+                         Statein%ugrs, Statein%vgrs, Statein%tgrs, vdftra,            &
+                         Radtend%htrsw, Radtend%htrlw, xmu, garea,                    &
+                         Statein%prsik(1,1), rb, Sfcprop%zorl, Diag%u10m, Diag%v10m,  &
+                         Sfcprop%ffmm, Sfcprop%ffhh, Sfcprop%tsfc, hflx, evap,        &
+                         stress, wind, kpbl, Statein%prsi, del, Statein%prsl,         &
+                         Statein%prslk, Statein%phii, Statein%phil, dtp,              &
+                         Model%dspheat, dusfc2, dvsfc2, dtsfc2, dqsfc2, Diag%hpbl,    &
+                         kinver, Model%xkzm_m, Model%xkzm_h, Model%xkzm_s)
 
              elseif (Model%isatmedmf == 1) then   ! updated version of satmedmfvdif (May 2019)
                 call satmedmfvdifq(ix, im, levs, nvdiff, ntcw, ntiwx, ntkev,          &
