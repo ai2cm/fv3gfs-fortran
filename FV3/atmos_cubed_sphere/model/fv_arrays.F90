@@ -67,7 +67,7 @@ module fv_arrays_mod
            id_dbz, id_maxdbz, id_basedbz, id_dbz4km, id_dbztop, id_dbz_m10C, &
            id_ctz, id_w1km, id_wmaxup, id_wmaxdn, id_cape, id_cin, id_diss
 
- integer :: id_vulcan_omga
+ integer :: id_lagrangian_tendency_of_hydrostatic_pressure
 
 ! Selected p-level fields from 3D variables:
  integer :: id_vort200, id_vort500, id_w500, id_w700
@@ -1314,7 +1314,7 @@ module fv_arrays_mod
 !-----------------------------------------------------------------------
     real, _ALLOCATABLE :: phis(:,:)     _NULL  !< Surface geopotential (g*Z_surf)
     real, _ALLOCATABLE :: omga(:,:,:)   _NULL  !< Vertical pressure velocity (pa/s)
-    real, _ALLOCATABLE :: vulcan_omga(:,:,:)  _NULL !< Alternate vertical pressure velocity (pa/s)
+    real, _ALLOCATABLE :: lagrangian_tendency_of_hydrostatic_pressure(:,:,:)  _NULL !< Alternate vertical pressure velocity (pa/s)
     real, _ALLOCATABLE :: ua(:,:,:)     _NULL  !< (ua, va) are mostly used as the A grid winds
     real, _ALLOCATABLE :: va(:,:,:)     _NULL
     real, _ALLOCATABLE :: uc(:,:,:)     _NULL  !< (uc, vc) are mostly used as the C grid winds
@@ -1879,7 +1879,7 @@ contains
     deallocate (  Atm%pkz )
     deallocate ( Atm%phis )
     deallocate ( Atm%omga )
-    if (allocated(Atm%vulcan_omga)) deallocate ( Atm%vulcan_omga )
+    if (allocated(Atm%lagrangian_tendency_of_hydrostatic_pressure)) deallocate ( Atm%lagrangian_tendency_of_hydrostatic_pressure )
     deallocate (   Atm%ua )
     deallocate (   Atm%va )
     deallocate (   Atm%uc )

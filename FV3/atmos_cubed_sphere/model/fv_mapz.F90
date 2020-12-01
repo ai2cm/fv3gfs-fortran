@@ -141,7 +141,7 @@ contains
                       akap, cappa, kord_mt, kord_wz, kord_tr, kord_tm,  peln, te0_2d,        &
                       ng, ua, va, omga, te, ws, fill, reproduce_sum, out_dt, dtdt,      &
                       ptop, ak, bk, pfull, gridstruct, domain, do_sat_adj, &
-                      hydrostatic, hybrid_z, do_omega, adiabatic, do_adiabatic_init, vulcan_omga)
+                      hydrostatic, hybrid_z, do_omega, adiabatic, do_adiabatic_init, lagrangian_tendency_of_hydrostatic_pressure)
   logical, intent(in):: last_step
   real,    intent(in):: mdt                    !< remap time step
   real,    intent(in):: pdt                    !< phys time step
@@ -197,7 +197,7 @@ contains
   real, intent(inout)::   ua(isd:ied,jsd:jed,km)   !< u-wind (m/s) on physics grid
   real, intent(inout)::   va(isd:ied,jsd:jed,km)   !< v-wind (m/s) on physics grid
   real, intent(inout):: omga(isd:ied,jsd:jed,km)   !< vertical press. velocity (pascal/sec)
-  real, allocatable, intent(inout):: vulcan_omga(:,:,:)   !< alternate vertical press. velocity (pascal/sec)
+  real, allocatable, intent(inout):: lagrangian_tendency_of_hydrostatic_pressure(:,:,:)   !< alternate vertical press. velocity (pascal/sec)
   real, intent(inout)::   peln(is:ie,km+1,js:je)   !< log(pe)
   real, intent(inout)::   dtdt(is:ie,js:je,km)
   real, intent(out)::    pkz(is:ie,js:je,km)       !< layer-mean pk for converting t to pt
@@ -240,7 +240,7 @@ contains
   !$ser verbatim js2d=js
 #endif
 
-if (allocated(vulcan_omga)) allocate(vulcan_pe3(is:ie+1,km+1))
+if (allocated(lagrangian_tendency_of_hydrostatic_pressure)) allocate(vulcan_pe3(is:ie+1,km+1))
 
 #ifdef CCPP
       ccpp_associate: associate( fast_mp_consv => CCPP_interstitial%fast_mp_consv, &
@@ -284,7 +284,7 @@ if (allocated(vulcan_omga)) allocate(vulcan_pe3(is:ie+1,km+1))
 #ifdef MULTI_GASES
 !$OMP                                  num_gas,                                          &
 #endif
-!$OMP                                  hs,w,ws,kord_wz,do_omega,omga,vulcan_omga,rrg,kord_mt,ua)    &
+!$OMP                                  hs,w,ws,kord_wz,do_omega,omga,lagrangian_tendency_of_hydrostatic_pressure,rrg,kord_mt,ua)    &
 !$OMP                          private(qv,gz,cvm,kp,k_next,bkh,dp2,   &
 !$OMP                                  pe0,pe1,pe2,pe3,pk1,pk2,pn2,phis,q2,vulcan_pe3)
   do 1000 j=js,je+1
@@ -540,13 +540,13 @@ if (allocated(vulcan_omga)) allocate(vulcan_pe3(is:ie+1,km+1))
    endif
 
 
-   if (last_step .and. allocated(vulcan_omga)) then
+   if (last_step .and. allocated(lagrangian_tendency_of_hydrostatic_pressure)) then
       do i=is,ie
          vulcan_pe3(i,1) = 0.
       enddo
       do k=2,km+1
          do i=is,ie
-            vulcan_pe3(i,k) = vulcan_omga(i,j,k-1)
+            vulcan_pe3(i,k) = lagrangian_tendency_of_hydrostatic_pressure(i,j,k-1)
          enddo
       enddo
    endif
@@ -650,7 +650,7 @@ if (allocated(vulcan_omga)) allocate(vulcan_pe3(is:ie+1,km+1))
    enddo
    endif     ! end do_omega
 
-   if ( last_step .and. allocated(vulcan_omga)) then
+   if ( last_step .and. allocated(lagrangian_tendency_of_hydrostatic_pressure)) then
       do k=1,km
          do i=is,ie
             dp2(i,k) = 0.5*(peln(i,k,j) + peln(i,k+1,j))
@@ -662,7 +662,7 @@ if (allocated(vulcan_omga)) allocate(vulcan_pe3(is:ie+1,km+1))
              kp = k_next
              do k=kp,km
                 if( dp2(i,n) <= pe0(i,k+1) .and. dp2(i,n) >= pe0(i,k) ) then
-                    vulcan_omga(i,j,n) = vulcan_pe3(i,k)  +  (vulcan_pe3(i,k+1) - vulcan_pe3(i,k)) *    &
+                    lagrangian_tendency_of_hydrostatic_pressure(i,j,n) = vulcan_pe3(i,k)  +  (vulcan_pe3(i,k+1) - vulcan_pe3(i,k)) *    &
                           (dp2(i,n)-pe0(i,k)) / (pe0(i,k+1)-pe0(i,k) )
                     k_next = k
                     exit

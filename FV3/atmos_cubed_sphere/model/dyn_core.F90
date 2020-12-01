@@ -178,7 +178,7 @@ contains
                      u,  v,  w, delz, pt, q, delp, pe, pk, phis, ws, omga, ptop, pfull, ua, va, & 
                      uc, vc, mfx, mfy, cx, cy, pkz, peln, q_con, ak, bk, &
                      ks, gridstruct, flagstruct, neststruct, idiag, bd, domain, &
-                     init_step, i_pack, end_step, diss_est, vulcan_omga, time_total)
+                     init_step, i_pack, end_step, diss_est, lagrangian_tendency_of_hydrostatic_pressure, time_total)
 
     integer, intent(IN) :: npx
     integer, intent(IN) :: npy
@@ -230,7 +230,7 @@ contains
 !-----------------------------------------------------------------------
     real, intent(out  ):: ws(bd%is:bd%ie,bd%js:bd%je)        !< w at surface
     real, intent(inout):: omga(bd%isd:bd%ied,bd%jsd:bd%jed,npz)    !< Vertical pressure velocity (pa/s)
-    real, allocatable, intent(inout):: vulcan_omga(:,:,:)          !< Alternate vertical pressure velocity (pa/s)
+    real, allocatable, intent(inout):: lagrangian_tendency_of_hydrostatic_pressure(:,:,:)          !< Alternate vertical pressure velocity (pa/s)
     real, intent(inout):: uc(bd%isd:bd%ied+1,bd%jsd:bd%jed  ,npz)  !< (uc, vc) are mostly used as the C grid winds
     real, intent(inout):: vc(bd%isd:bd%ied  ,bd%jsd:bd%jed+1,npz)
     real, intent(inout), dimension(bd%isd:bd%ied,bd%jsd:bd%jed,npz):: ua, va
@@ -787,7 +787,7 @@ contains
      
                                                      call timing_on('d_sw')
 !$OMP parallel do default(none) shared(npz,flagstruct,nord_v,pfull,damp_vt,hydrostatic,last_step, &
-!$OMP                                  is,ie,js,je,isd,ied,jsd,jed,omga,vulcan_omga,delp,gridstruct,npx,npy,  &
+!$OMP                                  is,ie,js,je,isd,ied,jsd,jed,omga,lagrangian_tendency_of_hydrostatic_pressure,delp,gridstruct,npx,npy,  &
 !$OMP                                  ng,zh,vt,ptc,pt,u,v,w,uc,vc,ua,va,divgd,mfx,mfy,cx,cy,     &
 !$OMP                                  crx,cry,xfx,yfx,q_con,zvir,sphum,nq,q,dt,bd,rdt,iep1,jep1, &
 !$OMP                                  heat_source,diss_est,ptop,first_call)                                      &
@@ -885,10 +885,10 @@ contains
                enddo
             enddo
        endif
-       if (last_step .and. allocated(vulcan_omga)) then
+       if (last_step .and. allocated(lagrangian_tendency_of_hydrostatic_pressure)) then
          do j=js,je
             do i=is,ie
-               vulcan_omga(i,j,k) = delp(i,j,k)
+               lagrangian_tendency_of_hydrostatic_pressure(i,j,k) = delp(i,j,k)
             enddo
          enddo
        endif
@@ -930,10 +930,10 @@ contains
                enddo
             enddo
        endif
-       if (last_step .and. allocated(vulcan_omga)) then
+       if (last_step .and. allocated(lagrangian_tendency_of_hydrostatic_pressure)) then
          do j=js,je
               do i=is,ie
-                 vulcan_omga(i,j,k) = vulcan_omga(i,j,k)*(xfx(i,j,k)-xfx(i+1,j,k)+yfx(i,j,k)-yfx(i,j+1,k))*gridstruct%rarea(i,j)*rdt
+                 lagrangian_tendency_of_hydrostatic_pressure(i,j,k) = lagrangian_tendency_of_hydrostatic_pressure(i,j,k)*(xfx(i,j,k)-xfx(i+1,j,k)+yfx(i,j,k)-yfx(i,j+1,k))*gridstruct%rarea(i,j)*rdt
               enddo
            enddo
         endif
@@ -1382,36 +1382,36 @@ contains
           used=send_data(idiag%id_ws, ws, fv_time)
       endif
     endif
-    if (last_step .and. allocated(vulcan_omga)) then
+    if (last_step .and. allocated(lagrangian_tendency_of_hydrostatic_pressure)) then
       if ( flagstruct%use_old_omega ) then
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,vulcan_omga,pe,pem,rdt)
+!$OMP parallel do default(none) shared(is,ie,js,je,npz,lagrangian_tendency_of_hydrostatic_pressure,pe,pem,rdt)
          do k=1,npz
             do j=js,je
                do i=is,ie
-                  vulcan_omga(i,j,k) = (pe(i,k+1,j) - pem(i,k+1,j)) * rdt
+                  lagrangian_tendency_of_hydrostatic_pressure(i,j,k) = (pe(i,k+1,j) - pem(i,k+1,j)) * rdt
                enddo
             enddo
          enddo
 !------------------------------
 ! Compute the "advective term"
 !------------------------------
-         call adv_pe(ua, va, pem, vulcan_omga, gridstruct, bd, npx, npy,  npz, ng)
+         call adv_pe(ua, va, pem, lagrangian_tendency_of_hydrostatic_pressure, gridstruct, bd, npx, npy,  npz, ng)
       else
-!$OMP parallel do default(none) shared(is,ie,js,je,npz,vulcan_omga) private(om2d)
+!$OMP parallel do default(none) shared(is,ie,js,je,npz,lagrangian_tendency_of_hydrostatic_pressure) private(om2d)
          do j=js,je
             do k=1,npz
                do i=is,ie
-                  om2d(i,k) = vulcan_omga(i,j,k)
+                  om2d(i,k) = lagrangian_tendency_of_hydrostatic_pressure(i,j,k)
                enddo
             enddo
             do k=2,npz
                do i=is,ie
-                  om2d(i,k) = om2d(i,k-1) + vulcan_omga(i,j,k)
+                  om2d(i,k) = om2d(i,k-1) + lagrangian_tendency_of_hydrostatic_pressure(i,j,k)
                enddo
             enddo
             do k=2,npz
                do i=is,ie
-                  vulcan_omga(i,j,k) = om2d(i,k)
+                  lagrangian_tendency_of_hydrostatic_pressure(i,j,k) = om2d(i,k)
                enddo
             enddo
          enddo
