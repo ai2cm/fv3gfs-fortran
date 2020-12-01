@@ -677,7 +677,7 @@ contains
           idiag%id_omga = register_diag_field ( trim(field), 'omega', axes(1:3), Time,      &
                'omega', 'Pa/s', missing_value=missing_value )
           idiag%id_vulcan_omga = register_diag_field ( trim(field), 'vulcan_omega', axes(1:3), Time,      &
-               'vulcan_omega', 'Pa/s', missing_value=missing_value )
+               'Lagrangian tendency of hydrostatic pressure', 'Pa/s', missing_value=missing_value )
          if (idiag%id_vulcan_omga > 0) then
             allocate(Atm(n)%vulcan_omga(Atm(n)%bd%isd:Atm(n)%bd%ied,Atm(n)%bd%jsd:Atm(n)%bd%jed,1:npz))
             Atm(n)%vulcan_omga = 0.0
