@@ -1564,7 +1564,6 @@ contains
     allocate ( Atm%ts(is:ie,js:je) ) ; Atm%ts=real_snan
     allocate ( Atm%phis(isd:ied  ,jsd:jed  ) ) ; Atm%phis=real_snan
     allocate ( Atm%omga(isd:ied  ,jsd:jed  ,npz) ); Atm%omga=0.
-    allocate ( Atm%vulcan_omga(isd:ied  ,jsd:jed  ,npz) ); Atm%vulcan_omga=0.
     allocate (   Atm%ua(isd:ied  ,jsd:jed  ,npz) ) ; Atm%ua=real_snan
     allocate (   Atm%va(isd:ied  ,jsd:jed  ,npz) ) ; Atm%va=real_snan
     allocate (   Atm%uc(isd:ied+1,jsd:jed  ,npz) ) ; Atm%uc=real_snan
@@ -1880,7 +1879,7 @@ contains
     deallocate (  Atm%pkz )
     deallocate ( Atm%phis )
     deallocate ( Atm%omga )
-    deallocate ( Atm%vulcan_omga )
+    if (allocated(Atm%vulcan_omga)) deallocate ( Atm%vulcan_omga )
     deallocate (   Atm%ua )
     deallocate (   Atm%va )
     deallocate (   Atm%uc )

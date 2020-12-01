@@ -678,6 +678,10 @@ contains
                'omega', 'Pa/s', missing_value=missing_value )
           idiag%id_vulcan_omga = register_diag_field ( trim(field), 'vulcan_omega', axes(1:3), Time,      &
                'vulcan_omega', 'Pa/s', missing_value=missing_value )
+         if (idiag%id_vulcan_omga > 0) then
+            allocate(Atm(n)%vulcan_omga(Atm(n)%bd%isd:Atm(n)%bd%ied,Atm(n)%bd%jsd:Atm(n)%bd%jed,1:npz))
+            Atm(n)%vulcan_omga = 0.0
+         endif      
           idiag%id_divg  = register_diag_field ( trim(field), 'divg', axes(1:3), Time,      &
                'mean divergence', '1/s', missing_value=missing_value )
           ! diagnotic output for skeb testing

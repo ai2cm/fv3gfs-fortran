@@ -197,7 +197,7 @@ contains
   real, intent(inout)::   ua(isd:ied,jsd:jed,km)   !< u-wind (m/s) on physics grid
   real, intent(inout)::   va(isd:ied,jsd:jed,km)   !< v-wind (m/s) on physics grid
   real, intent(inout):: omga(isd:ied,jsd:jed,km)   !< vertical press. velocity (pascal/sec)
-  real, intent(inout):: vulcan_omga(isd:ied,jsd:jed,km)   !< alternate vertical press. velocity (pascal/sec)
+  real, allocatable, intent(inout):: vulcan_omga(:,:,:)   !< alternate vertical press. velocity (pascal/sec)
   real, intent(inout)::   peln(is:ie,km+1,js:je)   !< log(pe)
   real, intent(inout)::   dtdt(is:ie,js:je,km)
   real, intent(out)::    pkz(is:ie,js:je,km)       !< layer-mean pk for converting t to pt
@@ -217,9 +217,10 @@ contains
 #endif
   real, dimension(is:ie,km)  :: q2, dp2
   real, dimension(is:ie,km+1):: pe1, pe2, pk1, pk2, pn2, phis
-  real, dimension(is:ie+1,km+1):: pe0, pe3, vulcan_pe3
+  real, dimension(is:ie+1,km+1):: pe0, pe3
   real, dimension(is:ie):: gz, cvm, qv
   real rcp, rg, rrg, bkh, dtmp, k1k
+  real, allocatable, dimension(:,:) :: vulcan_pe3
 #ifndef CCPP
   logical:: fast_mp_consv
 #endif
@@ -238,6 +239,8 @@ contains
   !$ser verbatim jedp1=jed+1
   !$ser verbatim js2d=js
 #endif
+
+if (allocated(vulcan_omga)) allocate(vulcan_pe3(is:ie+1,km+1))
 
 #ifdef CCPP
       ccpp_associate: associate( fast_mp_consv => CCPP_interstitial%fast_mp_consv, &
@@ -537,7 +540,7 @@ contains
    endif
 
 
-   if (last_step) then
+   if (last_step .and. allocated(vulcan_omga)) then
       do i=is,ie
          vulcan_pe3(i,1) = 0.
       enddo
@@ -647,7 +650,7 @@ contains
    enddo
    endif     ! end do_omega
 
-   if ( last_step ) then
+   if ( last_step .and. allocated(vulcan_omga)) then
       do k=1,km
          do i=is,ie
             dp2(i,k) = 0.5*(peln(i,k,j) + peln(i,k+1,j))

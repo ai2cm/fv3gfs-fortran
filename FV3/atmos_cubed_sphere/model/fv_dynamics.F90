@@ -233,7 +233,7 @@ contains
 !-----------------------------------------------------------------------
     real, intent(inout) :: phis(bd%isd:bd%ied,bd%jsd:bd%jed)       !< Surface geopotential (g*Z_surf)
     real, intent(inout) :: omga(bd%isd:bd%ied,bd%jsd:bd%jed,npz)   !< Vertical pressure velocity (pa/s)
-    real, intent(inout) :: vulcan_omga(bd%isd:bd%ied,bd%jsd:bd%jed,npz)   !< Alternate vertical pressure velocity (pa/s)
+    real, allocatable, intent(inout) :: vulcan_omga(:,:,:)   !< Alternate vertical pressure velocity (pa/s)
     real, intent(inout) :: uc(bd%isd:bd%ied+1,bd%jsd:bd%jed  ,npz) !< (uc,vc) mostly used as the C grid winds
     real, intent(inout) :: vc(bd%isd:bd%ied  ,bd%jsd:bd%jed+1,npz)
 
@@ -847,7 +847,9 @@ contains
 !--------------------------
             if(flagstruct%nf_omega>0)    &
             call del2_cubed(omga, 0.18*gridstruct%da_min, gridstruct, domain, npx, npy, npz, flagstruct%nf_omega, bd)
-            call del2_cubed(vulcan_omga, 0.18*gridstruct%da_min, gridstruct, domain, npx, npy, npz, flagstruct%nf_omega, bd)
+            if (allocated(vulcan_omga)) then
+               call del2_cubed(vulcan_omga, 0.18*gridstruct%da_min, gridstruct, domain, npx, npy, npz, flagstruct%nf_omega, bd)
+            endif
          endif
       end if
       

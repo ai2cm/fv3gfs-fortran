@@ -230,7 +230,7 @@ contains
 !-----------------------------------------------------------------------
     real, intent(out  ):: ws(bd%is:bd%ie,bd%js:bd%je)        !< w at surface
     real, intent(inout):: omga(bd%isd:bd%ied,bd%jsd:bd%jed,npz)    !< Vertical pressure velocity (pa/s)
-    real, intent(inout):: vulcan_omga(bd%isd:bd%ied,bd%jsd:bd%jed,npz)    !< Alternate vertical pressure velocity (pa/s)
+    real, allocatable, intent(inout):: vulcan_omga(:,:,:)    !< Alternate vertical pressure velocity (pa/s)
     real, intent(inout):: uc(bd%isd:bd%ied+1,bd%jsd:bd%jed  ,npz)  !< (uc, vc) are mostly used as the C grid winds
     real, intent(inout):: vc(bd%isd:bd%ied  ,bd%jsd:bd%jed+1,npz)
     real, intent(inout), dimension(bd%isd:bd%ied,bd%jsd:bd%jed,npz):: ua, va
@@ -885,7 +885,7 @@ contains
                enddo
             enddo
        endif
-       if (last_step) then
+       if (last_step .and. allocated(vulcan_omga)) then
          do j=js,je
             do i=is,ie
                vulcan_omga(i,j,k) = delp(i,j,k)
@@ -930,7 +930,7 @@ contains
                enddo
             enddo
        endif
-       if (last_step) then
+       if (last_step .and. allocated(vulcan_omga)) then
          do j=js,je
               do i=is,ie
                  vulcan_omga(i,j,k) = vulcan_omga(i,j,k)*(xfx(i,j,k)-xfx(i+1,j,k)+yfx(i,j,k)-yfx(i,j+1,k))*gridstruct%rarea(i,j)*rdt
@@ -1382,7 +1382,7 @@ contains
           used=send_data(idiag%id_ws, ws, fv_time)
       endif
     endif
-    if (last_step ) then
+    if (last_step .and. allocated(vulcan_omga)) then
       if ( flagstruct%use_old_omega ) then
 !$OMP parallel do default(none) shared(is,ie,js,je,npz,vulcan_omga,pe,pem,rdt)
          do k=1,npz
