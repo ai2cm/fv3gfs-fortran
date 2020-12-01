@@ -542,7 +542,7 @@ module module_physics_driver
            dtsfc_cice, dqsfc_cice, dusfc_cice, dvsfc_cice,              &
 !          dtsfc_cice, dqsfc_cice, dusfc_cice, dvsfc_cice, ulwsfc_cice, &
 !--- for CS-convection
-           wcbmax, psk, dqsfc2, dtsfc2, dvsfc2, dusfc2, curr_date
+           wcbmax, psk, dqsfc2, dtsfc2, dvsfc2, dusfc2, hpbl2, kpbl2
 
 !  1 - land, 2 - ice, 3 - ocean
       real(kind=kind_phys), dimension(size(Grid%xlon,1),3)  ::           &
@@ -2525,7 +2525,6 @@ module module_physics_driver
              if (Model%isatmedmf == 0) then   ! initial version of satmedmfvdif (Nov 2018)
                 psk = Statein%prsik(1, 1)
                 rank_arr = me
-                curr_date = Model%julian
 
                 ! Check stress field
                 ! print *, minval(stress), 'minval wind stress'
@@ -2533,7 +2532,7 @@ module module_physics_driver
                   print *, 'Adjusting negative stress at loc 1187'
                   stress(1187) = 0
                 endif
-                call call_function("emulation_slim.monitor", "print_rank")
+                ! call call_function("emulation_slim.monitor", "print_rank")
 
                 call set_state("model_time", Model%jdat)
                 call set_state("tdt_input", dtdt)
@@ -2563,7 +2562,6 @@ module module_physics_driver
                 call set_state("phii_input", Statein%phii)
                 call set_state("phil_input", Statein%phil)
                 call set_state("t1_input", Statein%tgrs)
-                call set_state("current_time", curr_date)
                 ! call call_function("emulation_slim.debug", "dump_state")
                 call call_function("emulation_slim.satmedmf", "emulator")
                 call get_state("dqsfc_output", dqsfc1)
@@ -2584,8 +2582,19 @@ module module_physics_driver
                          Sfcprop%ffmm, Sfcprop%ffhh, Sfcprop%tsfc, hflx, evap,        &
                          stress, wind, kpbl, Statein%prsi, del, Statein%prsl,         &
                          Statein%prslk, Statein%phii, Statein%phil, dtp,              &
-                         Model%dspheat, dusfc2, dvsfc2, dtsfc2, dqsfc2, Diag%hpbl,    &
-                         kinver, Model%xkzm_m, Model%xkzm_h, Model%xkzm_s)
+                         Model%dspheat, dusfc2, dvsfc2, dtsfc2, dqsfc2, hpbl2,    &
+                         kpbl2, Model%xkzm_m, Model%xkzm_h, Model%xkzm_s)
+
+                call set_state("dqsfc_truth", dqsfc2)
+                call set_state("dtsfc_truth", dtsfc2)
+                call set_state("dvsfc_truth", dvsfc2)
+                call set_state("dusfc_truth", dusfc2)
+                call set_state("du_truth", dudt2)
+                call set_state("dv_truth", dvdt2)
+                call set_state("tdt_truth", dtdt2)
+                call set_state("hpbl_truth", hpbl2)
+                call set_state("kpbl_truth", kpbl2)
+                call call_function("emulation_slim.monitor", "store")
 
              elseif (Model%isatmedmf == 1) then   ! updated version of satmedmfvdif (May 2019)
                 call satmedmfvdifq(ix, im, levs, nvdiff, ntcw, ntiwx, ntkev,          &
