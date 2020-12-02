@@ -77,16 +77,11 @@ export BUILD_ARGS="-q"
 export BUILD_FROM_INTERMEDIATE=y
 export BUILDKIT_PROGRESS=plain
 make pull_deps
-make build_deps
+
 # do the work
 echo ">> Running ./make_all_datasets.sh in ./tests/serialize_test_data_generation"
 cd tests/serialized_test_data_generation
 ./make_all_datasets.sh
-
-#make build_model
-#docker push us.gcr.io/vcm-ml/fv3gfs-compiled:7.2.0-cuda-serialize-gt4pydev
-#EXPERIMENT=c12_6ranks_standard make generate_data pack_data push_data
-
 cd -
 
 # end timer and report time taken
