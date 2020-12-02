@@ -66,13 +66,14 @@ contains
     n_tracers = Atm(tile_count)%ncnst
     call get_fine_array_bounds(is, ie, js, je)
 
+    ! Note we defer associating the data%var3 pointer for omega until we know
+    ! whether the diagnostic was requested and data was allocated for it.
     coarse_diagnostics(index)%axes = 3
     coarse_diagnostics(index)%module_name = DYNAMICS
     coarse_diagnostics(index)%name = 'omega_coarse'
     coarse_diagnostics(index)%description = 'coarse-grained pressure velocity'
     coarse_diagnostics(index)%units = 'Pa/s'
     coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
-    coarse_diagnostics(index)%data%var3 => Atm(tile_count)%omga(is:ie,js:je,1:npz)
 
     index = index + 1
     coarse_diagnostics(index)%axes = 3
@@ -158,6 +159,8 @@ contains
       coarse_diagnostics(index)%data%var3 => Atm(tile_count)%pt(is:ie,js:je,1:npz)
       coarse_diagnostics(index)%iv = 1
 
+      ! Note we defer associating the data%var3 pointer for omg_* until we know
+      ! whether the diagnostic was requested and data was allocated for it.
       index = index + 1
       coarse_diagnostics(index)%pressure_level = pressure_levels(p)
       coarse_diagnostics(index)%axes = 2
@@ -166,7 +169,6 @@ contains
       coarse_diagnostics(index)%description = 'coarse-grained ' // trim(adjustl(pressure_level_label)) // '-mb omega'
       coarse_diagnostics(index)%units = 'Pa/s'
       coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
-      coarse_diagnostics(index)%data%var3 => Atm(tile_count)%omga(is:ie,js:je,1:npz)
       coarse_diagnostics(index)%iv = -1
      
       index = index + 1
@@ -199,7 +201,8 @@ contains
     enddo
   end subroutine populate_coarse_diag_type
 
-  subroutine register_coarse_diagnostics(coarse_diagnostics, Time, id_xt_coarse, id_yt_coarse, id_pfull_coarse)
+  subroutine register_coarse_diagnostics(Atm, coarse_diagnostics, Time, id_xt_coarse, id_yt_coarse, id_pfull_coarse)
+    type(fv_atmos_type), intent(inout) :: Atm(:)
     type(coarse_diag_type), intent(inout) :: coarse_diagnostics(:)
     type(time_type), intent(in) :: Time
     integer, intent(in) :: id_xt_coarse, id_yt_coarse, id_pfull_coarse
@@ -224,11 +227,36 @@ contains
         trim(coarse_diagnostics(index)%units), &
         missing_value=missing_value &
       )
+      call maybe_allocate_reference_array(Atm, coarse_diagnostics(index))
     enddo 
   end subroutine register_coarse_diagnostics
-     
+  
+  ! Some diagnostics may only have memory allocated for them if they are requested
+  subroutine maybe_allocate_reference_array(Atm, coarse_diagnostic)
+    type(fv_atmos_type), target, intent(inout) :: Atm(:)
+    type(coarse_diag_type), intent(inout) :: coarse_diagnostic
+
+    integer :: is, ie, js, je, npz, isd, ied, jsd, jed
+
+    call get_fine_array_bounds(is, ie, js, je)
+    isd = Atm(tile_count)%bd%isd
+    ied = Atm(tile_count)%bd%ied
+    jsd = Atm(tile_count)%bd%jsd
+    jed = Atm(tile_count)%bd%jed
+    npz = Atm(tile_count)%npz
+
+    if (coarse_diagnostic%id .gt. 0) then
+      if (starts_with(coarse_diagnostic%name, 'omega') .or. starts_with(coarse_diagnostic%name, 'omg')) then
+        if (.not. allocated(Atm(tile_count)%lagrangian_tendency_of_hydrostatic_pressure)) then
+          allocate(Atm(tile_count)%lagrangian_tendency_of_hydrostatic_pressure(isd:ied,jsd:jed,1:npz))
+        endif
+        coarse_diagnostic%data%var3 => Atm(tile_count)%lagrangian_tendency_of_hydrostatic_pressure(is:ie,js:je,1:npz)
+      endif
+    endif
+  end subroutine maybe_allocate_reference_array
+
   subroutine fv_coarse_diag_init(Atm, Time, id_pfull, id_phalf, coarse_graining)
-    type(fv_atmos_type), intent(in) :: Atm(:)
+    type(fv_atmos_type), intent(inout) :: Atm(:)
     type(time_type), intent(in) :: Time
     integer, intent(in) :: id_pfull, id_phalf
     type(fv_coarse_graining_type), intent(inout) :: coarse_graining
@@ -245,7 +273,7 @@ contains
     coarse_graining%id_phalf = id_phalf
 
     call populate_coarse_diag_type(Atm, coarse_diagnostics)
-    call register_coarse_diagnostics(coarse_diagnostics, Time, &
+    call register_coarse_diagnostics(Atm, coarse_diagnostics, Time, &
          coarse_graining%id_xt_coarse, coarse_graining%id_yt_coarse, id_pfull)
   end subroutine fv_coarse_diag_init
 
@@ -692,4 +720,12 @@ contains
     call get_height_given_pressure(is, ie, js, je, npz, height, n_pressure_levels, ids, output_pressures, phalf, work)
     result(is:ie,js:je) = work(is:ie,js:je,1)
   end subroutine height_given_pressure_level
+
+  function starts_with(string, prefix)
+    character(len=64), intent(in) :: string, prefix
+    logical :: starts_with
+
+    starts_with = string(1:len(trim(prefix))) .eq. trim(prefix)
+    return
+  end function starts_with
 end module coarse_grained_diagnostics_mod
