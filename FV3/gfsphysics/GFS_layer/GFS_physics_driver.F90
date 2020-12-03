@@ -491,7 +491,7 @@ module module_physics_driver
 
       integer, dimension(size(Grid%xlon,1)) ::                          &
            kbot, ktop, kcnv, soiltyp, vegtype, kpbl, slopetyp, kinver,  &
-           levshc, islmsk,                                              &
+           levshc, islmsk, kpbl2,                                        &
 !--- coupling inputs for physics
            islmsk_cice, rank_arr
 
@@ -542,7 +542,7 @@ module module_physics_driver
            dtsfc_cice, dqsfc_cice, dusfc_cice, dvsfc_cice,              &
 !          dtsfc_cice, dqsfc_cice, dusfc_cice, dvsfc_cice, ulwsfc_cice, &
 !--- for CS-convection
-           wcbmax, psk, dqsfc2, dtsfc2, dvsfc2, dusfc2, hpbl2, kpbl2
+           wcbmax, psk, dqsfc2, dtsfc2, dvsfc2, dusfc2, hpbl2
 
 !  1 - land, 2 - ice, 3 - ocean
       real(kind=kind_phys), dimension(size(Grid%xlon,1),3)  ::           &
@@ -1231,6 +1231,9 @@ module module_physics_driver
           dudt(i,k)  = zero
           dvdt(i,k)  = zero
           dtdt(i,k)  = zero
+          dudt2(i,k) = zero
+          dvdt2(i,k) = zero
+          dtdt2(i,k) = zero
           dtdtc(i,k) = zero
 
 !vay-2018
@@ -2580,10 +2583,10 @@ module module_physics_driver
                          Radtend%htrsw, Radtend%htrlw, xmu, garea,                    &
                          Statein%prsik(1,1), rb, Sfcprop%zorl, Diag%u10m, Diag%v10m,  &
                          Sfcprop%ffmm, Sfcprop%ffhh, Sfcprop%tsfc, hflx, evap,        &
-                         stress, wind, kpbl, Statein%prsi, del, Statein%prsl,         &
+                         stress, wind, kpbl2, Statein%prsi, del, Statein%prsl,        &
                          Statein%prslk, Statein%phii, Statein%phil, dtp,              &
-                         Model%dspheat, dusfc2, dvsfc2, dtsfc2, dqsfc2, hpbl2,    &
-                         kpbl2, Model%xkzm_m, Model%xkzm_h, Model%xkzm_s)
+                         Model%dspheat, dusfc2, dvsfc2, dtsfc2, dqsfc2, hpbl2,        &
+                         kinver, Model%xkzm_m, Model%xkzm_h, Model%xkzm_s)
 
                 call set_state("dqsfc_truth", dqsfc2)
                 call set_state("dtsfc_truth", dtsfc2)
