@@ -76,8 +76,8 @@ export DOCKER_BUILDKIT=1
 export BUILD_ARGS="-q"
 export BUILD_FROM_INTERMEDIATE=y
 export BUILDKIT_PROGRESS=plain
+export GOOGLE_APPLICATION_CREDENTIALS=/users/olifu/.gc_cred/jenkins-sa-key.json
 make pull_deps
-make build_deps
 # do the work
 echo ">> Running ./make_all_datasets.sh in ./tests/serialize_test_data_generation"
 cd tests/serialized_test_data_generation
