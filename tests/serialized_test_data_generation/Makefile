@@ -71,7 +71,7 @@ run_model: ## run model using Docker image to generate serialized data
 	fi
 	mkdir -p $(DATA_DIR_HOST)
 	docker run -e USER_ID_HOST=$(USER_ID_HOST) -e GROUP_ID_HOST=$(GROUP_ID_HOST) \
-		--shm-size=3000m --network host --rm -v $(RUN_DIR_HOST):$(RUN_DIR_CONTAINER) \
+		--network host --rm -v $(RUN_DIR_HOST):$(RUN_DIR_CONTAINER) \
 		-v $(DATA_DIR_HOST):$(DATA_DIR_CONTAINER) -it $(COMPILED_IMAGE) \
 		 /rundir/submit_job.sh
 	cd $(DATA_DIR_HOST) && \
