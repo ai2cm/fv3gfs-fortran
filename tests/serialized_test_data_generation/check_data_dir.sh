@@ -13,7 +13,7 @@ dir=$1
 echo ">> Checking consistency of data directory ${dir}"
 
 # check for a basic set of files
-files="fortran_sha.txt logfile.000000.out stdout.out stderr.out md5sums.txt input.nml env.out ArchiveMetaData-Generator_rank0.json MetaData-Generator_rank0.json"
+files="fortran_sha.txt logfile.000000.out stdout.out stderr.out md5sums.txt input.nml env.out ArchiveMetaData-Generator_rank0.json MetaData-Generator#_rank0.json"
 for f in ${files} ; do
     if [ ! -f ${dir}/${f} ] ; then
         echo "Error: file ${dir}/${f} not present"
@@ -60,23 +60,35 @@ if [ `/bin/ls ${dir}/*.json | sed 's/_.*//g' | sort | uniq -c | awk '{print $1}'
   echo "Error: there seem to be an inconsistent number of *.json files"
   exit 1
 fi
-
-# make sure reasonable number of *.dat files exists and they are all > 0 bytes
-if [ `/bin/ls ${dir}/*rank0*.dat | wc -l` -lt 10 ] ; then
-    echo "Error: less than 10 *.dat files seems fishy"
+num_ranks=`/bin/ls ${dir}/MetaData*.json | wc -l`
+if [ ${num_ranks} -lt 6 ] ; then
+    echo "Error: less than 6 ranks"
     exit 1
 fi
-if [ `wc --bytes ${dir}/*.dat | sort -n | head -1 | awk '{print $1}'` -eq 0 ] ; then
-    echo "Error: found some *.dat files which 0 Bytes in size"
-    exit 1
-fi
-
+rank=0
+while [ $rank -lt ${num_ranks} ]
+do 
+    # make sure reasonable number of *.dat files exists and they are all > 0 bytes
+    dat_count=`/bin/ls ${dir}/*rank${rank}_*.dat | wc -l`
+    if [ ${dat_count} -lt 10 ] ; then
+	echo "Error: less than 10 (${dat_count}) *.dat files for rank ${rank} seems fishy"
+	exit 1
+    fi
+    if [ `wc --bytes ${dir}/*rank${rank}_*.dat | sort -n | head -1 | awk '{print $1}'` -eq 0 ] ; then
+    	echo "Error: found some *.dat files which 0 Bytes in size"
+    	exit 1
+    fi
+    rank=$[$rank+1]
+done
 # make sure that all fields are serialized from all ranks
 # explanation: Generator_rank<XXX>_<field>.dat | extract <field>.dat | sort fields | count occurrences of differnt <fields>'s
 #                   | extract counts | sort counts | count occurrences of different counts | make sure thre is only exactly 1
-if [ `/bin/ls ${dir}/*.dat | sed 's/.*rank[0-9]*_//g' | sort | uniq -c | awk '{print $1}' | sort -n | uniq -c | wc -l` -ne 1 ] ; then
-    echo "Error: there seem to be different number of *.dat files for different data fields"
-    exit 1
+# Note there are too many files when testing 54 ranks, so we do not run this test in that case
+if [ ${num_ranks} -lt 54 ] ; then 
+    if [ `/bin/ls ${dir}/*.dat | sed 's/.*rank[0-9]*_//g' | sort | uniq -c | awk '{print $1}' | sort -n | uniq -c | wc -l` -ne 1 ] ; then
+	echo "Error: there seem to be different number of *.dat files for different data fields"
+	exit 1
+    fi
 fi
 
 # make sure that the data is at least 1024 KB

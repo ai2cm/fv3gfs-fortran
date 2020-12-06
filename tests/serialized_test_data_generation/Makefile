@@ -76,7 +76,7 @@ run_model: ## run model using Docker image to generate serialized data
 		 /rundir/submit_job.sh
 	cd $(DATA_DIR_HOST) && \
 		md5sum `/bin/ls -1d * | egrep -v '^fortran_sha.txt$$|^logfile.000000.out$$|^stdout.out$$|^stderr.out$$|^env.out$$'` > md5sums.txt
-	#./check_data_dir.sh $(DATA_DIR_HOST)
+	./check_data_dir.sh $(DATA_DIR_HOST)
 
 pack_data: ## pack *.dat files into a *.tar.gz and delete them
 	@if [ -f $(TARFILE_HOST) ] ; then \
