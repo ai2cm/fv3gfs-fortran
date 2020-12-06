@@ -62,7 +62,7 @@ if [ `/bin/ls ${dir}/*.json | sed 's/_.*//g' | sort | uniq -c | awk '{print $1}'
 fi
 
 # make sure reasonable number of *.dat files exists and they are all > 0 bytes
-if [ `/bin/ls ${dir}/*.dat | wc -l` -lt 10 ] ; then
+if [ `/bin/ls ${dir}/*rank0*.dat | wc -l` -lt 10 ] ; then
     echo "Error: less than 10 *.dat files seems fishy"
     exit 1
 fi
