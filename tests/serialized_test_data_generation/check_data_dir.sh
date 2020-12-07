@@ -13,7 +13,7 @@ dir=$1
 echo ">> Checking consistency of data directory ${dir}"
 
 # check for a basic set of files
-files="fortran_sha.txt logfile.000000.out stdout.out stderr.out md5sums.txt input.nml env.out ArchiveMetaData-Generator_rank0.json MetaData-Generator#_rank0.json"
+files="fortran_sha.txt logfile.000000.out stdout.out stderr.out md5sums.txt input.nml env.out ArchiveMetaData-Generator_rank0.json MetaData-Generator_rank0.json"
 for f in ${files} ; do
     if [ ! -f ${dir}/${f} ] ; then
         echo "Error: file ${dir}/${f} not present"
