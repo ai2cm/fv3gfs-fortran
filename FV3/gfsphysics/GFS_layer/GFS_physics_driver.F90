@@ -2526,8 +2526,16 @@ module module_physics_driver
         else
           if (Model%satmedmf) then
              if (Model%isatmedmf == 0) then   ! initial version of satmedmfvdif (Nov 2018)
-                psk = Statein%prsik(1, 1)
+                do i=1,im
+                  psk(i) = Statein%prsik(i, 1)
+                enddo
                 rank_arr = me
+
+                do k=1,levs
+                  do i=1,im
+                    dtdt2(i,k) = dtdt(i,k)
+                  enddo
+                enddo
 
                 ! Check stress field
                 ! print *, minval(stress), 'minval wind stress'
@@ -2537,11 +2545,32 @@ module module_physics_driver
                 endif
                 ! call call_function("emulation_slim.monitor", "print_rank")
 
+                call satmedmfvdif(ix, im, levs, nvdiff, ntcw, ntiwx, ntkev,           &
+                         dvdt, dudt, dtdt, dvdftra,                                &
+                         Statein%ugrs, Statein%vgrs, Statein%tgrs, vdftra,            &
+                         Radtend%htrsw, Radtend%htrlw, xmu, garea,                    &
+                         Statein%prsik(1,1), rb, Sfcprop%zorl, Diag%u10m, Diag%v10m,  &
+                         Sfcprop%ffmm, Sfcprop%ffhh, Sfcprop%tsfc, hflx, evap,        &
+                         stress, wind, kpbl, Statein%prsi, del, Statein%prsl,        &
+                         Statein%prslk, Statein%phii, Statein%phil, dtp,              &
+                         Model%dspheat, dusfc1, dvsfc1, dtsfc1, dqsfc1, Diag%hpbl,        &
+                         kinver, Model%xkzm_m, Model%xkzm_h, Model%xkzm_s)
+
+                call set_state("dqsfc_truth", dqsfc1)
+                call set_state("dtsfc_truth", dtsfc1)
+                call set_state("dvsfc_truth", dvsfc1)
+                call set_state("dusfc_truth", dusfc1)
+                call set_state("du_truth", dudt)
+                call set_state("dv_truth", dvdt)
+                call set_state("tdt_truth", dtdt)
+                call set_state("hpbl_truth", Diag%hpbl)
+                call set_state("kpbl_truth", kpbl)
+
                 call set_state("model_time", Model%jdat)
-                call set_state("tdt_input", dtdt)
+                call set_state("tdt_input", dtdt2)
                 call set_state("u1_input", Statein%ugrs)
                 call set_state("v1_input", Statein%vgrs)
-                call set_state("q1_input", Statein%qgrs)
+                call set_state("q1_input", vdftra)
                 call set_state("swh_input", Radtend%htrsw)
                 call set_state("hlw_input", Radtend%htrlw)
                 call set_state("xmu_input", xmu)
@@ -2567,36 +2596,16 @@ module module_physics_driver
                 call set_state("t1_input", Statein%tgrs)
                 ! call call_function("emulation_slim.debug", "dump_state")
                 call call_function("emulation_slim.satmedmf", "emulator")
-                call get_state("dqsfc_output", dqsfc1)
-                call get_state("dtsfc_output", dtsfc1)
-                call get_state("dvsfc_output", dvsfc1)
-                call get_state("dusfc_output", dusfc1)
-                call get_state("du_output", dudt)
-                call get_state("dv_output", dvdt)
-                call get_state("tdt_output", dtdt)
-                call get_state("hpbl_output", Diag%hpbl)
-                call get_state("kpbl_output", kpbl)
+                call get_state("dqsfc_output", dqsfc2)
+                call get_state("dtsfc_output", dtsfc2)
+                call get_state("dvsfc_output", dvsfc2)
+                call get_state("dusfc_output", dusfc2)
+                call get_state("du_output", dudt2)
+                call get_state("dv_output", dvdt2)
+                call get_state("tdt_output", dtdt2)
+                call get_state("hpbl_output", hpbl2) ! Diag%hpbl
+                call get_state("kpbl_output", kpbl2)
 
-                call satmedmfvdif(ix, im, levs, nvdiff, ntcw, ntiwx, ntkev,           &
-                         dvdt2, dudt2, dtdt2, dvdftra,                                &
-                         Statein%ugrs, Statein%vgrs, Statein%tgrs, vdftra,            &
-                         Radtend%htrsw, Radtend%htrlw, xmu, garea,                    &
-                         Statein%prsik(1,1), rb, Sfcprop%zorl, Diag%u10m, Diag%v10m,  &
-                         Sfcprop%ffmm, Sfcprop%ffhh, Sfcprop%tsfc, hflx, evap,        &
-                         stress, wind, kpbl2, Statein%prsi, del, Statein%prsl,        &
-                         Statein%prslk, Statein%phii, Statein%phil, dtp,              &
-                         Model%dspheat, dusfc2, dvsfc2, dtsfc2, dqsfc2, hpbl2,        &
-                         kinver, Model%xkzm_m, Model%xkzm_h, Model%xkzm_s)
-
-                call set_state("dqsfc_truth", dqsfc2)
-                call set_state("dtsfc_truth", dtsfc2)
-                call set_state("dvsfc_truth", dvsfc2)
-                call set_state("dusfc_truth", dusfc2)
-                call set_state("du_truth", dudt2)
-                call set_state("dv_truth", dvdt2)
-                call set_state("tdt_truth", dtdt2)
-                call set_state("hpbl_truth", hpbl2)
-                call set_state("kpbl_truth", kpbl2)
                 call call_function("emulation_slim.monitor", "store")
 
              elseif (Model%isatmedmf == 1) then   ! updated version of satmedmfvdif (May 2019)
