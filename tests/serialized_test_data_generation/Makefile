@@ -5,16 +5,12 @@ EXPERIMENT_DIR = $(CWD)/configs
 EXPERIMENT ?= c12_6ranks_standard
 # base images w/ or w/o CUDA
 CUDA ?=y
-CUDA_TAG =
-ifneq ($(CUDA),n)
-	CUDA_TAG=-cuda
-endif
 
 # version number or tag (determines image tag and destination directory in cloud storage)
 # -convention: <tag>-<some large conceptual version change>.<serialization statement change>.<hotfix>
 # -version number should be increased when serialization data is expected to change
 # -omit tag (e.g. 7.1.1) for "operational" serialization data, use tag for experimental serialization data
-FORTRAN_VERSION ?= 7.2.1$(CUDA_TAG)
+FORTRAN_VERSION ?= 7.2.2
 
 # docker container image setup (used for running model, see ../../README.md)
 GCR_URL = us.gcr.io/vcm-ml
