@@ -81,7 +81,7 @@ namelist:
     months: 0
     ncores_per_node: 32
     seconds: 45
-    use_hyper_thread: true
+    use_hyper_thread: false
   diag_manager_nml:
     max_axes: 240
     max_files: 106
