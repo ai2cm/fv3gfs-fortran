@@ -1,12 +1,6 @@
 SHELL = /bin/sh
 
-ifdef CONFIGURE_FILE
-  @echo "Using configuration file $(CONFIGURE_FILE)"
-  include $(CONFIGURE_FILE)
-else
-  @echo "Using default configuration file conf/configure.fv3"
-  include conf/configure.fv3
-endif
+include conf/configure.fv3
 
 FMS_DIR?=
 fms_exist=$(wildcard $(FMS_DIR))
