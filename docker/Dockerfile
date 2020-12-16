@@ -9,6 +9,7 @@ FROM $BASE_IMAGE AS fv3gfs-mpi
 
 RUN apt-get update && apt-get install -y \
     wget \
+    libtool-bin \
     gcc \
     g++ \
     gfortran \
@@ -27,6 +28,7 @@ FROM $BASE_IMAGE AS fv3gfs-environment
 RUN apt-get update && apt-get install -y \
     wget \
     gcc \
+    libtool-bin \
     g++ \
     gfortran \
     make \
@@ -170,7 +172,7 @@ RUN cd serialbox2 && \
 
 ## Copy FV3GFS sources into image
 ##---------------------------------------------------------------------------------
-FROM ubuntu:19.10 AS fv3gfs-src
+FROM $BASE_IMAGE AS fv3gfs-src-serialize-false
 
 ARG compile_option
 ARG serialize
