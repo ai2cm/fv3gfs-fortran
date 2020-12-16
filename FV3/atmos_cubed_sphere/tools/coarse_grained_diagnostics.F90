@@ -467,13 +467,13 @@ contains
              Atm(tile_count)%nudge_diag%nudge_t_dt(is:ie,js:je,1:npz) = 0.0
           endif
           coarse_diagnostic%data%var3 => Atm(tile_count)%nudge_diag%nudge_t_dt(is:ie,js:je,1:npz)
-       elseif (trim(coarse_diagnostic%name) .eq. 'ps_dt_nudge_coarse') then
+       elseif (ends_with(coarse_diagnostic%name, 'ps_dt_nudge_coarse')) then
           if (.not. allocated(Atm(tile_count)%nudge_diag%nudge_ps_dt)) then
              allocate(Atm(tile_count)%nudge_diag%nudge_ps_dt(is:ie,js:je))
              Atm(tile_count)%nudge_diag%nudge_ps_dt(is:ie,js:je) = 0.0
           endif
           coarse_diagnostic%data%var2 => Atm(tile_count)%nudge_diag%nudge_ps_dt(is:ie,js:je)
-       elseif (trim(coarse_diagnostic%name) .eq. 'delp_dt_nudge_coarse') then
+       elseif (ends_with(coarse_diagnostic%name, 'delp_dt_nudge_coarse')) then
           if (.not. allocated(Atm(tile_count)%nudge_diag%nudge_delp_dt)) then
              allocate(Atm(tile_count)%nudge_diag%nudge_delp_dt(is:ie,js:je,1:npz))
              Atm(tile_count)%nudge_diag%nudge_delp_dt(is:ie,js:je,1:npz) = 0.0
@@ -1001,7 +1001,8 @@ contains
   end subroutine height_given_pressure_level
 
   function starts_with(string, prefix)
-    character(len=64), intent(in) :: string, prefix
+    character(len=64), intent(in) :: string
+    character(len=*), intent(in) :: prefix
     logical :: starts_with
 
     starts_with = string(1:len(trim(prefix))) .eq. trim(prefix)
