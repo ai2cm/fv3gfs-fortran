@@ -13,7 +13,8 @@ module coarse_graining_mod
        get_coarse_array_bounds, coarse_graining_init, weighted_block_average, &
        weighted_block_edge_average_x, weighted_block_edge_average_y, MODEL_LEVEL, &
        block_upsample, mask_area_weights, PRESSURE_LEVEL, vertical_remapping_requirements, &
-       vertically_remap_field, block_mode, block_min, block_max
+       vertically_remap_field, block_mode, block_min, block_max, mask_mass_weights, &
+       remap_edges_along_x, remap_edges_along_y
 
   interface block_sum
      module procedure block_sum_2d
@@ -55,6 +56,15 @@ module coarse_graining_mod
   interface block_max
      module procedure masked_block_max_2d
   end interface block_max
+  interface weighted_block_edge_average_x_pre_downsampled
+     module procedure weighted_block_edge_average_x_pre_downsampled_unmasked
+     module procedure weighted_block_edge_average_x_pre_downsampled_masked
+  end interface weighted_block_edge_average_x_pre_downsampled
+
+  interface weighted_block_edge_average_y_pre_downsampled
+     module procedure weighted_block_edge_average_y_pre_downsampled_unmasked
+     module procedure weighted_block_edge_average_y_pre_downsampled_masked
+  end interface weighted_block_edge_average_y_pre_downsampled
 
   ! Global variables for the module, initialized in coarse_graining_init
   integer :: is, ie, js, je, npz
@@ -413,12 +423,12 @@ contains
 
   subroutine block_upsample_3d(coarse, fine, nz)
     integer, intent(in) :: nz
-    real, intent(in) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:nz+1)
-    real, intent(out) :: fine(is:ie,js:je,1:nz+1)
+    real, intent(in) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:nz)
+    real, intent(out) :: fine(is:ie,js:je,1:nz)
 
     integer :: k
 
-    do k = 1, nz + 1
+    do k = 1, nz
       call block_upsample_2d(coarse(is_coarse:ie_coarse,js_coarse:je_coarse,k), fine(is:ie,js:je,k))
     enddo
   end subroutine block_upsample_3d
@@ -643,4 +653,311 @@ contains
        enddo
     enddo
    end subroutine masked_block_max_2d
+   subroutine mask_mass_weights(area, delp, phalf, upsampled_coarse_phalf, &
+    masked_mass_weights)
+    real, intent(in) :: area(is:ie,js:je)
+    real, intent(in) :: delp(is:ie,js:je,1:npz)
+    real, intent(in) :: phalf(is:ie,js:je,1:npz+1)
+    real, intent(in) :: upsampled_coarse_phalf(is:ie,js:je,1:npz+1)
+    real, intent(out) :: masked_mass_weights(is:ie,js:je,1:npz)
+
+    integer :: k
+
+    do k = 1, npz
+      where (upsampled_coarse_phalf(:,:,k+1) .lt. phalf(is:ie,js:je,npz+1))
+        masked_mass_weights(:,:,k) = delp(:,:,k) * area(:,:)
+      elsewhere
+        masked_mass_weights(:,:,k) = 0.0
+      endwhere
+    enddo
+   end subroutine mask_mass_weights
+
+   ! A naive routine for interpolating a field from the A-grid to the y-boundary
+   ! of the D-grid; this is a specialized function that automatically
+   ! downsamples to the coarse-grid on the downsampling dimension.
+   subroutine interpolate_to_d_grid_and_downsample_along_y(field_in, field_out, nz)
+    integer, intent(in) :: nz
+    real, intent(in) :: field_in(is-1:ie+1,js-1:je+1,1:nz)
+    real, intent(out) :: field_out(is:ie,js_coarse:je_coarse+1,1:nz)
+
+    integer :: i, j, k, j_coarse
+
+    do i = is,ie
+       do j = js,je+1,coarsening_factor
+          j_coarse = (j - 1) / coarsening_factor + 1
+          do k = 1,nz
+             field_out(i,j_coarse,k) = 0.5 * (field_in(i,j,k) + field_in(i,j-1,k))
+          enddo
+       enddo
+    enddo
+   end subroutine interpolate_to_d_grid_and_downsample_along_y
+
+   subroutine weighted_block_edge_average_x_pre_downsampled_unmasked(fine, dx, coarse, nz)
+    integer, intent(in) :: nz
+    real, intent(in) :: fine(is:ie,js_coarse:je_coarse+1,1:nz)
+    real, intent(in) :: dx(is:ie,js:je+1)
+    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse+1,1:nz)
+
+    integer :: i, j, k, a, i_coarse, j_coarse
+
+    a = coarsening_factor - 1
+    do k = 1, nz
+        do i = is, ie, coarsening_factor
+          i_coarse = (i - 1) / coarsening_factor + 1
+          do j = js, je + 1, coarsening_factor
+              j_coarse = (j - 1) / coarsening_factor + 1
+              coarse(i_coarse,j_coarse,k) = sum(dx(i:i+a,j) * fine(i:i+a,j_coarse,k)) / sum(dx(i:i+a,j))
+          enddo
+        enddo
+    enddo
+   end subroutine weighted_block_edge_average_x_pre_downsampled_unmasked
+
+   subroutine weighted_block_edge_average_x_pre_downsampled_masked(fine, dx,&
+    coarse, mask, nz)
+    integer, intent(in) :: nz
+    real, intent(in) :: fine(is:ie,js_coarse:je_coarse+1,1:nz)
+    real, intent(in) :: dx(is:ie,js:je+1)
+    logical, intent(in) :: mask(is:ie,js_coarse:je_coarse+1,1:nz)
+    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse+1,1:nz)
+
+    real, allocatable :: weights(:,:), downsampled_dx(:,:)
+
+    integer :: i, j, k, a, i_coarse, j_coarse
+
+    allocate(weights(is:ie,js_coarse:je_coarse+1))
+    allocate(downsampled_dx(is:ie,js_coarse:je_coarse+1))
+
+    downsampled_dx = dx(:,js:je+1:coarsening_factor)
+
+    a = coarsening_factor - 1
+    do k = 1, nz
+        where (mask(:,:,k))
+          weights = downsampled_dx
+        elsewhere
+          weights = 0.0
+        endwhere
+        do i = is, ie, coarsening_factor
+          i_coarse = (i - 1) / coarsening_factor + 1
+          do j = js, je + 1, coarsening_factor
+              j_coarse = (j - 1) / coarsening_factor + 1
+              coarse(i_coarse,j_coarse,k) = sum(weights(i:i+a,j_coarse) * fine(i:i+a,j_coarse,k)) / sum(weights(i:i+a,j_coarse))
+          enddo
+        enddo
+    enddo
+   end subroutine weighted_block_edge_average_x_pre_downsampled_masked
+
+   subroutine upsample_d_grid_x(field_in, field_out, nz)
+    integer, intent(in) :: nz
+    real, intent(in) :: field_in(is_coarse:ie_coarse,js_coarse:je_coarse+1,1:nz)
+    real, intent(out) :: field_out(is:ie,js_coarse:je_coarse+1,1:nz)
+
+    integer :: i, j, k, a, i_coarse
+    a = coarsening_factor - 1
+    do i = is, ie, coarsening_factor
+       i_coarse = (i - 1) / coarsening_factor + 1
+       do j = js_coarse, je_coarse + 1
+          do k = 1, nz
+             field_out(i:i+a,j,k) = field_in(i_coarse,j,k)
+          enddo
+       enddo
+    enddo
+   end subroutine upsample_d_grid_x
+
+   subroutine remap_edges_along_x(field, phalf, dx, ptop, result)
+    real, intent(in) :: field(is:ie,js:je+1,1:npz)
+    real, intent(in) :: phalf(is-1,ie+1,js-1,je+1,1:npz+1)
+    real, intent(in) :: dx(is:ie,js:je+1)
+    real, intent(in) :: ptop
+    real, intent(out) :: result(is_coarse:ie_coarse,js_coarse:je_coarse+1,1:npz)
+
+    real, allocatable, dimension(:,:,:) :: phalf_d_grid, coarse_phalf_d_grid, coarse_phalf_d_grid_on_fine, remapped
+    logical, allocatable :: mask(:,:,:)
+
+    integer :: i, i_coarse, j, j_coarse, k, kn, km, kord, iv
+
+    allocate(phalf_d_grid(is:ie,js_coarse:je_coarse+1,1:npz+1))
+    allocate(coarse_phalf_d_grid(is_coarse:ie_coarse,js_coarse:je_coarse+1,1:npz+1))
+    allocate(coarse_phalf_d_grid_on_fine(is:ie,js_coarse:je_coarse+1,1:npz+1))
+    allocate(remapped(is:ie,js_coarse:je_coarse+1,1:npz))
+    allocate(mask(is:ie,js_coarse:je_coarse+1,1:npz))
+
+    ! Hard-code parameters related to mappm.
+    kn = npz
+    km = npz
+    kord = 1
+    iv = 1
+
+    ! 1. Interpolate and downsample phalf
+    call interpolate_to_d_grid_and_downsample_along_y(phalf, phalf_d_grid, npz+1)
+
+    ! 2. Coarsen phalf on the D-grid
+    call weighted_block_edge_average_x_pre_downsampled(phalf_d_grid, dx, coarse_phalf_d_grid, npz+1)
+
+    ! 3. Upsample coarsened phalf back to the original resolution
+    call upsample_d_grid_x(coarse_phalf_d_grid, coarse_phalf_d_grid_on_fine, npz+1)
+
+    do j = js, je + 1, coarsening_factor
+      j_coarse = (j - 1) / coarsening_factor + 1
+      call mappm(km, phalf_d_grid(is:ie,j_coarse,:), field(is:ie,j,:), kn, &
+        coarse_phalf_d_grid_on_fine(is:ie,j_coarse,:), &
+        remapped(is:ie,j_coarse,:), is, ie, iv, kord, ptop)
+    enddo
+
+    ! 5. Create mask
+    do k = 1, npz
+      where (coarse_phalf_d_grid_on_fine(:,:,k+1) .lt. phalf_d_grid(:,:,npz+1))
+        mask(:,:,k) = .true.
+      elsewhere
+        mask(:,:,k) = .false.
+      endwhere
+    enddo
+
+    ! 6. Coarsen the remapped field
+    call weighted_block_edge_average_x_pre_downsampled(remapped, dx, result, mask, npz)
+  end subroutine remap_edges_along_x
+
+  ! A naive routine for interpolating a field from the A-grid to the x-boundary
+  ! of the D-grid; this is a specialized function that automatically
+  ! downsamples to the coarse-grid on the downsampling dimension.
+  subroutine interpolate_to_d_grid_and_downsample_along_x(field_in, field_out, nz)
+    integer, intent(in) :: nz
+    real, intent(in) :: field_in(is-1:ie+1,js-1:je+1,1:nz)
+    real, intent(out) :: field_out(is_coarse:ie_coarse+1,js:je,1:nz)
+
+    integer :: i, j, k, i_coarse
+
+    do i = is,ie+1,coarsening_factor
+       i_coarse = (i - 1) / coarsening_factor + 1
+       do j = js,je
+          do k = 1,nz
+             field_out(i_coarse,j,k) = 0.5 * (field_in(i,j,k) + field_in(i-1,j,k))
+          enddo
+       enddo
+    enddo
+  end subroutine interpolate_to_d_grid_and_downsample_along_x
+
+  subroutine weighted_block_edge_average_y_pre_downsampled_unmasked(fine, dy, coarse, nz)
+    integer, intent(in) :: nz
+    real, intent(in) :: fine(is_coarse:ie_coarse+1,js:je,1:nz)
+    real, intent(in) :: dy(is:ie+1,js:je)
+    real, intent(out) :: coarse(is_coarse:ie_coarse+1,js_coarse:je_coarse,1:nz)
+
+    integer :: i, j, k, a, i_coarse, j_coarse
+
+    a = coarsening_factor - 1
+    do k = 1, nz
+       do i = is, ie + 1, coarsening_factor
+          i_coarse = (i - 1) / coarsening_factor + 1
+          do j = js, je, coarsening_factor
+             j_coarse = (j - 1) / coarsening_factor + 1
+             coarse(i_coarse,j_coarse,k) = sum(dy(i,j:j+a) * fine(i_coarse,j:j+a,k)) / sum(dy(i,j:j+a))
+          enddo
+       enddo
+    enddo
+  end subroutine weighted_block_edge_average_y_pre_downsampled_unmasked
+
+  subroutine weighted_block_edge_average_y_pre_downsampled_masked(fine, dy,&
+    coarse, mask, nz)
+    integer, intent(in) :: nz
+    real, intent(in) :: fine(is_coarse:ie_coarse+1,js:je,1:nz)
+    real, intent(in) :: dy(is:ie+1,js:je)
+    logical, intent(in) :: mask(is_coarse:ie_coarse+1,js:je,1:nz)
+    real, intent(out) :: coarse(is_coarse:ie_coarse+1,js_coarse:je_coarse,1:nz)
+
+    real, allocatable :: weights(:,:), downsampled_dy(:,:)
+
+    integer :: i, j, k, a, i_coarse, j_coarse
+
+
+    allocate(weights(is_coarse:ie_coarse+1,js:je))
+    allocate(downsampled_dy(is_coarse:ie_coarse+1,js:je))
+
+    downsampled_dy = dy(is:ie+1:coarsening_factor,:)
+
+    a = coarsening_factor - 1
+    do k = 1, nz
+        where (mask(:,:,k))
+          weights = downsampled_dy
+        elsewhere
+          weights = 0.0
+        endwhere
+        do i = is, ie + 1, coarsening_factor
+          i_coarse = (i - 1) / coarsening_factor + 1
+          do j = js, je, coarsening_factor
+              j_coarse = (j - 1) / coarsening_factor + 1
+              coarse(i_coarse,j_coarse,k) = sum(weights(i_coarse,j:j+a) * fine(i_coarse,j:j+a,k)) / sum(weights(i_coarse,j:j+a))
+          enddo
+        enddo
+    enddo
+  end subroutine weighted_block_edge_average_y_pre_downsampled_masked
+
+  subroutine upsample_d_grid_y(field_in, field_out, nz)
+    integer, intent(in) :: nz
+    real, intent(in) :: field_in(is_coarse:ie_coarse+1,js_coarse:je_coarse,1:nz)
+    real, intent(out) :: field_out(is_coarse:ie_coarse+1,js:je,1:nz)
+
+    integer :: i, j, k, a, j_coarse
+    a = coarsening_factor - 1
+    do i = is_coarse, ie_coarse + 1
+       do j = js,je,coarsening_factor
+          j_coarse = (j - 1) / coarsening_factor + 1
+          do k = 1, nz
+             field_out(i,j:j+a,k) = field_in(i,j_coarse,k)
+          enddo
+       enddo
+    enddo
+  end subroutine upsample_d_grid_y
+
+  subroutine remap_edges_along_y(field, phalf, dy, ptop, result)
+    real, intent(in) :: field(is:ie+1,js:je,1:npz)
+    real, intent(in) :: phalf(is-1:ie+1,js-1:je+1,1:npz+1)
+    real, intent(in) :: dy(is:ie+1,js:je)
+    real, intent(in) :: ptop
+    real, intent(out) :: result(is_coarse:ie_coarse+1,js_coarse:je_coarse,1:npz)
+
+    real, allocatable, dimension(:,:,:) :: phalf_d_grid, coarse_phalf_d_grid, coarse_phalf_d_grid_on_fine, remapped
+    logical, allocatable :: mask(:,:,:)
+
+    integer :: i, i_coarse, j, j_coarse, k, kn, km, kord, iv
+
+    allocate(phalf_d_grid(is_coarse:ie_coarse+1,js:je,1:npz+1))
+    allocate(coarse_phalf_d_grid(is_coarse:ie_coarse+1,js_coarse:je_coarse,1:npz+1))
+    allocate(coarse_phalf_d_grid_on_fine(is_coarse:ie_coarse+1,js:je,1:npz+1))
+    allocate(remapped(is_coarse:ie_coarse+1,js:je,1:npz))
+    allocate(mask(is_coarse:ie_coarse+1,js:je,1:npz))
+
+    ! Hard-code parameters related to mappm.
+    kn = npz
+    km = npz
+    kord = 1
+    iv = 1
+
+    ! 1. Interpolate and downsample phalf
+    call interpolate_to_d_grid_and_downsample_along_x(phalf, phalf_d_grid, npz+1)
+
+    ! 2. Coarsen phalf on the D-grid
+    call weighted_block_edge_average_y_pre_downsampled(phalf_d_grid, dy, coarse_phalf_d_grid, npz+1)
+
+    ! 3. Upsample coarsened phalf back to the original resolution
+    call upsample_d_grid_y(coarse_phalf_d_grid, coarse_phalf_d_grid_on_fine, npz+1)
+
+    do i = is, ie + 1, coarsening_factor
+      i_coarse = (i - 1) / coarsening_factor + 1
+      call mappm(km, phalf_d_grid(i_coarse,js:je,:), field(i,js:je,:), kn, &
+        coarse_phalf_d_grid_on_fine(i_coarse,js:je,:), &
+        remapped(i_coarse,js:je,:), js, je, iv, kord, ptop)
+    enddo
+
+    ! 5. Create mask
+    do k = 1, npz
+      where (coarse_phalf_d_grid_on_fine(:,:,k+1) .lt. phalf_d_grid(:,:,npz+1))
+        mask(:,:,k) = .true.
+      elsewhere
+        mask(:,:,k) = .false.
+      endwhere
+    enddo
+
+    ! 6. Coarsen the remapped field
+    call weighted_block_edge_average_y_pre_downsampled(remapped, dy, result, mask, npz)
+  end subroutine remap_edges_along_y
 end module coarse_graining_mod
