@@ -438,35 +438,29 @@ contains
     type(fv_atmos_type), target, intent(inout) :: Atm(:)
     type(coarse_diag_type), intent(inout) :: coarse_diagnostic
 
-    integer :: is, ie, js, je, npz
+    integer :: is, ie, js, je, npz, isd, ied, jsd, jed
 
     call get_fine_array_bounds(is, ie, js, je)
     npz = Atm(tile_count)%npz
+    isd = Atm(tile_count)%bd%isd
+    ied = Atm(tile_count)%bd%ied
+    jsd = Atm(tile_count)%bd%jsd
+    jed = Atm(tile_count)%bd%jed
 
     ! It would be really nice if there were a cleaner way to do this;
     ! unfortunately it is not possible to check if an array associated with a
     ! pointer is allocated.
     if (coarse_diagnostic%id .gt. 0) then
        if (ends_with(coarse_diagnostic%name, 'qv_dt_phys_coarse')) then
-          if (.not. allocated(Atm(tile_count)%phys_diag%phys_qv_dt)) then
-             allocate(Atm(tile_count)%phys_diag%phys_qv_dt(is:ie,js:je,1:npz))
+          if (.not. allocated(Atm(tile_count)%physics_tendency_diag%qv_dt)) then
+             allocate(Atm(tile_count)%physics_tendency_diag%qv_dt(is:ie,js:je,1:npz))
           endif
-          coarse_diagnostic%data%var3 => Atm(tile_count)%phys_diag%phys_qv_dt(is:ie,js:je,1:npz)
+          coarse_diagnostic%data%var3 => Atm(tile_count)%physics_tendency_diag%qv_dt(is:ie,js:je,1:npz)
        elseif (ends_with(coarse_diagnostic%name, 't_dt_phys_coarse')) then
-          if (.not. allocated(Atm(tile_count)%phys_diag%phys_t_dt)) then
-             allocate(Atm(tile_count)%phys_diag%phys_t_dt(is:ie,js:je,1:npz))
+          if (.not. allocated(Atm(tile_count)%physics_tendency_diag%t_dt)) then
+             allocate(Atm(tile_count)%physics_tendency_diag%t_dt(is:ie,js:je,1:npz))
           endif
-          coarse_diagnostic%data%var3 => Atm(tile_count)%phys_diag%phys_t_dt(is:ie,js:je,1:npz)
-       elseif (ends_with(coarse_diagnostic%name, 'u_dt_phys_coarse')) then
-          if (.not. allocated(Atm(tile_count)%phys_diag%phys_u_dt)) then
-             allocate(Atm(tile_count)%phys_diag%phys_u_dt(is:ie,js:je,1:npz))
-          endif
-          coarse_diagnostic%data%var3 => Atm(tile_count)%phys_diag%phys_u_dt(is:ie,js:je,1:npz)
-       elseif (ends_with(coarse_diagnostic%name, 'v_dt_phys_coarse')) then
-          if (.not. allocated(Atm(tile_count)%phys_diag%phys_v_dt)) then
-             allocate(Atm(tile_count)%phys_diag%phys_v_dt(is:ie,js:je,1:npz))
-          endif
-          coarse_diagnostic%data%var3 => Atm(tile_count)%phys_diag%phys_v_dt(is:ie,js:je,1:npz)
+          coarse_diagnostic%data%var3 => Atm(tile_count)%physics_tendency_diag%t_dt(is:ie,js:je,1:npz)
        elseif (ends_with(coarse_diagnostic%name, 't_dt_nudge_coarse')) then
           if (.not. allocated(Atm(tile_count)%nudge_diag%nudge_t_dt)) then
              allocate(Atm(tile_count)%nudge_diag%nudge_t_dt(is:ie,js:je,1:npz))
@@ -557,10 +551,10 @@ contains
 
     id_x_coarse = diag_axis_init('grid_x_coarse', grid_x_coarse, &
          'index', 'x', 'x-index of cell corner points', set_name='coarse_grid', &
-         Domain2=coarse_domain, tile_count=tile_count, domain_position=EAST)
+         Domain2=coarse_domain, tile_count=tile_count)
     id_y_coarse = diag_axis_init('grid_y_coarse', grid_y_coarse, &
          'index', 'y', 'y-index of cell corner points', set_name='coarse_grid', &
-         Domain2=coarse_domain, tile_count=tile_count, domain_position=NORTH)
+         Domain2=coarse_domain, tile_count=tile_count)
   end subroutine initialize_coarse_diagnostic_axes
   
   subroutine fv_coarse_diag(Atm, Time)

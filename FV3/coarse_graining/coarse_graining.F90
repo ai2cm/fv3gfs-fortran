@@ -12,12 +12,21 @@ module coarse_graining_mod
        get_coarse_array_bounds, coarse_graining_init, weighted_block_average, &
        weighted_block_edge_average_x, weighted_block_edge_average_y, MODEL_LEVEL, &
        block_upsample, mask_area_weights, PRESSURE_LEVEL, vertical_remapping_requirements, &
-       vertically_remap_field, mask_mass_weights, remap_edges_along_x, remap_edges_along_y
+       vertically_remap_field, mask_mass_weights, remap_edges_along_x, remap_edges_along_y, &
+       block_edge_sum_x, block_edge_sum_y
 
   interface block_sum
      module procedure block_sum_2d
   end interface block_sum
   
+  interface block_edge_sum_x
+     module procedure block_edge_sum_x_2d_full_input
+  end interface block_edge_sum_x
+
+  interface block_edge_sum_y
+     module procedure block_edge_sum_y_2d_full_input
+  end interface block_edge_sum_y
+
   interface weighted_block_average
      module procedure weighted_block_average_2d
      module procedure weighted_block_average_3d_field_2d_weights
@@ -829,4 +838,36 @@ contains
     ! 6. Coarsen the remapped field
     call weighted_block_edge_average_y_pre_downsampled(remapped, dy, result, mask, npz)
   end subroutine remap_edges_along_y
+
+  subroutine block_edge_sum_x_2d_full_input(fine, coarse)
+    real, intent(in) :: fine(is:ie,js:je+1)
+    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse+1)
+
+    integer :: i, j, i_coarse, j_coarse, offset
+
+    offset = coarsening_factor - 1
+    do i = is, ie, coarsening_factor
+       i_coarse = (i - 1) / coarsening_factor + 1
+       do j = js, je + 1, coarsening_factor
+          j_coarse = (j - 1) / coarsening_factor + 1
+          coarse(i_coarse,j_coarse) = sum(fine(i:i+offset,j))
+       enddo
+    enddo
+  end subroutine block_edge_sum_x_2d_full_input
+
+  subroutine block_edge_sum_y_2d_full_input(fine, coarse)
+    real, intent(in) :: fine(is:ie+1,js:je)
+    real, intent(out) :: coarse(is_coarse:ie_coarse+1,js_coarse:je_coarse)
+
+    integer :: i, j, i_coarse, j_coarse, offset
+
+    offset = coarsening_factor - 1
+    do i = is, ie + 1, coarsening_factor
+       i_coarse = (i - 1) / coarsening_factor + 1
+       do j = js, je, coarsening_factor
+          j_coarse = (j - 1) / coarsening_factor + 1
+          coarse(i_coarse,j_coarse) = sum(fine(i,j:j+offset))
+       enddo
+    enddo
+  end subroutine block_edge_sum_y_2d_full_input
 end module coarse_graining_mod
