@@ -216,10 +216,12 @@ public :: atmosphere_resolution,   atmosphere_grid_bdry,         &
           atmosphere_diss_est,         & ! dissipation estimate for SKEB 
           atmosphere_get_bottom_layer, &
           atmosphere_nggps_diag,       &
-          set_atmosphere_pelist
+          set_atmosphere_pelist, atmosphere_coarse_diag_axes
 
 !--- physics/radiation data exchange routines
 public :: atmos_phys_driver_statein
+
+public :: atmosphere_coarsening_strategy
 
 !-----------------------------------------------------------------------
 ! version number of this module
@@ -945,6 +947,19 @@ contains
    axes (1:size(axes(:))) = Atm(mytile)%atmos_axes (1:size(axes(:)))
 
  end subroutine atmosphere_diag_axes
+
+
+!>@brief The subroutine 'atmosphere_coarse_diag_axes' is an API to return the axis indices
+!! for the coarse atmospheric (mass) grid.
+ subroutine atmosphere_coarse_diag_axes(coarse_axes)
+   integer, intent(out) :: coarse_axes(4)
+
+   coarse_axes = (/ &
+        Atm(mytile)%coarse_graining%id_xt_coarse, &
+        Atm(mytile)%coarse_graining%id_yt_coarse, &
+        Atm(mytile)%coarse_graining%id_pfull, &
+        Atm(mytile)%coarse_graining%id_phalf /)
+ end subroutine atmosphere_coarse_diag_axes 
 
 
 !>@brief The subroutine 'atmosphere_etalvls' is an API to return the ak/bk
@@ -2221,4 +2236,9 @@ contains
    enddo
  end subroutine update_physics_precipitation_for_qv_nudging
 
+ subroutine atmosphere_coarsening_strategy(coarsening_strategy)
+   character(len=64), intent(out) :: coarsening_strategy
+
+   coarsening_strategy = Atm(mytile)%coarse_graining%strategy
+ end subroutine atmosphere_coarsening_strategy
 end module atmosphere_mod
