@@ -447,7 +447,7 @@ contains
    call fv_diag_init(Atm(mytile:mytile), Atm(mytile)%atmos_axes, Time, npx, npy, npz, Atm(mytile)%flagstruct%p_ref)
 
    if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
-      call fv_coarse_diag_init(Time, Atm(mytile)%atmos_axes(3), &
+      call fv_coarse_diag_init(Atm, Time, Atm(mytile)%atmos_axes(3), &
            Atm(mytile)%atmos_axes(4), Atm(mytile)%coarse_graining)
    endif
    if (Atm(mytile)%coarse_graining%write_coarse_restart_files) then
