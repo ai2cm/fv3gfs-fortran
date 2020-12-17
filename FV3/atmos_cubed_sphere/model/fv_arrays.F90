@@ -49,7 +49,7 @@ module fv_arrays_mod
   real, parameter:: real_big = 1.e30   ! big enough to cause blowup if used
   real, parameter:: real_snan=x'FFF7FFFFFFFFFFFF'
 #endif
-  real, parameter:: i4_in=-huge(1)
+  integer, parameter:: i4_in=-huge(1)
   type fv_diag_type
 
 

@@ -1,28 +1,41 @@
-## configure.fv3.piz_daint_intel
-##
-## This configure file outlines support for the creation of an Intel compiler build of FV3
-## on the Swiss supercomputer, Piz Daint (a Cray XC-50).  OpenMP and vector (AVX2) support
-## is enabled.  A 64-bit compilation is performed of all the dynamics and physics modules
-##
-##  Mark Cheeseman, Vulcan Inc
-##  July 2, 2020
-##==========================================================================================
-
-# compiler commands 
+############
+# commands #
+############
 FC = ftn
 CC = cc
+CXX = CC
 LD = $(FC) -cxxlib
 
-# fv3 compile options 
+#########
+# flags #
+#########
+# default is 64-bit OpenMP non-hydrostatic build using AVX2
 DEBUG =
 REPRO =
 VERBOSE =
 OPENMP = Y
 AVX2 = Y
 HYDRO = N
+32BIT = N
 
+NCEPLIBS_DIR = /project/s1053/install/ncep/intel
 NEMSIOINC = -I$(NCEPLIBS_DIR)/include
 NCEPLIBS = -L$(NCEPLIBS_DIR)/lib -lbacio_4 -lsp_v2.0.2_d -lw3nco_d
+ifneq ($(OPENMP),)
+  ifeq ($(32BIT),Y)
+    FMS_DIR = /project/s1053/install/fms/intel_r4
+  else
+    FMS_DIR = /project/s1053/install/fms/intel_r8
+  endif
+else
+  ifeq ($(32BIT),Y)
+    FMS_DIR = /project/s1053/install/fms/intel_r4_noomp
+  else
+    FMS_DIR = /project/s1053/install/fms/intel_r8_noomp
+  endif
+endif
+ESMF_DIR = /project/s1053/install/esmf/8.0.0_intel
+MKL_DIR = $(MKLROOT)
 
 ##############################################
 # Need to use at least GNU Make version 3.81 #
@@ -30,11 +43,10 @@ NCEPLIBS = -L$(NCEPLIBS_DIR)/lib -lbacio_4 -lsp_v2.0.2_d -lw3nco_d
 need := 3.81
 ok := $(filter $(need),$(firstword $(sort $(MAKE_VERSION) $(need))))
 ifneq ($(need),$(ok))
-$(error Need at least make version $(need))
+$(error Need at least make version $(need).  Load module gmake/3.81)
 endif
 
-MKL_DIR=${MKLROOT}
-INCLUDE = -I${NETCDF_ROOT}/include -I${ESMF_DIR}/include -I$(MKL_DIR)/include -I$(MKL_DIR)/include/intel64/ilp64 -I${FMS_DIR}/include
+INCLUDE = -I$(NETCDF_DIR)/include -I$(ESMF_DIR)/include -I$(FMS_DIR)/include -I$(MKL_DIR)/include -I$(MKL_DIR)/include/intel64/ilp64
 
 FPPFLAGS := -cpp -Wp,-w $(INCLUDE)
 CFLAGS := $(INCLUDE) -qno-opt-dynamic-align
@@ -114,7 +126,7 @@ FFLAGS += $(FFLAGS_VERBOSE)
 LDFLAGS += $(LDFLAGS_VERBOSE)
 endif
 
-LIBS += -L${ESMF_DIR}/lib -lesmf -L${FMS_DIR}/lib -lFMS -L${NETCDF_ROOT}/lib -lnetcdff -lnetcdf
+LIBS += -L$(ESMF_DIR)/lib -lesmf -L$(FMS_DIR) -lfms -L$(NETCDF_DIR)/lib -lnetcdff -lnetcdf
 
 # Intel MKL library support
 LIBS += -L$(MKL_DIR)/lib/intel64 -Wl,--start-group $(MKL_DIR)/lib/intel64/libmkl_intel_lp64.a $(MKL_DIR)/lib/intel64/libmkl_intel_thread.a $(MKL_DIR)/lib/intel64/libmkl_core.a -Wl,--end-group -liomp5 -lpthread -lm
