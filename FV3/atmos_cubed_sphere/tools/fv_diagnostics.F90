@@ -1109,6 +1109,51 @@ contains
          allocate(Atm(n)%physics_tendency_diag%qv_dt(isc:iec,jsc:jec,npz))
          Atm(n)%physics_tendency_diag%qv_dt = 0.0
     endif
+
+    idiag%id_liq_wat_dt_phys = register_diag_field('dynamics', &
+          'liq_wat_dt_phys', axes(1:3), Time, &
+          'liquid water tendency from physics', 'kg/kg/s', &
+          missing_value=missing_value)
+    if (idiag%id_liq_wat_dt_phys > 0) then
+         allocate(Atm(n)%physics_tendency_diag%liq_wat_dt(isc:iec,jsc:jec,npz))
+         Atm(n)%physics_tendency_diag%liq_wat_dt = 0.0
+    endif
+
+    idiag%id_ice_wat_dt_phys = register_diag_field('dynamics', &
+          'ice_wat_dt_phys', axes(1:3), Time, &
+          'ice water tendency from physics', 'kg/kg/s', &
+          missing_value=missing_value)
+    if (idiag%id_ice_wat_dt_phys > 0) then
+         allocate(Atm(n)%physics_tendency_diag%ice_wat_dt(isc:iec,jsc:jec,npz))
+         Atm(n)%physics_tendency_diag%ice_wat_dt = 0.0
+    endif   
+
+    idiag%id_qr_dt_phys = register_diag_field('dynamics', &
+          'qr_dt_phys', axes(1:3), Time, &
+          'rain water tendency from physics', 'kg/kg/s', &
+          missing_value=missing_value)
+    if (idiag%id_qr_dt_phys > 0) then
+         allocate(Atm(n)%physics_tendency_diag%qr_dt(isc:iec,jsc:jec,npz))
+         Atm(n)%physics_tendency_diag%qr_dt = 0.0
+    endif
+
+    idiag%id_qs_dt_phys = register_diag_field('dynamics', &
+          'qs_dt_phys', axes(1:3), Time, &
+          'snow water tendency from physics', 'kg/kg/s', &
+          missing_value=missing_value)
+    if (idiag%id_qs_dt_phys > 0) then
+         allocate(Atm(n)%physics_tendency_diag%qs_dt(isc:iec,jsc:jec,npz))
+         Atm(n)%physics_tendency_diag%qs_dt = 0.0
+    endif
+
+    idiag%id_qg_dt_phys = register_diag_field('dynamics', &
+          'qg_dt_phys', axes(1:3), Time, &
+          'graupel tendency from physics', 'kg/kg/s', &
+          missing_value=missing_value)
+    if (idiag%id_qg_dt_phys > 0) then
+         allocate(Atm(n)%physics_tendency_diag%qg_dt(isc:iec,jsc:jec,npz))
+         Atm(n)%physics_tendency_diag%qg_dt = 0.0
+    endif
  end subroutine fv_diag_init
 
 
@@ -3143,6 +3188,22 @@ contains
      if (idiag%id_qv_dt_phys > 0) then
         used = send_data(idiag%id_qv_dt_phys, Atm(n)%physics_tendency_diag%qv_dt(isc:iec,jsc:jec,1:npz), Time)
      endif
+     if (idiag%id_liq_wat_dt_phys > 0) then
+        used = send_data(idiag%id_liq_wat_dt_phys, Atm(n)%physics_tendency_diag%liq_wat_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+     if (idiag%id_ice_wat_dt_phys > 0) then
+        used = send_data(idiag%id_ice_wat_dt_phys, Atm(n)%physics_tendency_diag%ice_wat_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+     if (idiag%id_qr_dt_phys > 0) then
+        used = send_data(idiag%id_qr_dt_phys, Atm(n)%physics_tendency_diag%qr_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+     if (idiag%id_qs_dt_phys > 0) then
+        used = send_data(idiag%id_qs_dt_phys, Atm(n)%physics_tendency_diag%qs_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+     if (idiag%id_qg_dt_phys > 0) then
+        used = send_data(idiag%id_qg_dt_phys, Atm(n)%physics_tendency_diag%qg_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+
    ! enddo  ! end ntileMe do-loop
 
     deallocate ( a2 )

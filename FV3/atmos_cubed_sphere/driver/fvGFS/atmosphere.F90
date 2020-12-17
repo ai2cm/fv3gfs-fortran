@@ -2212,14 +2212,53 @@ contains
    logical, intent(in) :: begin
    type(physics_tendency_diag_type), intent(inout) :: physics_tendency_diag
 
-   integer :: sphum
+   integer :: sphum, liq_wat, ice_wat, rainwat, snowwat, graupel
 
    sphum = get_tracer_index (MODEL_ATMOS, 'sphum')
+   liq_wat = get_tracer_index (MODEL_ATMOS, 'liq_wat')
+   ice_wat = get_tracer_index (MODEL_ATMOS, 'ice_wat')
+   rainwat = get_tracer_index (MODEL_ATMOS, 'rainwat')
+   snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
+   graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
 
    if (begin) then
-      if (allocated(physics_tendency_diag%qv_dt)) physics_tendency_diag%qv_dt = q(isc:iec,jsc:jec,1:npz,sphum)
+      if (sphum > 0) then
+        if (allocated(physics_tendency_diag%qv_dt)) physics_tendency_diag%qv_dt = q(isc:iec,jsc:jec,1:npz,sphum)
+      endif
+      if (liq_wat > 0) then
+        if (allocated(physics_tendency_diag%liq_wat_dt)) physics_tendency_diag%liq_wat_dt = q(isc:iec,jsc:jec,1:npz,liq_wat)
+      endif
+      if (ice_wat > 0) then
+        if (allocated(physics_tendency_diag%ice_wat_dt)) physics_tendency_diag%ice_wat_dt = q(isc:iec,jsc:jec,1:npz,ice_wat)
+      endif
+      if (rainwat > 0) then
+        if (allocated(physics_tendency_diag%qr_dt)) physics_tendency_diag%qr_dt = q(isc:iec,jsc:jec,1:npz,rainwat)
+      endif
+      if (snowwat > 0) then
+        if (allocated(physics_tendency_diag%qs_dt)) physics_tendency_diag%qs_dt = q(isc:iec,jsc:jec,1:npz,snowwat)
+      endif
+      if (graupel > 0) then
+        if (allocated(physics_tendency_diag%qg_dt)) physics_tendency_diag%qg_dt = q(isc:iec,jsc:jec,1:npz,graupel)
+      endif
    else
-      if (allocated(physics_tendency_diag%qv_dt)) physics_tendency_diag%qv_dt = (q(isc:iec,jsc:jec,1:npz,sphum) - physics_tendency_diag%qv_dt) / dt
+      if (sphum > 0) then
+        if (allocated(physics_tendency_diag%qv_dt)) physics_tendency_diag%qv_dt = (q(isc:iec,jsc:jec,1:npz,sphum) - physics_tendency_diag%qv_dt) / dt
+      endif
+      if (liq_wat > 0) then
+        if (allocated(physics_tendency_diag%liq_wat_dt)) physics_tendency_diag%liq_wat_dt = (q(isc:iec,jsc:jec,1:npz,liq_wat) - physics_tendency_diag%liq_wat_dt) / dt
+      endif
+      if (ice_wat > 0) then
+        if (allocated(physics_tendency_diag%ice_wat_dt)) physics_tendency_diag%ice_wat_dt = (q(isc:iec,jsc:jec,1:npz,ice_wat) - physics_tendency_diag%ice_wat_dt) / dt
+      endif
+      if (rainwat > 0) then
+        if (allocated(physics_tendency_diag%qr_dt)) physics_tendency_diag%qr_dt = (q(isc:iec,jsc:jec,1:npz,rainwat) - physics_tendency_diag%qr_dt) / dt
+      endif
+      if (snowwat > 0) then
+        if (allocated(physics_tendency_diag%qs_dt)) physics_tendency_diag%qs_dt = (q(isc:iec,jsc:jec,1:npz,snowwat) - physics_tendency_diag%qs_dt) / dt
+      endif
+      if (graupel > 0) then
+        if (allocated(physics_tendency_diag%qg_dt)) physics_tendency_diag%qg_dt = (q(isc:iec,jsc:jec,1:npz,graupel) - physics_tendency_diag%qg_dt) / dt
+      endif
    endif
  end subroutine atmos_phys_qdt_diag
 
