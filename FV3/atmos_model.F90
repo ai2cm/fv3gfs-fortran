@@ -79,12 +79,9 @@ use atmosphere_mod,     only: atmosphere_scalar_field_halo
 use atmosphere_mod,     only: atmosphere_get_bottom_layer
 use atmosphere_mod,     only: set_atmosphere_pelist
 use atmosphere_mod,     only: Atm, mytile
-<<<<<<< HEAD
 use atmosphere_mod,     only: atmosphere_coarse_graining_parameters
-=======
 use atmosphere_mod,     only: atmosphere_coarse_diag_axes
 use atmosphere_mod,     only: atmosphere_coarsening_strategy
->>>>>>> master
 use block_control_mod,  only: block_control_type, define_blocks_packed
 use DYCORE_typedefs,    only: DYCORE_data_type, DYCORE_diag_type
 #ifdef CCPP
