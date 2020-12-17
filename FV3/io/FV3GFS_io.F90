@@ -21,7 +21,7 @@ module FV3GFS_io_mod
   use fms_io_mod,         only: restart_file_type, free_restart_type, &
                                 register_restart_field,               &
                                 restore_state, save_restart
-  use mpp_domains_mod,    only: domain1d, domain2d, domainUG
+  use mpp_domains_mod,    only: domain1d, domain2d, domainUG, mpp_get_compute_domain
   use time_manager_mod,   only: time_type
   use diag_manager_mod,   only: register_diag_field, send_data
   use diag_axis_mod,      only: get_axis_global_length, get_diag_axis, &
@@ -29,6 +29,7 @@ module FV3GFS_io_mod
   use diag_data_mod,      only: output_fields, max_output_fields
   use diag_util_mod,      only: find_input_field
   use constants_mod,      only: grav, rdgas
+  use coarse_graining_mod, only: block_mode, block_upsample, block_min, block_max, block_sum, weighted_block_average
 !
 !--- GFS physics modules
 !#ifndef CCPP
@@ -72,7 +73,9 @@ module FV3GFS_io_mod
   !--- public interfaces ---
   public  FV3GFS_restart_read, FV3GFS_restart_write
   public  FV3GFS_IPD_checksum
-  public  fv3gfs_diag_register, fv3gfs_diag_output, fv3gfs_diag_register_coarse
+  public  fv3gfs_diag_register, fv3gfs_diag_output
+  public  FV3GFS_restart_write_coarse
+  public  fv3gfs_diag_register_coarse
 #ifdef use_WRTCOMP
   public  fv_phys_bundle_setup
 #endif
@@ -91,6 +94,11 @@ module FV3GFS_io_mod
   real(kind=kind_phys), allocatable, target, dimension(:,:,:,:) :: sfc_var3, phy_var3
   !--- Noah MP restart containers
   real(kind=kind_phys), allocatable, target, dimension(:,:,:,:) :: sfc_var3sn,sfc_var3eq,sfc_var3zn
+
+  ! Coarse graining
+  real(kind=kind_phys), allocatable, target, dimension(:,:,:) :: sfc_var2_coarse
+  real(kind=kind_phys), allocatable, target, dimension(:,:,:,:) :: sfc_var3_coarse
+  type(restart_file_type) :: sfc_restart_coarse
 
   real(kind=kind_phys) :: zhour
 !
@@ -179,7 +187,22 @@ module FV3GFS_io_mod
 
   end subroutine FV3GFS_restart_write
 
+  subroutine FV3GFS_restart_write_coarse (IPD_Data, IPD_Restart, Atm_block, Model, coarse_domain, timestamp)
+    type(IPD_data_type),         intent(inout) :: IPD_Data(:)
+    type(IPD_restart_type),      intent(inout) :: IPD_Restart
+    type(block_control_type),    intent(in)    :: Atm_block
+    type(IPD_control_type),      intent(in)    :: Model
+    type(domain2d),              intent(in)    :: coarse_domain
+    character(len=32), optional, intent(in)    :: timestamp
 
+    if (present(timestamp)) then
+      call sfc_prop_restart_write_coarse (IPD_Data%Sfcprop, Atm_block, Model, &
+            coarse_domain, IPD_Data%Grid, timestamp)
+    else
+      call sfc_prop_restart_write_coarse (IPD_Data%Sfcprop, Atm_block, Model, &
+            coarse_domain, IPD_Data%Grid)
+    endif
+  end subroutine FV3GFS_restart_write_coarse
 !--------------------
 ! FV3GFS_IPD_checksum
 !--------------------
@@ -2207,7 +2230,361 @@ module FV3GFS_io_mod
 
   end subroutine sfc_prop_restart_write
 
+  subroutine sfc_prop_restart_write_coarse(Sfcprop, Atm_block, Model, coarse_domain, Grid, timestamp)
+    type(GFS_sfcprop_type),      intent(in) :: Sfcprop(:)
+    type(block_control_type),    intent(in) :: atm_block
+    type(IPD_control_type),      intent(in) :: Model
+    type(domain2d),              intent(in) :: coarse_domain
+    type(GFS_grid_type),         intent(in) :: Grid(:)
+    character(len=32), optional, intent(in) :: timestamp
 
+    integer :: i, j, k, nb, ix, lsoil, num
+    integer :: isc, iec, jsc, jec, npz, nx, ny
+    integer :: id_restart
+    integer :: nvar2m, nvar2o, nvar3
+    logical :: mand
+
+    integer :: is_coarse, ie_coarse, js_coarse, je_coarse, nx_coarse, ny_coarse
+    character(len=32) :: fn_srf_coarse = 'sfc_data_coarse.nc'
+    real(kind=kind_phys), allocatable, dimension(:,:) :: area, &
+      dominant_sfc_type, dominant_vtype, dominant_stype, &
+      tisfc_area_average, only_area_weighted_zorl, &
+      only_area_weighted_canopy, coarsened_area_times_fice, &
+      coarsened_area_times_sncovr, coarsened_area_times_vfrac
+    logical, allocatable, dimension(:,:) :: sfc_type_mask, sfc_and_vtype_mask, sfc_and_stype_mask
+    real(kind=kind_phys), pointer, dimension(:,:)   :: var2_p_coarse => NULL()
+    real(kind=kind_phys), pointer, dimension(:,:,:) :: var3_p_coarse => NULL()
+    real(kind=kind_phys) :: FREEZING, VTYPE_LAND_ICE, STYPE_LAND_ICE, SHDMIN_CANOPY_THRESHOLD
+
+    if (Model%cplflx .or. (Model%lsm .eq. Model%lsm_noahmp) .or. (Model%nstf_name(1) > 0)) then
+      call mpp_error(FATAL, 'Coarse graining strategy not defined for land surface model configuration')
+    endif
+
+    nvar2m = 32
+    nvar3 = 3
+
+    isc = Atm_block%isc
+    iec = Atm_block%iec
+    jsc = Atm_block%jsc
+    jec = Atm_block%jec
+    npz = Atm_block%npz
+    nx = (iec - isc + 1)
+    ny = (jec - jsc + 1)
+
+    call mpp_get_compute_domain(coarse_domain, is_coarse, ie_coarse, js_coarse, je_coarse)
+    nx_coarse = ie_coarse - is_coarse + 1
+    ny_coarse = je_coarse - js_coarse + 1
+
+    allocate(area(isc:iec,jsc:jec))
+    do nb = 1, Atm_block%nblks
+      do ix = 1, Atm_block%blksz(nb)
+        i = Atm_block%index(nb)%ii(ix)
+        j = Atm_block%index(nb)%jj(ix)
+        area(i,j) = Grid(nb)%area(ix)
+      enddo
+    enddo
+
+    allocate(dominant_sfc_type(isc:iec,jsc:jec))
+    allocate(dominant_vtype(isc:iec,jsc:jec))
+    allocate(dominant_stype(isc:iec,jsc:jec))
+    allocate(sfc_type_mask(isc:iec,jsc:jec))
+    allocate(sfc_and_vtype_mask(isc:iec,jsc:jec))
+    allocate(sfc_and_stype_mask(isc:iec,jsc:jec))
+    allocate(tisfc_area_average(is_coarse:ie_coarse,js_coarse:je_coarse))
+    allocate(only_area_weighted_zorl(is_coarse:ie_coarse,js_coarse:je_coarse))
+    allocate(only_area_weighted_canopy(is_coarse:ie_coarse,js_coarse:je_coarse))
+    allocate(coarsened_area_times_fice(is_coarse:ie_coarse,js_coarse:je_coarse))
+    allocate(coarsened_area_times_sncovr(is_coarse:ie_coarse,js_coarse:je_coarse))
+    allocate(coarsened_area_times_vfrac(is_coarse:ie_coarse,js_coarse:je_coarse))
+
+    if (.not. allocated(sfc_var2_coarse)) then
+      allocate(sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,nvar2m))
+      allocate(sfc_var3_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,Model%lsoil,nvar3))
+
+      call register_coarse_sfc_prop_restart_fields(sfc_restart_coarse, &
+        sfc_var2_coarse, sfc_var3_coarse, fn_srf_coarse, &
+        var2_p_coarse, var3_p_coarse, sfc_name2, sfc_name3, coarse_domain, &
+        Model, nvar2m, nvar3)
+    endif
+
+    if (.not. allocated(sfc_name2)) then
+      !--- allocate the various containers needed for restarts
+      allocate(sfc_name2(nvar2m))
+      allocate(sfc_name3(nvar3))
+      allocate(sfc_var2(isc:iec,jsc:jec,nvar2m))
+      allocate(sfc_var3(isc:iec,jsc:jec,Model%lsoil,nvar3))
+      sfc_var2 = -9999._kind_phys
+      sfc_var3 = -9999._kind_phys
+
+      !--- names of the 2D variables to save
+      sfc_name2(1)  = 'slmsk'
+      sfc_name2(2)  = 'tsea'    !tsfc
+      sfc_name2(3)  = 'sheleg'  !weasd
+      sfc_name2(4)  = 'tg3'
+      sfc_name2(5)  = 'zorl'
+      sfc_name2(6)  = 'alvsf'
+      sfc_name2(7)  = 'alvwf'
+      sfc_name2(8)  = 'alnsf'
+      sfc_name2(9)  = 'alnwf'
+      sfc_name2(10) = 'facsf'
+      sfc_name2(11) = 'facwf'
+      sfc_name2(12) = 'vfrac'
+      sfc_name2(13) = 'canopy'
+      sfc_name2(14) = 'f10m'
+      sfc_name2(15) = 't2m'
+      sfc_name2(16) = 'q2m'
+      sfc_name2(17) = 'vtype'
+      sfc_name2(18) = 'stype'
+      sfc_name2(19) = 'uustar'
+      sfc_name2(20) = 'ffmm'
+      sfc_name2(21) = 'ffhh'
+      sfc_name2(22) = 'hice'
+      sfc_name2(23) = 'fice'
+      sfc_name2(24) = 'tisfc'
+      sfc_name2(25) = 'tprcp'
+      sfc_name2(26) = 'srflag'
+      sfc_name2(27) = 'snwdph'  !snowd
+      sfc_name2(28) = 'shdmin'
+      sfc_name2(29) = 'shdmax'
+      sfc_name2(30) = 'slope'
+      sfc_name2(31) = 'snoalb'
+      sfc_name2(32) = 'sncovr'
+   endif
+
+   do nb = 1, Atm_block%nblks
+    do ix = 1, Atm_block%blksz(nb)
+       i = Atm_block%index(nb)%ii(ix)
+       j = Atm_block%index(nb)%jj(ix)
+       sfc_var2(i,j,1)  = Sfcprop(nb)%slmsk(ix)
+       sfc_var2(i,j,2)  = Sfcprop(nb)%tsfc(ix)
+       sfc_var2(i,j,3)  = Sfcprop(nb)%weasd(ix)
+       sfc_var2(i,j,4)  = Sfcprop(nb)%tg3(ix)
+       sfc_var2(i,j,5)  = Sfcprop(nb)%zorl(ix)
+       sfc_var2(i,j,6)  = Sfcprop(nb)%alvsf(ix)
+       sfc_var2(i,j,7)  = Sfcprop(nb)%alvwf(ix)
+       sfc_var2(i,j,8)  = Sfcprop(nb)%alnsf(ix)
+       sfc_var2(i,j,9)  = Sfcprop(nb)%alnwf(ix)
+       sfc_var2(i,j,10) = Sfcprop(nb)%facsf(ix)
+       sfc_var2(i,j,11) = Sfcprop(nb)%facwf(ix)
+       sfc_var2(i,j,12) = Sfcprop(nb)%vfrac(ix)
+       sfc_var2(i,j,13) = Sfcprop(nb)%canopy(ix)
+       sfc_var2(i,j,14) = Sfcprop(nb)%f10m(ix)
+       sfc_var2(i,j,15) = Sfcprop(nb)%t2m(ix)
+       sfc_var2(i,j,16) = Sfcprop(nb)%q2m(ix)
+       sfc_var2(i,j,17) = Sfcprop(nb)%vtype(ix)
+       sfc_var2(i,j,18) = Sfcprop(nb)%stype(ix)
+       sfc_var2(i,j,19) = Sfcprop(nb)%uustar(ix)
+       sfc_var2(i,j,20) = Sfcprop(nb)%ffmm(ix)
+       sfc_var2(i,j,21) = Sfcprop(nb)%ffhh(ix)
+       sfc_var2(i,j,22) = Sfcprop(nb)%hice(ix)
+       sfc_var2(i,j,23) = Sfcprop(nb)%fice(ix)
+       sfc_var2(i,j,24) = Sfcprop(nb)%tisfc(ix)
+       sfc_var2(i,j,25) = Sfcprop(nb)%tprcp(ix)
+       sfc_var2(i,j,26) = Sfcprop(nb)%srflag(ix)
+       sfc_var2(i,j,27) = Sfcprop(nb)%snowd(ix)
+       sfc_var2(i,j,28) = Sfcprop(nb)%shdmin(ix)
+       sfc_var2(i,j,29) = Sfcprop(nb)%shdmax(ix)
+       sfc_var2(i,j,30) = Sfcprop(nb)%slope(ix)
+       sfc_var2(i,j,31) = Sfcprop(nb)%snoalb(ix)
+       sfc_var2(i,j,32) = Sfcprop(nb)%sncovr(ix)
+       do lsoil = 1,Model%lsoil
+        sfc_var3(i,j,lsoil,1) = Sfcprop(nb)%stc(ix,lsoil)
+        sfc_var3(i,j,lsoil,2) = Sfcprop(nb)%smc(ix,lsoil)
+        sfc_var3(i,j,lsoil,3) = Sfcprop(nb)%slc(ix,lsoil)
+      enddo
+    enddo
+  enddo
+
+    ! Coarse grain all the variables
+
+    ! First coarse-grain the land surface type and upsample it back to the native resolution
+    call block_mode(sfc_var2(isc:iec,jsc:jec,1), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1))
+    call block_upsample(sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1), dominant_sfc_type)
+    sfc_type_mask = (dominant_sfc_type .eq. sfc_var2(isc:iec,jsc:jec,1))
+
+    ! Then coarse-grain the vegetation and soil types and upsample them too
+    call block_mode(sfc_var2(isc:iec,jsc:jec,17), sfc_type_mask, sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,17))
+    call block_upsample(sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,17), dominant_vtype)
+    call block_mode(sfc_var2(isc:iec,jsc:jec,18), sfc_type_mask, sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,18))
+    call block_upsample(sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,18), dominant_stype)
+
+    sfc_and_vtype_mask = (sfc_type_mask .and. (dominant_vtype .eq. sfc_var2(isc:iec,jsc:jec,17)))
+    sfc_and_stype_mask = (sfc_type_mask .and. (dominant_stype .eq. sfc_var2(isc:iec,jsc:jec,18)))
+
+    ! Take the area weighted mean over full blocks for the surface temperature
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,2), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,2))
+
+    ! Take the area weighted average over the dominant surface type for tg3
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,4), sfc_type_mask, sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,4))
+
+    ! Take the area weighted average over the dominant surface type for vfrac
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,12), sfc_type_mask, sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,12))
+
+    ! Take the area and vfrac weighted average over the dominant surface and vegetation type for zorl and canopy
+    call weighted_block_average(area * sfc_var2(isc:iec,jsc:jec,12), sfc_var2(isc:iec,jsc:jec,5), sfc_and_vtype_mask, &
+         sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,5))
+    call weighted_block_average(area * sfc_var2(isc:iec,jsc:jec,12), sfc_var2(isc:iec,jsc:jec,13), sfc_and_vtype_mask, &
+         sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,13))
+
+    ! Also compute a simple area weighted average over the dominant surface and
+    ! vegetation type for zorl and canopy; this will be used in the event that
+    ! the sum of vfrac is equal to zero.
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,5), sfc_and_vtype_mask, &
+         only_area_weighted_zorl)
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,13), sfc_and_vtype_mask, &
+         only_area_weighted_canopy)
+
+    call block_sum(area * sfc_var2(isc:iec,jsc:jec,12), sfc_and_vtype_mask, coarsened_area_times_vfrac)
+
+    ! If the dominant surface type is ocean or sea-ice then just use the
+    ! area weighted average over the dominant surface and vegetation type for zorl or canopy.
+    where (coarsened_area_times_vfrac .eq. 0.0)
+       sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,5) = only_area_weighted_zorl
+       sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,13) = only_area_weighted_canopy
+    endwhere
+
+    ! Take the area weighted average of the albedo variables
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,6), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,6))
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,7), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,7))
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,8), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,8))
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,9), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,9))
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,10), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,10))
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,11), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,11))
+
+    ! Take the area weighted average of f10, t2m, q2m, uustar, ffmm, and ffhh
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,14), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,14))
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,15), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,15))
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,16), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,16))
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,19), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,19))
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,20), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,20))
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,21), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,21))
+
+    ! Take the area weighted average over the dominant surface type for fice
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,23), sfc_type_mask, sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,23))
+
+    ! Compute the area weighted average of tpcrp
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,25), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,25))
+
+    ! Take the mode for srflag
+    call block_mode(sfc_var2(isc:iec,jsc:jec,26), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,26))
+
+    ! Take the area weighted average for snow depth
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,27), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,27))
+
+    ! Take the min and max over the dominant sfc type for shdmin and shdmax
+    call block_min(sfc_var2(isc:iec,jsc:jec,28), sfc_type_mask, sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,28))
+    call block_max(sfc_var2(isc:iec,jsc:jec,29), sfc_type_mask, sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,29))
+
+    ! Take the masked block mode over the dominant surface type for slope
+    call block_mode(sfc_var2(isc:iec,jsc:jec,30), sfc_type_mask, sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,30))  
+
+    ! Take the block maximum for the snoalb
+    call block_max(sfc_var2(isc:iec,jsc:jec,31), sfc_type_mask, sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,31))
+
+    ! Take the area weighted average over the dominant surface type for sncovr
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,32), sfc_type_mask, sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,32))
+
+    ! For sheleg take the area and sncovr weighted average; zero out any regions where the snow cover fraction is zero over the block.
+    call weighted_block_average(area * sfc_var2(isc:iec,jsc:jec,32), sfc_var2(isc:iec,jsc:jec,3), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,3))
+    call block_sum(area * sfc_var2(isc:iec,jsc:jec,32), coarsened_area_times_sncovr)
+    where (coarsened_area_times_sncovr .eq. 0.0)
+       sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,3) = 0.0
+    endwhere
+
+    ! Do something similar for hice
+    call weighted_block_average(area * sfc_var2(isc:iec,jsc:jec,23), sfc_var2(isc:iec,jsc:jec,22), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,22))
+    call block_sum(area * sfc_var2(isc:iec,jsc:jec,23), coarsened_area_times_fice)
+    where (coarsened_area_times_fice .eq. 0.0)
+       sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,22) = 0.0
+    endwhere
+
+    ! Over sea ice compute the area and ice fraction weighted average of tisfc; over all
+    ! other surfaces use just the area weighted average of tisfc.
+    call weighted_block_average(area * sfc_var2(isc:iec,jsc:jec,23), sfc_var2(isc:iec,jsc:jec,24), sfc_type_mask, sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,24))
+    call weighted_block_average(area, sfc_var2(isc:iec,jsc:jec,24), sfc_type_mask, tisfc_area_average)
+    where (sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1) .lt. 2.0)
+       sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,24) = tisfc_area_average
+    endwhere
+
+    ! Apply corrections to 2D variables based on surface_chgres.F90
+    FREEZING = 273.16
+    VTYPE_LAND_ICE = 15.0
+    STYPE_LAND_ICE = 16.0
+    SHDMIN_CANOPY_THRESHOLD = 0.011
+
+    ! Correction (1)
+    ! Clip tsea and tg3 at 273.16 K if a cell contains land ice.
+    where ((sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,2) .gt. FREEZING) .and. (sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,17) .eq. VTYPE_LAND_ICE))
+       sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,2) = FREEZING
+    endwhere
+    where ((sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,4) .gt. FREEZING) .and. (sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,17) .eq. VTYPE_LAND_ICE))
+       sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,4) = FREEZING
+    endwhere
+
+    ! Correction (2)
+    ! If a cell contains land ice, make sure the soil type is ice.
+    where (sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,17) .eq. VTYPE_LAND_ICE)
+       sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,18) = STYPE_LAND_ICE
+    endwhere
+
+    ! Correction (3)
+    ! If a cell does not contain vegetation, i.e. if shdmin < 0.011,
+    ! then set the canopy moisture content to zero.
+    where (sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,28) .lt. SHDMIN_CANOPY_THRESHOLD)
+       sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,13) = 0.0
+    endwhere
+
+    ! Correction (4)
+    ! If a cell contains land ice, then shdmin is set to zero.
+    where (sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,17) .eq. VTYPE_LAND_ICE)
+       sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,28) = 0.0
+    endwhere
+
+    ! For the 3D variables (all soil properties) take the area weighted average
+    ! over the dominant surface and soil type.
+    do num = 1,nvar3
+      call weighted_block_average(area, sfc_var3(isc:iec,jsc:jec,:,num), sfc_and_stype_mask, Model%lsoil, sfc_var3_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,:,num))
+    enddo
+
+    call save_restart(sfc_restart_coarse, timestamp)
+  end subroutine sfc_prop_restart_write_coarse
+
+  subroutine register_coarse_sfc_prop_restart_fields(restart, sfc_var2_coarse, sfc_var3_coarse, filename, &
+    var2_p_coarse, var3_p_coarse, variable_names_2d, variable_names_3d, domain, &
+    Model, nvar2m, nvar3)
+    type(restart_file_type), intent(inout) :: restart
+    real(kind=kind_phys), target, intent(inout) :: sfc_var2_coarse(:,:,:)
+    real(kind=kind_phys), target, intent(inout) :: sfc_var3_coarse(:,:,:,:)
+    character(len=32), intent(in) :: filename
+    real(kind=kind_phys), pointer, intent(inout) :: var2_p_coarse(:,:)
+    real(kind=kind_phys), pointer, intent(inout) :: var3_p_coarse(:,:,:)
+    character(len=32), intent(in) :: variable_names_2d(:), variable_names_3d(:)
+    type(domain2d), intent(in) :: domain
+    type(IPD_control_type), intent(in) :: Model
+    integer, intent(in) :: nvar2m, nvar3
+
+    integer :: num, id_restart
+    logical :: mand
+
+    do num = 1,nvar2m
+        var2_p_coarse => sfc_var2_coarse(:,:,num)
+        if (trim(variable_names_2d(num)) == 'sncovr') then
+          id_restart = register_restart_field(restart, filename, &
+                variable_names_2d(num), var2_p_coarse, domain=domain, mandatory=.false.)
+        else
+          id_restart = register_restart_field(restart, filename, &
+                variable_names_2d(num), var2_p_coarse, domain=domain)
+        endif
+    enddo
+    nullify(var2_p_coarse)
+
+    do num = 1,nvar3
+        var3_p_coarse => sfc_var3_coarse(:,:,:,num)
+        id_restart = register_restart_field(restart, filename, &
+            variable_names_3d(num), var3_p_coarse, domain=domain)
+    enddo
+    nullify(var3_p_coarse)
+ end subroutine register_coarse_sfc_prop_restart_fields
 !----------------------------------------------------------------------      
 ! phys_restart_read
 !----------------------------------------------------------------------      
