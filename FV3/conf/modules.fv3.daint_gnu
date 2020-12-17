@@ -1,0 +1,12 @@
+##
+## load programming environment
+## this typically includes compiler, MPI and job scheduler
+##
+module load daint-gpu
+module switch PrgEnv-cray PrgEnv-gnu
+module load cray-netcdf
+
+##
+## load nwprod libraries
+##
+
