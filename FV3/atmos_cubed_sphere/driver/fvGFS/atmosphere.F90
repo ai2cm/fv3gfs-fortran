@@ -221,6 +221,7 @@ public :: atmosphere_resolution,   atmosphere_grid_bdry,         &
 !--- physics/radiation data exchange routines
 public :: atmos_phys_driver_statein
 
+public :: atmosphere_coarse_graining_parameters
 public :: atmosphere_coarsening_strategy
 
 !-----------------------------------------------------------------------
@@ -2236,6 +2237,14 @@ contains
    enddo
  end subroutine update_physics_precipitation_for_qv_nudging
 
+ subroutine atmosphere_coarse_graining_parameters(coarse_domain, write_coarse_restart_files, write_only_coarse_intermediate_restarts)
+   type(domain2d), intent(out) :: coarse_domain
+   logical, intent(out) :: write_coarse_restart_files, write_only_coarse_intermediate_restarts
+
+   coarse_domain = Atm(mytile)%coarse_graining%domain
+   write_coarse_restart_files = Atm(mytile)%coarse_graining%write_coarse_restart_files
+   write_only_coarse_intermediate_restarts = Atm(mytile)%coarse_graining%write_only_coarse_intermediate_restarts
+ end subroutine atmosphere_coarse_graining_parameters
  subroutine atmosphere_coarsening_strategy(coarsening_strategy)
    character(len=64), intent(out) :: coarsening_strategy
 
