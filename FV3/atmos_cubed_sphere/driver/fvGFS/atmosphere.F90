@@ -218,12 +218,14 @@ public :: atmosphere_resolution,   atmosphere_grid_bdry,         &
           atmosphere_diss_est,         & ! dissipation estimate for SKEB 
           atmosphere_get_bottom_layer, &
           atmosphere_nggps_diag,       &
-          set_atmosphere_pelist
+          set_atmosphere_pelist, atmosphere_coarse_diag_axes
 
 !--- physics/radiation data exchange routines
 public :: atmos_phys_driver_statein
 
 public :: atmosphere_coarse_graining_parameters
+public :: atmosphere_coarsening_strategy
+
 !-----------------------------------------------------------------------
 ! version number of this module
 ! Include variable "version" to be written to log file.
@@ -448,7 +450,7 @@ contains
    call fv_diag_init(Atm(mytile:mytile), Atm(mytile)%atmos_axes, Time, npx, npy, npz, Atm(mytile)%flagstruct%p_ref)
 
    if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
-      call fv_coarse_diag_init(Time, Atm(mytile)%atmos_axes(3), &
+      call fv_coarse_diag_init(Atm, Time, Atm(mytile)%atmos_axes(3), &
            Atm(mytile)%atmos_axes(4), Atm(mytile)%coarse_graining)
    endif
    if (Atm(mytile)%coarse_graining%write_coarse_restart_files) then
@@ -983,6 +985,19 @@ contains
    axes (1:size(axes(:))) = Atm(mytile)%atmos_axes (1:size(axes(:)))
 
  end subroutine atmosphere_diag_axes
+
+
+!>@brief The subroutine 'atmosphere_coarse_diag_axes' is an API to return the axis indices
+!! for the coarse atmospheric (mass) grid.
+ subroutine atmosphere_coarse_diag_axes(coarse_axes)
+   integer, intent(out) :: coarse_axes(4)
+
+   coarse_axes = (/ &
+        Atm(mytile)%coarse_graining%id_xt_coarse, &
+        Atm(mytile)%coarse_graining%id_yt_coarse, &
+        Atm(mytile)%coarse_graining%id_pfull, &
+        Atm(mytile)%coarse_graining%id_phalf /)
+ end subroutine atmosphere_coarse_diag_axes 
 
 
 !>@brief The subroutine 'atmosphere_etalvls' is an API to return the ak/bk
@@ -2267,4 +2282,9 @@ contains
    write_coarse_restart_files = Atm(mytile)%coarse_graining%write_coarse_restart_files
    write_only_coarse_intermediate_restarts = Atm(mytile)%coarse_graining%write_only_coarse_intermediate_restarts
  end subroutine atmosphere_coarse_graining_parameters
+ subroutine atmosphere_coarsening_strategy(coarsening_strategy)
+   character(len=64), intent(out) :: coarsening_strategy
+
+   coarsening_strategy = Atm(mytile)%coarse_graining%strategy
+ end subroutine atmosphere_coarsening_strategy
 end module atmosphere_mod

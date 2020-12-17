@@ -79,7 +79,12 @@ use atmosphere_mod,     only: atmosphere_scalar_field_halo
 use atmosphere_mod,     only: atmosphere_get_bottom_layer
 use atmosphere_mod,     only: set_atmosphere_pelist
 use atmosphere_mod,     only: Atm, mytile
+<<<<<<< HEAD
 use atmosphere_mod,     only: atmosphere_coarse_graining_parameters
+=======
+use atmosphere_mod,     only: atmosphere_coarse_diag_axes
+use atmosphere_mod,     only: atmosphere_coarsening_strategy
+>>>>>>> master
 use block_control_mod,  only: block_control_type, define_blocks_packed
 use DYCORE_typedefs,    only: DYCORE_data_type, DYCORE_diag_type
 #ifdef CCPP
@@ -112,10 +117,11 @@ use stochastic_physics_sfc, only: run_stochastic_physics_sfc
 use FV3GFS_io_mod,      only: FV3GFS_restart_read, FV3GFS_restart_write, &
                               FV3GFS_IPD_checksum,                       &
                               FV3GFS_diag_register, FV3GFS_diag_output,  &
-                              DIAG_SIZE, FV3GFS_restart_write_coarse
+                              DIAG_SIZE, FV3GFS_restart_write_coarse,    &
+                              FV3GFS_diag_register_coarse
 use fv_iau_mod,         only: iau_external_data_type,getiauforcing,iau_initialize
 use module_fv3_config,  only: output_1st_tstep_rst, first_kdt, nsout
-
+use coarse_graining_mod, only: get_fine_array_bounds
 !-----------------------------------------------------------------------
 
 implicit none
@@ -161,6 +167,7 @@ public Atm_block, IPD_Data, IPD_Control
      type(domain2d)                :: coarse_domain      ! domain decomposition of the coarse grid
      logical                       :: write_coarse_restart_files  ! whether to write coarse restart files
      logical                       :: write_only_coarse_intermediate_restarts  ! whether to write only coarse intermediate restart files
+     character(len=64)            :: coarsening_strategy            ! coarsening strategy for 3D fields
  end type atmos_data_type
                                                          ! to calculate gradient on cubic sphere grid.
 !</PUBLICTYPE >
@@ -199,10 +206,12 @@ type(DYCORE_diag_type)                 :: DYCORE_Diag(25)
 type(IPD_control_type)              :: IPD_Control
 type(IPD_data_type),    allocatable :: IPD_Data(:)  ! number of blocks
 type(IPD_diag_type),    target      :: IPD_Diag(DIAG_SIZE)
+type(IPD_diag_type),    target      :: IPD_Diag_coarse(DIAG_SIZE)
 type(IPD_restart_type)              :: IPD_Restart
 #else
 ! IPD_Control and IPD_Data are coming from CCPP_data
 type(IPD_diag_type),    target      :: IPD_Diag(DIAG_SIZE)
+type(IPD_diag_type),    target      :: IPD_Diag_coarse(DIAG_SIZE)
 type(IPD_restart_type)              :: IPD_Restart
 #endif
 
@@ -462,6 +471,7 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
   integer              :: ntracers, maxhf, maxh
   character(len=32), allocatable, target :: tracer_names(:)
   integer :: nthrds, nb
+  integer :: coarse_diagnostic_axes(4)
 
 !-----------------------------------------------------------------------
 
@@ -518,6 +528,7 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
    call atmosphere_hgt (Atmos%layer_hgt, 'layer', relative=.false., flip=flip_vc)
    call atmosphere_hgt (Atmos%level_hgt, 'level', relative=.false., flip=flip_vc)
    call atmosphere_coarse_graining_parameters(Atmos%coarse_domain, Atmos%write_coarse_restart_files, Atmos%write_only_coarse_intermediate_restarts)
+   call atmosphere_coarsening_strategy(Atmos%coarsening_strategy)
 
    Atmos%mlon = mlon
    Atmos%mlat = mlat
@@ -683,6 +694,10 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
 
    call atmosphere_nggps_diag (Time, init=.true.)
    call FV3GFS_diag_register (IPD_Diag, Time, Atm_block, IPD_Control, Atmos%lon, Atmos%lat, Atmos%axes)
+   if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
+      call atmosphere_coarse_diag_axes(coarse_diagnostic_axes)
+      call FV3GFS_diag_register_coarse(IPD_Diag, Time, coarse_diagnostic_axes, IPD_Diag_coarse)
+   endif
    call IPD_initialize_rst (IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Init_parm)
 #ifdef CCPP
    call FV3GFS_restart_read (IPD_Data, IPD_Restart, Atm_block, IPD_Control, Atmos%domain, Atm(mytile)%flagstruct%warm_start)
@@ -860,6 +875,7 @@ subroutine update_atmos_model_state (Atmos)
   integer :: isec, seconds, isec_fhzero
   integer :: rc
   real(kind=IPD_kind_phys) :: time_int, time_intfull
+  integer :: is, ie, js, je
 !
     call set_atmosphere_pelist()
     call mpp_clock_begin(fv3Clock)
@@ -900,9 +916,13 @@ subroutine update_atmos_model_state (Atmos)
       endif
       if (mpp_pe() == mpp_root_pe()) write(6,*) ' gfs diags time since last bucket empty: ',time_int/3600.,'hrs'
       call atmosphere_nggps_diag(Atmos%Time)
-      call FV3GFS_diag_output(Atmos%Time, IPD_DIag, Atm_block, IPD_Control%nx, IPD_Control%ny, &
+      call get_fine_array_bounds(is, ie, js, je)
+      call FV3GFS_diag_output(Atmos%Time, IPD_DIag, Atm_block, IPD_Data, IPD_Control%nx, IPD_Control%ny, &
                             IPD_Control%levs, 1, 1, 1.d0, time_int, time_intfull,              &
-                            IPD_Control%fhswr, IPD_Control%fhlwr)
+                            IPD_Control%fhswr, IPD_Control%fhlwr, &
+                            Atm(mytile)%coarse_graining%write_coarse_diagnostics, &
+                            IPD_Diag_coarse, &
+                            Atm(mytile)%delp(is:ie,js:je,:), Atmos%coarsening_strategy, Atm(mytile)%ptop)
       if (nint(IPD_Control%fhzero) > 0) then 
         if (mod(isec,3600*nint(IPD_Control%fhzero)) == 0) diag_time = Atmos%Time
       else
