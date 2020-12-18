@@ -561,7 +561,7 @@ module module_physics_driver
 
       real(kind=kind_phys), dimension(size(Grid%xlon,1),Model%levs) ::  &
           del, rhc, dtdt, dudt, dvdt, dtdtc,                            &
-          ud_mf, dd_mf, dt_mf, prnum, dkt, specific_heat
+          ud_mf, dd_mf, dt_mf, prnum, dkt, specific_heat, final_dynamics_delp
 !         ud_mf, dd_mf, dt_mf, prnum, dkt, sigmatot, sigmafrac, txa
       real(kind=kind_phys), allocatable, dimension(:,:) :: sigmatot,    &
           gwdcu, gwdcv, rainp, sigmafrac, tke
@@ -5360,11 +5360,16 @@ module module_physics_driver
               Statein%prsi(1:im,1:levs+1), im, levs, nwat, 1, Model%ntcw, Model%ntiw, &
               Model%ntrw, Model%ntsw, Model%ntgl, specific_heat)
         endif
-
-        call update_temperature_tendency_diagnostics(Diag%t_dt, dt3dt_initial, Diag%dt3dt, &
-            specific_heat, im, levs, dtp)
-        call update_water_vapor_tendency_diagnostics(Diag%q_dt, dq3dt_initial, Diag%dq3dt, &
-            Statein%qgrs(:,:,1:nwat), Stateout%gq0(:,:,1:nwat), im, levs, nwat, dtp)
+        call compute_final_dynamics_delp(Statein%prsi(1:im,1:levs+1), &
+            dq3dt_initial, Diag%dq3dt, Stateout%gq0(:,:,1:nwat), im, levs, &
+            nwat, final_dynamics_delp)
+        call update_temperature_tendency_diagnostics(Diag%t_dt, Diag%t_dt_average, &
+            Diag%t_dt_int, Diag%t_dt_average_int, final_dynamics_delp, &
+            dt3dt_initial, Diag%dt3dt, specific_heat, im, levs, dtp)
+        call update_water_vapor_tendency_diagnostics(Diag%q_dt, Diag%q_dt_average, &
+            Diag%q_dt_int, Diag%q_dt_average_int, &
+            dq3dt_initial, Diag%dq3dt, Statein%qgrs(:,:,1:nwat), Stateout%gq0(:,:,1:nwat), &
+            final_dynamics_delp, im, levs, nwat, dtp)
       endif
 
 !     if (kdt > 2 ) stop
@@ -5687,18 +5692,23 @@ module module_physics_driver
       ! if the dynamical core is non-hydrostatic or cp / cpm if the dynamical
       ! core is hydrostatic to account for how the temperature tendency is
       ! adjusted within the dynamical core.
-      subroutine update_temperature_tendency_diagnostics(t_dt, dt3dt_initial, dt3dt_final, specific_heat, &
-        im, levs, timestep)
+      subroutine update_temperature_tendency_diagnostics(t_dt, t_dt_average, t_dt_int, t_dt_average_int, &
+        delp, dt3dt_initial, dt3dt_final, specific_heat, im, levs, timestep)
         integer, intent(in) :: im, levs
         real(kind=kind_phys), intent(in), dimension(1:im,1:levs,9) :: dt3dt_initial, dt3dt_final
-        real(kind=kind_phys), intent(inout) :: t_dt(1:im,1:levs,9)
-        real(kind=kind_phys), intent(in), dimension(1:im,1:levs) :: specific_heat
+        real(kind=kind_phys), intent(inout) :: t_dt(1:im,1:levs,9), t_dt_average(1:im,1:levs,9), t_dt_int(1:im,9), t_dt_average_int(1:im,9)
+        real(kind=kind_phys), intent(in), dimension(1:im,1:levs) :: specific_heat, delp
         real(kind=kind_phys), intent(in) :: timestep
 
+        real(kind=kind_phys), dimension(1:im,1:levs) :: increment
         integer :: i
 
         do i = 1, 9
-          t_dt(:,:,i) = con_cp * (dt3dt_final(:,:,i) - dt3dt_initial(:,:,i)) / (timestep * specific_heat(:,:))
+          increment = dt3dt_final(:,:,i) - dt3dt_initial(:,:,i)
+          t_dt(:,:,i) = con_cp * increment / (timestep * specific_heat(:,:))
+          t_dt_average(:,:,i) = t_dt_average(:,:,i) + timestep * t_dt(:,:,i)
+          t_dt_int(:,i) = sum(delp * specific_heat * t_dt(:,:,i), dim=2) / con_g
+          t_dt_average_int(:,i) = t_dt_average_int(:,i) + timestep * t_dt_int(:,i)
         enddo
       end subroutine update_temperature_tendency_diagnostics
 
@@ -5714,16 +5724,17 @@ module module_physics_driver
       ! 1 / (mass of dry air + mass of all hydrometeors at the beginning of the physics).
       ! This residual is typically small compared to the tendencies induced by the
       ! physics parameterizations themselves.
-      subroutine update_water_vapor_tendency_diagnostics(q_dt, dq3dt_initial, dq3dt_final, &
-        q_initial, q_final, im, levs, nwat, timestep)
+      subroutine update_water_vapor_tendency_diagnostics(q_dt, q_dt_average, q_dt_int, q_dt_average_int, &
+        dq3dt_initial, dq3dt_final, q_initial, q_final, delp, im, levs, nwat, timestep)
         integer, intent(in) :: im, levs, nwat
-        real(kind=kind_phys), intent(inout) :: q_dt(1:im,1:levs,5)
+        real(kind=kind_phys), intent(inout) :: q_dt(1:im,1:levs,5), q_dt_average(1:im,1:levs,5), q_dt_int(1:im,5), q_dt_average_int(1:im,5)
         real(kind=kind_phys), intent(in), dimension(1:im,1:levs,1:9) :: dq3dt_initial, dq3dt_final
+        real(kind=kind_phys), intent(in) :: delp(1:im,1:levs)
         real(kind=kind_phys), intent(in), dimension(1:im,1:levs,1:nwat) :: q_initial, q_final
         real(kind=kind_phys), intent(in) :: timestep
 
         integer :: i
-        real(kind=kind_phys), dimension(1:im,1:levs) :: initial_dynamics_denominator, final_dynamics_denominator
+        real(kind=kind_phys), dimension(1:im,1:levs) :: initial_dynamics_denominator, final_dynamics_denominator, increment
 
         ! Note a factor of delp = mass of dry air + mass of water vapor at the start of
         ! the physics cancels in all of these calculations, so we can work with mass
@@ -5732,12 +5743,38 @@ module module_physics_driver
         final_dynamics_denominator = 1.0 + sum(dq3dt_final(:,:,1:4) - dq3dt_initial(:,:,1:4), 3) + sum(q_final(:,:,2:nwat), 3)
 
         do i = 1, 4
-          q_dt(:,:,i) = (dq3dt_final(:,:,i) - dq3dt_initial(:,:,i)) / (timestep * final_dynamics_denominator)
+          increment = dq3dt_final(:,:,i) - dq3dt_initial(:,:,i)
+          q_dt(:,:,i) = increment / (timestep * final_dynamics_denominator)
+          q_dt_int(:,i) = sum(delp * q_dt(:,:,i), dim=2) / con_g
+          q_dt_average(:,:,i) = q_dt_average(:,:,i) + timestep * q_dt(:,:,i)
+          q_dt_average_int(:,i) = q_dt_average_int(:,i) + timestep * q_dt_int(:,i)
         enddo
 
         ! Compute the residual tendency.
         q_dt(:,:,5) = q_initial(:,:,1) * ((1.0 / final_dynamics_denominator) - (1.0 / initial_dynamics_denominator)) / timestep
+        q_dt_int(:,5) = sum(delp * q_dt(:,:,5), dim=2) / con_g
+        q_dt_average(:,:,5) = q_dt_average(:,:,5) + timestep * q_dt(:,:,5)
+        q_dt_average_int(:,5) = q_dt_average_int(:,5) + timestep * q_dt_int(:,5)
       end subroutine update_water_vapor_tendency_diagnostics
+
+      subroutine compute_final_dynamics_delp(pressure_on_interfaces, &
+        dq3dt_initial, dq3dt_final, q_final, im, levs, nwat, delp)
+        integer, intent(in) :: im, levs, nwat
+        real(kind=kind_phys), intent(in), dimension(1:im,1:levs,1:9) :: dq3dt_initial, dq3dt_final
+        real(kind=kind_phys), intent(in), dimension(1:im,1:levs,1:nwat) :: q_final
+        real(kind=kind_phys), intent(in), dimension(1:im,1:levs+1) :: pressure_on_interfaces
+        real(kind=kind_phys), intent(out), dimension(1:im,1:levs) :: delp
+
+        real(kind=kind_phys), dimension(1:im,1:levs) :: delp_physics
+        real(kind=kind_phys), dimension(1:im,1:levs) :: final_dynamics_q
+        integer :: k
+
+        final_dynamics_q = 1.0 + sum(dq3dt_final(:,:,1:4) - dq3dt_initial(:,:,1:4), 3) + sum(q_final(:,:,2:nwat), 3)
+        do k = 1, levs
+          delp_physics(:,k) = pressure_on_interfaces(:,k) - pressure_on_interfaces(:,k+1)
+        enddo
+        delp = delp_physics * final_dynamics_q
+      end subroutine compute_final_dynamics_delp
 !> @}
 
 end module module_physics_driver
