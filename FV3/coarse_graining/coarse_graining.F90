@@ -4,7 +4,8 @@ module coarse_graining_mod
   use mpp_domains_mod, only: domain2d, mpp_define_io_domain, mpp_define_mosaic, mpp_get_compute_domain
   use mappm_mod, only: mappm
   use mpp_mod, only: FATAL, input_nml_file, mpp_error, mpp_npes
-  
+  use statistics_mod, only: mode
+
   implicit none
   private
 
@@ -12,14 +13,26 @@ module coarse_graining_mod
        get_coarse_array_bounds, coarse_graining_init, weighted_block_average, &
        weighted_block_edge_average_x, weighted_block_edge_average_y, MODEL_LEVEL, &
        block_upsample, mask_area_weights, PRESSURE_LEVEL, vertical_remapping_requirements, &
-       vertically_remap_field, mask_mass_weights, remap_edges_along_x, remap_edges_along_y
+       vertically_remap_field, block_mode, block_min, block_max, mask_mass_weights, &
+       remap_edges_along_x, remap_edges_along_y, block_edge_sum_x, block_edge_sum_y
 
   interface block_sum
      module procedure block_sum_2d
+     module procedure masked_block_sum_2d
   end interface block_sum
   
+  interface block_edge_sum_x
+     module procedure block_edge_sum_x_2d_full_input
+  end interface block_edge_sum_x
+
+  interface block_edge_sum_y
+     module procedure block_edge_sum_y_2d_full_input
+  end interface block_edge_sum_y
+
   interface weighted_block_average
      module procedure weighted_block_average_2d
+     module procedure masked_weighted_block_average_2d
+     module procedure masked_weighted_block_average_3d_field_2d_weights
      module procedure weighted_block_average_3d_field_2d_weights
      module procedure weighted_block_average_3d_field_3d_weights
   end interface weighted_block_average
@@ -39,6 +52,18 @@ module coarse_graining_mod
      module procedure block_upsample_3d
   end interface block_upsample
 
+  interface block_mode
+     module procedure block_mode_2d
+     module procedure masked_block_mode_2d
+  end interface block_mode
+
+  interface block_min
+     module procedure masked_block_min_2d
+  end interface block_min
+
+  interface block_max
+     module procedure masked_block_max_2d
+  end interface block_max
   interface weighted_block_edge_average_x_pre_downsampled
      module procedure weighted_block_edge_average_x_pre_downsampled_unmasked
      module procedure weighted_block_edge_average_x_pre_downsampled_masked
@@ -189,7 +214,24 @@ contains
           coarse(i_coarse,j_coarse) = sum(fine(i:i+offset,j:j+offset))
        enddo
     enddo
-  end subroutine
+  end subroutine block_sum_2d
+
+  subroutine masked_block_sum_2d(fine, mask, coarse)
+    real, intent(in) :: fine(is:ie,js:je)
+    logical, intent(in) :: mask(is:ie,js:je)
+    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse)
+
+    integer :: i, j, i_coarse, j_coarse, offset
+
+    offset = coarsening_factor - 1
+    do i = is, ie, coarsening_factor
+       i_coarse = (i - 1) / coarsening_factor + 1
+       do j = js, je, coarsening_factor
+          j_coarse = (j - 1) / coarsening_factor + 1
+          coarse(i_coarse,j_coarse) = sum(fine(i:i+offset,j:j+offset), mask=mask(i:i+offset,j:j+offset))
+       enddo
+    enddo
+  end subroutine masked_block_sum_2d
   
   subroutine weighted_block_average_2d(weights, fine, coarse)
     real, intent(in) :: weights(is:ie,js:je), fine(is:ie,js:je)
@@ -207,6 +249,23 @@ contains
     coarse = weighted_block_sum / block_sum_weights
   end subroutine weighted_block_average_2d
 
+  subroutine masked_weighted_block_average_2d(weights, fine, mask, coarse)
+    real, intent(in) :: weights(is:ie,js:je), fine(is:ie,js:je)
+    logical, intent(in) :: mask(is:ie,js:je)
+    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse)
+
+    real, allocatable :: weighted_fine(:,:), weighted_block_sum(:,:), block_sum_weights(:,:)
+
+    allocate(weighted_fine(is:ie,js:je))
+    allocate(weighted_block_sum(is_coarse:ie_coarse,js_coarse:je_coarse))
+    allocate(block_sum_weights(is_coarse:ie_coarse,js_coarse:je_coarse))
+
+    weighted_fine = weights * fine
+    call masked_block_sum_2d(weighted_fine, mask, weighted_block_sum)
+    call masked_block_sum_2d(weights, mask, block_sum_weights)
+    coarse = weighted_block_sum / block_sum_weights
+  end subroutine masked_weighted_block_average_2d
+
   subroutine weighted_block_average_3d_field_2d_weights(weights, fine, coarse)
     real, intent(in) :: weights(is:ie,js:je), fine(is:ie,js:je,1:npz)
     real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz)
@@ -217,6 +276,19 @@ contains
        call weighted_block_average_2d(weights, fine(is:ie,js:je,k), coarse(is_coarse:ie_coarse,js_coarse:je_coarse,k))
     enddo
   end subroutine weighted_block_average_3d_field_2d_weights
+
+  subroutine masked_weighted_block_average_3d_field_2d_weights(weights, fine, mask, nz, coarse)
+    real, intent(in) :: weights(is:ie,js:je), fine(is:ie,js:je,1:nz)
+    logical, intent(in) :: mask(is:ie,js:je)
+    integer, intent(in) :: nz
+    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:nz)
+
+    integer :: k
+
+    do k = 1, nz
+       call masked_weighted_block_average_2d(weights, fine(is:ie,js:je,k), mask, coarse(is_coarse:ie_coarse,js_coarse:je_coarse,k))
+    enddo
+  end subroutine masked_weighted_block_average_3d_field_2d_weights
 
   subroutine weighted_block_average_3d_field_3d_weights(weights, fine, coarse)
     real, intent(in) :: weights(is:ie,js:je,1:npz), fine(is:ie,js:je,1:npz)
@@ -501,7 +573,6 @@ contains
     call weighted_block_average(area(is:ie,js:je), delp(is:ie,js:je,1:npz), coarse_delp)
     call compute_phalf_from_delp(coarse_delp, ptop, is_coarse, ie_coarse, js_coarse, je_coarse, coarse_phalf)
     call block_upsample(coarse_phalf, upsampled_coarse_phalf, npz+1)
-
     deallocate(coarse_delp)
     deallocate(coarse_phalf)
    end subroutine vertical_remapping_requirements
@@ -523,6 +594,72 @@ contains
     enddo
    end subroutine mask_area_weights
 
+   subroutine block_mode_2d(fine, coarse)
+    real, intent(in) :: fine(is:ie,js:je)
+    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse)
+
+    integer :: i, j, i_coarse, j_coarse, offset
+
+    offset = coarsening_factor - 1
+    do i = is, ie, coarsening_factor
+       i_coarse = (i - 1) / coarsening_factor + 1
+       do j = js, je, coarsening_factor
+          j_coarse = (j - 1) / coarsening_factor + 1
+          coarse(i_coarse, j_coarse) = mode(fine(i:i+offset,j:j+offset))
+       enddo
+    enddo
+   end subroutine block_mode_2d
+
+   subroutine masked_block_mode_2d(fine, mask, coarse)
+    real, intent(in) :: fine(is:ie,js:je)
+    logical, intent(in) :: mask(is:ie,js:je)
+    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse)
+
+    integer :: i, j, i_coarse, j_coarse, offset
+
+    offset = coarsening_factor - 1
+    do i = is, ie, coarsening_factor
+       i_coarse = (i - 1) / coarsening_factor + 1
+       do j = js, je, coarsening_factor
+          j_coarse = (j - 1) / coarsening_factor + 1
+          coarse(i_coarse, j_coarse) = mode(fine(i:i+offset,j:j+offset), mask(i:i+offset,j:j+offset))
+       enddo
+    enddo
+   end subroutine masked_block_mode_2d
+
+   subroutine masked_block_min_2d(fine, mask, coarse)
+    real, intent(in) :: fine(is:ie,js:je)
+    logical, intent(in) :: mask(is:ie,js:je)
+    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse)
+
+    integer :: i, j, i_coarse, j_coarse, offset
+
+    offset = coarsening_factor - 1
+    do i = is, ie, coarsening_factor
+       i_coarse = (i - 1) / coarsening_factor + 1
+       do j = js, je, coarsening_factor
+          j_coarse = (j - 1) / coarsening_factor + 1
+          coarse(i_coarse, j_coarse) = minval(fine(i:i+offset,j:j+offset), mask=mask(i:i + offset,j:j + offset))
+       enddo
+    enddo
+   end subroutine masked_block_min_2d
+
+   subroutine masked_block_max_2d(fine, mask, coarse)
+    real, intent(in) :: fine(is:ie,js:je)
+    logical, intent(in) :: mask(is:ie,js:je)
+    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse)
+
+    integer :: i, j, i_coarse, j_coarse, offset
+
+    offset = coarsening_factor - 1
+    do i = is, ie, coarsening_factor
+       i_coarse = (i - 1) / coarsening_factor + 1
+       do j = js, je, coarsening_factor
+          j_coarse = (j - 1) / coarsening_factor + 1
+          coarse(i_coarse, j_coarse) = maxval(fine(i:i+offset,j:j+offset), mask=mask(i:i + offset,j:j + offset))
+       enddo
+    enddo
+   end subroutine masked_block_max_2d
    subroutine mask_mass_weights(area, delp, phalf, upsampled_coarse_phalf, &
     masked_mass_weights)
     real, intent(in) :: area(is:ie,js:je)
@@ -830,4 +967,36 @@ contains
     ! 6. Coarsen the remapped field
     call weighted_block_edge_average_y_pre_downsampled(remapped, dy, result, mask, npz)
   end subroutine remap_edges_along_y
+
+  subroutine block_edge_sum_x_2d_full_input(fine, coarse)
+    real, intent(in) :: fine(is:ie,js:je+1)
+    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse+1)
+
+    integer :: i, j, i_coarse, j_coarse, offset
+
+    offset = coarsening_factor - 1
+    do i = is, ie, coarsening_factor
+       i_coarse = (i - 1) / coarsening_factor + 1
+       do j = js, je + 1, coarsening_factor
+          j_coarse = (j - 1) / coarsening_factor + 1
+          coarse(i_coarse,j_coarse) = sum(fine(i:i+offset,j))
+       enddo
+    enddo
+  end subroutine block_edge_sum_x_2d_full_input
+
+  subroutine block_edge_sum_y_2d_full_input(fine, coarse)
+    real, intent(in) :: fine(is:ie+1,js:je)
+    real, intent(out) :: coarse(is_coarse:ie_coarse+1,js_coarse:je_coarse)
+
+    integer :: i, j, i_coarse, j_coarse, offset
+
+    offset = coarsening_factor - 1
+    do i = is, ie + 1, coarsening_factor
+       i_coarse = (i - 1) / coarsening_factor + 1
+       do j = js, je, coarsening_factor
+          j_coarse = (j - 1) / coarsening_factor + 1
+          coarse(i_coarse,j_coarse) = sum(fine(i,j:j+offset))
+       enddo
+    enddo
+  end subroutine block_edge_sum_y_2d_full_input
 end module coarse_graining_mod

@@ -126,7 +126,7 @@ FFLAGS += $(FFLAGS_VERBOSE)
 LDFLAGS += $(LDFLAGS_VERBOSE)
 endif
 
-LIBS += -L$(ESMF_DIR)/lib -lesmf -L$(FMS_DIR) -lfms -L$(NETCDF_DIR)/lib -lnetcdff -lnetcdf
+LIBS += -L$(ESMF_DIR)/lib -lesmf -L$(FMS_DIR)/lib -lfms -L$(NETCDF_DIR)/lib -lnetcdff -lnetcdf
 
 # Intel MKL library support
 LIBS += -L$(MKL_DIR)/lib/intel64 -Wl,--start-group $(MKL_DIR)/lib/intel64/libmkl_intel_lp64.a $(MKL_DIR)/lib/intel64/libmkl_intel_thread.a $(MKL_DIR)/lib/intel64/libmkl_core.a -Wl,--end-group -liomp5 -lpthread -lm
