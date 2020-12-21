@@ -5431,11 +5431,7 @@ module GFS_typedefs
       Diag%du3dt    = zero
       Diag%dv3dt    = zero
       Diag%dt3dt    = zero
-      Diag%t_dt     = zero
-      Diag%t_dt_int = zero
       Diag%dq3dt    = zero
-      Diag%q_dt     = zero
-      Diag%q_dt_int = zero
 !     Diag%upd_mf   = zero
 !     Diag%dwn_mf   = zero
 !     Diag%det_mf   = zero

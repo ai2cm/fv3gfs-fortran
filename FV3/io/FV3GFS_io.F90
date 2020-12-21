@@ -2953,7 +2953,7 @@ module FV3GFS_io_mod
     write_coarse_diagnostics, Diag_coarse, delp, coarsening_strategy, ptop)
     type(time_type),           intent(in) :: Time
     type(IPD_diag_type),       intent(in) :: Diag(:)
-    type(block_control_type), intent(in) :: Atm_block
+    type(block_control_type),  intent(in) :: Atm_block
     type(IPD_data_type),       intent(in) :: IPD_Data(:)
     integer,                   intent(in) :: nx, ny, levs
     logical,                   intent(in) :: write_coarse_diagnostics
@@ -2973,7 +2973,7 @@ module FV3GFS_io_mod
 
     isc   = atm_block%isc
     jsc   = atm_block%jsc
-
+ 
     if (write_coarse_diagnostics) then
       call determine_required_coarse_graining_weights(diag_coarse, coarsening_strategy, require_area, require_masked_area, require_mass, require_vertical_remapping)
       if (.not. require_vertical_remapping) then
