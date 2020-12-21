@@ -22,7 +22,8 @@ module physics_abstraction_layer
                              restart_populate =>  GFS_restart_populate
 
   use GFS_diagnostics, only: diagnostic_type      =>  GFS_externaldiag_type,    &
-                             diagnostic_populate  =>  GFS_externaldiag_populate
+                             diagnostic_populate  =>  GFS_externaldiag_populate, &
+                             populate_standard_diagnostics => GFS_populate_standard_diagnostics
 
 #ifdef CCPP
   use GFS_driver,      only: initialize       =>  GFS_initialize

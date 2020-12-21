@@ -46,11 +46,43 @@ module GFS_diagnostics
   public  GFS_externaldiag_type
 
   !--- public interfaces ---
-  public  GFS_externaldiag_populate
+  public  GFS_externaldiag_populate, GFS_populate_standard_diagnostics
  
   CONTAINS
 
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+subroutine GFS_populate_standard_diagnostics(Diag, IntDiag, nblks)
+  type(GFS_externaldiag_type), intent(inout) :: Diag(:)
+  type(GFS_diag_type), intent(in) :: IntDiag(:)
+  integer, intent(in) :: nblks
+
+  integer :: nb
+  integer :: index = 1
+
+  Diag(index)%axes = 3
+  Diag(index)%name = 'standard_tendency_of_air_temperature_due_to_longwave_heating'
+  Diag(index)%desc = 'instantaneous temperature tendency due to longwave radiation'
+  Diag(index)%unit = 'K/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'mass_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,1)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 3
+  Diag(index)%name = 'standard_tendency_of_air_temperature_due_to_deep_convection'
+  Diag(index)%desc = 'instantaneous temperature tendency due to deep convection'
+  Diag(index)%unit = 'K/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'mass_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,4)
+  enddo
+end subroutine GFS_populate_standard_diagnostics
 
 !-------------------------------------------------------------------------      
 !--- GFS_externaldiag_populate ---

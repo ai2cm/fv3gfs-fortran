@@ -76,6 +76,8 @@ module FV3GFS_io_mod
   public  fv3gfs_diag_register, fv3gfs_diag_output
   public  FV3GFS_restart_write_coarse
   public  fv3gfs_diag_register_coarse
+  public  fv3gfs_register_standard_diagnostics
+  public  fv3gfs_standard_diagnostic_output
 #ifdef use_WRTCOMP
   public  fv_phys_bundle_setup
 #endif
@@ -2895,6 +2897,23 @@ module FV3GFS_io_mod
 
   end subroutine fv3gfs_diag_register
 
+  subroutine fv3gfs_register_standard_diagnostics(Diag, Time, axes)
+    type(IPD_diag_type), intent(inout) :: Diag(:)
+    type(time_type), intent(in) :: Time
+    integer, intent(in) :: axes(4)
+
+    integer :: index
+
+    do index = 1, DIAG_SIZE
+      write(*,*) 'Registering standard diagnostics at index ', index
+      if (trim(Diag(index)%name) .eq. '') exit  ! No need to populate non-existent coarse diagnostics
+      write(*,*) 'Registering ', Diag(index)%name
+      Diag(index)%id = register_diag_field(trim(Diag(index)%mod_name), trim(Diag(index)%name),  &
+        axes(1:Diag(index)%axes), Time, trim(Diag(index)%desc), &
+        trim(Diag(index)%unit), missing_value=real(missing_value))
+    enddo
+  end subroutine fv3gfs_register_standard_diagnostics
+
   subroutine populate_coarse_diag_type(diagnostic, coarse_diagnostic)
     type(IPD_diag_type), intent(in) :: diagnostic
     type(IPD_diag_type), intent(inout) :: coarse_diagnostic
@@ -2931,6 +2950,38 @@ module FV3GFS_io_mod
   end subroutine fv3gfs_diag_register_coarse
   
 !-------------------------------------------------------------------------      
+
+  subroutine fv3gfs_standard_diagnostic_output(Time, Diag, Atm_block, IPD_Data, nx, ny, levs)
+    type(time_type),           intent(in) :: Time
+    type(IPD_diag_type),       intent(in) :: Diag(:)
+    type(block_control_type), intent(in) :: Atm_block
+    type(IPD_data_type),       intent(in) :: IPD_Data(:)
+    integer,                   intent(in) :: nx, ny, levs
+
+    real(kind=kind_phys) :: var3d(nx, ny, levs)
+    integer :: i, j, ii, jj, k, isc, jsc, ix, nb, index, used
+
+    isc   = atm_block%isc
+    jsc   = atm_block%jsc
+
+    do index = 1, DIAG_SIZE
+      if (trim(Diag(index)%name) .eq. '') exit
+      if (Diag(index)%id .gt. 0) then
+        do k=1, levs
+          do j = 1, ny
+            jj = j + jsc - 1
+            do i = 1, nx
+                ii = i + isc - 1
+                nb = Atm_block%blkno(ii,jj)
+                ix = Atm_block%ixp(ii,jj)
+                var3d(i,j,k) = Diag(index)%data(nb)%var3(ix,levs - k + 1)
+            enddo
+          enddo
+        enddo
+        used = send_data(Diag(index)%id, var3d, Time)
+      endif
+    enddo
+  end subroutine fv3gfs_standard_diagnostic_output
 
 !-------------------------------------------------------------------------      
 !--- gfs_diag_output ---
