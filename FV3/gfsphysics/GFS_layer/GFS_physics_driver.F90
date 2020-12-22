@@ -2574,7 +2574,7 @@ module module_physics_driver
                 call set_state("swh_input", Radtend%htrsw)
                 call set_state("hlw_input", Radtend%htrlw)
                 call set_state("xmu_input", xmu)
-                call set_state("garea_input", garea)
+                ! call set_state("garea_input", garea)
                 ! call set_state("psk_input", psk)
                 call set_state("rbsoil_input", rb)
                 call set_state("zorl_input", Sfcprop%zorl)
