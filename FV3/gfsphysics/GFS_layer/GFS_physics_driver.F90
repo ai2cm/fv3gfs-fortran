@@ -5360,7 +5360,7 @@ module module_physics_driver
               Statein%prsi(1:im,1:levs+1), im, levs, nwat, 1, Model%ntcw, Model%ntiw, &
               Model%ntrw, Model%ntsw, Model%ntgl, specific_heat)
         endif
-        call compute_final_dynamics_delp(Statein%prsi(1:im,1:levs+1), &
+        call compute_updated_delp_following_dynamics_definition(Statein%prsi(1:im,1:levs+1), &
             dq3dt_initial, Diag%dq3dt, Stateout%gq0(:,:,1:nwat), im, levs, &
             nwat, final_dynamics_delp)
         call update_temperature_tendency_diagnostics(Diag%t_dt, &
@@ -5750,7 +5750,10 @@ module module_physics_driver
         q_dt_int(:,5) = sum(delp * q_dt(:,:,5), dim=2) / con_g
       end subroutine update_water_vapor_tendency_diagnostics
 
-      subroutine compute_final_dynamics_delp(pressure_on_interfaces, &
+      ! Compute the pressure thickness at the end of the physics following the definition 
+      ! in the dynamical core, where it is defined using the total mass of dry air plus all 
+      ! hydrometeors.
+      subroutine compute_updated_delp_following_dynamics_definition(pressure_on_interfaces, &
         dq3dt_initial, dq3dt_final, q_final, im, levs, nwat, delp)
         integer, intent(in) :: im, levs, nwat
         real(kind=kind_phys), intent(in), dimension(1:im,1:levs,1:9) :: dq3dt_initial, dq3dt_final
@@ -5758,16 +5761,32 @@ module module_physics_driver
         real(kind=kind_phys), intent(in), dimension(1:im,1:levs+1) :: pressure_on_interfaces
         real(kind=kind_phys), intent(out), dimension(1:im,1:levs) :: delp
 
-        real(kind=kind_phys), dimension(1:im,1:levs) :: delp_physics
-        real(kind=kind_phys), dimension(1:im,1:levs) :: final_dynamics_q
+        real(kind=kind_phys), dimension(1:im,1:levs) :: initial_mass_of_dry_air_plus_vapor
+        real(kind=kind_phys), dimension(1:im,1:levs) :: dry_air_plus_hydrometeor_mass_fraction_after_physics
+        real(kind=kind_phys), dimension(1:im,1:levs) :: change_in_vapor_mass_fraction_due_to_physics
+        real(kind=kind_phys), dimension(1:im,1:levs) :: final_mass_fraction_of_non_vapor_hydrometeors
+        real(kind=kind_phys) :: initial_mass_fraction_of_dry_air_plus_vapor = 1.0
         integer :: k
 
-        final_dynamics_q = 1.0 + sum(dq3dt_final(:,:,1:4) - dq3dt_initial(:,:,1:4), 3) + sum(q_final(:,:,2:nwat), 3)
+        ! Compute the sum of the mass fractions of dry air and the hydrometeors at the end of
+        ! the physics driver.  These mass fractions use the physics convention in which the 
+        ! denominator is the mass of dry air plus the mass of water vapor at the start of the physics. 
+        change_in_vapor_mass_fraction_due_to_physics = sum(dq3dt_final(:,:,1:4) - dq3dt_initial(:,:,1:4), 3)
+        final_mass_fraction_of_non_vapor_hydrometeors = sum(q_final(:,:,2:nwat), 3)
+        dry_air_plus_hydrometeor_mass_fraction_after_physics = initial_mass_fraction_of_dry_air_plus_vapor + &
+                                                               change_in_vapor_mass_fraction_due_to_physics + &
+                                                               final_mass_fraction_of_non_vapor_hydrometeors
+
+        ! Compute the mass of dry air plus vapor at the start of the physics.  (Note this is
+        ! implicitly scaled by a factor of gravitational acceleration / grid cell area, but 
+        ! we want to keep this constant factor in our result, so that is fine).
         do k = 1, levs
-          delp_physics(:,k) = pressure_on_interfaces(:,k) - pressure_on_interfaces(:,k+1)
+          initial_mass_of_dry_air_plus_vapor(:,k) = pressure_on_interfaces(:,k) - pressure_on_interfaces(:,k+1)
         enddo
-        delp = delp_physics * final_dynamics_q
-      end subroutine compute_final_dynamics_delp
+
+        ! Compute the mass of dry air plus all hydrometeors at the end of the physics.
+        delp = initial_mass_of_dry_air_plus_vapor * dry_air_plus_hydrometeor_mass_fraction_after_physics
+      end subroutine compute_updated_delp_following_dynamics_definition
 !> @}
 
 end module module_physics_driver

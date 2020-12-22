@@ -76,8 +76,8 @@ module FV3GFS_io_mod
   public  fv3gfs_diag_register, fv3gfs_diag_output
   public  FV3GFS_restart_write_coarse
   public  fv3gfs_diag_register_coarse
-  public  fv3gfs_register_vulcan_diagnostics
-  public  fv3gfs_vulcan_diagnostic_output
+  public  register_diag_manager_controlled_diagnostics
+  public  send_diag_manager_controlled_diagnostic_data
 #ifdef use_WRTCOMP
   public  fv_phys_bundle_setup
 #endif
@@ -2897,7 +2897,7 @@ module FV3GFS_io_mod
 
   end subroutine fv3gfs_diag_register
 
-  subroutine fv3gfs_register_vulcan_diagnostics(Diag, Time, axes)
+  subroutine register_diag_manager_controlled_diagnostics(Diag, Time, axes)
     type(IPD_diag_type), intent(inout) :: Diag(:)
     type(time_type), intent(in) :: Time
     integer, intent(in) :: axes(4)
@@ -2905,12 +2905,12 @@ module FV3GFS_io_mod
     integer :: index
 
     do index = 1, DIAG_SIZE
-      if (trim(Diag(index)%name) .eq. '') exit  ! No need to populate non-existent coarse diagnostics
+      if (trim(Diag(index)%name) .eq. '') exit  ! No need to populate non-existent diagnostics
       Diag(index)%id = register_diag_field(trim(Diag(index)%mod_name), trim(Diag(index)%name),  &
         axes(1:Diag(index)%axes), Time, trim(Diag(index)%desc), &
         trim(Diag(index)%unit), missing_value=real(missing_value))
     enddo
-  end subroutine fv3gfs_register_vulcan_diagnostics
+  end subroutine register_diag_manager_controlled_diagnostics
 
   subroutine populate_coarse_diag_type(diagnostic, coarse_diagnostic)
     type(IPD_diag_type), intent(in) :: diagnostic
@@ -2949,7 +2949,7 @@ module FV3GFS_io_mod
   
 !-------------------------------------------------------------------------      
 
-  subroutine fv3gfs_vulcan_diagnostic_output(Time, Diag, Atm_block, IPD_Data, nx, ny, levs, &
+  subroutine send_diag_manager_controlled_diagnostic_data(Time, Diag, Atm_block, IPD_Data, nx, ny, levs, &
     write_coarse_diagnostics, Diag_coarse, delp, coarsening_strategy, ptop)
     type(time_type),           intent(in) :: Time
     type(IPD_diag_type),       intent(in) :: Diag(:)
@@ -2994,7 +2994,7 @@ module FV3GFS_io_mod
         call vertical_remapping_requirements(delp, area, ptop, phalf, phalf_coarse_on_fine)
         call mask_area_weights(area, phalf, phalf_coarse_on_fine, masked_area)
       endif
-   endif
+    endif
 
     do index = 1, DIAG_SIZE
       if (trim(Diag(index)%name) .eq. '') exit
@@ -3047,7 +3047,7 @@ module FV3GFS_io_mod
         endif
       endif
     enddo
-  end subroutine fv3gfs_vulcan_diagnostic_output
+  end subroutine send_diag_manager_controlled_diagnostic_data
 
 !-------------------------------------------------------------------------      
 !--- gfs_diag_output ---

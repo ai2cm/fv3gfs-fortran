@@ -23,7 +23,7 @@ module physics_abstraction_layer
 
   use GFS_diagnostics, only: diagnostic_type      =>  GFS_externaldiag_type,    &
                              diagnostic_populate  =>  GFS_externaldiag_populate, &
-                             populate_vulcan_diagnostics => GFS_populate_vulcan_diagnostics
+                             populate_diag_manager_controlled_diagnostics => GFS_populate_diag_manager_controlled_diagnostics
 
 #ifdef CCPP
   use GFS_driver,      only: initialize       =>  GFS_initialize

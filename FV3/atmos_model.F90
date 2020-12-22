@@ -104,7 +104,8 @@ use IPD_driver,         only: IPD_initialize, IPD_initialize_rst
 use CCPP_driver,        only: CCPP_step, non_uniform_blocks
 #else
 use IPD_driver,         only: IPD_initialize, IPD_initialize_rst, IPD_step
-use physics_abstraction_layer, only: time_vary_step, radiation_step1, physics_step1, physics_step2, populate_vulcan_diagnostics
+use physics_abstraction_layer, only: time_vary_step, radiation_step1, physics_step1, physics_step2, &
+                                     populate_diag_manager_controlled_diagnostics
 #endif
 
 use stochastic_physics, only: init_stochastic_physics,         &
@@ -115,8 +116,8 @@ use FV3GFS_io_mod,      only: FV3GFS_restart_read, FV3GFS_restart_write, &
                               FV3GFS_IPD_checksum,                       &
                               FV3GFS_diag_register, FV3GFS_diag_output,  &
                               DIAG_SIZE, FV3GFS_restart_write_coarse,    &
-                              FV3GFS_diag_register_coarse, FV3GFS_register_vulcan_diagnostics, &
-                              FV3GFS_vulcan_diagnostic_output
+                              FV3GFS_diag_register_coarse, register_diag_manager_controlled_diagnostics, &
+                              send_diag_manager_controlled_diagnostic_data
 use fv_iau_mod,         only: iau_external_data_type,getiauforcing,iau_initialize
 use module_fv3_config,  only: output_1st_tstep_rst, first_kdt, nsout
 use coarse_graining_mod, only: get_fine_array_bounds
@@ -205,15 +206,15 @@ type(IPD_control_type)              :: IPD_Control
 type(IPD_data_type),    allocatable :: IPD_Data(:)  ! number of blocks
 type(IPD_diag_type),    target      :: IPD_Diag(DIAG_SIZE)
 type(IPD_diag_type),    target      :: IPD_Diag_coarse(DIAG_SIZE)
-type(IPD_diag_type),    target      :: IPD_Diag_vulcan(DIAG_SIZE)
-type(IPD_diag_type),    target      :: IPD_Diag_vulcan_coarse(DIAG_SIZE)
+type(IPD_diag_type),    target      :: IPD_Diag_diag_manager_controlled(DIAG_SIZE)
+type(IPD_diag_type),    target      :: IPD_Diag_diag_manager_controlled_coarse(DIAG_SIZE)
 type(IPD_restart_type)              :: IPD_Restart
 #else
 ! IPD_Control and IPD_Data are coming from CCPP_data
 type(IPD_diag_type),    target      :: IPD_Diag(DIAG_SIZE)
 type(IPD_diag_type),    target      :: IPD_Diag_coarse(DIAG_SIZE)
-type(IPD_diag_type),    target      :: IPD_Diag_vulcan(DIAG_SIZE)
-type(IPD_diag_type),    target      :: IPD_Diag_vulcan_coarse(DIAG_SIZE)
+type(IPD_diag_type),    target      :: IPD_Diag_diag_manager_controlled(DIAG_SIZE)
+type(IPD_diag_type),    target      :: IPD_Diag_diag_manager_controlled_coarse(DIAG_SIZE)
 type(IPD_restart_type)              :: IPD_Restart
 #endif
 
@@ -634,7 +635,8 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
                         IPD_Interstitial, commglobal, mpp_npes(), Init_parm)
 #else
    call IPD_initialize (IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Init_parm)
-   call populate_vulcan_diagnostics(IPD_Diag_vulcan, IPD_Data%IntDiag, size(IPD_Data%Statein))
+   call populate_diag_manager_controlled_diagnostics(IPD_Diag_diag_manager_controlled, &
+                                                     IPD_Data%IntDiag, size(IPD_Data%Statein))
 #endif
 
    if (IPD_Control%do_sppt .OR. IPD_Control%do_shum .OR. IPD_Control%do_skeb .OR. IPD_Control%do_sfcperts) then
@@ -697,11 +699,11 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
 
    call atmosphere_nggps_diag (Time, init=.true.)
    call FV3GFS_diag_register (IPD_Diag, Time, Atm_block, IPD_Control, Atmos%lon, Atmos%lat, Atmos%axes)
-   call FV3GFS_register_vulcan_diagnostics(IPD_Diag_vulcan, Time, Atmos%axes)
+   call register_diag_manager_controlled_diagnostics(IPD_Diag_diag_manager_controlled, Time, Atmos%axes)
    if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
       call atmosphere_coarse_diag_axes(coarse_diagnostic_axes)
       call FV3GFS_diag_register_coarse(IPD_Diag, Time, coarse_diagnostic_axes, IPD_Diag_coarse)
-      call FV3GFS_diag_register_coarse(IPD_Diag_vulcan, Time, coarse_diagnostic_axes, IPD_Diag_vulcan_coarse)
+      call FV3GFS_diag_register_coarse(IPD_Diag_diag_manager_controlled, Time, coarse_diagnostic_axes, IPD_Diag_diag_manager_controlled_coarse)
    endif
    call IPD_initialize_rst (IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Init_parm)
 #ifdef CCPP
@@ -902,10 +904,11 @@ subroutine update_atmos_model_state (Atmos)
     call get_time (Atmos%Time - Atmos%Time_init, seconds)
     call atmosphere_nggps_diag(Atmos%Time,ltavg=.true.,avg_max_length=avg_max_length)
     call get_fine_array_bounds(is, ie, js, je)
-    call FV3GFS_vulcan_diagnostic_output(Atmos%Time, IPD_Diag_vulcan, &
+    call send_diag_manager_controlled_diagnostic_data(Atmos%Time, IPD_Diag_diag_manager_controlled, &
       Atm_block, IPD_Data, IPD_Control%nx, IPD_Control%ny, IPD_Control%levs, &
       Atm(mytile)%coarse_graining%write_coarse_diagnostics, &
-      IPD_Diag_vulcan_coarse, Atm(mytile)%delp(is:ie,js:je,:), Atmos%coarsening_strategy, Atm(mytile)%ptop)
+      IPD_Diag_diag_manager_controlled_coarse, Atm(mytile)%delp(is:ie,js:je,:), &
+      Atmos%coarsening_strategy, Atm(mytile)%ptop)
     if (ANY(nint(fdiag(:)*3600.0) == seconds) .or. (IPD_Control%kdt == first_kdt) .or. nsout > 0) then
       if (mpp_pe() == mpp_root_pe()) write(6,*) "---isec,seconds",isec,seconds
       time_int = real(isec)

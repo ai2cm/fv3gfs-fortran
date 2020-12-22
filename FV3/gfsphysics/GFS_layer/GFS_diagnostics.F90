@@ -46,13 +46,13 @@ module GFS_diagnostics
   public  GFS_externaldiag_type
 
   !--- public interfaces ---
-  public  GFS_externaldiag_populate, GFS_populate_vulcan_diagnostics
+  public  GFS_externaldiag_populate, GFS_populate_diag_manager_controlled_diagnostics
  
   CONTAINS
 
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-subroutine GFS_populate_vulcan_diagnostics(Diag, IntDiag, nblks)
+subroutine GFS_populate_diag_manager_controlled_diagnostics(Diag, IntDiag, nblks)
   type(GFS_externaldiag_type), intent(inout) :: Diag(:)
   type(GFS_diag_type), intent(in) :: IntDiag(:)
   integer, intent(in) :: nblks
@@ -396,7 +396,7 @@ subroutine GFS_populate_vulcan_diagnostics(Diag, IntDiag, nblks)
   do nb = 1,nblks
     Diag(index)%data(nb)%var2 => IntDiag(nb)%q_dt_int(:,5)
   enddo
-end subroutine GFS_populate_vulcan_diagnostics
+end subroutine GFS_populate_diag_manager_controlled_diagnostics
 
 !-------------------------------------------------------------------------      
 !--- GFS_externaldiag_populate ---
