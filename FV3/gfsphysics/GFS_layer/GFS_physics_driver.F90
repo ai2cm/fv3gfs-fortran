@@ -2563,8 +2563,8 @@ module module_physics_driver
                 call set_state("du_truth", dudt2)
                 call set_state("dv_truth", dvdt2)
                 call set_state("tdt_truth", dtdt2)
-                call set_state("hpbl_truth", hpbl2)
-                call set_state("kpbl_truth", kpbl2)
+                call set_state("hpbl_truth", Diag%hpbl)
+                call set_state("kpbl_truth", kpbl)
 
                 call set_state("model_time", Model%jdat)
                 call set_state("tdt_input", dtdt)
@@ -2603,7 +2603,7 @@ module module_physics_driver
                 call get_state("hpbl_output", hpbl2) ! Diag%hpbl
                 call get_state("kpbl_output", kpbl2)
 
-                ! call call_function("emulation_slim.monitor", "store")
+                call call_function("emulation_slim.monitor", "store")
 
              elseif (Model%isatmedmf == 1) then   ! updated version of satmedmfvdif (May 2019)
                 call satmedmfvdifq(ix, im, levs, nvdiff, ntcw, ntiwx, ntkev,          &
