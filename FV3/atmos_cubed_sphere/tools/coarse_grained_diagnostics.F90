@@ -167,7 +167,47 @@ contains
     coarse_diagnostics(index)%axes = 3
     coarse_diagnostics(index)%module_name = DYNAMICS
     coarse_diagnostics(index)%name = 'qv_dt_phys_coarse'
-    coarse_diagnostics(index)%description = 'coarse-grained water vapor specific humidity tendency from physics'
+    coarse_diagnostics(index)%description = 'coarse-grained specific humidity tendency from physics'
+    coarse_diagnostics(index)%units = 'kg/kg/s'
+    coarse_diagnostics(index)%reduction_method = MASS_WEIGHTED
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 3
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'liq_wat_dt_phys_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained liquid water tendency from physics'
+    coarse_diagnostics(index)%units = 'kg/kg/s'
+    coarse_diagnostics(index)%reduction_method = MASS_WEIGHTED
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 3
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'ice_wat_dt_phys_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained ice water tendency from physics'
+    coarse_diagnostics(index)%units = 'kg/kg/s'
+    coarse_diagnostics(index)%reduction_method = MASS_WEIGHTED
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 3
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'qr_dt_phys_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained rain water tendency from physics'
+    coarse_diagnostics(index)%units = 'kg/kg/s'
+    coarse_diagnostics(index)%reduction_method = MASS_WEIGHTED
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 3
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'qs_dt_phys_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained snow water tendency from physics'
+    coarse_diagnostics(index)%units = 'kg/kg/s'
+    coarse_diagnostics(index)%reduction_method = MASS_WEIGHTED
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 3
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'qg_dt_phys_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained graupel tendency from physics'
     coarse_diagnostics(index)%units = 'kg/kg/s'
     coarse_diagnostics(index)%reduction_method = MASS_WEIGHTED
 
@@ -241,7 +281,52 @@ contains
     coarse_diagnostics(index)%axes = 2
     coarse_diagnostics(index)%module_name = DYNAMICS
     coarse_diagnostics(index)%name = 'int_qv_dt_phys_coarse'
-    coarse_diagnostics(index)%description = 'coarse-grained vertically integrated water vapor specific humidity tendency from physics'
+    coarse_diagnostics(index)%description = 'coarse-grained vertically integrated specific humidity tendency from physics'
+    coarse_diagnostics(index)%units = 'kg/m**2/s'
+    coarse_diagnostics(index)%vertically_integrated = .true.
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'int_liq_wat_dt_phys_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained vertically integrated liquid water tendency from physics'
+    coarse_diagnostics(index)%units = 'kg/m**2/s'
+    coarse_diagnostics(index)%vertically_integrated = .true.
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'int_ice_wat_dt_phys_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained vertically integrated ice water tendency from physics'
+    coarse_diagnostics(index)%units = 'kg/m**2/s'
+    coarse_diagnostics(index)%vertically_integrated = .true.
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'int_qr_dt_phys_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained vertically integrated rain water tendency from physics'
+    coarse_diagnostics(index)%units = 'kg/m**2/s'
+    coarse_diagnostics(index)%vertically_integrated = .true.
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'int_qs_dt_phys_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained vertically integrated snow water tendency from physics'
+    coarse_diagnostics(index)%units = 'kg/m**2/s'
+    coarse_diagnostics(index)%vertically_integrated = .true.
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'int_qg_dt_phys_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained vertically integrated graupel tendency from physics'
     coarse_diagnostics(index)%units = 'kg/m**2/s'
     coarse_diagnostics(index)%vertically_integrated = .true.
     coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
@@ -456,6 +541,31 @@ contains
              allocate(Atm(tile_count)%physics_tendency_diag%qv_dt(is:ie,js:je,1:npz))
           endif
           coarse_diagnostic%data%var3 => Atm(tile_count)%physics_tendency_diag%qv_dt(is:ie,js:je,1:npz)
+       elseif (ends_with(coarse_diagnostic%name, 'liq_wat_dt_phys_coarse')) then
+          if (.not. allocated(Atm(tile_count)%physics_tendency_diag%liq_wat_dt)) then
+             allocate(Atm(tile_count)%physics_tendency_diag%liq_wat_dt(is:ie,js:je,1:npz))
+          endif
+          coarse_diagnostic%data%var3 => Atm(tile_count)%physics_tendency_diag%liq_wat_dt(is:ie,js:je,1:npz)
+       elseif (ends_with(coarse_diagnostic%name, 'ice_wat_dt_phys_coarse')) then
+          if (.not. allocated(Atm(tile_count)%physics_tendency_diag%ice_wat_dt)) then
+             allocate(Atm(tile_count)%physics_tendency_diag%ice_wat_dt(is:ie,js:je,1:npz))
+          endif
+          coarse_diagnostic%data%var3 => Atm(tile_count)%physics_tendency_diag%ice_wat_dt(is:ie,js:je,1:npz)
+       elseif (ends_with(coarse_diagnostic%name, 'qr_dt_phys_coarse')) then
+          if (.not. allocated(Atm(tile_count)%physics_tendency_diag%qr_dt)) then
+             allocate(Atm(tile_count)%physics_tendency_diag%qr_dt(is:ie,js:je,1:npz))
+          endif
+          coarse_diagnostic%data%var3 => Atm(tile_count)%physics_tendency_diag%qr_dt(is:ie,js:je,1:npz)
+       elseif (ends_with(coarse_diagnostic%name, 'qs_dt_phys_coarse')) then
+          if (.not. allocated(Atm(tile_count)%physics_tendency_diag%qs_dt)) then
+             allocate(Atm(tile_count)%physics_tendency_diag%qs_dt(is:ie,js:je,1:npz))
+          endif
+          coarse_diagnostic%data%var3 => Atm(tile_count)%physics_tendency_diag%qs_dt(is:ie,js:je,1:npz)
+       elseif (ends_with(coarse_diagnostic%name, 'qg_dt_phys_coarse')) then
+          if (.not. allocated(Atm(tile_count)%physics_tendency_diag%qg_dt)) then
+             allocate(Atm(tile_count)%physics_tendency_diag%qg_dt(is:ie,js:je,1:npz))
+          endif
+          coarse_diagnostic%data%var3 => Atm(tile_count)%physics_tendency_diag%qg_dt(is:ie,js:je,1:npz)
        elseif (ends_with(coarse_diagnostic%name, 't_dt_phys_coarse')) then
           if (.not. allocated(Atm(tile_count)%physics_tendency_diag%t_dt)) then
              allocate(Atm(tile_count)%physics_tendency_diag%t_dt(is:ie,js:je,1:npz))
