@@ -2973,7 +2973,7 @@ module FV3GFS_io_mod
 
     isc   = atm_block%isc
     jsc   = atm_block%jsc
- 
+
     if (write_coarse_diagnostics) then
       call determine_required_coarse_graining_weights(diag_coarse, coarsening_strategy, require_area, require_masked_area, require_mass, require_vertical_remapping)
       if (.not. require_vertical_remapping) then

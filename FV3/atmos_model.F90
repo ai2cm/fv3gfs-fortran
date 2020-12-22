@@ -901,10 +901,11 @@ subroutine update_atmos_model_state (Atmos)
     call get_time (Atmos%Time - diag_time, isec)
     call get_time (Atmos%Time - Atmos%Time_init, seconds)
     call atmosphere_nggps_diag(Atmos%Time,ltavg=.true.,avg_max_length=avg_max_length)
+    call get_fine_array_bounds(is, ie, js, je)
     call FV3GFS_vulcan_diagnostic_output(Atmos%Time, IPD_Diag_vulcan, &
       Atm_block, IPD_Data, IPD_Control%nx, IPD_Control%ny, IPD_Control%levs, &
       Atm(mytile)%coarse_graining%write_coarse_diagnostics, &
-      IPD_Diag_coarse, Atm(mytile)%delp(is:ie,js:je,:), Atmos%coarsening_strategy, Atm(mytile)%ptop)
+      IPD_Diag_vulcan_coarse, Atm(mytile)%delp(is:ie,js:je,:), Atmos%coarsening_strategy, Atm(mytile)%ptop)
     if (ANY(nint(fdiag(:)*3600.0) == seconds) .or. (IPD_Control%kdt == first_kdt) .or. nsout > 0) then
       if (mpp_pe() == mpp_root_pe()) write(6,*) "---isec,seconds",isec,seconds
       time_int = real(isec)
@@ -925,7 +926,6 @@ subroutine update_atmos_model_state (Atmos)
       endif
       if (mpp_pe() == mpp_root_pe()) write(6,*) ' gfs diags time since last bucket empty: ',time_int/3600.,'hrs'
       call atmosphere_nggps_diag(Atmos%Time)
-      call get_fine_array_bounds(is, ie, js, je)
       call FV3GFS_diag_output(Atmos%Time, IPD_DIag, Atm_block, IPD_Data, IPD_Control%nx, IPD_Control%ny, &
                             IPD_Control%levs, 1, 1, 1.d0, time_int, time_intfull,              &
                             IPD_Control%fhswr, IPD_Control%fhlwr, &

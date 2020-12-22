@@ -170,7 +170,7 @@ subroutine GFS_populate_vulcan_diagnostics(Diag, IntDiag, nblks)
 ! Vertically integrated instantaneous temperature tendency diagnostics
   index = index + 1
   Diag(index)%axes = 2
-  Diag(index)%name = 'int_tendency_of_air_temperature_due_to_longwave_heating'
+  Diag(index)%name = 'vertically_integrated_tendency_of_air_temperature_due_to_longwave_heating'
   Diag(index)%desc = 'vertically integrated temperature tendency due to longwave radiation'
   Diag(index)%unit = 'W/m**2'
   Diag(index)%mod_name = 'gfs_phys'
@@ -182,7 +182,7 @@ subroutine GFS_populate_vulcan_diagnostics(Diag, IntDiag, nblks)
 
   index = index + 1
   Diag(index)%axes = 2
-  Diag(index)%name = 'int_tendency_of_air_temperature_due_to_shortwave_heating'
+  Diag(index)%name = 'vertically_integrated_tendency_of_air_temperature_due_to_shortwave_heating'
   Diag(index)%desc = 'vertically integrated temperature tendency due to shortwave radiation'
   Diag(index)%unit = 'W/m**2'
   Diag(index)%mod_name = 'gfs_phys'
@@ -194,7 +194,7 @@ subroutine GFS_populate_vulcan_diagnostics(Diag, IntDiag, nblks)
 
   index = index + 1
   Diag(index)%axes = 2
-  Diag(index)%name = 'int_tendency_of_air_temperature_due_to_turbulence'
+  Diag(index)%name = 'vertically_integrated_tendency_of_air_temperature_due_to_turbulence'
   Diag(index)%desc = 'vertically integrated temperature tendency due to turbulence scheme'
   Diag(index)%unit = 'W/m**2'
   Diag(index)%mod_name = 'gfs_phys'
@@ -206,7 +206,7 @@ subroutine GFS_populate_vulcan_diagnostics(Diag, IntDiag, nblks)
 
   index = index + 1
   Diag(index)%axes = 2
-  Diag(index)%name = 'int_tendency_of_air_temperature_due_to_deep_convection'
+  Diag(index)%name = 'vertically_integrated_tendency_of_air_temperature_due_to_deep_convection'
   Diag(index)%desc = 'vertically integrated temperature tendency due to deep convection'
   Diag(index)%unit = 'W/m**2'
   Diag(index)%mod_name = 'gfs_phys'
@@ -218,7 +218,7 @@ subroutine GFS_populate_vulcan_diagnostics(Diag, IntDiag, nblks)
 
   index = index + 1
   Diag(index)%axes = 2
-  Diag(index)%name = 'int_tendency_of_air_temperature_due_to_shallow_convection'
+  Diag(index)%name = 'vertically_integrated_tendency_of_air_temperature_due_to_shallow_convection'
   Diag(index)%desc = 'vertically integrated temperature tendency due to shallow convection'
   Diag(index)%unit = 'W/m**2'
   Diag(index)%mod_name = 'gfs_phys'
@@ -230,7 +230,7 @@ subroutine GFS_populate_vulcan_diagnostics(Diag, IntDiag, nblks)
 
   index = index + 1
   Diag(index)%axes = 2
-  Diag(index)%name = 'int_tendency_of_air_temperature_due_to_microphysics'
+  Diag(index)%name = 'vertically_integrated_tendency_of_air_temperature_due_to_microphysics'
   Diag(index)%desc = 'vertically integrated temperature tendency due to micro-physics'
   Diag(index)%unit = 'W/m**2'
   Diag(index)%mod_name = 'gfs_phys'
@@ -242,7 +242,7 @@ subroutine GFS_populate_vulcan_diagnostics(Diag, IntDiag, nblks)
 
   index = index + 1
   Diag(index)%axes = 2
-  Diag(index)%name = 'int_tendency_of_air_temperature_due_to_dissipation_of_gravity_waves'
+  Diag(index)%name = 'vertically_integrated_tendency_of_air_temperature_due_to_dissipation_of_gravity_waves'
   Diag(index)%desc = 'vertically integrated temperature tendency due to gravity wave drag'
   Diag(index)%unit = 'W/m**2'
   Diag(index)%mod_name = 'gfs_phys'
@@ -254,7 +254,7 @@ subroutine GFS_populate_vulcan_diagnostics(Diag, IntDiag, nblks)
 
   index = index + 1
   Diag(index)%axes = 2
-  Diag(index)%name = 'int_tendency_of_air_temperature_due_to_longwave_heating_assuming_clear_sky'
+  Diag(index)%name = 'vertically_integrated_tendency_of_air_temperature_due_to_longwave_heating_assuming_clear_sky'
   Diag(index)%desc = 'vertically integrated temperature tendency due to clear sky longwave radiation'
   Diag(index)%unit = 'W/m**2'
   Diag(index)%mod_name = 'gfs_phys'
@@ -266,7 +266,7 @@ subroutine GFS_populate_vulcan_diagnostics(Diag, IntDiag, nblks)
 
   index = index + 1
   Diag(index)%axes = 2
-  Diag(index)%name = 'int_tendency_of_air_temperature_due_to_shortwave_heating_assuming_clear_sky'
+  Diag(index)%name = 'vertically_integrated_tendency_of_air_temperature_due_to_shortwave_heating_assuming_clear_sky'
   Diag(index)%desc = 'vertically integrated temperature tendency due to clear sky shortwave radiation'
   Diag(index)%unit = 'W/m**2'
   Diag(index)%mod_name = 'gfs_phys'
@@ -339,7 +339,7 @@ subroutine GFS_populate_vulcan_diagnostics(Diag, IntDiag, nblks)
   ! Vertically integrated instantaneous specific humidity tendency diagnostics
   index = index + 1
   Diag(index)%axes = 2
-  Diag(index)%name = 'int_tendency_of_specific_humidity_due_to_turbulence'
+  Diag(index)%name = 'vertically_integrated_tendency_of_specific_humidity_due_to_turbulence'
   Diag(index)%desc = 'vertically integrated water vapor tendency due to turbulence scheme'
   Diag(index)%unit = 'kg/m**2/s'
   Diag(index)%mod_name = 'gfs_phys'
@@ -351,7 +351,7 @@ subroutine GFS_populate_vulcan_diagnostics(Diag, IntDiag, nblks)
 
   index = index + 1
   Diag(index)%axes = 2
-  Diag(index)%name = 'int_tendency_of_specific_humidity_due_to_deep_convection'
+  Diag(index)%name = 'vertically_integrated_tendency_of_specific_humidity_due_to_deep_convection'
   Diag(index)%desc = 'vertically integrated water vapor tendency due to deep convection'
   Diag(index)%unit = 'kg/m**2/s'
   Diag(index)%mod_name = 'gfs_phys'
@@ -363,7 +363,7 @@ subroutine GFS_populate_vulcan_diagnostics(Diag, IntDiag, nblks)
 
   index = index + 1
   Diag(index)%axes = 2
-  Diag(index)%name = 'int_tendency_of_specific_humidity_due_to_shallow_convection'
+  Diag(index)%name = 'vertically_integrated_tendency_of_specific_humidity_due_to_shallow_convection'
   Diag(index)%desc = 'vertically integrated water vapor tendency due to shallow convection'
   Diag(index)%unit = 'kg/m**2/s'
   Diag(index)%mod_name = 'gfs_phys'
@@ -375,7 +375,7 @@ subroutine GFS_populate_vulcan_diagnostics(Diag, IntDiag, nblks)
 
   index = index + 1
   Diag(index)%axes = 2
-  Diag(index)%name = 'int_tendency_of_specific_humidity_due_to_microphysics'
+  Diag(index)%name = 'vertically_integrated_tendency_of_specific_humidity_due_to_microphysics'
   Diag(index)%desc = 'vertically integrated water vapor tendency due to microphysics'
   Diag(index)%unit = 'kg/m**2/s'
   Diag(index)%mod_name = 'gfs_phys'
@@ -387,7 +387,7 @@ subroutine GFS_populate_vulcan_diagnostics(Diag, IntDiag, nblks)
 
   index = index + 1
   Diag(index)%axes = 2
-  Diag(index)%name = 'int_tendency_of_specific_humidity_due_to_change_in_atmosphere_mass'
+  Diag(index)%name = 'vertically_integrated_tendency_of_specific_humidity_due_to_change_in_atmosphere_mass'
   Diag(index)%desc = 'vertically integrated residual water vapor tendency'
   Diag(index)%unit = 'kg/m**2/s'
   Diag(index)%mod_name = 'gfs_phys'
