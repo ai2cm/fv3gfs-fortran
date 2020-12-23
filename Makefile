@@ -1,5 +1,6 @@
 # setup (use XXX=<value> make <target> to override)
 GCR_URL ?= us.gcr.io/vcm-ml
+COMMIT_SHA := $(shell git rev-parse HEAD)
 DOCKERFILE ?= docker/Dockerfile
 ENVIRONMENT_TAG_NAME ?= latest
 COMPILE_OPTION ?=
@@ -12,11 +13,11 @@ OTHER_MOUNTS ?=
 
 # base images w/ or w/o CUDA
 ifeq ($(CUDA),n)
-	BASE_IMAGE ?=ubuntu:19.10
-	DEP_TAG_NAME ?=gnu9-mpich314-nocuda
+	BASE_IMAGE ?=ubuntu:18.04
+	DEP_TAG_NAME ?=gnu7-mpich314-nocuda
 else
 	BASE_IMAGE ?=nvidia/cuda:10.2-devel-ubuntu18.04
-	DEP_TAG_NAME ?=gnu8-mpich314-cuda102
+	DEP_TAG_NAME ?=gnu7-mpich314-cuda102
 endif
 BUILD_ARGS += --build-arg BASE_IMAGE=$(BASE_IMAGE)
 
@@ -73,11 +74,13 @@ build_deps: ## build container images of dependnecies (FMS, ESMF, SerialBox)
 	docker build -f $(DOCKERFILE) -t $(ESMF_IMAGE) $(BUILD_ARGS) --target fv3gfs-esmf .
 	docker build -f $(DOCKERFILE) -t $(SERIALBOX_IMAGE) $(BUILD_ARGS) --target fv3gfs-environment-serialbox .
 
-push_deps: ## push container images of dependencies to GCP
-	docker push $(MPI_IMAGE)
-	docker push $(FMS_IMAGE)
-	docker push $(ESMF_IMAGE)
-	docker push $(SERIALBOX_IMAGE)
+push_image_%:
+	docker tag $(GCR_URL)/$*:$(DEP_TAG_NAME) $(GCR_URL)/$*:$(DEP_TAG_NAME)-$(COMMIT_SHA)
+	docker push $(GCR_URL)/$*:$(DEP_TAG_NAME)
+	docker push $(GCR_URL)/$*:$(DEP_TAG_NAME)-$(COMMIT_SHA)
+
+## push container images of dependencies to GCP 
+push_deps: push_image_mpi-build push_image_fms-build push_image_esmf-build push_image_serialbox-build
 
 pull_deps: ## pull container images of dependencies from GCP (for faster builds)
 	docker pull $(MPI_IMAGE)

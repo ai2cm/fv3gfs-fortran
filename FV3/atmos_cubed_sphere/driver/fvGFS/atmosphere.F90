@@ -218,10 +218,13 @@ public :: atmosphere_resolution,   atmosphere_grid_bdry,         &
           atmosphere_diss_est,         & ! dissipation estimate for SKEB 
           atmosphere_get_bottom_layer, &
           atmosphere_nggps_diag,       &
-          set_atmosphere_pelist
+          set_atmosphere_pelist, atmosphere_coarse_diag_axes
 
 !--- physics/radiation data exchange routines
 public :: atmos_phys_driver_statein
+
+public :: atmosphere_coarse_graining_parameters
+public :: atmosphere_coarsening_strategy
 
 !-----------------------------------------------------------------------
 ! version number of this module
@@ -447,7 +450,7 @@ contains
    call fv_diag_init(Atm(mytile:mytile), Atm(mytile)%atmos_axes, Time, npx, npy, npz, Atm(mytile)%flagstruct%p_ref)
 
    if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
-      call fv_coarse_diag_init(Time, Atm(mytile)%atmos_axes(3), &
+      call fv_coarse_diag_init(Atm, Time, Atm(mytile)%atmos_axes(3), &
            Atm(mytile)%atmos_axes(4), Atm(mytile)%coarse_graining)
    endif
    if (Atm(mytile)%coarse_graining%write_coarse_restart_files) then
@@ -715,7 +718,8 @@ contains
                        Atm(n)%flagstruct%hybrid_z,                               &
                        Atm(n)%gridstruct,  Atm(n)%flagstruct,                    &
                        Atm(n)%neststruct,  Atm(n)%idiag, Atm(n)%bd,              &
-                       Atm(n)%parent_grid, Atm(n)%domain,Atm(n)%diss_est)
+                       Atm(n)%parent_grid, Atm(n)%domain,Atm(n)%diss_est,        &
+                       Atm(n)%lagrangian_tendency_of_hydrostatic_pressure)
     
      !$ser savepoint FVDynamics-Out
      !$ser data  u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
@@ -981,6 +985,19 @@ contains
    axes (1:size(axes(:))) = Atm(mytile)%atmos_axes (1:size(axes(:)))
 
  end subroutine atmosphere_diag_axes
+
+
+!>@brief The subroutine 'atmosphere_coarse_diag_axes' is an API to return the axis indices
+!! for the coarse atmospheric (mass) grid.
+ subroutine atmosphere_coarse_diag_axes(coarse_axes)
+   integer, intent(out) :: coarse_axes(4)
+
+   coarse_axes = (/ &
+        Atm(mytile)%coarse_graining%id_xt_coarse, &
+        Atm(mytile)%coarse_graining%id_yt_coarse, &
+        Atm(mytile)%coarse_graining%id_pfull, &
+        Atm(mytile)%coarse_graining%id_phalf /)
+ end subroutine atmosphere_coarse_diag_axes 
 
 
 !>@brief The subroutine 'atmosphere_etalvls' is an API to return the ak/bk
@@ -1816,7 +1833,7 @@ contains
                         Atm(mytile)%cx, Atm(mytile)%cy, Atm(mytile)%ze0, Atm(mytile)%flagstruct%hybrid_z,         &
                         Atm(mytile)%gridstruct, Atm(mytile)%flagstruct,                                           &
                         Atm(mytile)%neststruct, Atm(mytile)%idiag, Atm(mytile)%bd, Atm(mytile)%parent_grid,       &
-                        Atm(mytile)%domain,Atm(mytile)%diss_est)
+                        Atm(mytile)%domain,Atm(mytile)%diss_est, Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure)
 ! Backward
        call fv_dynamics(Atm(mytile)%npx, Atm(mytile)%npy, npz,  nq, Atm(mytile)%ng, -dt_atmos, 0.,                &
                         Atm(mytile)%flagstruct%fill, Atm(mytile)%flagstruct%reproduce_sum, kappa, cp_air, zvir,   &
@@ -1831,7 +1848,7 @@ contains
                         Atm(mytile)%cx,    Atm(mytile)%cy,   Atm(mytile)%ze0, Atm(mytile)%flagstruct%hybrid_z,    &
                         Atm(mytile)%gridstruct, Atm(mytile)%flagstruct,                                           &
                         Atm(mytile)%neststruct, Atm(mytile)%idiag, Atm(mytile)%bd, Atm(mytile)%parent_grid,       &
-                        Atm(mytile)%domain,Atm(mytile)%diss_est)
+                        Atm(mytile)%domain,Atm(mytile)%diss_est, Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure)
 !Nudging back to IC
 !$omp parallel do default (none) &
 !$omp              shared (pref, npz, jsc, jec, isc, iec, n, sphum, Atm, u0, v0, t0, dp0, xt, zvir, mytile, nudge_dz, dz0) &
@@ -1908,7 +1925,7 @@ contains
                         Atm(mytile)%cx, Atm(mytile)%cy, Atm(mytile)%ze0, Atm(mytile)%flagstruct%hybrid_z,         &
                         Atm(mytile)%gridstruct, Atm(mytile)%flagstruct,                                           &
                         Atm(mytile)%neststruct, Atm(mytile)%idiag, Atm(mytile)%bd, Atm(mytile)%parent_grid,       &
-                        Atm(mytile)%domain,Atm(mytile)%diss_est)
+                        Atm(mytile)%domain,Atm(mytile)%diss_est, Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure)
 ! Forward call
        call fv_dynamics(Atm(mytile)%npx, Atm(mytile)%npy, npz,  nq, Atm(mytile)%ng, dt_atmos, 0.,                 &
                         Atm(mytile)%flagstruct%fill, Atm(mytile)%flagstruct%reproduce_sum, kappa, cp_air, zvir,   &
@@ -1923,7 +1940,7 @@ contains
                         Atm(mytile)%cx, Atm(mytile)%cy, Atm(mytile)%ze0, Atm(mytile)%flagstruct%hybrid_z,         &
                         Atm(mytile)%gridstruct, Atm(mytile)%flagstruct,                                           &
                         Atm(mytile)%neststruct, Atm(mytile)%idiag, Atm(mytile)%bd, Atm(mytile)%parent_grid,       &
-                        Atm(mytile)%domain,Atm(mytile)%diss_est)
+                        Atm(mytile)%domain,Atm(mytile)%diss_est, Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure)
 ! Nudging back to IC
 !$omp parallel do default (none) &
 !$omp              shared (nudge_dz,npz, jsc, jec, isc, iec, n, sphum, Atm, u0, v0, t0, dz0, dp0, xt, zvir, mytile) &
@@ -2195,14 +2212,53 @@ contains
    logical, intent(in) :: begin
    type(physics_tendency_diag_type), intent(inout) :: physics_tendency_diag
 
-   integer :: sphum
+   integer :: sphum, liq_wat, ice_wat, rainwat, snowwat, graupel
 
    sphum = get_tracer_index (MODEL_ATMOS, 'sphum')
+   liq_wat = get_tracer_index (MODEL_ATMOS, 'liq_wat')
+   ice_wat = get_tracer_index (MODEL_ATMOS, 'ice_wat')
+   rainwat = get_tracer_index (MODEL_ATMOS, 'rainwat')
+   snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
+   graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
 
    if (begin) then
-      if (allocated(physics_tendency_diag%qv_dt)) physics_tendency_diag%qv_dt = q(isc:iec,jsc:jec,1:npz,sphum)
+      if (sphum > 0) then
+        if (allocated(physics_tendency_diag%qv_dt)) physics_tendency_diag%qv_dt = q(isc:iec,jsc:jec,1:npz,sphum)
+      endif
+      if (liq_wat > 0) then
+        if (allocated(physics_tendency_diag%liq_wat_dt)) physics_tendency_diag%liq_wat_dt = q(isc:iec,jsc:jec,1:npz,liq_wat)
+      endif
+      if (ice_wat > 0) then
+        if (allocated(physics_tendency_diag%ice_wat_dt)) physics_tendency_diag%ice_wat_dt = q(isc:iec,jsc:jec,1:npz,ice_wat)
+      endif
+      if (rainwat > 0) then
+        if (allocated(physics_tendency_diag%qr_dt)) physics_tendency_diag%qr_dt = q(isc:iec,jsc:jec,1:npz,rainwat)
+      endif
+      if (snowwat > 0) then
+        if (allocated(physics_tendency_diag%qs_dt)) physics_tendency_diag%qs_dt = q(isc:iec,jsc:jec,1:npz,snowwat)
+      endif
+      if (graupel > 0) then
+        if (allocated(physics_tendency_diag%qg_dt)) physics_tendency_diag%qg_dt = q(isc:iec,jsc:jec,1:npz,graupel)
+      endif
    else
-      if (allocated(physics_tendency_diag%qv_dt)) physics_tendency_diag%qv_dt = (q(isc:iec,jsc:jec,1:npz,sphum) - physics_tendency_diag%qv_dt) / dt
+      if (sphum > 0) then
+        if (allocated(physics_tendency_diag%qv_dt)) physics_tendency_diag%qv_dt = (q(isc:iec,jsc:jec,1:npz,sphum) - physics_tendency_diag%qv_dt) / dt
+      endif
+      if (liq_wat > 0) then
+        if (allocated(physics_tendency_diag%liq_wat_dt)) physics_tendency_diag%liq_wat_dt = (q(isc:iec,jsc:jec,1:npz,liq_wat) - physics_tendency_diag%liq_wat_dt) / dt
+      endif
+      if (ice_wat > 0) then
+        if (allocated(physics_tendency_diag%ice_wat_dt)) physics_tendency_diag%ice_wat_dt = (q(isc:iec,jsc:jec,1:npz,ice_wat) - physics_tendency_diag%ice_wat_dt) / dt
+      endif
+      if (rainwat > 0) then
+        if (allocated(physics_tendency_diag%qr_dt)) physics_tendency_diag%qr_dt = (q(isc:iec,jsc:jec,1:npz,rainwat) - physics_tendency_diag%qr_dt) / dt
+      endif
+      if (snowwat > 0) then
+        if (allocated(physics_tendency_diag%qs_dt)) physics_tendency_diag%qs_dt = (q(isc:iec,jsc:jec,1:npz,snowwat) - physics_tendency_diag%qs_dt) / dt
+      endif
+      if (graupel > 0) then
+        if (allocated(physics_tendency_diag%qg_dt)) physics_tendency_diag%qg_dt = (q(isc:iec,jsc:jec,1:npz,graupel) - physics_tendency_diag%qg_dt) / dt
+      endif
    endif
  end subroutine atmos_phys_qdt_diag
 
@@ -2257,4 +2313,17 @@ contains
    enddo
  end subroutine update_physics_precipitation_for_qv_nudging
 
+ subroutine atmosphere_coarse_graining_parameters(coarse_domain, write_coarse_restart_files, write_only_coarse_intermediate_restarts)
+   type(domain2d), intent(out) :: coarse_domain
+   logical, intent(out) :: write_coarse_restart_files, write_only_coarse_intermediate_restarts
+
+   coarse_domain = Atm(mytile)%coarse_graining%domain
+   write_coarse_restart_files = Atm(mytile)%coarse_graining%write_coarse_restart_files
+   write_only_coarse_intermediate_restarts = Atm(mytile)%coarse_graining%write_only_coarse_intermediate_restarts
+ end subroutine atmosphere_coarse_graining_parameters
+ subroutine atmosphere_coarsening_strategy(coarsening_strategy)
+   character(len=64), intent(out) :: coarsening_strategy
+
+   coarsening_strategy = Atm(mytile)%coarse_graining%strategy
+ end subroutine atmosphere_coarsening_strategy
 end module atmosphere_mod
