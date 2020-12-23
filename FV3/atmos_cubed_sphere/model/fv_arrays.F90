@@ -49,7 +49,7 @@ module fv_arrays_mod
   real, parameter:: real_big = 1.e30   ! big enough to cause blowup if used
   real, parameter:: real_snan=x'FFF7FFFFFFFFFFFF'
 #endif
-  real, parameter:: i4_in=-huge(1)
+  integer, parameter:: i4_in=-huge(1)
   type fv_diag_type
 
 
@@ -115,7 +115,9 @@ module fv_arrays_mod
 
      integer :: id_t_dt_nudge, id_ps_dt_nudge, id_delp_dt_nudge
      integer :: id_u_dt_nudge, id_v_dt_nudge, id_q_dt_nudge
-     integer :: id_t_dt_phys, id_qv_dt_phys, id_column_moistening_nudge
+     integer :: id_t_dt_phys, id_qv_dt_phys, id_liq_wat_dt_phys, id_ice_wat_dt_phys
+     integer :: id_qr_dt_phys, id_qs_dt_phys, id_qg_dt_phys
+     integer :: id_column_moistening_nudge
 
   end type fv_diag_type
 
@@ -1149,6 +1151,11 @@ module fv_arrays_mod
 
       real, allocatable :: t_dt(:,:,:)
       real, allocatable :: qv_dt(:,:,:)
+      real, allocatable :: liq_wat_dt(:,:,:)
+      real, allocatable :: ice_wat_dt(:,:,:)
+      real, allocatable :: qr_dt(:,:,:)
+      real, allocatable :: qs_dt(:,:,:)
+      real, allocatable :: qg_dt(:,:,:)
 
    end type physics_tendency_diag_type
 !>@brief 'allocate_fv_nest_BC_type' is an interface to subroutines
