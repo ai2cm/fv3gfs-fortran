@@ -15,9 +15,8 @@ repositories associated with different subtrees of this repository:
 ├── FV3                    # https://github.com/NOAA-EMC/fv3atm
 │   ├── atmos_cubed_sphere # https://github.com/NOAA-EMC/GFDL_atmos_cubed_sphere
 │   ├── ccpp
-│   │   ├── framework      # https://github.com/NCAR/ccpp-framework
-│   │   ├── physics        # https://github.com/NCAR/ccpp-physics
-│   ├── coarse_graining
+│       ├── framework      # https://github.com/NCAR/ccpp-framework
+│       └── physics        # https://github.com/NCAR/ccpp-physics
 ├── serialbox              # https://github.com/GridTools/serialbox
 └── stochastic_physics     # https://github.com/noaa-psd/stochastic_physics
 ```
