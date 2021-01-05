@@ -11,7 +11,7 @@ repositories associated with different subtrees of this repository:
 
 ```
 .                          # ~ https://github.com/ufs-community/ufs-weather-model
-├── FMS
+├── FMS                    # https://github.com/NOAA-GFDL/FMS
 ├── FV3                    # https://github.com/NOAA-EMC/fv3atm
 │   ├── atmos_cubed_sphere # https://github.com/NOAA-EMC/GFDL_atmos_cubed_sphere
 │   └── ccpp
