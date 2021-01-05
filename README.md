@@ -14,7 +14,7 @@ repositories associated with different subtrees of this repository:
 ├── FMS
 ├── FV3                    # https://github.com/NOAA-EMC/fv3atm
 │   ├── atmos_cubed_sphere # https://github.com/NOAA-EMC/GFDL_atmos_cubed_sphere
-│   ├── ccpp
+│   └── ccpp
 │       ├── framework      # https://github.com/NCAR/ccpp-framework
 │       └── physics        # https://github.com/NCAR/ccpp-physics
 ├── serialbox              # https://github.com/GridTools/serialbox
