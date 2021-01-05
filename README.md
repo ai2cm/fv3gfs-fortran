@@ -1,5 +1,30 @@
 [![VulcanClimateModeling](https://circleci.com/gh/VulcanClimateModeling/fv3gfs-fortran.svg?style=svg)](https://circleci.com/gh/VulcanClimateModeling/fv3gfs-fortran)
 
+# Repository Structure
+
+This repository structure corresponds loosely to the top-level structure of
+the [UFS](https://github.com/ufs-community/ufs-weather-model), but with many
+submodules replaced by subtrees for convenience. See this
+[description](https://github.com/ufs-community/ufs-weather-model) of the
+submodule hierarchy of the UFS. This tables shows the canonical upstream
+repositories associated with different subtrees of this repository
+
+```
+.                          # ~ https://github.com/ufs-community/ufs-weather-model
+├── FMS
+├── FV3                    # https://github.com/NOAA-EMC/fv3atm
+│   ├── atmos_cubed_sphere # https://github.com/NOAA-EMC/GFDL_atmos_cubed_sphere
+│   ├── ccpp
+│   │   ├── framework      # https://github.com/NCAR/ccpp-framework
+│   │   ├── physics        # https://github.com/NCAR/ccpp-physics
+│   ├── coarse_graining
+├── serialbox              # https://github.com/GridTools/serialbox
+└── stochastic_physics     # https://github.com/noaa-psd/stochastic_physics
+```
+
+In some cases these are actual submodules, and in other cases they are
+subtrees.
+
 # How to run fv3gfs via a docker image
 
 Don't forget to load the submodules in your local copy of the source, i.e.
