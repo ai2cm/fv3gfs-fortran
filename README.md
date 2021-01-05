@@ -6,8 +6,8 @@ This repository structure corresponds loosely to the top-level structure of
 the [UFS](https://github.com/ufs-community/ufs-weather-model), but with many
 submodules replaced by subtrees for convenience. See this
 [description](https://github.com/ufs-community/ufs-weather-model) of the
-submodule hierarchy of the UFS. This tables shows the canonical upstream
-repositories associated with different subtrees of this repository
+submodule hierarchy of the UFS. This table shows the canonical upstream
+repositories associated with different subtrees of this repository:
 
 ```
 .                          # ~ https://github.com/ufs-community/ufs-weather-model
