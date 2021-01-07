@@ -72,7 +72,9 @@ rootdir=`/bin/pwd`
 popd > /dev/null
 
 # setup module environment and default queue
+set +e
 . ${envloc}/env/machineEnvironment.sh
+set -e
 
 # load module tools
 . ${envloc}/env/moduleTools.sh

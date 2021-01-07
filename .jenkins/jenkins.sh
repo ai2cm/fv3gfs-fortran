@@ -22,7 +22,7 @@
 # JOB_URL            Full URL of this job, like http://server:port/jenkins/job/foo/
 
 # stop on all errors
-set +e
+set -e
 
 # get root directory of where jenkins.sh is sitting
 root=`dirname $0`
@@ -37,7 +37,9 @@ optarg="$@"
 git submodule update --init --recursive
 
 # setup module environment and default queue
+set +e
 . ${envloc}/env/machineEnvironment.sh
+set -e
 
 # load machine dependent environment
 . ${envloc}/env/env.${host}.sh
