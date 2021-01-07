@@ -99,6 +99,14 @@ esac
 cd ${rootdir}/FV3
 echo "${compiler_number}" | ./configure
 
+module unload cudatoolkit
+module unload boost
+module unload cray-python
+module switch PrgEnv-gnu PrgEnv-cray
+echo "==== module list ===="
+module list
+echo "====================="
+
 ./compile
 
 num_exe=`/bin/ls -1d *.exe | wc -l`
