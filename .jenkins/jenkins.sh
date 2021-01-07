@@ -30,7 +30,8 @@ envloc=`dirname $0`
 
 # some global variables
 action="$1"
-optarg="$2"
+shift
+optarg="$@"
 
 # get latest version of buildenv
 git submodule update --init --recursive
