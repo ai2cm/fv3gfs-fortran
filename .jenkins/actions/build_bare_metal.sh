@@ -1,5 +1,6 @@
 #!/bin/bash
 
+set -x
 set -e
 
 INSTALL_DIR=${PROJECT}/../install
