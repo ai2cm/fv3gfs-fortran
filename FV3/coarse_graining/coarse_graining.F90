@@ -75,7 +75,7 @@ module coarse_graining_mod
   end interface weighted_block_edge_average_y_pre_downsampled
 
   ! Global variables for the module, initialized in coarse_graining_init
-  integer :: is = 1, ie = 1, js = 1, je = 1, npz
+  integer :: is, ie, js, je, npz
   integer :: is_coarse, ie_coarse, js_coarse, je_coarse
   character(len=11) :: MODEL_LEVEL = 'model_level'
   character(len=14) :: PRESSURE_LEVEL = 'pressure_level'
