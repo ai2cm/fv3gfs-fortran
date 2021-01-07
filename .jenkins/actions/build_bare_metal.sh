@@ -138,11 +138,12 @@ EOF
 
     cd ${rootdir}/tests/serialized_test_data_generation/rundir/${config}/
     cp ${rootdir}/FV3/*.exe ./
+    cp ${rootdir}/FV3/conf/modules.fv3 ./module.env
 
     jobfile=job
     cp ${envloc}/env/submit.${host}.${scheduler}  ./${jobfile}
     sed -i 's|<OUTFILE>|'"${jobfile}.out"'|g' ${jobfile}
-    sed -i 's|<G2G>|'""'|g' ${jobfile}
+    sed -i 's|<G2G>|'"source ./module.env; module list"'|g' ${jobfile}
     sed -i 's|<CMD>|'"srun -n 6 ./fv3_64bit.exe"'|g' ${jobfile}
     sed -i 's|<NAME>|'"fv3_test"'|g' ${jobfile}
     sed -i 's|<NTASKS>|12|g' ${jobfile}
