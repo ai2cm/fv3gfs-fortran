@@ -100,7 +100,7 @@ cd ${rootdir}/FV3
 echo "${compiler_number}" | ./configure
 
 module unload cudatoolkit
-module unload boost
+module unload Boost
 module unload cray-python
 module switch PrgEnv-gnu PrgEnv-cray
 echo "==== module list ===="
