@@ -37,6 +37,7 @@ optarg="$@"
 git submodule update --init --recursive
 
 # setup module environment and default queue
+# note: disable error checking since script uses fails for checks
 set +e
 . ${envloc}/env/machineEnvironment.sh
 set -e

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -x
+# stop on all errors
 set -e
 
 INSTALL_DIR=${PROJECT}/../install
@@ -72,6 +72,7 @@ rootdir=`/bin/pwd`
 popd > /dev/null
 
 # setup module environment and default queue
+# note: disable error checking since script uses fails for checks
 set +e
 . ${envloc}/env/machineEnvironment.sh
 set -e
@@ -86,7 +87,10 @@ set -e
 . ${envloc}/env/schedulerTools.sh
 
 # compile the model
+# note: this relies on the fact that daint_gnu and daint_intel are the first
+#       two options for the configure script
 echo "### compile model"
+
 compiler_number=0
 case $compiler in
   gnu) compiler_number=1 ;;
@@ -94,11 +98,20 @@ case $compiler in
 esac
 cd ${rootdir}/FV3
 echo "${compiler_number}" | ./configure
+
 ./compile
+
+num_exe=`/bin/ls -1d *.exe | wc -l`
+if [ "$num_exe" -lt 1 ] ; then
+   exitError 700 ${LINENO} "No valid executables have been found after compilation"
+fi
 cd -
 
 # install and run example
+# note: we setup the rundir using fv3config in a separate script in order to keep
+#       the environment of this script clean (no modules loaded etc.)
 echo "### run install and example"
+
 script=/tmp/create_rundir_$$.sh
 for config in c12_6ranks_standard c48_6ranks_standard ; do
     cat > ${script} <<EOF
@@ -114,8 +127,10 @@ cd -
 EOF
     chmod 755 ${script}
     ${script}
+
     cd ${rootdir}/tests/serialized_test_data_generation/rundir/${config}/
     cp ${rootdir}/FV3/*.exe ./
+
     script=job
     cp ${envloc}/env/submit.${host}.${scheduler}  ./${script}
     sed -i 's|<OUTFILE>|'"job.out"'|g' ${script}
@@ -125,7 +140,14 @@ EOF
     sed -i 's|<NTASKS>|12|g' ${script}
     sed -i 's|<NTASKSPERNODE>|'"12"'|g' ${script}
     sed -i 's|<CPUSPERTASK>|1|g' ${script}
+
+    set +e
     launch_job ${script} 3000
+    if [ $? -ne 0 ] ; then
+        exitError 710 ${LINENO} "Problem with SLURM job"
+    fi
+    set -e
+
 done
 
 # copy executables to install dir
