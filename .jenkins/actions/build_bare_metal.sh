@@ -131,20 +131,20 @@ EOF
     cd ${rootdir}/tests/serialized_test_data_generation/rundir/${config}/
     cp ${rootdir}/FV3/*.exe ./
 
-    script=job
-    cp ${envloc}/env/submit.${host}.${scheduler}  ./${script}
-    sed -i 's|<OUTFILE>|'"job.out"'|g' ${script}
-    sed -i 's|<G2G>|'""'|g' ${script}
-    sed -i 's|<CMD>|'"srun -n 6 ./fv3_64bit.exe"'|g' ${script}
-    sed -i 's|<NAME>|'"fv3_test"'|g' ${script}
-    sed -i 's|<NTASKS>|12|g' ${script}
-    sed -i 's|<NTASKSPERNODE>|'"12"'|g' ${script}
-    sed -i 's|<CPUSPERTASK>|1|g' ${script}
+    jobfile=job
+    cp ${envloc}/env/submit.${host}.${scheduler}  ./${jobfile}
+    sed -i 's|<OUTFILE>|'"${jobfile}.out"'|g' ${jobfile}
+    sed -i 's|<G2G>|'""'|g' ${jobfile}
+    sed -i 's|<CMD>|'"srun -n 6 ./fv3_64bit.exe"'|g' ${jobfile}
+    sed -i 's|<NAME>|'"fv3_test"'|g' ${jobfile}
+    sed -i 's|<NTASKS>|12|g' ${jobfile}
+    sed -i 's|<NTASKSPERNODE>|'"12"'|g' ${jobfile}
+    sed -i 's|<CPUSPERTASK>|1|g' ${jobfile}
 
     set +e
-    launch_job ${script} 3000
+    launch_job ${jobfile} 3000
     if [ $? -ne 0 ] ; then
-        exitError 710 ${LINENO} "Problem with SLURM job"
+        exitError 710 ${LINENO} "Problem with SLURM job (`pwd`/${jobfile}) see log (`pwd`/${jobfile}.out)"
     fi
     set -e
 
