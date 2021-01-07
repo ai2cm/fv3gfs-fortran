@@ -137,8 +137,15 @@ EOF
     ${script}
 
     cd ${rootdir}/tests/serialized_test_data_generation/rundir/${config}/
+
     cp ${rootdir}/FV3/*.exe ./
     cp ${rootdir}/FV3/conf/modules.fv3 ./module.env
+
+    sed -i 's|^ *months *= *[0-9][0-9]* *$|months = 0|g' input.nml
+    sed -i 's|^ *days *= *[0-9][0-9]* *$|days = 1|g' input.nml
+    sed -i 's|^ *hours *= *[0-9][0-9]* *$|hours = 0|g' input.nml
+    sed -i 's|^ *minutes *= *[0-9][0-9]* *$|minutes = 0|g' input.nml
+    sed -i 's|^ *seconds *= *[0-9][0-9]* *$|seconds = 0|g' input.nml
 
     jobfile=job
     cp ${envloc}/env/submit.${host}.${scheduler}  ./${jobfile}
@@ -154,6 +161,10 @@ EOF
     launch_job ${jobfile} 3000
     if [ $? -ne 0 ] ; then
         exitError 710 ${LINENO} "Problem with SLURM job (`pwd`/${jobfile}) see log (`pwd`/${jobfile}.out)"
+    fi
+    grep '^Termination ' job.out > /dev/null
+    if [ $? -ne 0 ] ; then
+        exitError 715 ${LINENO} "Configuration ${config} did not run through (see `pwd`/${jobfile}.out)"
     fi
     set -e
 
