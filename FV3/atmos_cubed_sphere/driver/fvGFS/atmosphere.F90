@@ -256,6 +256,8 @@ character(len=20)   :: mod_name = 'fvGFS/atmosphere_mod'
   !$ser verbatim integer::cld_amt
 #endif
   !$ser verbatim integer :: o3mr, sgs_tke
+  !$ser verbatim character(len=256) :: ser_env
+  !$ser verbatim logical :: serialize_only_driver
   integer :: mytile  = 1
   integer :: p_split = 1
   integer, allocatable :: pelist(:)
@@ -318,7 +320,7 @@ contains
    integer :: nthreads
    integer :: ierr
 #endif
-
+   
    current_time_in_seconds = time_type_to_real( Time - Time_init )
    if (mpp_pe() == 0) write(*,"('atmosphere_init: current_time_seconds = ',f9.1)")current_time_in_seconds
 
@@ -391,7 +393,8 @@ contains
    graupel = get_tracer_index (MODEL_ATMOS, 'graupel' )
   !$ser verbatim o3mr = get_tracer_index (MODEL_ATMOS, 'o3mr')
   !$ser verbatim sgs_tke = get_tracer_index (MODEL_ATMOS, 'sgs_tke')
-  
+  !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+  !$ser verbatim serialize_only_driver = (index(ser_env, "ONLY_DRIVER") /= 0)
 #ifdef CCPP
    cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
 #else
@@ -703,10 +706,10 @@ contains
      !$ser verbatim if (sgs_tke > 0) then
      !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
      !$ser verbatim endif
-#ifdef SER_DRIVER
-     !$ser verbatim ser_on=fs_is_serialization_on()
-     !$ser off
-#endif
+     !$ser verbatim (serialize_only_driver) then  
+         !$ser verbatim ser_on=fs_is_serialization_on()
+         !$ser off
+     !$ser verbatim endif
      call fv_dynamics(npx, npy, npz, nq, Atm(n)%ng, dt_atmos/real(abs(p_split)),&
                        Atm(n)%flagstruct%consv_te, Atm(n)%flagstruct%fill,       &
                        Atm(n)%flagstruct%reproduce_sum, kappa, cp_air, zvir,     &
@@ -726,19 +729,19 @@ contains
                        Atm(n)%neststruct,  Atm(n)%idiag, Atm(n)%bd,              &
                        Atm(n)%parent_grid, Atm(n)%domain,Atm(n)%diss_est,        &
                        Atm(n)%lagrangian_tendency_of_hydrostatic_pressure)
-#ifdef SER_DRIVER
-     !$ser verbatim if (ser_on) then 
-     !$ser on
-     !$ser verbatim endif
-#endif    
+     !$ser verbatim (serialize_only_driver) then        
+       !$ser verbatim if (ser_on) then 
+       !$ser on
+       !$ser verbatim endif
+     !$ser verbatim endif    
      !$ser savepoint FVDynamics-Out
      !$ser data  u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
      !$ser verbatim if (sgs_tke > 0) then
      !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
      !$ser verbatim endif
-#ifdef SER_DRIVER
-     !$ser off                                                                                                   
-#endif
+     !$ser verbatim (serialize_only_driver) then        
+     !$ser off                                                                                                  
+     !$ser verbatim endif
       call timing_off('fv_dynamics')
 
       if (ngrids > 1 .and. (psc < p_split .or. p_split < 0)) then

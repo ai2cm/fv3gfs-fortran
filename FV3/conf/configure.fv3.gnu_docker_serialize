@@ -50,10 +50,6 @@ ifeq ($(GT4PY_DEV),Y)
 CPPDEFS += -DGT4PY_DEV
 endif
 
-ifeq ($(SER_DRIVER),Y)
-CPPDEFS += -DSER_DRIVER
-endif
-
 ifeq ($(HYDRO),Y)
 CPPDEFS += 
 else
