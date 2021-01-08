@@ -11,11 +11,12 @@ CUDA ?=y
 # -version number should be increased when serialization data is expected to change
 # -omit tag (e.g. 7.1.1) for "operational" serialization data, use tag for experimental serialization data
 FORTRAN_VERSION ?= 7.2.3
-COMPILE_OPTION ?= "GT4PY_DEV=Y"
+GT4PY_OPTION = "GT4PY_DEV=Y"
+COMPILE_OPTION ?= $(GT4PY_OPTION)
 MODE ?= default
 MODEBUCKET =
 ifeq ($(MODE),driver)
-        COMPILE_OPTION = "$(COMPILE_OPTION)///nSER_DRIVER=Y"
+        COMPILE_OPTION = "$(GT4PY_OPTION)///nSER_DRIVER=Y"
 	MODEBUCKET = $(MODE)
 endif
 # docker container image setup (used for running model, see ../../README.md)
