@@ -48,7 +48,7 @@ set -e
 
 # copy artefacts to test_data directory
 cp $RUNDIR/input.nml $TEST_DATA_DIR/
-if [ -f $UNDIR/fortran_sha.txt ] ; then
+if [ -f $RUNDIR/fortran_sha.txt ] ; then
     cp $RUNDIR/fortran_sha.txt $TEST_DATA_DIR/
 fi
 cp $RUNDIR/logfile.*.out $TEST_DATA_DIR/
