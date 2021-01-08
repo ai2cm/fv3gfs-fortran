@@ -706,7 +706,7 @@ contains
      !$ser verbatim if (sgs_tke > 0) then
      !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
      !$ser verbatim endif
-     !$ser verbatim (serialize_only_driver) then  
+     !$ser verbatim if (serialize_only_driver) then  
          !$ser verbatim ser_on=fs_is_serialization_on()
          !$ser off
      !$ser verbatim endif
@@ -729,7 +729,7 @@ contains
                        Atm(n)%neststruct,  Atm(n)%idiag, Atm(n)%bd,              &
                        Atm(n)%parent_grid, Atm(n)%domain,Atm(n)%diss_est,        &
                        Atm(n)%lagrangian_tendency_of_hydrostatic_pressure)
-     !$ser verbatim (serialize_only_driver) then        
+     !$ser verbatim if (serialize_only_driver) then        
        !$ser verbatim if (ser_on) then 
        !$ser on
        !$ser verbatim endif
@@ -739,7 +739,7 @@ contains
      !$ser verbatim if (sgs_tke > 0) then
      !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
      !$ser verbatim endif
-     !$ser verbatim (serialize_only_driver) then        
+     !$ser verbatim if (serialize_only_driver) then        
      !$ser off                                                                                                  
      !$ser verbatim endif
       call timing_off('fv_dynamics')
