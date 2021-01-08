@@ -139,6 +139,7 @@ module atmosphere_mod
 
 #include <fms_platform.h>
 !$ser verbatim use mpi
+!$ser verbatim USE m_serialize, ONLY: fs_is_serialization_on
 !-----------------
 ! FMS modules:
 !-----------------
@@ -653,6 +654,7 @@ contains
    type(time_type) :: atmos_time
    !$ser verbatim integer :: mpi_rank,ier
    !$ser verbatim real :: bdt
+   !$ser verbatim logical :: ser_on
    !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, mpi_rank,ier)
    
 !---- Call FV dynamics -----
@@ -701,7 +703,11 @@ contains
      !$ser verbatim if (sgs_tke > 0) then
      !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
      !$ser verbatim endif
-      call fv_dynamics(npx, npy, npz, nq, Atm(n)%ng, dt_atmos/real(abs(p_split)),&
+#ifdef SER_DRIVER
+     !$ser verbatim ser_on=fs_is_serialization_on()
+     !$ser off
+#endif
+     call fv_dynamics(npx, npy, npz, nq, Atm(n)%ng, dt_atmos/real(abs(p_split)),&
                        Atm(n)%flagstruct%consv_te, Atm(n)%flagstruct%fill,       &
                        Atm(n)%flagstruct%reproduce_sum, kappa, cp_air, zvir,     &
                        Atm(n)%ptop, Atm(n)%ks, nq,                               &
@@ -720,12 +726,19 @@ contains
                        Atm(n)%neststruct,  Atm(n)%idiag, Atm(n)%bd,              &
                        Atm(n)%parent_grid, Atm(n)%domain,Atm(n)%diss_est,        &
                        Atm(n)%lagrangian_tendency_of_hydrostatic_pressure)
-    
+#ifdef SER_DRIVER
+     !$ser verbatim if (ser_on) then 
+     !$ser on
+     !$ser verbatim endif
+#endif    
      !$ser savepoint FVDynamics-Out
      !$ser data  u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
      !$ser verbatim if (sgs_tke > 0) then
      !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
      !$ser verbatim endif
+#ifdef SER_DRIVER
+     !$ser off                                                                                                   
+#endif
       call timing_off('fv_dynamics')
 
       if (ngrids > 1 .and. (psc < p_split .or. p_split < 0)) then

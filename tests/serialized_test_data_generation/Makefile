@@ -11,10 +11,14 @@ CUDA ?=y
 # -version number should be increased when serialization data is expected to change
 # -omit tag (e.g. 7.1.1) for "operational" serialization data, use tag for experimental serialization data
 FORTRAN_VERSION ?= 7.2.3
-
+COMPILE_OPTION ?= "GT4PY_DEV=Y"
+MODE ?= "default"
+ifeq ($(MODE),"driver")
+        COMPILE_OPTION = "$(COMPILE_OPTION)///nSER_DRIVER=Y"
+endif
 # docker container image setup (used for running model, see ../../README.md)
 GCR_URL = us.gcr.io/vcm-ml
-COMPILED_IMAGE = $(GCR_URL)/fv3gfs-compiled:$(FORTRAN_VERSION)-serialize-gt4pydev
+COMPILED_IMAGE = $(GCR_URL)/fv3gfs-compiled:$(FORTRAN_VERSION)-serialize-gt4pydev-$(MODE)
 RUN_DIR_CONTAINER = /rundir
 DATA_DIR_CONTAINER = $(RUN_DIR_CONTAINER)/test_data
 
@@ -39,7 +43,7 @@ build_model: ## build Docker image with compiled model code for serialization
 	cd $(FORTRAN_DIR) && \
 		BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
 		COMPILED_IMAGE=$(COMPILED_IMAGE) \
-		COMPILE_OPTION="GT4PY_DEV=Y" \
+		COMPILE_OPTION=$(COMPILE_OPTION) \
 		$(MAKE) build_compiled
 
 setup_rundir: ## create run directory on local host using fv3config
