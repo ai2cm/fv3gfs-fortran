@@ -13,9 +13,10 @@ CUDA ?=y
 FORTRAN_VERSION ?= 7.2.3
 COMPILE_OPTION ?= "GT4PY_DEV=Y"
 MODE ?= default
+MODEBUCKET =
 ifeq ($(MODE),driver)
         COMPILE_OPTION = "$(COMPILE_OPTION)///nSER_DRIVER=Y"
-	FORTRAN_VERSION = "$(FORTRAN_VERSION)$(MODE)"
+	MODEBUCKET = $(MODE)
 endif
 # docker container image setup (used for running model, see ../../README.md)
 GCR_URL = us.gcr.io/vcm-ml
@@ -35,7 +36,7 @@ GROUP_ID_HOST = $(shell id -g)
 
 # cloud storage location for pushing generated data
 STORAGE_BUCKET = gs://vcm-fv3gfs-serialized-regression-data
-DATA_DIR_BUCKET = $(STORAGE_BUCKET)/$(FORTRAN_VERSION)/$(EXPERIMENT)
+DATA_DIR_BUCKET = $(STORAGE_BUCKET)/$(FORTRAN_VERSION)$(MODEBUCKET)/$(EXPERIMENT)
 
 help:
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
