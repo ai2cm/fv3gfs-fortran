@@ -15,6 +15,7 @@ COMPILE_OPTION ?= "GT4PY_DEV=Y"
 MODE ?= "default"
 ifeq ($(MODE),"driver")
         COMPILE_OPTION = "$(COMPILE_OPTION)///nSER_DRIVER=Y"
+	FORTRAN_VERSION = "$(FORTRAN_VERSION)$(MODE)"
 endif
 # docker container image setup (used for running model, see ../../README.md)
 GCR_URL = us.gcr.io/vcm-ml
