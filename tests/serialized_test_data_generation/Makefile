@@ -12,8 +12,8 @@ CUDA ?=y
 # -omit tag (e.g. 7.1.1) for "operational" serialization data, use tag for experimental serialization data
 FORTRAN_VERSION ?= 7.2.3
 COMPILE_OPTION ?= "GT4PY_DEV=Y"
-MODE ?= "default"
-ifeq ($(MODE),"driver")
+MODE ?= default
+ifeq ($(MODE),driver)
         COMPILE_OPTION = "$(COMPILE_OPTION)///nSER_DRIVER=Y"
 	FORTRAN_VERSION = "$(FORTRAN_VERSION)$(MODE)"
 endif
