@@ -20,8 +20,8 @@ fi
 # setup
 base_dir=`pwd`
 config_name=`basename ${config_file} .yml`
-coverage_dir=`pwd`/coverage_${config_name}
-rundir=`pwd`/rundir  # must be an absolute path
+coverage_dir=${base_dir}/coverage_${config_name}
+rundir=${base_dir}/rundir  # must be an absolute path
 submit_job=${base_dir}/tests/serialized_test_data_generation/submit_job.sh
 count_ranks=${base_dir}/tests/serialized_test_data_generation/count_ranks.py
 gcr_url="us.gcr.io/vcm-ml/fv3gfs-compiled"
