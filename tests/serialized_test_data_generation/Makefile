@@ -16,7 +16,7 @@ COMPILE_OPTION ?= $(GT4PY_OPTION)
 MODE ?= default
 MODEBUCKET =
 ifeq ($(MODE),driver)
-        COMPILE_OPTION = "$(GT4PY_OPTION)///nSER_DRIVER=Y"
+        COMPILE_OPTION = "$(GT4PY_OPTION)\\\nSER_DRIVER=Y"
 	MODEBUCKET = $(MODE)
 endif
 # docker container image setup (used for running model, see ../../README.md)
