@@ -1,5 +1,5 @@
 data_table: default
-diag_table: gs://vcm-ml-scratch/spencerc/diag_table_coarse_graining_v1.1
+diag_table: gs://vcm-ml-scratch/spencerc/diag_table_coarse_graining
 experiment_name: pressure-level-coarse-graining
 forcing: "gs://vcm-fv3config/data/base_forcing/v1.1/"
 orographic_forcing: gs://vcm-fv3config/data/orographic_data/v1.0
@@ -133,8 +133,8 @@ namelist:
     kord_tr: 10
     kord_wz: 10
     layout:
-    - 1
-    - 1
+    - 2
+    - 2
     make_nh: true
     mountain: false
     n_split: 6
