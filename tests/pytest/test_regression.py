@@ -24,15 +24,14 @@ USE_LOCAL_ARCHIVE = True
 config_filenames = os.listdir(CONFIG_DIR)
 
 
-@pytest.fixture(params=["{version}", "{version}-serialize"])
-def model_image_tag(request):
-    return request.param.format(version=request.config.getoption("--image_version"))
+@pytest.fixture
+def image_version(request):
+    return request.config.getoption("--image_version")
 
 
 @pytest.fixture
-def model_image(request, model_image_tag):
-    model_image = request.config.getoption("--image")
-    return model_image + ':' + model_image_tag
+def image(request):
+    return request.config.getoption("--image")
 
 
 @pytest.fixture
@@ -45,20 +44,33 @@ def image_runner(request):
     return request.config.getoption("--image_runner")
 
 
-@pytest.fixture(params=config_filenames)
-def config(request):
-    config_filename = os.path.join(CONFIG_DIR, request.param)
+def get_config(filename):
+    config_filename = os.path.join(CONFIG_DIR, filename)
     with open(config_filename, 'r') as config_file:
         return yaml.safe_load(config_file)
 
 
-@pytest.fixture
-def run_dir(model_image_tag, config):
+def get_run_dir(model_image_tag, config):
     run_name = config['experiment_name']
     return os.path.join(OUTPUT_DIR, model_image_tag, run_name)
 
 
-def test_regression(config, model_image, reference_dir, run_dir, image_runner):
+@pytest.mark.parametrize(
+    ("config_filename", "tag"), 
+    [
+        ("default.yml", "{version}"), 
+        ("default.yml", "{version}-serialize"), 
+        ("restart.yml", "{version}"), 
+        ("restart.yml", "{version}-serialize"), 
+        ("model-level-coarse-graining.yml", "{version}"),
+        ("pressure-level-coarse-graining.yml", "{version}")
+    ]
+)
+def test_regression(config_filename, tag, image, image_version, reference_dir, image_runner):
+    model_image_tag = tag.format(version=image_version)
+    model_image = f"{image}:{model_image_tag}"
+    config = get_config(config_filename)
+    run_dir = get_run_dir(model_image_tag, config)
     run_name = config['experiment_name']
     run_reference_dir = os.path.join(reference_dir, run_name)
     if os.path.isdir(run_dir):
