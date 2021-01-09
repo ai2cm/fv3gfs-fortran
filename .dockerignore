@@ -6,3 +6,4 @@ physics_standalone
 *.so
 fv3.exe
 *.tmp.f90
+coverage_*
