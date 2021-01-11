@@ -1,3 +1,5 @@
+import copy
+import hashlib
 import os
 from os.path import join
 import yaml
@@ -159,6 +161,61 @@ def check_md5sum(run_dir, md5sum_filename):
 def write_run_directory(config, dirname):
     fv3config.write_run_directory(config, dirname)
     shutil.copy(SUBMIT_JOB_FILENAME, os.path.join(dirname, 'submit_job.sh'))
+
+
+def run_model(config, run_dir, model_image, image_runner):
+    if os.path.isdir(run_dir):
+        shutil.rmtree(run_dir)
+    os.makedirs(run_dir)
+    write_run_directory(config, run_dir)
+    n_processes = get_n_processes(config)
+    if image_runner == "docker":
+        run_model_docker(run_dir, model_image, n_processes)
+    elif image_runner == "sarus":
+        run_model_sarus(run_dir, model_image, n_processes)
+    else:
+        raise NotImplementedError("image_runner must be one of 'docker' or 'sarus'")
+
+
+def get_md5hash(filename):
+    return hashlib.md5(open(filename, "rb").read()).hexdigest()
+
+
+def get_md5sums(run_dir):
+    history_files = sorted(glob(join(run_dir, "*.nc")))
+    restart_files = sorted(glob(join(run_dir, "RESTART", "*.nc")))
+    return list(map(get_md5hash, history_files + restart_files))
+
+
+@pytest.mark.parametrize(
+    ("config_filename", "tag"), 
+    [
+        ("model-level-coarse-graining.yml", "{version}"),
+        ("pressure-level-coarse-graining.yml", "{version}")
+    ]
+)
+def test_results_reproduce_across_layouts(config_filename, tag, image, image_version, image_runner):
+    model_image_tag = tag.format(version=image_version)
+    model_image = f"{image}:{model_image_tag}"
+    config = get_config(config_filename)
+    reference_config = copy.copy(config)
+    test_config = copy.copy(config)
+
+    reference_config["namelist"]["fv_core_nml"]["layout"] = [1, 1]
+    reference_run_name = reference_config["experiment_name"] + "_1x1"
+    reference_run_dir = join(OUTPUT_DIR, model_image_tag, reference_run_name)
+    run_model(reference_config, reference_run_dir, model_image, image_runner)
+    expected_md5sums = get_md5sums(reference_run_dir)
+
+    test_config["namelist"]["fv_core_nml"]["layout"] = [2, 2]
+    test_run_name = test_config["experiment_name"] + "_2x2"
+    test_run_dir = join(OUTPUT_DIR, model_image_tag, test_run_name)
+    run_model(test_config, test_run_dir, model_image, image_runner)
+    result_md5sums = get_md5sums(test_run_dir)
+
+    assert result_md5sums == expected_md5sums
+    shutil.rmtree(reference_run_dir)
+    shutil.rmtree(test_run_dir)
 
 
 if __name__ == '__main__':

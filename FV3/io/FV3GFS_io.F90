@@ -2309,7 +2309,6 @@ module FV3GFS_io_mod
         Model, nvar2m, nvar3)
     endif
 
-    write(*,*) 'allocating sfc_var2_fine', isc, iec, jsc, jec, nvar2m
     allocate(sfc_var2_fine(isc:iec,jsc:jec,nvar2m))
     allocate(sfc_var3_fine(isc:iec,jsc:jec,Model%lsoil,nvar3))
     sfc_var2_fine = -9999._kind_phys
