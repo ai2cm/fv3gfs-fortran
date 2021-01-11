@@ -173,7 +173,7 @@ def run_model(config, run_dir, model_image, image_runner):
     ],
     ids=lambda x: str(x)
 )
-def test_results_reproduce_across_layouts(config_filename, tag, layout, image, image_version, image_runner, reference_dir):
+def test_run_reproduces_across_layouts(config_filename, tag, layout, image, image_version, image_runner, reference_dir):
     model_image_tag = tag.format(version=image_version)
     model_image = f"{image}:{model_image_tag}"
     config = get_config(config_filename)
@@ -184,8 +184,8 @@ def test_results_reproduce_across_layouts(config_filename, tag, layout, image, i
     run_model(config, run_dir, model_image, image_runner)
 
     reference_run_name = config["experiment_name"]
-    run_reference_dir = os.path.join(reference_dir, reference_run_name)
-    md5sum_filename = os.path.join(run_reference_dir, MD5SUM_FILENAME)
+    run_reference_dir = join(reference_dir, reference_run_name)
+    md5sum_filename = join(run_reference_dir, MD5SUM_FILENAME)
     check_rundir_md5sum(run_dir, md5sum_filename)
     shutil.rmtree(run_dir)
 
