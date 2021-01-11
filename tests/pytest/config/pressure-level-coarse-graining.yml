@@ -134,7 +134,7 @@ namelist:
     kord_wz: 10
     layout:
     - 1
-    - 2
+    - 1
     make_nh: true
     mountain: false
     n_split: 6
