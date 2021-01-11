@@ -133,7 +133,7 @@ namelist:
     kord_tr: 10
     kord_wz: 10
     layout:
-    - 2
+    - 1
     - 2
     make_nh: true
     mountain: false

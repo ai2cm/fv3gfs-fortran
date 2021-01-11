@@ -65,10 +65,10 @@ def get_n_processes(config):
 @pytest.mark.parametrize(
     ("config_filename", "tag"), 
     [
-        ("default.yml", "{version}"),
-        ("default.yml", "{version}-serialize"),
-        ("restart.yml", "{version}"),
-        ("restart.yml", "{version}-serialize"),
+        # ("default.yml", "{version}"),
+        # ("default.yml", "{version}-serialize"),
+        # ("restart.yml", "{version}"),
+        # ("restart.yml", "{version}-serialize"),
         ("model-level-coarse-graining.yml", "{version}"),
         ("pressure-level-coarse-graining.yml", "{version}")
     ]
@@ -207,8 +207,8 @@ def test_results_reproduce_across_layouts(config_filename, tag, image, image_ver
     run_model(reference_config, reference_run_dir, model_image, image_runner)
     expected_md5sums = get_md5sums(reference_run_dir)
 
-    test_config["namelist"]["fv_core_nml"]["layout"] = [2, 2]
-    test_run_name = test_config["experiment_name"] + "_2x2"
+    test_config["namelist"]["fv_core_nml"]["layout"] = [1, 2]
+    test_run_name = test_config["experiment_name"] + "_1x2"
     test_run_dir = join(OUTPUT_DIR, model_image_tag, test_run_name)
     run_model(test_config, test_run_dir, model_image, image_runner)
     result_md5sums = get_md5sums(test_run_dir)
