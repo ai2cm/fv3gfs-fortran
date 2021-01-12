@@ -33,13 +33,13 @@ if [ $? -ne 0 ] ; then
     echo ">>> Error occurred while running the model"
     echo ">>>>> cmd:"
     echo "mpirun -l -np $NUM_RANKS $RUNDIR/fv3.exe"
-    echo ">>>>> stderr:"
-    cat $RUNDIR/stderr.out
+    echo ">>>>> env:"
+    env
     echo ">>>>> stdout:"
     cat $RUNDIR/stdout.out
-    echo ">>>>> env:"
-    cat $RUNDIR/env.out
-    echo ">>>>> Aborting"
+    echo ">>>>> stderr:"
+    cat $RUNDIR/stderr.out
+    echo ">>>>> Aborting due to error when executing fv3.exe"
     exit 1
 else
     echo ">>> Success"
@@ -48,7 +48,9 @@ set -e
 
 # copy artefacts to test_data directory
 cp $RUNDIR/input.nml $TEST_DATA_DIR/
-cp $RUNDIR/fortran_sha.txt $TEST_DATA_DIR/
+if [ -f $RUNDIR/fortran_sha.txt ] ; then
+    cp $RUNDIR/fortran_sha.txt $TEST_DATA_DIR/
+fi
 cp $RUNDIR/logfile.*.out $TEST_DATA_DIR/
 cp $RUNDIR/std*.out $TEST_DATA_DIR
 env > $TEST_DATA_DIR/env.out

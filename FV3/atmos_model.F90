@@ -82,6 +82,7 @@ use atmosphere_mod,     only: Atm, mytile
 use atmosphere_mod,     only: atmosphere_coarse_graining_parameters
 use atmosphere_mod,     only: atmosphere_coarse_diag_axes
 use atmosphere_mod,     only: atmosphere_coarsening_strategy
+use atmosphere_mod,     only: atmosphere_control_data
 use block_control_mod,  only: block_control_type, define_blocks_packed
 use DYCORE_typedefs,    only: DYCORE_data_type, DYCORE_diag_type
 #ifdef CCPP
@@ -872,7 +873,7 @@ subroutine update_atmos_model_state (Atmos)
   integer :: isec, seconds, isec_fhzero
   integer :: rc
   real(kind=IPD_kind_phys) :: time_int, time_intfull
-  integer :: is, ie, js, je
+  integer :: is, ie, js, je, nk
 !
     call set_atmosphere_pelist()
     call mpp_clock_begin(fv3Clock)
@@ -913,7 +914,7 @@ subroutine update_atmos_model_state (Atmos)
       endif
       if (mpp_pe() == mpp_root_pe()) write(6,*) ' gfs diags time since last bucket empty: ',time_int/3600.,'hrs'
       call atmosphere_nggps_diag(Atmos%Time)
-      call get_fine_array_bounds(is, ie, js, je)
+      call atmosphere_control_data(is, ie, js, je, nk)
       call FV3GFS_diag_output(Atmos%Time, IPD_DIag, Atm_block, IPD_Data, IPD_Control%nx, IPD_Control%ny, &
                             IPD_Control%levs, 1, 1, 1.d0, time_int, time_intfull,              &
                             IPD_Control%fhswr, IPD_Control%fhlwr, &
