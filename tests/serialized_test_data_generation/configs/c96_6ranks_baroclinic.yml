@@ -1,5 +1,5 @@
 data_table: default
-diag_table: gs://vcm-fv3config/config/diag_table/baroclinic_test/v1.0/diag_table
+diag_table: gs://vcm-fv3config/config/diag_table/no_output/v1.0/diag_table
 field_table: gs://vcm-fv3config/config/field_table/baroclinic_test/v1.0/field_table
 experiment_name: c96_6ranks_baroclinic
 forcing: gs://vcm-fv3config/data/base_forcing/v1.1/
@@ -21,6 +21,7 @@ namelist:
   atmos_model_nml:
     blocksize: -1
     chksum_debug: false
+    disable_phys_restart_write: true
     dycore_only: true
     fdiag: 1.0
   cires_ugwp_nml:
@@ -115,6 +116,7 @@ namelist:
     d_ext: 0.0
     dddmp: 0.5
     delt_max: 0.002
+    disable_fv_restart_write: true
     dnats: 1
     do_sat_adj: false
     do_vort_damp: true
