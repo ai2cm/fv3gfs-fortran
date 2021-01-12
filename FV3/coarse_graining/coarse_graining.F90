@@ -246,7 +246,14 @@ contains
     weighted_fine = weights * fine
     call block_sum_2d(weighted_fine, weighted_block_sum)
     call block_sum_2d(weights, block_sum_weights)
-    coarse = weighted_block_sum / block_sum_weights
+    where (block_sum_weights .eq. 0.0)
+      ! If the weights sum to zero in a coarse cell, set the result to a huge number.
+      ! Ideally we'd use some form of NaN, but that causes crashes when running with
+      ! -ffpe-trap=invalid (as we do in debug mode).
+      coarse = huge(0.0)
+    elsewhere
+      coarse = weighted_block_sum / block_sum_weights
+    endwhere
   end subroutine weighted_block_average_2d
 
   subroutine masked_weighted_block_average_2d(weights, fine, mask, coarse)
@@ -263,7 +270,14 @@ contains
     weighted_fine = weights * fine
     call masked_block_sum_2d(weighted_fine, mask, weighted_block_sum)
     call masked_block_sum_2d(weights, mask, block_sum_weights)
-    coarse = weighted_block_sum / block_sum_weights
+    where (block_sum_weights .eq. 0.0)
+      ! If the weights sum to zero in a coarse cell, set the result to a huge number.
+      ! Ideally we'd use some form of NaN, but that causes crashes when running with
+      ! -ffpe-trap=invalid (as we do in debug mode).
+      coarse = huge(0.0)
+    elsewhere
+      coarse = weighted_block_sum / block_sum_weights
+    endwhere
   end subroutine masked_weighted_block_average_2d
 
   subroutine weighted_block_average_3d_field_2d_weights(weights, fine, coarse)
