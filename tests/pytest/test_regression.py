@@ -71,7 +71,14 @@ def get_n_processes(config):
         ("pressure-level-coarse-graining.yml", "{version}")
     ]
 )
-def test_regression(config_filename, tag, image, image_version, reference_dir, image_runner):
+def test_regression(
+    config_filename,
+    tag,
+    image,
+    image_version,
+    reference_dir,
+    image_runner
+):
     model_image_tag = tag.format(version=image_version)
     model_image = f"{image}:{model_image_tag}"
     config = get_config(config_filename)
@@ -124,7 +131,16 @@ def run_model_docker(rundir, model_image, n_processes):
     data_mount = ['-v', f'{data_abs}:' + docker_runpath + '/rundir/test_data']
     fv3out_filename = join(rundir, 'stdout.log')
     fv3err_filename = join(rundir, 'stderr.log')
-    call = docker_run + rundir_mount + archive_mount + data_mount + secret_mount + env_vars + [model_image] + ["bash", "/rundir/submit_job.sh", str(n_processes)]
+    call = (
+        docker_run + 
+        rundir_mount + 
+        archive_mount + 
+        data_mount + 
+        secret_mount + 
+        env_vars + 
+        [model_image] + 
+        ["bash", "/rundir/submit_job.sh", str(n_processes)]
+    )
     with open(fv3out_filename, 'w') as fv3out_f, open(fv3err_filename, 'w') as fv3err_f:
         subprocess.check_call(
             call,
@@ -139,7 +155,8 @@ def run_model_sarus(rundir, model_image, n_processes):
     env = os.environ.copy()
     env["FV3_CONTAINER"] = model_image
     env["SCRATCH_DIR"] = rundir
-    subprocess.check_call(["sbatch", "--wait", f"--ntasks={n_processes}", "job_jenkins_sarus"], env=env, cwd=rundir)
+    call = ["sbatch", "--wait", f"--ntasks={n_processes}", "job_jenkins_sarus"]
+    subprocess.check_call(call, env=env, cwd=rundir)
 
 
 def check_md5sum(run_dir, md5sum_filename):
@@ -173,7 +190,15 @@ def run_model(config, run_dir, model_image, image_runner):
     ],
     ids=lambda x: str(x)
 )
-def test_run_reproduces_across_layouts(config_filename, tag, layout, image, image_version, image_runner, reference_dir):
+def test_run_reproduces_across_layouts(
+    config_filename,
+    tag,
+    layout,
+    image,
+    image_version,
+    image_runner,
+    reference_dir
+):
     model_image_tag = tag.format(version=image_version)
     model_image = f"{image}:{model_image_tag}"
     config = get_config(config_filename)
