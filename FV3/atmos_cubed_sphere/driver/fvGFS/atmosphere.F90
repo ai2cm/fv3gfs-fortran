@@ -252,6 +252,8 @@ character(len=20)   :: mod_name = 'fvGFS/atmosphere_mod'
 #else
 #endif
   !$ser verbatim integer :: o3mr, sgs_tke
+  !$ser verbatim character(len=256) :: ser_env
+  !$ser verbatim logical :: serialize_only_driver
   integer :: mytile  = 1
   integer :: p_split = 1
   integer, allocatable :: pelist(:)
@@ -387,7 +389,9 @@ contains
    graupel = get_tracer_index (MODEL_ATMOS, 'graupel' )
   !$ser verbatim o3mr = get_tracer_index (MODEL_ATMOS, 'o3mr')
   !$ser verbatim sgs_tke = get_tracer_index (MODEL_ATMOS, 'sgs_tke')
-  
+  !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+  !$ser verbatim serialize_only_driver = (index(ser_env, "ONLY_DRIVER") /= 0)
+
 #ifdef CCPP
    cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
 #else
