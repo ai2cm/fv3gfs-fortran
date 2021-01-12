@@ -394,10 +394,10 @@ contains
   !$ser verbatim o3mr = get_tracer_index (MODEL_ATMOS, 'o3mr')
   !$ser verbatim sgs_tke = get_tracer_index (MODEL_ATMOS, 'sgs_tke')
   !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
-   !$ser verbatim serialize_only_driver = (index(ser_env, "ONLY_DRIVER") /= 0)
-   !$ser verbatim  WRITE(0,*)"SER_ENV"
-   !$ser verbatim  WRITE(0,*)serialize_only_driver
-     !$ser verbatim  WRITE(0,*)ser_env
+  !$ser verbatim serialize_only_driver = (index(ser_env, "ONLY_DRIVER") /= 0)
+  !$ser verbatim  WRITE(0,*)"SER_ENV"
+  !$ser verbatim  WRITE(0,*)serialize_only_driver
+  !$ser verbatim  WRITE(0,*)ser_env
 #ifdef CCPP
    cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
 #else
