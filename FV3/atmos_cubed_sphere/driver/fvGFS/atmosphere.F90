@@ -139,7 +139,7 @@ module atmosphere_mod
 
 #include <fms_platform.h>
 !$ser verbatim use mpi
-!$ser verbatim USE m_serialize, ONLY: fs_is_serialization_on
+!$ser verbatim use m_serialize, ONLY: fs_is_serialization_on
 !-----------------
 ! FMS modules:
 !-----------------
@@ -320,7 +320,7 @@ contains
    integer :: nthreads
    integer :: ierr
 #endif
-   
+
    current_time_in_seconds = time_type_to_real( Time - Time_init )
    if (mpp_pe() == 0) write(*,"('atmosphere_init: current_time_seconds = ',f9.1)")current_time_in_seconds
 
@@ -394,7 +394,10 @@ contains
   !$ser verbatim o3mr = get_tracer_index (MODEL_ATMOS, 'o3mr')
   !$ser verbatim sgs_tke = get_tracer_index (MODEL_ATMOS, 'sgs_tke')
   !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
-  !$ser verbatim serialize_only_driver = (index(ser_env, "ONLY_DRIVER") /= 0)
+   !$ser verbatim serialize_only_driver = (index(ser_env, "ONLY_DRIVER") /= 0)
+   !$ser verbatim  WRITE(0,*)"SER_ENV"
+   !$ser verbatim  WRITE(0,*)serialize_only_driver
+     !$ser verbatim  WRITE(0,*)ser_env
 #ifdef CCPP
    cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
 #else
