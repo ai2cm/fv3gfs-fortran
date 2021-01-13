@@ -48,7 +48,7 @@ for exp_file in ${EXPERIMENTS} ; do
   echo "====================================================="
   echo "Generating data for ${exp_name} ..."
   npx=`cat ${exp_file} | grep npx | sed s/npx://g | sed 's/^ *//g'`
-  if [ ${npx} -gt 48 ] ; then
+  if [ ${npx} -gt 49 ] ; then
       export SER_ENV="ONLY_DRIVER"
   else
       export SER_ENV="ALL"
