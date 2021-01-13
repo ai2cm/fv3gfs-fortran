@@ -3073,11 +3073,6 @@ end subroutine ytp_v
 
   if (grid_type < 3 .and. .not. (nested .or. regional)) then
      npt = 4
-#ifdef GT4PY_DEV
-     if (npt > (je - js) .or. npt > (ie - is)) then
-        npt = 0
-     endif
-#endif
   else
      npt = -2
   endif
