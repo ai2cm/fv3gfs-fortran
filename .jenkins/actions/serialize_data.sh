@@ -63,7 +63,8 @@ else
 fi
 echo "FORCE_PUSH:      ${FORCE_PUSH}"
 echo "=== the following setup is being used ==="
-
+export CUDA=y
+export MPICH_RDMA_ENABLED_CUDA=0
 # set up virtual env, if not already set up
 echo ">> Running pip install -r requirements.txt in venv"
 python3 -m venv venv
