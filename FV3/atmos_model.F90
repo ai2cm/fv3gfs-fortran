@@ -768,15 +768,15 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
 #endif
 
    if (sync) then
-     fv3Clock = mpp_clock_id( ' 3.1-FV3-Dycore', flags=clock_flag_default+MPP_CLOCK_SYNC, grain=CLOCK_COMPONENT )
+     fv3Clock = mpp_clock_id( ' 3.1-atmosphere_dynamics()', flags=clock_flag_default+MPP_CLOCK_SYNC, grain=CLOCK_COMPONENT )
    else
-     fv3Clock = mpp_clock_id( ' 3.1-FV3-Dycore', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+     fv3Clock = mpp_clock_id( ' 3.1-atmosphere_dynamics()', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    endif
-   getClock   = mpp_clock_id( ' 3.2-FV3-Get-state', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+   getClock   = mpp_clock_id( ' 3.2-atmos_phys_driver_statein()', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    setupClock = mpp_clock_id( ' 3.3-GFS-Step-Setup', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    radClock   = mpp_clock_id( ' 3.4-GFS-Radiation', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    physClock  = mpp_clock_id( ' 3.5-GFS-Physics', flags=clock_flag_default, grain=CLOCK_COMPONENT )
-   updClock   = mpp_clock_id( ' 3.6-FV3-Update-state', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+   updClock   = mpp_clock_id( ' 3.6-atmosphere_state_update()', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    diagClock  = mpp_clock_id( ' 3.7-Diagnostics', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    ! 3.8-Write-restart is timed on the coupler_main.F90 level
    otherClock = mpp_clock_id( ' 3.9-Other', flags=clock_flag_default, grain=CLOCK_COMPONENT )
@@ -899,12 +899,9 @@ subroutine update_atmos_model_state (Atmos)
     call set_atmosphere_pelist()
     call mpp_clock_end(otherClock)
 
-    ! OF: remove fv3Clock timer here in order to avoid double-counting
-    !call mpp_clock_begin(fv3Clock)
     call mpp_clock_begin(updClock)
     call atmosphere_state_update (Atmos%Time, IPD_Data, IAU_Data, Atm_block, flip_vc)
     call mpp_clock_end(updClock)
-    !call mpp_clock_end(fv3Clock)
 
     call mpp_clock_begin(otherClock)
     if (chksum_debug) then
