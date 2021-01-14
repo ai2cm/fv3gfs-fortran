@@ -306,13 +306,13 @@ contains
     integer, save :: id_dyn_core = -1, id_tracer_adv = -1, id_remap = -1, id_other = -1
 
     if (id_dyn_core < 0) &
-        id_dyn_core = mpp_clock_id('  3.1.1.1-dyn_core', flags = clock_flag_default, grain=CLOCK_MODULE)
+        id_dyn_core = mpp_clock_id('   3.1.1.1-dyn_core', flags = clock_flag_default, grain=CLOCK_MODULE)
     if (id_tracer_adv < 0) &
-        id_tracer_adv = mpp_clock_id('  3.1.1.2-tracer', flags = clock_flag_default, grain=CLOCK_MODULE)
+        id_tracer_adv = mpp_clock_id('   3.1.1.2-tracer', flags = clock_flag_default, grain=CLOCK_MODULE)
     if (id_remap < 0) &
-        id_remap = mpp_clock_id('  3.1.1.3-remap', flags = clock_flag_default, grain=CLOCK_MODULE)
+        id_remap = mpp_clock_id('   3.1.1.3-remap', flags = clock_flag_default, grain=CLOCK_MODULE)
     if (id_other < 0) &
-        id_other = mpp_clock_id('  3.1.1.4-other', flags = clock_flag_default, grain=CLOCK_MODULE)
+        id_other = mpp_clock_id('   3.1.1.4-other', flags = clock_flag_default, grain=CLOCK_MODULE)
     call mpp_clock_begin(id_other)
 
       is  = bd%is
