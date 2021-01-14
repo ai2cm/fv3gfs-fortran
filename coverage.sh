@@ -46,12 +46,16 @@ mkdir -p ${coverage_dir}
 docker run -it --rm --network host -v ${coverage_dir}:/coverage -v `pwd`/rundir:/rundir ${gcr_url}:gcov bash -c "set -ex; cd /rundir; ./submit_job.sh; pip3 install gcovr; cd /coverage; mkdir physics; cd physics; gcovr -d -r /FV3/gfsphysics --html --html-details -o index.html; cd ../; mkdir dycore; cd dycore; gcovr -d -r /FV3/atmos_cubed_sphere --html --html-details -o index.html"
 
 # cleanup run directory
-if grep Termination ${rundir}/stdout.out ; then
+set +e
+grep Termination ${rundir}/stdout.out > /dev/null
+if [ $? -ne 0 ] ; then
   echo "Warning: Run does not seem to have been successfull. Check the rundir!"
 else
   \rm -rf "${rundir}"
 fi
+set -e
 
 # tell user we're done
 echo "Open coverage_${config_name}/*/index.html to view coverage data"
 exit 0
+

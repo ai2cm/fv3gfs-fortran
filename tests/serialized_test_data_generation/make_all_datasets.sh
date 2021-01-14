@@ -47,6 +47,12 @@ for exp_file in ${EXPERIMENTS} ; do
   exp_name=`basename ${exp_file} .yml`
   echo "====================================================="
   echo "Generating data for ${exp_name} ..."
+  npx=`cat ${exp_file} | grep npx | sed s/npx://g | sed 's/^ *//g'`
+  if [ ${npx} -gt 49 ] ; then
+      export SER_ENV="ONLY_DRIVER"
+  else
+      export SER_ENV="ALL"
+  fi
   if [ "${VALIDATE_ONLY}" == "true" ] ; then
       EXPERIMENT=${exp_name} make generate_data validate_data
   else
