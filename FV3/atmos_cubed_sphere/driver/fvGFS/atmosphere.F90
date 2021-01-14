@@ -481,7 +481,7 @@ contains
    id_subgridz     = mpp_clock_id ('  3.1.2-subgrid_z',  flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
    id_dynam_other  = mpp_clock_id ('  3.1.3-other',      flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
 
-   id_update       = mpp_clock_id ('  3.6.2-fv_update_phys', flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_update       = mpp_clock_id ('  3.6.1-fv_update_phys', flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
    id_fv_diag      = mpp_clock_id ('  3.6.2-fv_diag',        flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
    id_update_other = mpp_clock_id ('  3.6.3-other',          flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
 
