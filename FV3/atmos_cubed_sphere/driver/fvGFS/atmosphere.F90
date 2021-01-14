@@ -1,4 +1,3 @@
-
 !***********************************************************************
 !*                   GNU Lesser General Public License                 
 !*
@@ -242,7 +241,8 @@ character(len=20)   :: mod_name = 'fvGFS/atmosphere_mod'
   integer :: isd, ied, jsd, jed
   integer :: nq                       !  number of transported tracers
   integer :: sec, seconds, days
-  integer :: id_dynam, id_fv_diag, id_subgridz
+  integer :: id_dynam = -1, id_subgridz = -1, id_dynam_other = -1
+  integer :: id_update = -1, id_fv_diag = -1, id_update_other = -1
   logical :: cold_start = .false.     !  used in initial condition
 
   integer, dimension(:), allocatable :: id_tracerdt_dyn
@@ -471,9 +471,13 @@ contains
     call get_eta_level ( npz, ps2, pref(1,2), dum1d, Atm(mytile)%ak, Atm(mytile)%bk )
 
 !  --- initialize clocks for dynamics, physics_down and physics_up
-   id_dynam     = mpp_clock_id ('FV dy-core',  flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
-   id_subgridz  = mpp_clock_id ('FV subgrid_z',flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
-   id_fv_diag   = mpp_clock_id ('FV Diag',     flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_dynam        = mpp_clock_id ('  3.1.1-fv_dynamics', flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_subgridz     = mpp_clock_id ('  3.1.2-fv_subgrid_z',  flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_dynam_other  = mpp_clock_id ('  3.1.3-Other',      flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+
+   id_update       = mpp_clock_id ('  3.6.1-fv_update_phys', flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_fv_diag      = mpp_clock_id ('  3.6.2-fv_diag',        flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_update_other = mpp_clock_id ('  3.6.3-Other',          flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
 
                     call timing_off('ATMOS_INIT')
 
@@ -654,7 +658,7 @@ contains
    
 !---- Call FV dynamics -----
 
-   call mpp_clock_begin (id_dynam)
+   call mpp_clock_begin(id_dynam_other)
 
    n = mytile
 
@@ -679,6 +683,9 @@ contains
      call read_new_bc_data(Atm(n), Time, Time_step_atmos, p_split, &
                            isd, ied, jsd, jed )
    endif
+   call mpp_clock_end(id_dynam_other)
+
+   call mpp_clock_begin(id_dynam)
 
    do psc=1,abs(p_split)
       p_step = psc
@@ -712,13 +719,13 @@ contains
       endif
 
     end do !p_split
-    call mpp_clock_end (id_dynam)
+    call mpp_clock_end(id_dynam)
 
 !-----------------------------------------------------
 !--- COMPUTE SUBGRID Z
 !-----------------------------------------------------
 !--- zero out tendencies
-    call mpp_clock_begin (id_subgridz)
+    call mpp_clock_begin(id_subgridz)
     u_dt(:,:,:)   = 0.
     v_dt(:,:,:)   = 0.
     t_dt(:,:,:)   = 0.
@@ -750,7 +757,7 @@ contains
     endif
 #endif
 
-   call mpp_clock_end (id_subgridz)
+   call mpp_clock_end(id_subgridz)
 
  end subroutine atmosphere_dynamics
 
@@ -1460,6 +1467,9 @@ contains
    integer :: i, j, ix, k, k1, n, w_diff, nt_dyn, iq
    integer :: nb, blen, nwat, dnats, nq_adv
    real(kind=kind_phys):: rcp, q0, qwat(nq), qt, rdt
+
+   call mpp_clock_begin(id_update_other)
+
    Time_prev = Time
    Time_next = Time + Time_step_atmos
    rdt = 1.d0 / dt_atmos
@@ -1628,8 +1638,9 @@ contains
        enddo
     endif
 #endif
+   call mpp_clock_end(id_update_other)
 
-   call mpp_clock_begin (id_dynam)
+   call mpp_clock_begin(id_update)
        call timing_on('FV_UPDATE_PHYS')
     call fv_update_phys( dt_atmos, isc, iec, jsc, jec, isd, ied, jsd, jed, Atm(n)%ng, nt_dyn, &
                          Atm(n)%u,  Atm(n)%v,   Atm(n)%w,  Atm(n)%delp, Atm(n)%pt,         &
@@ -1646,7 +1657,9 @@ contains
                          Atm(n)%column_moistening_implied_by_nudging)
 
        call timing_off('FV_UPDATE_PHYS')
-   call mpp_clock_end (id_dynam)
+   call mpp_clock_end(id_update)
+
+   call mpp_clock_begin(id_update_other)
 
    if (Atm(n)%flagstruct%nudge) call update_physics_precipitation_for_qv_nudging(Atm_block, IPD_Data)
 
@@ -1658,6 +1671,8 @@ contains
        call timing_off('TWOWAY_UPDATE')
     endif   
    call nullify_domain()
+
+   call mpp_clock_end(id_update_other)
 
   !---- diagnostics for FV dynamics -----
    if (Atm(mytile)%flagstruct%print_freq /= -99) then

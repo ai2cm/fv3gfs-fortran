@@ -53,7 +53,9 @@ use       fms_mod,     only: file_exist, check_nml_error,               &
 
 use mpp_mod,           only: mpp_init, mpp_pe, mpp_root_pe, mpp_npes, mpp_get_current_pelist, &
                              mpp_set_current_pelist, stdlog, mpp_error, NOTE, FATAL, WARNING
-use mpp_mod,           only: mpp_clock_id, mpp_clock_begin, mpp_clock_end, mpp_sync
+use mpp_mod,           only: mpp_clock_id, mpp_clock_begin, mpp_clock_end, mpp_sync, &
+                             mpp_record_time_start, mpp_record_time_end, CLOCK_COMPONENT
+use fms_mod,           only: clock_flag_default
 
 use mpp_io_mod,        only: mpp_open, mpp_close, &
                              MPP_NATIVE, MPP_RDONLY, MPP_DELETE
@@ -95,7 +97,7 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
 
 ! ----- timing flags -----
 
-   integer :: initClock, mainClock, termClock
+   integer :: initClock = -1, mainClock = -1, termClock = -1, mainClock1st = -1, rstrtClock = -1
    integer, parameter :: timing_level = 1
 
 ! ----- namelist -----
@@ -128,8 +130,9 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
 
  call fms_init()
  call mpp_init()
- initClock = mpp_clock_id( 'Initialization' )
+ initClock = mpp_clock_id( '1-Initialization' )
  call mpp_clock_begin (initClock) !nesting problem
+ call mpp_record_time_end()
   
  call fms_init
  call constants_init
@@ -149,12 +152,24 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
  call print_memuse_stats('after coupler init')
 
  call mpp_set_current_pelist()
+ call mpp_record_time_start()
  call mpp_clock_end (initClock) !end initialization
- mainClock = mpp_clock_id( 'Main loop' )
- termClock = mpp_clock_id( 'Termination' )
- call mpp_clock_begin(mainClock) !begin main loop
+ mainClock1st = mpp_clock_id( '2-Main-loop-1st-trip' )
+ mainClock = mpp_clock_id( '3-Main-loop' )
+ rstrtClock = mpp_clock_id( ' 3.8-Write-restart', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+ termClock = mpp_clock_id( '4-Termination' )
+
+ call mpp_clock_begin(mainClock1st)
+ call mpp_record_time_end()
 
  do nc = 1, num_cpld_calls
+
+    ! separate timer for first trip of timeloop (due to init overhead)
+    if (nc > 1) then
+      call mpp_record_time_start()
+      call mpp_clock_end(mainClock1st)
+      call mpp_clock_begin(mainClock)
+    end if
 
     Time_atmos = Time_atmos + Time_step_atmos
 
@@ -165,6 +180,7 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
     call update_atmos_model_state (Atm)
 
 !--- intermediate restart
+    call mpp_clock_begin(rstrtClock)
     if (intrm_rst) then
       if ((nc /= num_cpld_calls) .and. (Time_atmos == Time_restart)) then
         timestamp = date_to_string (Time_restart)
@@ -173,6 +189,7 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
         Time_restart = Time_restart + Time_step_restart
       endif
     endif
+    call mpp_clock_end(rstrtClock)
 
     call print_memuse_stats('after full step')
 
@@ -183,12 +200,21 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
 #ifdef AVEC_TIMERS
  call avec_timers_output
 #endif
- call mpp_set_current_pelist()
- call mpp_clock_end(mainClock)
- call mpp_clock_begin(termClock)
 
+ call mpp_set_current_pelist()
+ 
+ if (num_cpld_calls > 1) then
+   call mpp_clock_end(mainClock)
+ else
+    call mpp_record_time_start()
+    call mpp_clock_end(mainClock1st)
+ end if
+
+ call mpp_clock_begin(termClock)
+ call mpp_record_time_end()
  call coupler_end
  call mpp_set_current_pelist()
+ call mpp_record_time_start()
  call mpp_clock_end(termClock)
 
  call fms_end
