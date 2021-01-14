@@ -132,6 +132,7 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
  call mpp_init()
  initClock = mpp_clock_id( '1-Initialization' )
  call mpp_clock_begin (initClock) !nesting problem
+ call mpp_record_time_end()
   
  call fms_init
  call constants_init
@@ -151,6 +152,7 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
  call print_memuse_stats('after coupler init')
 
  call mpp_set_current_pelist()
+ call mpp_record_time_start()
  call mpp_clock_end (initClock) !end initialization
  mainClock1st = mpp_clock_id( '2-Main-loop-1st-trip' )
  mainClock = mpp_clock_id( '3-Main-loop' )
@@ -209,8 +211,10 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
  end if
 
  call mpp_clock_begin(termClock)
+ call mpp_record_time_end()
  call coupler_end
  call mpp_set_current_pelist()
+ call mpp_record_time_start()
  call mpp_clock_end(termClock)
 
  call fms_end
