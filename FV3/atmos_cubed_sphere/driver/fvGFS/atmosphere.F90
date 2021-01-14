@@ -1,4 +1,3 @@
-./FV3/atmos_cubed_sphere/driver/fvGFS/atmosphere.F90
 !***********************************************************************
 !*                   GNU Lesser General Public License                 
 !*
