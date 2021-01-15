@@ -1,0 +1,37 @@
+## 6 MPI ranks per socket, 4 OpenMP threads, hyperthreading on
+#!/bin/bash -l
+#SBATCH --job-name="fv3_bench"
+#SBATCH --account="c1053"
+#SBATCH --time=01:00:00
+#SBATCH --nodes=6
+#SBATCH --ntasks-per-core=2
+#SBATCH --ntasks-per-node=6
+#SBATCH --cpus-per-task=4
+#SBATCH --partition=normal
+#SBATCH --constraint=gpu
+#SBATCH --hint=multithread
+
+export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+export CRAY_CUDA_MPS=1
+
+srun ./fv3.exe
+
+###  ## 12 MPI ranks per socket, 2 OpenMP threads, hyperthreading on
+###  #!/bin/bash -l
+###  #SBATCH --ntasks-per-core=2
+###  #SBATCH --ntasks-per-node=12
+###  #SBATCH --cpus-per-task=2
+###  #SBATCH --hint=multithread
+###  
+###  ## 6 MPI ranks per socket, 2 OpenMP threads, hyperthreading off
+###  #SBATCH --ntasks-per-core=1
+###  #SBATCH --ntasks-per-node=6
+###  #SBATCH --cpus-per-task=2
+###  #SBATCH --hint=nomultithread
+###  
+###  ## 12 MPI ranks per socket, 1 OpenMP thread, hyperthreading off
+###  #SBATCH --ntasks-per-core=1
+###  #SBATCH --ntasks-per-node=12
+###  #SBATCH --cpus-per-task=1
+###  #SBATCH --hint=nomultithread
+
