@@ -159,16 +159,13 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
  rstrtClock = mpp_clock_id( ' 3.8-Write-restart', flags=clock_flag_default, grain=CLOCK_COMPONENT )
  termClock = mpp_clock_id( '4-Termination' )
 
- call mpp_clock_begin(mainClock1st)
- call mpp_record_time_end()
-
  do nc = 1, num_cpld_calls
 
     ! separate timer for first trip of timeloop (due to init overhead)
-    if (nc > 1) then
-      call mpp_record_time_start()
-      call mpp_clock_end(mainClock1st)
-      call mpp_clock_begin(mainClock)
+    ! note: we switch off all other timers
+    if (nc == 1) then
+      call mpp_clock_begin(mainClock1st)
+      call mpp_record_time_end()
     end if
 
     Time_atmos = Time_atmos + Time_step_atmos
@@ -193,6 +190,14 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
 
     call print_memuse_stats('after full step')
 
+    ! separate timer for first trip of timeloop (due to init overhead)
+    ! note: we switch back on all other timers
+    if (nc == 1) then
+      call mpp_record_time_start()
+      call mpp_clock_end(mainClock1st)
+      call mpp_clock_begin(mainClock)
+    end if
+    
  enddo
  !$ser cleanup
 !-----------------------------------------------------------------------
@@ -203,11 +208,8 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
 
  call mpp_set_current_pelist()
  
- if (num_cpld_calls > 1) then
+ if (num_cpld_calls > 0) then
    call mpp_clock_end(mainClock)
- else
-    call mpp_record_time_start()
-    call mpp_clock_end(mainClock1st)
  end if
 
  call mpp_clock_begin(termClock)
