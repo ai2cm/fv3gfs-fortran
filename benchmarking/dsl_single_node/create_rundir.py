@@ -9,6 +9,7 @@ ntiles = 6
 number_of_nodes_per_tile_side = 1
 number_of_threads_per_rank = 2
 hyper_threading = True
+path_to_exe = "./fv3.exe"
 
 # Piz Daint specification
 PARTITION='hybrid' # one of hybrid or multicore
@@ -52,6 +53,29 @@ fv3_use_hyper_threads = '.true.' if hyper_threads else '.false.'
 fv3_ncores_per_node = SOCKETS_PER_NODE * CORES_PER_SOCKET
 fv3_io_layout = '1,1'
 
+# SLURM job
+slurm_job = f"""
+#!/bin/bash -l
+#SBATCH --job-name="fv3_bench"
+#SBATCH --account="c1053"
+#SBATCH --time=00:30:00
+#SBATCH --nodes={nodes}
+#SBATCH --ntasks-per-core={slurm_ntasks_per_core}
+#SBATCH --ntasks-per-node={slurm_ntasks_per_node}
+#SBATCH --cpus-per-task={slurm_cpus_per_task}
+#SBATCH --partition=normal
+#SBATCH --constraint={slurm_constraint}
+#SBATCH --hint={slurm_hint}
+
+export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+export CRAY_CUDA_MPS=1
+
+t_start=$(date +%s)
+srun {path_to_exe}
+t_end=$(date +%s)
+t_elapsed=$(($t_end - $t_start))
+echo "Elapsed[s]=$(t_elapsed)"
+"""
 
 config = yaml.safe_load(open(yaml_file, 'r'))
 
