@@ -107,7 +107,7 @@ echo "==== module list ===="
 module list
 echo "====================="
 
-./compile
+#./compile
 
 num_exe=`/bin/ls -1d *.exe | wc -l`
 if [ "$num_exe" -lt 1 ] ; then
@@ -121,22 +121,24 @@ cd -
 echo "### run install and example"
 
 script=/tmp/create_rundir_$$.sh
+configdir=${rootdir}/tests/serialized_test_data_generation/configs
 for config in c12_6ranks_standard c48_6ranks_standard ; do
+    rundir=${rootdir}/rundir/${config}
+    mkdir -p ${rundir}
     cat > ${script} <<EOF
 #!/bin/bash
 set -e
 export GOOGLE_APPLICATION_CREDENTIALS=/users/olifu/.gc_cred/jenkins-sa-key.json
-cd ${rootdir}/tests/serialized_test_data_generation/
 source ${FV3CONFIG_VENV}/bin/activate
 module load gcloud
-EXPERIMENT=${config} make setup_rundir
+write_run_directory ${configdir}/${config}.yml ${rundir}
 deactivate
 cd -
 EOF
     chmod 755 ${script}
     ${script}
 
-    cd ${rootdir}/tests/serialized_test_data_generation/rundir/${config}/
+    cd ${rundir}
 
     cp ${rootdir}/FV3/*.exe ./
     cp ${rootdir}/FV3/conf/modules.fv3 ./module.env

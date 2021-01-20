@@ -43,7 +43,7 @@ set +e
 set -e
 
 # load machine dependent environment
-. ${envloc}/env/env.${host}.sh
+#. ${envloc}/env/env.${host}.sh
 
 # check if action script exists
 script="${root}/actions/${action}.sh"
