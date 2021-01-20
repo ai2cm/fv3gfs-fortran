@@ -33,10 +33,11 @@ if DAINT_SECTION == 'multicore':
 @click.option('--rank_layout', default=-1, help='Choose which rank layout to use (1, 2, 3, ...)')
 @click.option('--threads_per_rank', default=1, help='number of OpenMP threads per rank')
 @click.option('--timesteps', default=61, help='number of timesteps')
+@click.option('--wait/--no-wait', default=True, help='wait for SLURM job to complete')
 @click.argument('yaml_file', type=click.File('r'), nargs=1)
 @click.argument('run_directory', type=str, nargs=1)
 def run_benchmark(nodes_per_tile_side, threads_per_rank, hyperthreading, executable, 
-    rank_layout, blocksize, partition, force, timesteps, yaml_file, run_directory):
+    rank_layout, blocksize, partition, force, timesteps, wait, yaml_file, run_directory):
 
     # echo command
     print('\nRunning command:')
@@ -162,7 +163,7 @@ exit 0
 
     # run SLURM job
     print(f'Running SLURM job:')
-    os.system(f'cd {run_directory}; sbatch --wait job')
+    os.system(f'cd {run_directory}; sbatch {'--wait' if wait} job')
 
 if __name__ == '__main__':
     run_benchmark()

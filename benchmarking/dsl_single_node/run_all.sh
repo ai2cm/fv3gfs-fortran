@@ -1,31 +1,45 @@
 #!/bin/bash
 
-default_args="--timesteps=11 --force --partition=debug --executable=/users/olifu/vulcan/fv3gfs-fortran/FV3/fv3_64bit.exe config/c96.yml /scratch/snx3000/olifu/benchmarking/"
+workdir=/scratch/snx3000/olifu/benchmarking
+\rm -rf "${workdir}"
+#partition="normal --no-wait"
+partition="debug"
 
-./run_benchmark.py --no-hyperthreading --threads_per_rank=1 --nodes_per_tile_side=1 --rank_layout=1 ${default_args}/gnu_no_1_01x12
-./run_benchmark.py --no-hyperthreading --threads_per_rank=1 --nodes_per_tile_side=1 --rank_layout=2 ${default_args}/gnu_no_1_02x06
-./run_benchmark.py --no-hyperthreading --threads_per_rank=1 --nodes_per_tile_side=1 --rank_layout=3 ${default_args}/gnu_no_1_03x04
-./run_benchmark.py --no-hyperthreading --threads_per_rank=1 --nodes_per_tile_side=1 --rank_layout=4 ${default_args}/gnu_no_1_04x03
-./run_benchmark.py --no-hyperthreading --threads_per_rank=1 --nodes_per_tile_side=1 --rank_layout=5 ${default_args}/gnu_no_1_06x02
-./run_benchmark.py --no-hyperthreading --threads_per_rank=1 --nodes_per_tile_side=1 --rank_layout=6 ${default_args}/gnu_no_1_12x01
-./run_benchmark.py --hyperthreading    --threads_per_rank=2 --nodes_per_tile_side=1 --rank_layout=1 ${default_args}/gnu_yes_2_01x12
-./run_benchmark.py --hyperthreading    --threads_per_rank=2 --nodes_per_tile_side=1 --rank_layout=2 ${default_args}/gnu_yes_2_02x06
-./run_benchmark.py --hyperthreading    --threads_per_rank=2 --nodes_per_tile_side=1 --rank_layout=3 ${default_args}/gnu_yes_2_03x04
-./run_benchmark.py --hyperthreading    --threads_per_rank=2 --nodes_per_tile_side=1 --rank_layout=4 ${default_args}/gnu_yes_2_04x03
-./run_benchmark.py --hyperthreading    --threads_per_rank=2 --nodes_per_tile_side=1 --rank_layout=5 ${default_args}/gnu_yes_2_06x02
-./run_benchmark.py --hyperthreading    --threads_per_rank=2 --nodes_per_tile_side=1 --rank_layout=6 ${default_args}/gnu_yes_2_12x01
+for config in c96 c128 c192 c256 ; do
+for compiler in gnu intel ; do
 
-./run_benchmark.py --no-hyperthreading --threads_per_rank=2 --nodes_per_tile_side=1 --rank_layout=1 ${default_args}/gnu_no_2_01x06
-./run_benchmark.py --no-hyperthreading --threads_per_rank=2 --nodes_per_tile_side=1 --rank_layout=2 ${default_args}/gnu_no_2_02x03
-./run_benchmark.py --no-hyperthreading --threads_per_rank=2 --nodes_per_tile_side=1 --rank_layout=3 ${default_args}/gnu_no_2_03x02
-./run_benchmark.py --no-hyperthreading --threads_per_rank=2 --nodes_per_tile_side=1 --rank_layout=4 ${default_args}/gnu_no_2_06x01
-./run_benchmark.py --hyperthreading    --threads_per_rank=4 --nodes_per_tile_side=1 --rank_layout=1 ${default_args}/gnu_yes_4_01x06
-./run_benchmark.py --hyperthreading    --threads_per_rank=4 --nodes_per_tile_side=1 --rank_layout=2 ${default_args}/gnu_yes_4_02x03
-./run_benchmark.py --hyperthreading    --threads_per_rank=4 --nodes_per_tile_side=1 --rank_layout=3 ${default_args}/gnu_yes_4_03x02
-./run_benchmark.py --hyperthreading    --threads_per_rank=4 --nodes_per_tile_side=1 --rank_layout=4 ${default_args}/gnu_yes_4_06x01
+  exe=/project/s1053/install/fv3gfs-fortran/${compiler}/fv3_64bit.exe
+  default_args="--timesteps=11 --force --partition=${partition} --executable=${exe} config/${config}.yml ${workdir}/"
+  
+  ./run_benchmark.py --no-hyperthreading --threads_per_rank=1 --nodes_per_tile_side=1 --rank_layout=1 ${default_args}/${config}_${compiler}_no_1_1x12
+  ./run_benchmark.py --no-hyperthreading --threads_per_rank=1 --nodes_per_tile_side=1 --rank_layout=2 ${default_args}/${config}_${compiler}_no_1_2x6
+  ./run_benchmark.py --no-hyperthreading --threads_per_rank=1 --nodes_per_tile_side=1 --rank_layout=3 ${default_args}/${config}_${compiler}_no_1_3x4
+  ./run_benchmark.py --no-hyperthreading --threads_per_rank=1 --nodes_per_tile_side=1 --rank_layout=4 ${default_args}/${config}_${compiler}_no_1_4x3
+  ./run_benchmark.py --no-hyperthreading --threads_per_rank=1 --nodes_per_tile_side=1 --rank_layout=5 ${default_args}/${config}_${compiler}_no_1_6x2
+  ./run_benchmark.py --no-hyperthreading --threads_per_rank=1 --nodes_per_tile_side=1 --rank_layout=6 ${default_args}/${config}_${compiler}_no_1_12x1
+  ./run_benchmark.py --hyperthreading    --threads_per_rank=2 --nodes_per_tile_side=1 --rank_layout=1 ${default_args}/${config}_${compiler}_yes_2_1x12
+  ./run_benchmark.py --hyperthreading    --threads_per_rank=2 --nodes_per_tile_side=1 --rank_layout=2 ${default_args}/${config}_${compiler}_yes_2_2x6
+  ./run_benchmark.py --hyperthreading    --threads_per_rank=2 --nodes_per_tile_side=1 --rank_layout=3 ${default_args}/${config}_${compiler}_yes_2_3x4
+  ./run_benchmark.py --hyperthreading    --threads_per_rank=2 --nodes_per_tile_side=1 --rank_layout=4 ${default_args}/${config}_${compiler}_yes_2_4x3
+  ./run_benchmark.py --hyperthreading    --threads_per_rank=2 --nodes_per_tile_side=1 --rank_layout=5 ${default_args}/${config}_${compiler}_yes_2_6x2
+  ./run_benchmark.py --hyperthreading    --threads_per_rank=2 --nodes_per_tile_side=1 --rank_layout=6 ${default_args}/${config}_${compiler}_yes_2_12x1
+  
+  ./run_benchmark.py --no-hyperthreading --threads_per_rank=2 --nodes_per_tile_side=1 --rank_layout=1 ${default_args}/${config}_${compiler}_no_2_1x6
+  ./run_benchmark.py --no-hyperthreading --threads_per_rank=2 --nodes_per_tile_side=1 --rank_layout=2 ${default_args}/${config}_${compiler}_no_2_2x3
+  ./run_benchmark.py --no-hyperthreading --threads_per_rank=2 --nodes_per_tile_side=1 --rank_layout=3 ${default_args}/${config}_${compiler}_no_2_3x2
+  ./run_benchmark.py --no-hyperthreading --threads_per_rank=2 --nodes_per_tile_side=1 --rank_layout=4 ${default_args}/${config}_${compiler}_no_2_6x1
+  ./run_benchmark.py --hyperthreading    --threads_per_rank=4 --nodes_per_tile_side=1 --rank_layout=1 ${default_args}/${config}_${compiler}_yes_4_1x6
+  ./run_benchmark.py --hyperthreading    --threads_per_rank=4 --nodes_per_tile_side=1 --rank_layout=2 ${default_args}/${config}_${compiler}_yes_4_2x3
+  ./run_benchmark.py --hyperthreading    --threads_per_rank=4 --nodes_per_tile_side=1 --rank_layout=3 ${default_args}/${config}_${compiler}_yes_4_3x2
+  ./run_benchmark.py --hyperthreading    --threads_per_rank=4 --nodes_per_tile_side=1 --rank_layout=4 ${default_args}/${config}_${compiler}_yes_4_6x1
+  
+  ./run_benchmark.py --no-hyperthreading --threads_per_rank=4 --nodes_per_tile_side=1 --rank_layout=1 ${default_args}/${config}_${compiler}_no_4_1x3
+  ./run_benchmark.py --no-hyperthreading --threads_per_rank=4 --nodes_per_tile_side=1 --rank_layout=2 ${default_args}/${config}_${compiler}_no_4_3x1
+  ./run_benchmark.py --hyperthreading    --threads_per_rank=8 --nodes_per_tile_side=1 --rank_layout=1 ${default_args}/${config}_${compiler}_yes_8_1x3
+  ./run_benchmark.py --hyperthreading    --threads_per_rank=8 --nodes_per_tile_side=1 --rank_layout=2 ${default_args}/${config}_${compiler}_yes_8_3x1
 
-./run_benchmark.py --no-hyperthreading --threads_per_rank=4 --nodes_per_tile_side=1 --rank_layout=1 ${default_args}/gnu_no_4_01x03
-./run_benchmark.py --no-hyperthreading --threads_per_rank=4 --nodes_per_tile_side=1 --rank_layout=2 ${default_args}/gnu_no_4_03x01
-./run_benchmark.py --hyperthreading    --threads_per_rank=8 --nodes_per_tile_side=1 --rank_layout=1 ${default_args}/gnu_yes_8_01x03
-./run_benchmark.py --hyperthreading    --threads_per_rank=8 --nodes_per_tile_side=1 --rank_layout=2 ${default_args}/gnu_yes_8_03x01
+  exit 0
+
+done
+done
 
