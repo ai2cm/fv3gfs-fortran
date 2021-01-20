@@ -120,7 +120,7 @@ namelist:
     dwind_2d: false
     external_ic: true
     fill: true
-    fill_dp: false
+    fill_dp: true
     fv_debug: false
     fv_sg_adj: 600
     gfs_phil: false
