@@ -2260,6 +2260,9 @@ do 1000 j=jfirst,jlast
       dpmin = 0.01 * ( ak(k+1)-ak(k) + (bk(k+1)-bk(k))*1.E5 )
       do i=ifirst, ilast
          if(delp(i,j,k) < dpmin) then
+#ifdef SERIALIZE
+            stop 'Encountered gridpoint where mix_dp() is applied. Not ported in fv3core!'
+#endif
             if (fv_debug) write(*,*) 'Mix_dp: ', i, j, k, mpp_pe(), delp(i,j,k), pt(i,j,k)
             ! Remap from below and mix pt
             dp = dpmin - delp(i,j,k)
@@ -2277,7 +2280,10 @@ do 1000 j=jfirst,jlast
    do i=ifirst, ilast
       if(delp(i,j,km) < dpmin) then
          if (fv_debug) write(*,*) 'Mix_dp: ', i, j, km, mpp_pe(), delp(i,j,km), pt(i,j,km)
-         ! Remap from above and mix pt
+#ifdef SERIALIZE
+         stop 'Encountered gridpoint where mix_dp() is applied. Not ported in fv3core!'
+#endif
+      ! Remap from above and mix pt
          dp = dpmin - delp(i,j,km)
          pt(i,j,km) = (pt(i,j,km)*delp(i,j,km) + pt(i,j,km-1)*dp)/dpmin
          if ( .not.hydrostatic ) w(i,j,km) = (w(i,j,km)*delp(i,j,km) + w(i,j,km-1)*dp) / dpmin
