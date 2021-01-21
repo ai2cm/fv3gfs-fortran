@@ -19,6 +19,8 @@ module GFS_typedefs
        use h2o_def,                  only: levh2o,      h2o_coeff
        use aerclm_def,               only: ntrcaer,     ntrcaerm
 #endif
+       use mpp_mod,                  only: mpp_error, FATAL
+
 
        implicit none
 
@@ -3704,6 +3706,10 @@ module GFS_typedefs
         n = get_tracer_index(Model%tracer_names, 'msa', Model%me, Model%master, Model%debug) - Model%ntchs + 1
         if (n > 0) Model%ntdiag(n) = .false.
       endif
+    endif
+
+    if (Model%satmedmf .and. Model%ntke .lt. 0) then
+      call mpp_error(FATAL, 'GFS_typedefs:: An sgs_tke tracer must be defined in the field_table if gfs_physics_nml.satmedmf is true.')
     endif
 
     ! -- setup aerosol scavenging factors
