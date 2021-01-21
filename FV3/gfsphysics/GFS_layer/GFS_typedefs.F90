@@ -3709,7 +3709,7 @@ module GFS_typedefs
     endif
 
     if (Model%satmedmf .and. Model%ntke .lt. 0) then
-      call mpp_error(FATAL, 'GFS_typedefs:: An sgs_tke tracer must be defined in the field_table if gfs_physics_nml.satmedmf is true.')
+      call mpp_error(FATAL, 'GFS_typedefs::control_initialize An sgs_tke tracer must be defined in the field_table if gfs_physics_nml.satmedmf is true.')
     endif
 
     ! -- setup aerosol scavenging factors
