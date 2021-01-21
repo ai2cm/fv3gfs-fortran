@@ -708,7 +708,7 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
    call FV3GFS_diag_register (IPD_Diag, Time, Atm_block, IPD_Control, Atmos%lon, Atmos%lat, Atmos%axes)
    if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
       call atmosphere_coarse_diag_axes(coarse_diagnostic_axes)
-      call FV3GFS_diag_register_coarse(IPD_Diag, Time, coarse_diagnostic_axes, IPD_Diag_coarse)
+      call FV3GFS_diag_register_coarse(IPD_Diag, Time, coarse_diagnostic_axes, IPD_Control%ldiag3d, IPD_Diag_coarse)
    endif
    call IPD_initialize_rst (IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Init_parm)
 #ifdef CCPP
@@ -944,8 +944,7 @@ subroutine update_atmos_model_state (Atmos)
                             IPD_Control%fhswr, IPD_Control%fhlwr, &
                             Atm(mytile)%coarse_graining%write_coarse_diagnostics, &
                             IPD_Diag_coarse, &
-                            Atm(mytile)%delp(is:ie,js:je,:), Atmos%coarsening_strategy, Atm(mytile)%ptop, &
-                            IPD_Control%ldiag3d)
+                            Atm(mytile)%delp(is:ie,js:je,:), Atmos%coarsening_strategy, Atm(mytile)%ptop)
       if (nint(IPD_Control%fhzero) > 0) then 
         if (mod(isec,3600*nint(IPD_Control%fhzero)) == 0) diag_time = Atmos%Time
       else

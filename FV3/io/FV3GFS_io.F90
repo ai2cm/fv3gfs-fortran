@@ -2878,6 +2878,9 @@ module FV3GFS_io_mod
              endif
            endif
            num_axes_phys = 3
+           if (diag(idx)%id .gt. 0 .and. .not. Model%ldiag3d) then
+             call mpp_error(FATAL, 'FV3GFS_io::fv3gfs_diag_register Outputting 3D diagnostics from the physics requires gfs_physics_nml.ldiag3d be set to true.')
+           endif
         endif
       endif
 
@@ -2912,10 +2915,11 @@ module FV3GFS_io_mod
     coarse_diagnostic%coarse_graining_method = diagnostic%coarse_graining_method
   end subroutine populate_coarse_diag_type
   
-  subroutine fv3gfs_diag_register_coarse(Diag, Time, coarse_axes, Diag_coarse)
+  subroutine fv3gfs_diag_register_coarse(Diag, Time, coarse_axes, ldiag3d, Diag_coarse)
     type(IPD_diag_type), intent(in) :: Diag(:)
     type(time_type), intent(in) :: Time
     integer, intent(in) :: coarse_axes(4)
+    logical, intent(in) :: ldiag3d
     type(IPD_diag_type), intent(inout) :: Diag_coarse(:)
 
     integer :: index
@@ -2926,7 +2930,10 @@ module FV3GFS_io_mod
        Diag_coarse(index)%id = register_diag_field( &
             trim(Diag_coarse(index)%mod_name), trim(Diag_coarse(index)%name),  &
             coarse_axes(1:Diag_coarse(index)%axes), Time, trim(Diag_coarse(index)%desc), &
-            trim(Diag_coarse(index)%unit), missing_value=real(missing_value))       
+            trim(Diag_coarse(index)%unit), missing_value=real(missing_value))
+       if (Diag_coarse(index)%id .gt. 0 .and. Diag_coarse(index)%axes .eq. 3 .and. .not. ldiag3d) then
+         call mpp_error(FATAL, 'FV3GFS_io::fv3gfs_diag_register_coarse Outputting 3D diagnostics from the physics requires gfs_physics_nml.ldiag3d be set to true.')
+       endif
     enddo
   end subroutine fv3gfs_diag_register_coarse
   
@@ -2943,7 +2950,7 @@ module FV3GFS_io_mod
   subroutine fv3gfs_diag_output(time, diag, atm_block, IPD_Data, nx, ny, levs, ntcw, ntoz, &
                                 dt, time_int, time_intfull, time_radsw, &
                                 time_radlw, write_coarse_diagnostics,&
-                                diag_coarse, delp, coarsening_strategy, ptop, ldiag3d)
+                                diag_coarse, delp, coarsening_strategy, ptop)
 !--- subroutine interface variable definitions
     type(time_type),           intent(in) :: time
     type(IPD_diag_type),       intent(in) :: diag(:)
@@ -2960,7 +2967,6 @@ module FV3GFS_io_mod
     real(kind=kind_phys),      intent(in) :: delp(isco:ieco,jsco:jeco,1:levo)
     character(len=64),         intent(in) :: coarsening_strategy
     real,                      intent(in) :: ptop
-    logical,                   intent(in) :: ldiag3d
 !--- local variables
     integer :: i, j, k, idx, nblks, nb, ix, ii, jj
     integer :: is_in, js_in, isc, jsc
@@ -3143,9 +3149,6 @@ module FV3GFS_io_mod
             !---
             !--- skipping other 3D variables with the following else statement
             !---
-            if (.not. ldiag3d) then
-              call mpp_error(FATAL, 'FV3GFS_io:: Outputting 3D diagnostics from the physics requires gfs_physics_nml.ldiag3d be set to true.')
-            endif
             if (trim(Diag(idx)%name) .eq. 'delp_phys') then
                if (Diag(idx)%id > 0) then
                   call store_data3D(Diag(idx)%id, delp, Time, idx, Diag(idx)%intpl_method, Diag(idx)%name)
