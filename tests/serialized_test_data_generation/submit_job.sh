@@ -17,7 +17,8 @@ mkdir -p $TEST_DATA_DIR
 # a single node. The alternative is to set --shm-size in the docker
 # run command.
 export MPIR_CVAR_CH3_NOLOCAL=1
-
+# Setting this to allow finer resolution on 1 rank
+export OMP_STACKSIZE=10G
 
 # setup run environment
 cd $RUNDIR
