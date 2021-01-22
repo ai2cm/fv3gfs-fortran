@@ -163,7 +163,7 @@ exit 0
 
     # run SLURM job
     print(f'Running SLURM job:')
-    os.system(f'cd {run_directory}; sbatch {'--wait' if wait} job')
+    os.system(f'cd {run_directory}; sbatch {"--wait" if wait else ""} job')
 
 if __name__ == '__main__':
     run_benchmark()
