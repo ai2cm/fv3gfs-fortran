@@ -115,12 +115,13 @@ cd -
 # note: we setup the rundir using fv3config in a separate script in order to keep
 #       the environment of this script clean (no modules loaded etc.)
 echo "### run install and example"
-
-script=/tmp/create_rundir_$$.sh
-configdir=${rootdir}/tests/serialized_test_data_generation/configs
 for config in c12_6ranks_standard c48_6ranks_standard ; do
+
+    script=/tmp/create_rundir_$$.sh
+    configdir=${rootdir}/tests/serialized_test_data_generation/configs
     rundir=${rootdir}/rundir/${config}
     mkdir -p ${rundir}
+
     cat > ${script} <<EOF1
 #!/bin/bash
 set -e
