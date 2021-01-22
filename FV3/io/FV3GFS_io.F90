@@ -2880,6 +2880,9 @@ module FV3GFS_io_mod
              endif
            endif
            num_axes_phys = 3
+           if (diag(idx)%id .gt. 0 .and. .not. Model%ldiag3d) then
+             call mpp_error(FATAL, 'FV3GFS_io::fv3gfs_diag_register Outputting 3D diagnostics from the physics requires gfs_physics_nml.ldiag3d be set to true.')
+           endif
         endif
       endif
 
@@ -2929,10 +2932,11 @@ module FV3GFS_io_mod
     coarse_diagnostic%coarse_graining_method = diagnostic%coarse_graining_method
   end subroutine populate_coarse_diag_type
   
-  subroutine fv3gfs_diag_register_coarse(Diag, Time, coarse_axes, Diag_coarse)
+  subroutine fv3gfs_diag_register_coarse(Diag, Time, coarse_axes, ldiag3d, Diag_coarse)
     type(IPD_diag_type), intent(in) :: Diag(:)
     type(time_type), intent(in) :: Time
     integer, intent(in) :: coarse_axes(4)
+    logical, intent(in) :: ldiag3d
     type(IPD_diag_type), intent(inout) :: Diag_coarse(:)
 
     integer :: index
@@ -2943,7 +2947,10 @@ module FV3GFS_io_mod
        Diag_coarse(index)%id = register_diag_field( &
             trim(Diag_coarse(index)%mod_name), trim(Diag_coarse(index)%name),  &
             coarse_axes(1:Diag_coarse(index)%axes), Time, trim(Diag_coarse(index)%desc), &
-            trim(Diag_coarse(index)%unit), missing_value=real(missing_value))       
+            trim(Diag_coarse(index)%unit), missing_value=real(missing_value))
+       if (Diag_coarse(index)%id .gt. 0 .and. Diag_coarse(index)%axes .eq. 3 .and. .not. ldiag3d) then
+         call mpp_error(FATAL, 'FV3GFS_io::fv3gfs_diag_register_coarse Outputting 3D diagnostics from the physics requires gfs_physics_nml.ldiag3d be set to true.')
+       endif
     enddo
   end subroutine fv3gfs_diag_register_coarse
   

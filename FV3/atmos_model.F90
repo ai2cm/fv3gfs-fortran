@@ -82,6 +82,7 @@ use atmosphere_mod,     only: Atm, mytile
 use atmosphere_mod,     only: atmosphere_coarse_graining_parameters
 use atmosphere_mod,     only: atmosphere_coarse_diag_axes
 use atmosphere_mod,     only: atmosphere_coarsening_strategy
+use atmosphere_mod,     only: atmosphere_control_data
 use block_control_mod,  only: block_control_type, define_blocks_packed
 use DYCORE_typedefs,    only: DYCORE_data_type, DYCORE_diag_type
 #ifdef CCPP
@@ -171,7 +172,7 @@ public Atm_block, IPD_Data, IPD_Control
                                                          ! to calculate gradient on cubic sphere grid.
 !</PUBLICTYPE >
 
-integer :: fv3Clock, getClock, updClock, setupClock, radClock, physClock
+integer :: fv3Clock, getClock, updClock, setupClock, radClock, physClock, diagClock, otherClock
 
 !-----------------------------------------------------------------------
 integer :: blocksize    = 1
@@ -284,28 +285,36 @@ subroutine update_atmos_radiation_physics (Atmos)
 
     if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "statein driver"
 !--- get atmospheric state from the dynamic core
+
+    call mpp_clock_begin(otherClock)
     call set_atmosphere_pelist()
-    call mpp_clock_begin(getClock)
     if (IPD_control%do_skeb) call atmosphere_diss_est (IPD_control%skeb_npass) !  do smoothing for SKEB
+    call mpp_clock_end(otherClock)
+
+    call mpp_clock_begin(getClock)
     call atmos_phys_driver_statein (IPD_data, Atm_block, flip_vc)
     call mpp_clock_end(getClock)
 
 !--- if dycore only run, set up the dummy physics output state as the input state
     if (dycore_only) then
+      call mpp_clock_begin(updClock)
       do nb = 1,Atm_block%nblks
         IPD_Data(nb)%Stateout%gu0 = IPD_Data(nb)%Statein%ugrs
         IPD_Data(nb)%Stateout%gv0 = IPD_Data(nb)%Statein%vgrs
         IPD_Data(nb)%Stateout%gt0 = IPD_Data(nb)%Statein%tgrs
         IPD_Data(nb)%Stateout%gq0 = IPD_Data(nb)%Statein%qgrs
       enddo
+      call mpp_clock_end(updClock)
     else
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "setup step"
 
 !--- update IPD_Control%jdat(8)
+      call mpp_clock_begin(otherClock)
       jdat(:) = 0
       call get_date (Atmos%Time, jdat(1), jdat(2), jdat(3),  &
                                  jdat(5), jdat(6), jdat(7))
       IPD_Control%jdat(:) = jdat(:)
+      call mpp_clock_end(otherClock)
 
 !--- execute the IPD atmospheric setup step
       call mpp_clock_begin(setupClock)
@@ -368,10 +377,12 @@ subroutine update_atmos_radiation_physics (Atmos)
 #endif
       call mpp_clock_end(radClock)
 
+      call mpp_clock_begin(otherClock)
       if (chksum_debug) then
         if (mpp_pe() == mpp_root_pe()) print *,'RADIATION STEP  ', IPD_Control%kdt, IPD_Control%fhour
         call FV3GFS_IPD_checksum(IPD_Control, IPD_Data, Atm_block)
       endif
+      call mpp_clock_end(otherClock)
 
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "physics driver"
 
@@ -393,10 +404,12 @@ subroutine update_atmos_radiation_physics (Atmos)
 #endif
       call mpp_clock_end(physClock)
 
+      call mpp_clock_begin(otherClock)
       if (chksum_debug) then
         if (mpp_pe() == mpp_root_pe()) print *,'PHYSICS STEP1   ', IPD_Control%kdt, IPD_Control%fhour
         call FV3GFS_IPD_checksum(IPD_Control, IPD_Data, Atm_block)
       endif
+      call mpp_clock_end(otherClock)
 
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "stochastic physics driver"
 
@@ -418,12 +431,14 @@ subroutine update_atmos_radiation_physics (Atmos)
 #endif
       call mpp_clock_end(physClock)
 
+      call mpp_clock_begin(otherClock)
       if (chksum_debug) then
         if (mpp_pe() == mpp_root_pe()) print *,'PHYSICS STEP2   ', IPD_Control%kdt, IPD_Control%fhour
         call FV3GFS_IPD_checksum(IPD_Control, IPD_Data, Atm_block)
       endif
       call getiauforcing(IPD_Control,IAU_data)
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "end of radiation and physics step"
+      call mpp_clock_end(otherClock)
     endif
 
 #ifdef CCPP
@@ -702,8 +717,8 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
    call register_diag_manager_controlled_diagnostics(IPD_Diag_diag_manager_controlled, Time, Atmos%axes)
    if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
       call atmosphere_coarse_diag_axes(coarse_diagnostic_axes)
-      call FV3GFS_diag_register_coarse(IPD_Diag, Time, coarse_diagnostic_axes, IPD_Diag_coarse)
-      call FV3GFS_diag_register_coarse(IPD_Diag_diag_manager_controlled, Time, coarse_diagnostic_axes, IPD_Diag_diag_manager_controlled_coarse)
+      call FV3GFS_diag_register_coarse(IPD_Diag, Time, coarse_diagnostic_axes, IPD_Control%ldiag3d, IPD_Diag_coarse)
+      call FV3GFS_diag_register_coarse(IPD_Diag_diag_manager_controlled, Time, coarse_diagnostic_axes, IPD_Control%ldiag3d, IPD_Diag_diag_manager_controlled_coarse)
    endif
    call IPD_initialize_rst (IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Init_parm)
 #ifdef CCPP
@@ -762,16 +777,19 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
    if (mpp_pe() == mpp_root_pe()) write(6,*) "---fdiag",fdiag(1:40)
 #endif
 
-   setupClock = mpp_clock_id( 'GFS Step Setup        ', flags=clock_flag_default, grain=CLOCK_COMPONENT )
-   radClock   = mpp_clock_id( 'GFS Radiation         ', flags=clock_flag_default, grain=CLOCK_COMPONENT )
-   physClock  = mpp_clock_id( 'GFS Physics           ', flags=clock_flag_default, grain=CLOCK_COMPONENT )
-   getClock   = mpp_clock_id( 'Dynamics get state    ', flags=clock_flag_default, grain=CLOCK_COMPONENT )
-   updClock   = mpp_clock_id( 'Dynamics update state ', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    if (sync) then
-     fv3Clock = mpp_clock_id( 'FV3 Dycore            ', flags=clock_flag_default+MPP_CLOCK_SYNC, grain=CLOCK_COMPONENT )
+     fv3Clock = mpp_clock_id( ' 3.1-atmosphere_dynamics', flags=clock_flag_default+MPP_CLOCK_SYNC, grain=CLOCK_COMPONENT )
    else
-     fv3Clock = mpp_clock_id( 'FV3 Dycore            ', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+     fv3Clock = mpp_clock_id( ' 3.1-atmosphere_dynamics', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    endif
+   getClock   = mpp_clock_id( ' 3.2-atmos_phys_driver_statein', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+   setupClock = mpp_clock_id( ' 3.3-GFS-Step-Setup', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+   radClock   = mpp_clock_id( ' 3.4-GFS-Radiation', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+   physClock  = mpp_clock_id( ' 3.5-GFS-Physics', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+   updClock   = mpp_clock_id( ' 3.6-atmosphere_state_update', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+   diagClock  = mpp_clock_id( ' 3.7-Diagnostics', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+   ! 3.8-Write-restart is timed on the coupler_main.F90 level
+   otherClock = mpp_clock_id( ' 3.9-Other', flags=clock_flag_default, grain=CLOCK_COMPONENT )
 
 #ifdef CCPP
    ! Set flag for first time step of time integration
@@ -790,7 +808,10 @@ subroutine update_atmos_model_dynamics (Atmos)
 ! run the atmospheric dynamics to advect the properties
   type (atmos_data_type), intent(in) :: Atmos
 
+    call mpp_clock_begin(otherClock)
     call set_atmosphere_pelist()
+    call mpp_clock_end(otherClock)
+    
     call mpp_clock_begin(fv3Clock)
     call atmosphere_dynamics (Atmos%Time)
     call mpp_clock_end(fv3Clock)
@@ -882,24 +903,28 @@ subroutine update_atmos_model_state (Atmos)
   integer :: isec, seconds, isec_fhzero
   integer :: rc
   real(kind=IPD_kind_phys) :: time_int, time_intfull
-  integer :: is, ie, js, je
+  integer :: is, ie, js, je, nk
 !
+    call mpp_clock_begin(otherClock)
     call set_atmosphere_pelist()
-    call mpp_clock_begin(fv3Clock)
+    call mpp_clock_end(otherClock)
+
     call mpp_clock_begin(updClock)
     call atmosphere_state_update (Atmos%Time, IPD_Data, IAU_Data, Atm_block, flip_vc)
     call mpp_clock_end(updClock)
-    call mpp_clock_end(fv3Clock)
 
+    call mpp_clock_begin(otherClock)
     if (chksum_debug) then
       if (mpp_pe() == mpp_root_pe()) print *,'UPDATE STATE    ', IPD_Control%kdt, IPD_Control%fhour
       if (mpp_pe() == mpp_root_pe()) print *,'in UPDATE STATE    ', size(IPD_Data(1)%SfcProp%tsfc),'nblks=',Atm_block%nblks
       call FV3GFS_IPD_checksum(IPD_Control, IPD_Data, Atm_block)
     endif
+    call mpp_clock_end(otherClock)
 
     !--- advance time ---
     Atmos % Time = Atmos % Time + Atmos % Time_step
 
+    call mpp_clock_begin(diagClock)
     call get_time (Atmos%Time - diag_time, isec)
     call get_time (Atmos%Time - Atmos%Time_init, seconds)
     call atmosphere_nggps_diag(Atmos%Time,ltavg=.true.,avg_max_length=avg_max_length)
@@ -929,6 +954,7 @@ subroutine update_atmos_model_state (Atmos)
       endif
       if (mpp_pe() == mpp_root_pe()) write(6,*) ' gfs diags time since last bucket empty: ',time_int/3600.,'hrs'
       call atmosphere_nggps_diag(Atmos%Time)
+      call atmosphere_control_data(is, ie, js, je, nk)
       call FV3GFS_diag_output(Atmos%Time, IPD_DIag, Atm_block, IPD_Data, IPD_Control%nx, IPD_Control%ny, &
                             IPD_Control%levs, 1, 1, 1.d0, time_int, time_intfull,              &
                             IPD_Control%fhswr, IPD_Control%fhlwr, &
@@ -942,6 +968,9 @@ subroutine update_atmos_model_state (Atmos)
       endif
       call diag_send_complete_instant (Atmos%Time)
     endif
+    call mpp_clock_end(diagClock)
+
+    call mpp_clock_begin(otherClock)
 
     !--- this may not be necessary once write_component is fully implemented
     !!!call diag_send_complete_extra (Atmos%Time)
@@ -955,6 +984,8 @@ subroutine update_atmos_model_state (Atmos)
 !jw       call setup_exportdata(IPD_Control, IPD_Data, Atm_block)
       call setup_exportdata(rc)
     endif
+
+    call mpp_clock_end(otherClock)
 
  end subroutine update_atmos_model_state
 ! </SUBROUTINE>

@@ -1,4 +1,3 @@
-
 !***********************************************************************
 !*                   GNU Lesser General Public License                 
 !*
@@ -139,6 +138,7 @@ module atmosphere_mod
 
 #include <fms_platform.h>
 !$ser verbatim use mpi
+!$ser verbatim use m_serialize, ONLY: fs_is_serialization_on
 !-----------------
 ! FMS modules:
 !-----------------
@@ -244,7 +244,8 @@ character(len=20)   :: mod_name = 'fvGFS/atmosphere_mod'
   integer :: isd, ied, jsd, jed
   integer :: nq                       !  number of transported tracers
   integer :: sec, seconds, days
-  integer :: id_dynam, id_fv_diag, id_subgridz
+  integer :: id_dynam = -1, id_subgridz = -1, id_dynam_other = -1
+  integer :: id_update = -1, id_fv_diag = -1, id_update_other = -1
   logical :: cold_start = .false.     !  used in initial condition
 
   integer, dimension(:), allocatable :: id_tracerdt_dyn
@@ -255,6 +256,8 @@ character(len=20)   :: mod_name = 'fvGFS/atmosphere_mod'
   !$ser verbatim integer::cld_amt
 #endif
   !$ser verbatim integer :: o3mr, sgs_tke
+  !$ser verbatim character(len=256) :: ser_env
+  !$ser verbatim logical :: serialize_only_driver
   integer :: mytile  = 1
   integer :: p_split = 1
   integer, allocatable :: pelist(:)
@@ -390,7 +393,9 @@ contains
    graupel = get_tracer_index (MODEL_ATMOS, 'graupel' )
   !$ser verbatim o3mr = get_tracer_index (MODEL_ATMOS, 'o3mr')
   !$ser verbatim sgs_tke = get_tracer_index (MODEL_ATMOS, 'sgs_tke')
-  
+  !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+  !$ser verbatim serialize_only_driver = (index(ser_env, "ONLY_DRIVER") /= 0)
+
 #ifdef CCPP
    cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
 #else
@@ -471,9 +476,13 @@ contains
     call get_eta_level ( npz, ps2, pref(1,2), dum1d, Atm(mytile)%ak, Atm(mytile)%bk )
 
 !  --- initialize clocks for dynamics, physics_down and physics_up
-   id_dynam     = mpp_clock_id ('FV dy-core',  flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
-   id_subgridz  = mpp_clock_id ('FV subgrid_z',flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
-   id_fv_diag   = mpp_clock_id ('FV Diag',     flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_dynam        = mpp_clock_id ('  3.1.1-fv_dynamics', flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_subgridz     = mpp_clock_id ('  3.1.2-fv_subgrid_z',  flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_dynam_other  = mpp_clock_id ('  3.1.3-Other',      flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+
+   id_update       = mpp_clock_id ('  3.6.1-fv_update_phys', flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_fv_diag      = mpp_clock_id ('  3.6.2-fv_diag',        flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_update_other = mpp_clock_id ('  3.6.3-Other',          flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
 
                     call timing_off('ATMOS_INIT')
 
@@ -653,11 +662,12 @@ contains
    type(time_type) :: atmos_time
    !$ser verbatim integer :: mpi_rank,ier
    !$ser verbatim real :: bdt
+   !$ser verbatim logical :: ser_on
    !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, mpi_rank,ier)
    
 !---- Call FV dynamics -----
 
-   call mpp_clock_begin (id_dynam)
+   call mpp_clock_begin(id_dynam_other)
 
    n = mytile
 
@@ -682,6 +692,9 @@ contains
      call read_new_bc_data(Atm(n), Time, Time_step_atmos, p_split, &
                            isd, ied, jsd, jed )
    endif
+   call mpp_clock_end(id_dynam_other)
+
+   call mpp_clock_begin(id_dynam)
 
    do psc=1,abs(p_split)
      !$ser verbatim if (psc == abs(p_split) .and. a_step == 1) then                    
@@ -701,7 +714,11 @@ contains
      !$ser verbatim if (sgs_tke > 0) then
      !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
      !$ser verbatim endif
-      call fv_dynamics(npx, npy, npz, nq, Atm(n)%ng, dt_atmos/real(abs(p_split)),&
+     !$ser verbatim if (serialize_only_driver) then  
+         !$ser verbatim ser_on=fs_is_serialization_on()
+         !$ser off
+     !$ser verbatim endif
+     call fv_dynamics(npx, npy, npz, nq, Atm(n)%ng, dt_atmos/real(abs(p_split)),&
                        Atm(n)%flagstruct%consv_te, Atm(n)%flagstruct%fill,       &
                        Atm(n)%flagstruct%reproduce_sum, kappa, cp_air, zvir,     &
                        Atm(n)%ptop, Atm(n)%ks, nq,                               &
@@ -720,11 +737,18 @@ contains
                        Atm(n)%neststruct,  Atm(n)%idiag, Atm(n)%bd,              &
                        Atm(n)%parent_grid, Atm(n)%domain,Atm(n)%diss_est,        &
                        Atm(n)%lagrangian_tendency_of_hydrostatic_pressure)
-    
+     !$ser verbatim if (serialize_only_driver) then        
+       !$ser verbatim if (ser_on) then 
+       !$ser on
+       !$ser verbatim endif
+     !$ser verbatim endif    
      !$ser savepoint FVDynamics-Out
      !$ser data  u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
      !$ser verbatim if (sgs_tke > 0) then
      !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
+     !$ser verbatim endif
+     !$ser verbatim if (serialize_only_driver) then        
+     !$ser off                                                                                                  
      !$ser verbatim endif
       call timing_off('fv_dynamics')
 
@@ -735,13 +759,13 @@ contains
       endif
 
     end do !p_split
-    call mpp_clock_end (id_dynam)
+    call mpp_clock_end(id_dynam)
 
 !-----------------------------------------------------
 !--- COMPUTE SUBGRID Z
 !-----------------------------------------------------
 !--- zero out tendencies
-    call mpp_clock_begin (id_subgridz)
+    call mpp_clock_begin(id_subgridz)
     u_dt(:,:,:)   = 0.
     v_dt(:,:,:)   = 0.
     t_dt(:,:,:)   = 0.
@@ -783,7 +807,7 @@ contains
     endif
 #endif
 
-   call mpp_clock_end (id_subgridz)
+   call mpp_clock_end(id_subgridz)
 
  end subroutine atmosphere_dynamics
 
@@ -1493,6 +1517,9 @@ contains
    integer :: i, j, ix, k, k1, n, w_diff, nt_dyn, iq
    integer :: nb, blen, nwat, dnats, nq_adv
    real(kind=kind_phys):: rcp, q0, qwat(nq), qt, rdt
+
+   call mpp_clock_begin(id_update_other)
+
    Time_prev = Time
    Time_next = Time + Time_step_atmos
    rdt = 1.d0 / dt_atmos
@@ -1661,8 +1688,9 @@ contains
        enddo
     endif
 #endif
+   call mpp_clock_end(id_update_other)
 
-   call mpp_clock_begin (id_dynam)
+   call mpp_clock_begin(id_update)
        call timing_on('FV_UPDATE_PHYS')
     call fv_update_phys( dt_atmos, isc, iec, jsc, jec, isd, ied, jsd, jed, Atm(n)%ng, nt_dyn, &
                          Atm(n)%u,  Atm(n)%v,   Atm(n)%w,  Atm(n)%delp, Atm(n)%pt,         &
@@ -1679,7 +1707,9 @@ contains
                          Atm(n)%column_moistening_implied_by_nudging)
 
        call timing_off('FV_UPDATE_PHYS')
-   call mpp_clock_end (id_dynam)
+   call mpp_clock_end(id_update)
+
+   call mpp_clock_begin(id_update_other)
 
    if (Atm(n)%flagstruct%nudge) call update_physics_precipitation_for_qv_nudging(Atm_block, IPD_Data)
 
@@ -1691,6 +1721,8 @@ contains
        call timing_off('TWOWAY_UPDATE')
     endif   
    call nullify_domain()
+
+   call mpp_clock_end(id_update_other)
 
   !---- diagnostics for FV dynamics -----
    if (Atm(mytile)%flagstruct%print_freq /= -99) then
