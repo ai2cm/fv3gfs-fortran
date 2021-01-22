@@ -99,10 +99,6 @@ esac
 cd ${rootdir}/FV3
 echo "${compiler_number}" | ./configure
 
-module unload cudatoolkit
-module unload Boost
-module unload cray-python
-module switch PrgEnv-gnu PrgEnv-cray
 echo "==== module list ===="
 module list
 echo "====================="
@@ -150,6 +146,7 @@ EOF1
 
     jobfile=job
     cp ${envloc}/env/submit.${host}.${scheduler}  ./${jobfile}
+    sed -i 's|set -x||g' ${jobfile}
     sed -i 's|<OUTFILE>|'"${jobfile}.out"'|g' ${jobfile}
     sed -i 's|<G2G>|'"source ./module.env; module list"'|g' ${jobfile}
     sed -i 's|<CMD>|'"srun -n 6 ./fv3_64bit.exe"'|g' ${jobfile}
