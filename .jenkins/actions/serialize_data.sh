@@ -63,14 +63,13 @@ else
 fi
 echo "FORCE_PUSH:      ${FORCE_PUSH}"
 echo "=== the following setup is being used ==="
-
+export CUDA=y
 # set up virtual env, if not already set up
 echo ">> Running pip install -r requirements.txt in venv"
 python3 -m venv venv
 . ./venv/bin/activate
 pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
-export CUDA=y
 # configure Docker builds
 export DOCKER_BUILDKIT=1
 export BUILD_ARGS="-q"
