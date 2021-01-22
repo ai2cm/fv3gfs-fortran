@@ -161,7 +161,7 @@ EOF1
     if [ $? -ne 0 ] ; then
         exitError 710 ${LINENO} "Problem with SLURM job (`pwd`/${jobfile}) see log (`pwd`/${jobfile}.out)"
     fi
-    grep '^Termination ' job.out > /dev/null
+    grep '^4-Termination ' job.out > /dev/null
     if [ $? -ne 0 ] ; then
         exitError 715 ${LINENO} "Configuration ${config} did not run through (see `pwd`/${jobfile}.out)"
     fi
