@@ -650,9 +650,9 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
                         IPD_Interstitial, commglobal, mpp_npes(), Init_parm)
 #else
    call IPD_initialize (IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Init_parm)
-   call populate_diag_manager_controlled_diagnostics(IPD_Diag_diag_manager_controlled, &
-                                                     IPD_Data%IntDiag, size(IPD_Data%Statein))
 #endif
+
+   call populate_diag_manager_controlled_diagnostics(IPD_Diag_diag_manager_controlled, IPD_Data%IntDiag, size(IPD_Data%Statein))
 
    if (IPD_Control%do_sppt .OR. IPD_Control%do_shum .OR. IPD_Control%do_skeb .OR. IPD_Control%do_sfcperts) then
       ! Initialize stochastic physics
