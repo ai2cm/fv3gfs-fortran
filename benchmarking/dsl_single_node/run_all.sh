@@ -9,7 +9,8 @@ for config in c96 c128 c192 c256 ; do
 for compiler in gnu intel ; do
 
   exe=/project/s1053/install/fv3gfs-fortran/${compiler}/fv3_64bit.exe
-  default_args="--timesteps=11 --force --partition=${partition} --executable=${exe} config/${config}.yml ${workdir}/"
+  module_env=/project/s1053/install/fv3gfs-fortran/${compiler}/module.env
+  default_args="--timesteps=11 --force --partition=${partition} --executable=${exe} --module_env=${module_env} config/${config}.yml ${workdir}/"
   
   ./run_benchmark.py --no-hyperthreading --threads_per_rank=1 --nodes_per_tile_side=1 --rank_layout=1 ${default_args}/${config}_${compiler}_no_1_1x12
   ./run_benchmark.py --no-hyperthreading --threads_per_rank=1 --nodes_per_tile_side=1 --rank_layout=2 ${default_args}/${config}_${compiler}_no_1_2x6

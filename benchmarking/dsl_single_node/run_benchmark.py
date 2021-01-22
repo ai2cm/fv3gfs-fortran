@@ -28,6 +28,7 @@ if DAINT_SECTION == 'multicore':
 @click.option('--executable', default='./fv3.exe', help='path to the FV3GFS executable')
 @click.option('--force/--no-force', default=False, help='overwrite existing run directory (if it exists)')
 @click.option('--hyperthreading/--no-hyperthreading', default=False, help='switch hyperthreading on or off')
+@click.option('--module_env', default=None, help='file to source to pre-load modules')
 @click.option('--nodes_per_tile_side', default=1, help='number of compute nodes per tile side')
 @click.option('--partition', default='normal', help='parittion to submit job to')
 @click.option('--rank_layout', default=-1, help='Choose which rank layout to use (1, 2, 3, ...)')
@@ -37,7 +38,7 @@ if DAINT_SECTION == 'multicore':
 @click.argument('yaml_file', type=click.File('r'), nargs=1)
 @click.argument('run_directory', type=str, nargs=1)
 def run_benchmark(nodes_per_tile_side, threads_per_rank, hyperthreading, executable, 
-    rank_layout, blocksize, partition, force, timesteps, wait, yaml_file, run_directory):
+    rank_layout, blocksize, partition, force, timesteps, wait, module_env, yaml_file, run_directory):
 
     # echo command
     print('\nRunning command:')
@@ -82,6 +83,10 @@ def run_benchmark(nodes_per_tile_side, threads_per_rank, hyperthreading, executa
 
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 export CRAY_CUDA_MPS=1
+
+if [ -f ./module.env ] ; then
+  source ./module.env
+fi
 
 t_start=$(date +%s)
 srun ./fv3.exe
@@ -154,6 +159,8 @@ exit 0
     shutil.copy2(executable, os.path.join(run_directory, 'fv3.exe'))
     md5_hash = hashlib.md5(open(executable,'rb').read()).hexdigest()
     print(f' md5 hash is {md5_hash}\n')
+    if module_env is not None:
+        shutil.copy2(module_env, os.path.join(run_directory, 'module.env'))
 
     # create SLURM job file
     job_file = os.path.join(run_directory, 'job')
