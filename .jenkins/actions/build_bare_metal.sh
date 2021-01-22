@@ -127,7 +127,6 @@ for config in c12_6ranks_standard c48_6ranks_standard ; do
 set -e
 source ${FV3CONFIG_VENV}/bin/activate
 module load gcloud
-echo "GOOGLE_APPLICATION_CREDENTIALS=\${GOOGLE_APPLICATION_CREDENTIALS}"
 write_run_directory ${configdir}/${config}.yml ${rundir}
 deactivate
 cd -
