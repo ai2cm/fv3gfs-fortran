@@ -107,7 +107,7 @@ echo "==== module list ===="
 module list
 echo "====================="
 
-./compile
+#./compile
 
 num_exe=`/bin/ls -1d *.exe | wc -l`
 if [ "$num_exe" -lt 1 ] ; then
@@ -125,16 +125,15 @@ configdir=${rootdir}/tests/serialized_test_data_generation/configs
 for config in c12_6ranks_standard c48_6ranks_standard ; do
     rundir=${rootdir}/rundir/${config}
     mkdir -p ${rundir}
-    cat > ${script} <<EOF
+    cat > ${script} <<EOF1
 #!/bin/bash
 set -e
-export GOOGLE_APPLICATION_CREDENTIALS=/users/olifu/.gc_cred/jenkins-sa-key.json
 source ${FV3CONFIG_VENV}/bin/activate
 module load gcloud
 write_run_directory ${configdir}/${config}.yml ${rundir}
 deactivate
 cd -
-EOF
+EOF1
     chmod 755 ${script}
     ${script}
 
@@ -172,10 +171,17 @@ EOF
 
 done
 
-# copy executables to install dir
+# copy executables to install dir (and add meta-information)
 echo "### saving executables"
 mkdir -p ${INSTALL_DIR}/fv3gfs-fortran/${compiler}
 cp ${rootdir}/FV3/*.exe ${INSTALL_DIR}/fv3gfs-fortran/${compiler}/
+cp ${rootdir}/FV3/conf/modules.fv3 ${INSTALL_DIR}/fv3gfs-fortran/${compiler}/module.env
+cat > ${INSTALL_DIR}/fv3gfs-fortran/${compiler}/git.env <<EOF2
+GIT_URL = ${GIT_URL}
+GIT_COMMIT = ${GIT_COMMIT}
+GIT_BRANCH = ${GIT_BRANCH}
+GIT_LOCAL_BRANCH = ${GIT_LOCAL_BRANCH}
+EOF2
 
 # end timer and report time taken
 T="$(($(date +%s)-T))"
