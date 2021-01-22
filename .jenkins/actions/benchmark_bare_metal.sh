@@ -7,8 +7,9 @@ INSTALL_DIR=${PROJECT}/../install
 FV3_EXE_DIR=${INSTALL_DIR}/fv3gfs-fortran/
 VENV_DIR=${INSTALL_DIR}/venv/vcm_1.0/
 
-CONFIG_LISTS="c128"
+CONFIG_LIST="c128"
 FV3_EXE_NAME="fv3_64bit.exe"
+TIMESTEPS="61"
 
 ##################################################
 # functions
@@ -92,9 +93,11 @@ echo "==== module list ===="
 module list
 echo "====================="
 
-# note: we setup the rundir using fv3config in a separate script in order to keep
-#       the environment of this script clean (no modules loaded etc.)
-echo "### run install and example"
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip wheel
+pip install git+https://github.com/VulcanClimateModeling/fv3config.git
+
 for config in ${CONFIG_LIST} ; do
 
     workdir=${rootdir}/rundir/bench_${compiler}_${config}
@@ -111,9 +114,9 @@ for config in ${CONFIG_LIST} ; do
         --timesteps=${TIMESTEPS} \
         --force \
         --partition=${partition} \
-        --executable=${FV3_EXE_DIR}/${compiler}/${FV3_EXE_NAME} 
-        --module_env=${FV3_EXE_DIR}/${compiler}/module.env
-        --wait
+        --executable=${FV3_EXE_DIR}/${compiler}/${FV3_EXE_NAME} \
+        --module_env=${FV3_EXE_DIR}/${compiler}/module.env \
+        --wait \
         config/${config}.yml ${workdir}
 
     set +e
@@ -126,6 +129,8 @@ for config in ${CONFIG_LIST} ; do
     cp ${FV3_EXE_DIR}/${compiler}/git.env ${workdir}/
 
 done
+
+deactivate
 
 # end timer and report time taken
 T="$(($(date +%s)-T))"
