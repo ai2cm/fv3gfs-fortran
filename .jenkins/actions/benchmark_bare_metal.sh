@@ -8,9 +8,7 @@ set -e
 #   FV3_EXECUTABLE     - Name of executable to use (these executables are stored under /project/s1053/install/fv3gfs-fortran.
 #   TIMESTEPS          - Number of timesteps to run benchmark for.
 
-INSTALL_DIR=${PROJECT}/../install
-FV3_EXE_DIR=${INSTALL_DIR}/fv3gfs-fortran/
-VENV_DIR=${INSTALL_DIR}/venv/vcm_1.0/
+FV3_EXE_DIR=${PROJECT}/../install/fv3gfs-fortran/
 PERFORMANCE_DIR=${PROJECT}/../performance/fv3core_monitor/fortran
 
 ##################################################
@@ -95,6 +93,8 @@ echo "==== module list ===="
 module list
 echo "====================="
 
+# create venv for the two Python tools below
+# note: can't use vcm_1.0 since we want to keep the module environment clean
 python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip wheel
@@ -105,12 +105,12 @@ cd ${rootdir}/benchmarking/daint_single_node/
 
 for config in ${CONFIGURATION_LIST} ; do
 
-    workdir=${rootdir}/rundir/bench_${compiler}_${config}
-    if [ -d "${workdir}" ] ; then
-        /bin/rm -rf "${workdir}"
-    fi
-    mkdir -p ${workdir}
+    # create directory for benchmark
+    work_name=bench_${compiler}_${config}
+    work_dir=${rootdir}/rundir/${work_name}
 
+    # create the run directory (will erase pre-existing directories) and run benchmark
+    # note: this waits until completion
     ./run_benchmark.py \
         --hyperthreading \
         --threads_per_rank=4 \
@@ -122,22 +122,31 @@ for config in ${CONFIGURATION_LIST} ; do
         --executable=${FV3_EXE_DIR}/${compiler}/${FV3_EXECUTABLE} \
         --module_env=${FV3_EXE_DIR}/${compiler}/module.env \
         --wait \
-        config/${config}.yml ${workdir}
+        config/${config}.yml ${work_dir} | tee /tmp/config_$$.log
+    mv /tmp/config_$$.log ${work_dir}/config_$$.log
 
+    # check for successful completion of run
     set +e
-    grep '^4-Termination ' ${workdir}/slurm-*.out > /dev/null
+    grep '^4-Termination ' ${work_dir}/slurm-*.out > /dev/null
     if [ $? -ne 0 ] ; then
         exitError 715 ${LINENO} "Configuration ${config} did not run through (see `pwd`/${jobfile}.out)"
     fi
     set -e
 
     # copy meta-data
-    cp config/${config}.yml ${workdir}/config.yml
-    cp ${FV3_EXE_DIR}/${compiler}/git.env ${workdir}/git.env
+    cp config/${config}.yml ${work_dir}/config.yml
+    cp ${FV3_EXE_DIR}/${compiler}/git.env ${work_dir}/git.env
 
     # convert to JSON file and store
-    ./stdout_to_json.py ${workdir} | tee /tmp/perf_$$.json
+    ./stdout_to_json.py ${work_dir} | tee /tmp/perf_$$.json
     mv /tmp/perf_$$.json ${PERFORMANCE_DIR}/`date +%Y-%m-%d-%H-%M-%S`.json
+
+    # copy latest run to /project
+    tarfile=${PERFORMANCE_DIR}/latest/${work_name}.tar.gz
+    if [ -f ${tarfile} ] ; then
+        /bin/rm -f ${tarfile}
+    fi
+    (cd ${work_dir}/..; tar cvf ${tarfile}.tar.gz ${work_name})
 
 done
 

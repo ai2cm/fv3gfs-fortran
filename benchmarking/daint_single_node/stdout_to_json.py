@@ -8,6 +8,7 @@ TIMER_MAPPING = {
   "total": ["Total runtime"],
   "init": ["1-Initialization", "2-Main-loop-1st-trip"],
   "main_loop": ["3-Main-loop"],
+  "fv_dynamics": ["3.1.1-fv_dynamics"],
   "dyn_core": ["3.1.1.1-dyn_core"],
   "tracer_adv": ["3.1.1.2-Tracer-advection"],
   "remapping": ["3.1.1.3-Remapping"]
@@ -42,7 +43,7 @@ def stdout_to_json(stdout_file_regex, run_directory):
     for line in match.group().splitlines():
         name = line[0:32].strip()
         values = [num(val) for val in line[32:].split()]
-        raw_timers[name] = dict(zip(labels, values))
+        raw_timers[name] = dict(zip(labels, values))jjjjj
 
     # convert into format for plotting
     times = {}
@@ -58,8 +59,8 @@ def stdout_to_json(stdout_file_regex, run_directory):
     setup = {}
     setup["experiment time"] = datetime.datetime.fromtimestamp(os.path.getmtime(stdout_file)).strftime("%d/%m/%Y %H:%M:%S")
     setup["data set"] = os.path.basename(os.path.normpath(run_directory))
-    main_loop_timer = TIMER_MAPPING["main_loop"][0]
-    setup["timesteps"] = raw_timers[main_loop_timer]["hits"] + 1
+    dynamics_timer = TIMER_MAPPING["fv_dynamics"][0]
+    setup["timesteps"] = raw_timers[dynamics_timer]["hits"] + 1
     setup["version"] = "fortran"
     with open(os.path.join(run_directory, "git.env"), 'r+') as f:
         git_env = f.read()
