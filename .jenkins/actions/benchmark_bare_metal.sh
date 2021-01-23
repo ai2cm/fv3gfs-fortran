@@ -155,7 +155,8 @@ for config in ${CONFIGURATION_LIST} ; do
     if [ -f ${tarfile} ] ; then
         /bin/rm -f ${tarfile}
     fi
-    (cd ${work_dir}/..; tar cvf ${tarfile}.tar.gz ${work_name})
+    mkdir -p `dirname ${tarfile}`
+    (cd ${work_dir}/..; tar cvf ${tarfile} ${work_name})
 
 done
 
