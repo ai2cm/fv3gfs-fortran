@@ -104,9 +104,7 @@ cd ${rootdir}/benchmarking/daint_single_node/
 
 for config in ${CONFIG_LIST} ; do
 
-    # TODO
     workdir=${rootdir}/rundir/bench_${compiler}_${config}
-    workdir=${SCRATCH}/rundir/bench_${compiler}_${config}
     if [ -d "${workdir}" ] ; then
         /bin/rm -rf "${workdir}"
     fi

@@ -75,6 +75,7 @@ def stdout_to_json(stdout_file_regex, run_directory):
     experiment["setup"] = setup
     experiment["times"] = times
     json.dump(experiment, sys.stdout, indent=4)
+    print('')
 
 if __name__ == '__main__':
     stdout_to_json()
