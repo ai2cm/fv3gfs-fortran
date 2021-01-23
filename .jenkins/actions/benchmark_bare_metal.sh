@@ -3,14 +3,15 @@
 # stop on all errors
 set -e
 
+# the following environment variables need to be set
+#   CONFIGURATION_LIST - Space-separated list of configurations to run benchmarks of
+#   FV3_EXECUTABLE     - Name of executable to use (these executables are stored under /project/s1053/install/fv3gfs-fortran.
+#   TIMESTEPS          - Number of timesteps to run benchmark for.
+
 INSTALL_DIR=${PROJECT}/../install
 FV3_EXE_DIR=${INSTALL_DIR}/fv3gfs-fortran/
 VENV_DIR=${INSTALL_DIR}/venv/vcm_1.0/
 PERFORMANCE_DIR=${PROJECT}/../performance/fv3core_monitor/fortran
-
-CONFIG_LIST="c128"
-FV3_EXE_NAME="fv3_64bit.exe"
-TIMESTEPS="61"
 
 ##################################################
 # functions
@@ -102,7 +103,7 @@ pip install click
 
 cd ${rootdir}/benchmarking/daint_single_node/
 
-for config in ${CONFIG_LIST} ; do
+for config in ${CONFIGURATION_LIST} ; do
 
     workdir=${rootdir}/rundir/bench_${compiler}_${config}
     if [ -d "${workdir}" ] ; then
@@ -118,7 +119,7 @@ for config in ${CONFIG_LIST} ; do
         --timesteps=${TIMESTEPS} \
         --force \
         --partition=${partition} \
-        --executable=${FV3_EXE_DIR}/${compiler}/${FV3_EXE_NAME} \
+        --executable=${FV3_EXE_DIR}/${compiler}/${FV3_EXECUTABLE} \
         --module_env=${FV3_EXE_DIR}/${compiler}/module.env \
         --wait \
         config/${config}.yml ${workdir}
