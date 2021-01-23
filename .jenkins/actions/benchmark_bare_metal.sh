@@ -6,6 +6,7 @@ set -e
 INSTALL_DIR=${PROJECT}/../install
 FV3_EXE_DIR=${INSTALL_DIR}/fv3gfs-fortran/
 VENV_DIR=${INSTALL_DIR}/venv/vcm_1.0/
+PERFORMANCE_DIR=${PROJECT}/../performance/fv3core_monitor/fortran
 
 CONFIG_LIST="c128"
 FV3_EXE_NAME="fv3_64bit.exe"
@@ -96,16 +97,21 @@ echo "====================="
 python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip wheel
-pip install git+https://github.com/VulcanClimateModeling/fv3config.git
+pip install -r requirements.txt
+pip install click
+
+cd ${rootdir}/benchmarking/daint_single_node/
 
 for config in ${CONFIG_LIST} ; do
 
+    # TODO
     workdir=${rootdir}/rundir/bench_${compiler}_${config}
+    workdir=${SCRATCH}/rundir/bench_${compiler}_${config}
     if [ -d "${workdir}" ] ; then
         /bin/rm -rf "${workdir}"
     fi
+    mkdir -p ${workdir}
 
-    cd ${rootdir}/benchmarking/daint_single_node/
     ./run_benchmark.py \
         --hyperthreading \
         --threads_per_rank=4 \
@@ -126,9 +132,17 @@ for config in ${CONFIG_LIST} ; do
     fi
     set -e
 
-    cp ${FV3_EXE_DIR}/${compiler}/git.env ${workdir}/
+    # copy meta-data
+    cp config/${config}.yml ${workdir}/config.yml
+    cp ${FV3_EXE_DIR}/${compiler}/git.env ${workdir}/git.env
+
+    # convert to JSON file and store
+    ./stdout_to_json.py ${workdir} | tee /tmp/perf_$$.json
+    mv /tmp/perf_$$.json ${PERFORMANCE_DIR}/`date +%Y-%m-%d-%H-%M-%S`.json
 
 done
+
+cd -
 
 deactivate
 
