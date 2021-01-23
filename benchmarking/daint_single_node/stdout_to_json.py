@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
 
+# This script parses the standard output of a FV3GFS run to extract timing
+# information and convert it to the JSON format which is used by the performance
+# monitoring script.
+
+# 2021/01/22 Oliver Fuhrer, Vulcan Inc, oliverf@vulcan.com
+
 import os, re, click, glob, time, datetime, json, sys
 
 # this dict maps the names of the timer in the JSON file to the actual

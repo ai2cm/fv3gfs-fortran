@@ -1,5 +1,14 @@
 #!/bin/bash
 
+# This script provides an Jenkins action to run a performance benchmark
+# using pre-compiled executables. Several environment variables (see below)
+# are expected to be set upon execution.
+# If the benchmark runs through successfully, the timing results are converted
+# to JSON format and stored. A *.tar.gz file of the latest successful run is
+# also stored.
+
+# 2021/01/22 Oliver Fuhrer, Vulcan Inc, oliverf@vulcan.com
+
 # stop on all errors
 set -e
 

@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
 
+# This script generates a rundirectory given user-provided arguments and a configuration
+# file. It relies on fv3config for setting up the run directory. Once done, a SLURM
+# script is generated and submitted. Optionally, we wait for the completion of the SLURM
+# job.
+
+# 2021/01/22 Oliver Fuhrer, Vulcan Inc, oliverf@vulcan.com
+
 import math
 import os
 import sys
