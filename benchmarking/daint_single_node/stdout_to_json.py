@@ -49,7 +49,7 @@ def stdout_to_json(stdout_file_regex, run_directory):
     for line in match.group().splitlines():
         name = line[0:32].strip()
         values = [num(val) for val in line[32:].split()]
-        raw_timers[name] = dict(zip(labels, values))jjjjj
+        raw_timers[name] = dict(zip(labels, values))
 
     # convert into format for plotting
     times = {}
