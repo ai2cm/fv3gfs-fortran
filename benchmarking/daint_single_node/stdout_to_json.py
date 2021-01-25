@@ -62,7 +62,7 @@ This function parses the standard output of a FV3GFS run in the run_directory to
             times[json_name]["hits"] += raw_timers[fv3_name]["hits"]
             times[json_name]["minimum"] += raw_timers[fv3_name]["tmin"]
             times[json_name]["maximum"] += raw_timers[fv3_name]["tmax"]
-            times[json_name]["median"] += raw_timers[fv3_name]["tavg"]
+            times[json_name]["mean"] += raw_timers[fv3_name]["tavg"]
 
     # assemble meta-data
     setup = {}

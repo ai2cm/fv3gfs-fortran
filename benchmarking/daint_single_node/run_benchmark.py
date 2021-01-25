@@ -75,35 +75,6 @@ def run_benchmark(nodes_per_tile_side, threads_per_rank, hyperthreading, executa
     if DAINT_SECTION == 'multicore':
         slurm_constraint = 'mc'
 
-    # SLURM job
-    slurm_job = f"""#!/bin/bash -l
-#SBATCH --job-name="fv3_bench"
-#SBATCH --account="s1053"
-#SBATCH --time=00:30:00
-#SBATCH --nodes={slurm_nodes}
-#SBATCH --ntasks-per-core={slurm_ntasks_per_core}
-#SBATCH --ntasks-per-node={slurm_ntasks_per_node}
-#SBATCH --cpus-per-task={slurm_cpus_per_task}
-#SBATCH --partition={partition}
-#SBATCH --constraint={slurm_constraint}
-#SBATCH --hint={slurm_hint}
-
-export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
-export CRAY_CUDA_MPS=1
-
-if [ -f ./module.env ] ; then
-  source ./module.env
-fi
-
-t_start=$(date +%s)
-srun ./fv3.exe
-t_end=$(date +%s)
-t_elapsed=$(($t_end - $t_start))
-echo "Elapsed[s]=${{t_elapsed}}"
-
-exit 0
-"""
-
     # define MPI decomposition
     ranks_per_tile = slurm_ntasks_per_node * nodes_per_tile_side**2
     max_ranks_in_x = int(math.sqrt(ranks_per_tile))
@@ -170,6 +141,33 @@ exit 0
         shutil.copy2(module_env, os.path.join(run_directory, 'module.env'))
 
     # create SLURM job file
+    slurm_job = f"""#!/bin/bash -l
+#SBATCH --job-name="fv3_bench"
+#SBATCH --account="s1053"
+#SBATCH --time=00:30:00
+#SBATCH --nodes={slurm_nodes}
+#SBATCH --ntasks-per-core={slurm_ntasks_per_core}
+#SBATCH --ntasks-per-node={slurm_ntasks_per_node}
+#SBATCH --cpus-per-task={slurm_cpus_per_task}
+#SBATCH --partition={partition}
+#SBATCH --constraint={slurm_constraint}
+#SBATCH --hint={slurm_hint}
+
+export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+export CRAY_CUDA_MPS=1
+
+if [ -f ./module.env ] ; then
+  source ./module.env
+fi
+
+t_start=$(date +%s)
+srun ./fv3.exe
+t_end=$(date +%s)
+t_elapsed=$(($t_end - $t_start))
+echo "Elapsed[s]=${{t_elapsed}}"
+
+exit 0
+"""
     job_file = os.path.join(run_directory, 'job')
     print(f'Writing SLURM job file:\n {job_file}\n')
     with open(job_file, 'w') as f:
