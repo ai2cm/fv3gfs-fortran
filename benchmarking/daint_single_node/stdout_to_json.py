@@ -7,6 +7,7 @@
 # 2021/01/22 Oliver Fuhrer, Vulcan Inc, oliverf@vulcan.com
 
 import os, re, click, glob, time, datetime, json, sys
+import yaml
 
 # this dict maps the names of the timer in the JSON file to the actual
 # timers reported in stdout of FV3GFS, multiple entries are accumulated
