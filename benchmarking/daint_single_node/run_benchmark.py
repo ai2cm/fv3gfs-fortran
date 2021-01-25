@@ -40,7 +40,7 @@ if DAINT_SECTION == 'multicore':
 @click.option('--partition', default='normal', help='parittion to submit job to')
 @click.option('--rank_layout', default=-1, help='Choose which rank layout to use (1, 2, 3, ...)')
 @click.option('--threads_per_rank', default=1, help='number of OpenMP threads per rank')
-@click.option('--timesteps', default=61, help='number of timesteps')
+@click.option('--timesteps', default=60, help='number of timesteps')
 @click.option('--wait/--no-wait', default=True, help='wait for SLURM job to complete')
 @click.argument('yaml_file', type=click.File('r'), nargs=1)
 @click.argument('run_directory', type=str, nargs=1)
