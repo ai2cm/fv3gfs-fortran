@@ -143,12 +143,14 @@ for config in ${CONFIGURATION_LIST} ; do
     set -e
 
     # copy meta-data
-    cp config/${config}.yml ${work_dir}/config.yml
+    if [ ! -f ${work_dir}/module.env ] ; then
+        cp ${FV3_EXE_DIR}/${compiler}/module.env ${work_dir}/module.env
+    fi
     cp ${FV3_EXE_DIR}/${compiler}/git.env ${work_dir}/git.env
 
     # convert to JSON file and store
     ./stdout_to_json.py ${work_dir} | tee /tmp/perf_$$.json
-    mv /tmp/perf_$$.json ${PERFORMANCE_DIR}/`date +%Y-%m-%d-%H-%M-%S`.json
+    mv /tmp/perf_$$.json ${PERFORMANCE_DIR}/`date +%Y-%m-%d-%H-%M-%S`_${compiler}_${config}.json
 
     # copy latest run to /project
     tarfile=${PERFORMANCE_DIR}/latest/${work_name}.tar.gz

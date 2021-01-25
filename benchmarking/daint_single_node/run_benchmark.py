@@ -132,13 +132,14 @@ def run_benchmark(nodes_per_tile_side, threads_per_rank, hyperthreading, executa
     print(f'Writing run directory:\n {run_directory}\n')
     fv3config.write_run_directory(config, run_directory)
 
-    # copy executable
+    # copy executable and some meta-information
     print(f'Copying executable:\n {executable}')
     shutil.copy2(executable, os.path.join(run_directory, 'fv3.exe'))
     md5_hash = hashlib.md5(open(executable,'rb').read()).hexdigest()
     print(f' md5 hash is {md5_hash}\n')
     if module_env is not None:
         shutil.copy2(module_env, os.path.join(run_directory, 'module.env'))
+    shutil.copy2(yaml_file.name, os.path.join(run_directory, 'config.yml'))
 
     # create SLURM job file
     slurm_job = f"""#!/bin/bash -l

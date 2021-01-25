@@ -67,7 +67,9 @@ This function parses the standard output of a FV3GFS run in the run_directory to
     # assemble meta-data
     setup = {}
     setup["experiment time"] = datetime.datetime.fromtimestamp(os.path.getmtime(stdout_file)).strftime("%d/%m/%Y %H:%M:%S")
-    setup["data set"] = os.path.basename(os.path.normpath(run_directory))
+    with open(os.path.join(run_directory, 'config.yml'), 'r+') as f:
+        config = yaml.safe_load(yaml_file)
+        setup["data set"] = config["experiment_name"]
     dynamics_timer = TIMER_MAPPING["fv_dynamics"][0]
     setup["timesteps"] = raw_timers[dynamics_timer]["hits"] + 1
     setup["version"] = "fortran"
