@@ -32,9 +32,14 @@ def num(s):
 @click.option('--stdout_file_regex', default='slurm-*.out', help='regex pattern to identify stdout file')
 @click.argument('run_directory', nargs=1)
 def stdout_to_json(stdout_file_regex, run_directory):
-"""
-This function parses the standard output of a FV3GFS run in the run_directory to extract timing information and convert it to the JSON format.
-"""
+    """
+    This function parses the standard output of a FV3GFS run in the run_directory to extract timing information and convert it to the JSON format, which is printed to stdout. Function does not return anything.
+
+      Parameters:
+          stdout_file_regex (string): Optional regex string to identify stdout file in run directory
+          run_directory     (string): String containing path to run directory
+
+    """
 
     # find stdout file
     files = glob.glob(os.path.join(run_directory, stdout_file_regex))
