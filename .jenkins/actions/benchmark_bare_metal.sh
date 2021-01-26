@@ -9,8 +9,9 @@
 
 # 2021/01/22 Oliver Fuhrer, Vulcan Inc, oliverf@vulcan.com
 
-# stop on all errors
+# stop on all errors (also on errors in a pipe-redirection)
 set -e
+set -o pipefail
 
 # the following environment variables need to be set
 #   CONFIGURATION_LIST - Space-separated list of configurations to run benchmarks of
@@ -150,9 +151,6 @@ for config in ${CONFIGURATION_LIST} ; do
 
     # convert to JSON file and store
     ./stdout_to_json.py ${work_dir} | tee /tmp/perf_$$.json
-    if [ $? -ne 0 ] ; then
-        exitError 725 ${LINENO} "Error converting standard output to JSON format"
-    fi
     mv /tmp/perf_$$.json ${PERFORMANCE_DIR}/`date +%Y-%m-%d-%H-%M-%S`_${compiler}_${config}.json
 
     # copy latest run to /project
