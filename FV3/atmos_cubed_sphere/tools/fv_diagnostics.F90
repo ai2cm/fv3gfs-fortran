@@ -186,7 +186,7 @@ module fv_diagnostics_mod
  public :: prt_height, prt_gb_nh_sh, interpolate_vertical, rh_calc, get_height_field, dbzcalc
  public :: max_vv,get_vorticity,max_uh 
  public :: max_vorticity,max_vorticity_hy1,bunkers_vector
- public :: helicity_relative_CAPS 
+ public :: helicity_relative_CAPS, cs3_interpolator, get_height_given_pressure
 
  integer, parameter :: nplev = 31
  integer :: levs(nplev)
@@ -723,8 +723,14 @@ contains
                'potential temperature perturbation', 'K', missing_value=missing_value )
           idiag%id_theta_e = register_diag_field ( trim(field), 'theta_e', axes(1:3), Time,       &
                'theta_e', 'K', missing_value=missing_value )
-          idiag%id_omga = register_diag_field ( trim(field), 'omega', axes(1:3), Time,      &
-               'omega', 'Pa/s', missing_value=missing_value )
+          idiag%id_omga = register_diag_field ( trim(field), 'approximate_omega', axes(1:3), Time,      &
+               'approximate_omega', 'Pa/s', missing_value=missing_value )
+          idiag%id_lagrangian_tendency_of_hydrostatic_pressure = register_diag_field ( trim(field), 'omega', axes(1:3), Time,      &
+               'Lagrangian tendency of hydrostatic pressure', 'Pa/s', missing_value=missing_value )
+         if (idiag%id_lagrangian_tendency_of_hydrostatic_pressure > 0) then
+            allocate(Atm(n)%lagrangian_tendency_of_hydrostatic_pressure(Atm(n)%bd%isd:Atm(n)%bd%ied,Atm(n)%bd%jsd:Atm(n)%bd%jed,1:npz))
+            Atm(n)%lagrangian_tendency_of_hydrostatic_pressure = 0.0
+         endif      
           idiag%id_divg  = register_diag_field ( trim(field), 'divg', axes(1:3), Time,      &
                'mean divergence', '1/s', missing_value=missing_value )
           ! diagnotic output for skeb testing
@@ -1108,6 +1114,15 @@ contains
         Atm(n)%nudge_diag%nudge_q_dt(isc:iec,jsc:jec,npz) = 0.0
     endif
 
+    idiag%id_column_moistening_nudge = register_diag_field('dynamics', &
+          'column_moistening_nudge', axes(1:2), Time, &
+          'column integrated moistening from nudging', &
+          'mm/s', missing_value=missing_value)
+    if (idiag%id_column_moistening_nudge > 0) then
+        allocate(Atm(n)%nudge_diag%column_moistening(isc:iec,jsc:jec))
+        Atm(n)%nudge_diag%column_moistening(isc:iec,jsc:jec) = 0.0
+    endif
+
     idiag%id_u_dt_nudge = register_diag_field('dynamics', &
           'u_dt_nudge', axes(1:3), Time, &
           'zonal wind tendency from nudging', &
@@ -1142,6 +1157,51 @@ contains
     if (idiag%id_qv_dt_phys > 0) then
          allocate(Atm(n)%physics_tendency_diag%qv_dt(isc:iec,jsc:jec,npz))
          Atm(n)%physics_tendency_diag%qv_dt = 0.0
+    endif
+
+    idiag%id_liq_wat_dt_phys = register_diag_field('dynamics', &
+          'liq_wat_dt_phys', axes(1:3), Time, &
+          'liquid water tendency from physics', 'kg/kg/s', &
+          missing_value=missing_value)
+    if (idiag%id_liq_wat_dt_phys > 0) then
+         allocate(Atm(n)%physics_tendency_diag%liq_wat_dt(isc:iec,jsc:jec,npz))
+         Atm(n)%physics_tendency_diag%liq_wat_dt = 0.0
+    endif
+
+    idiag%id_ice_wat_dt_phys = register_diag_field('dynamics', &
+          'ice_wat_dt_phys', axes(1:3), Time, &
+          'ice water tendency from physics', 'kg/kg/s', &
+          missing_value=missing_value)
+    if (idiag%id_ice_wat_dt_phys > 0) then
+         allocate(Atm(n)%physics_tendency_diag%ice_wat_dt(isc:iec,jsc:jec,npz))
+         Atm(n)%physics_tendency_diag%ice_wat_dt = 0.0
+    endif   
+
+    idiag%id_qr_dt_phys = register_diag_field('dynamics', &
+          'qr_dt_phys', axes(1:3), Time, &
+          'rain water tendency from physics', 'kg/kg/s', &
+          missing_value=missing_value)
+    if (idiag%id_qr_dt_phys > 0) then
+         allocate(Atm(n)%physics_tendency_diag%qr_dt(isc:iec,jsc:jec,npz))
+         Atm(n)%physics_tendency_diag%qr_dt = 0.0
+    endif
+
+    idiag%id_qs_dt_phys = register_diag_field('dynamics', &
+          'qs_dt_phys', axes(1:3), Time, &
+          'snow water tendency from physics', 'kg/kg/s', &
+          missing_value=missing_value)
+    if (idiag%id_qs_dt_phys > 0) then
+         allocate(Atm(n)%physics_tendency_diag%qs_dt(isc:iec,jsc:jec,npz))
+         Atm(n)%physics_tendency_diag%qs_dt = 0.0
+    endif
+
+    idiag%id_qg_dt_phys = register_diag_field('dynamics', &
+          'qg_dt_phys', axes(1:3), Time, &
+          'graupel tendency from physics', 'kg/kg/s', &
+          missing_value=missing_value)
+    if (idiag%id_qg_dt_phys > 0) then
+         allocate(Atm(n)%physics_tendency_diag%qg_dt(isc:iec,jsc:jec,npz))
+         Atm(n)%physics_tendency_diag%qg_dt = 0.0
     endif
  end subroutine fv_diag_init
 
@@ -3011,6 +3071,7 @@ contains
 
        if(idiag%id_pt   > 0) used=send_data(idiag%id_pt  , Atm(n)%pt  (isc:iec,jsc:jec,:), Time)
        if(idiag%id_omga > 0) used=send_data(idiag%id_omga, Atm(n)%omga(isc:iec,jsc:jec,:), Time)
+       if(idiag%id_lagrangian_tendency_of_hydrostatic_pressure > 0) used=send_data(idiag%id_lagrangian_tendency_of_hydrostatic_pressure, Atm(n)%lagrangian_tendency_of_hydrostatic_pressure(isc:iec,jsc:jec,:), Time)
        if(idiag%id_diss > 0) used=send_data(idiag%id_diss, Atm(n)%diss_est(isc:iec,jsc:jec,:), Time)
        
        allocate( a3(isc:iec,jsc:jec,npz) )
@@ -3160,6 +3221,9 @@ contains
      if (idiag%id_q_dt_nudge > 0) then
         used = send_data(idiag%id_q_dt_nudge, Atm(n)%nudge_diag%nudge_q_dt(isc:iec,jsc:jec,1:npz), Time)
      endif
+     if (idiag%id_column_moistening_nudge > 0) then
+        used = send_data(idiag%id_column_moistening_nudge, Atm(n)%nudge_diag%column_moistening(isc:iec,jsc:jec), Time)
+     endif
      if (idiag%id_u_dt_nudge > 0) then
         used = send_data(idiag%id_u_dt_nudge, Atm(n)%nudge_diag%nudge_u_dt(isc:iec,jsc:jec,1:npz), Time)
      endif
@@ -3173,6 +3237,22 @@ contains
      if (idiag%id_qv_dt_phys > 0) then
         used = send_data(idiag%id_qv_dt_phys, Atm(n)%physics_tendency_diag%qv_dt(isc:iec,jsc:jec,1:npz), Time)
      endif
+     if (idiag%id_liq_wat_dt_phys > 0) then
+        used = send_data(idiag%id_liq_wat_dt_phys, Atm(n)%physics_tendency_diag%liq_wat_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+     if (idiag%id_ice_wat_dt_phys > 0) then
+        used = send_data(idiag%id_ice_wat_dt_phys, Atm(n)%physics_tendency_diag%ice_wat_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+     if (idiag%id_qr_dt_phys > 0) then
+        used = send_data(idiag%id_qr_dt_phys, Atm(n)%physics_tendency_diag%qr_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+     if (idiag%id_qs_dt_phys > 0) then
+        used = send_data(idiag%id_qs_dt_phys, Atm(n)%physics_tendency_diag%qs_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+     if (idiag%id_qg_dt_phys > 0) then
+        used = send_data(idiag%id_qg_dt_phys, Atm(n)%physics_tendency_diag%qg_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+
    ! enddo  ! end ntileMe do-loop
 
     deallocate ( a2 )

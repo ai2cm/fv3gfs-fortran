@@ -147,8 +147,11 @@ module fv_dynamics_mod
    use fv_arrays_mod,       only: fv_grid_type, fv_flags_type, fv_atmos_type, fv_nest_type, fv_diag_type, fv_grid_bounds_type
    use fv_nwp_nudge_mod,    only: do_adiabatic_init
 #ifdef MULTI_GASES
-   use multi_gases_mod,  only:  virq, virqd, vicpqd
+   use multi_gases_mod,     only:  virq, virqd, vicpqd
 #endif
+  use mpp_mod,              only: mpp_clock_id, mpp_clock_begin,     &
+                                  mpp_clock_end, CLOCK_MODULE
+  use fms_mod,              only: clock_flag_default
 
 implicit none
    logical :: RF_initialized = .false.
@@ -177,7 +180,7 @@ contains
                         ps, pe, pk, peln, pkz, phis, q_con, omga, ua, va, uc, vc,     &
                         ak, bk, mfx, mfy, cx, cy, ze0, hybrid_z,                      &
                         gridstruct, flagstruct, neststruct, idiag, bd,                &
-                        parent_grid, domain, diss_est, time_total)
+                        parent_grid, domain, diss_est, lagrangian_tendency_of_hydrostatic_pressure, time_total)
 
 #ifdef CCPP
     use mpp_mod,   only: FATAL, mpp_error
@@ -233,6 +236,7 @@ contains
 !-----------------------------------------------------------------------
     real, intent(inout) :: phis(bd%isd:bd%ied,bd%jsd:bd%jed)       !< Surface geopotential (g*Z_surf)
     real, intent(inout) :: omga(bd%isd:bd%ied,bd%jsd:bd%jed,npz)   !< Vertical pressure velocity (pa/s)
+    real, allocatable, intent(inout) :: lagrangian_tendency_of_hydrostatic_pressure(:,:,:)   !< Alternate vertical pressure velocity (pa/s)
     real, intent(inout) :: uc(bd%isd:bd%ied+1,bd%jsd:bd%jed  ,npz) !< (uc,vc) mostly used as the C grid winds
     real, intent(inout) :: vc(bd%isd:bd%ied  ,bd%jsd:bd%jed+1,npz)
 
@@ -298,6 +302,18 @@ contains
                                  last_step => CCPP_interstitial%last_step, &
                                  te_2d     => CCPP_interstitial%te0_2d     )
 #endif
+
+    integer, save :: id_dyn_core = -1, id_tracer_adv = -1, id_remap = -1, id_other = -1
+
+    if (id_dyn_core < 0) &
+        id_dyn_core = mpp_clock_id('   3.1.1.1-dyn_core', flags = clock_flag_default, grain=CLOCK_MODULE)
+    if (id_tracer_adv < 0) &
+        id_tracer_adv = mpp_clock_id('   3.1.1.2-Tracer-advection', flags = clock_flag_default, grain=CLOCK_MODULE)
+    if (id_remap < 0) &
+        id_remap = mpp_clock_id('   3.1.1.3-Remapping', flags = clock_flag_default, grain=CLOCK_MODULE)
+    if (id_other < 0) &
+        id_other = mpp_clock_id('   3.1.1.4-Other', flags = clock_flag_default, grain=CLOCK_MODULE)
+    call mpp_clock_begin(id_other)
 
       is  = bd%is
       ie  = bd%ie
@@ -651,8 +667,11 @@ contains
        enddo
   endif
 #endif
+  call mpp_clock_end(id_other)
+
                                                   call timing_on('FV_DYN_LOOP')
   do n_map=1, k_split   ! first level of time-split
+     call mpp_clock_begin(id_dyn_core)
      !$ser verbatim n_map_step=n_map
      k_step = n_map
     
@@ -711,10 +730,13 @@ contains
                     u, v, w, delz, pt, q, delp, pe, pk, phis, ws, omga, ptop, pfull, ua, va,           & 
                     uc, vc, mfx, mfy, cx, cy, pkz, peln, q_con, ak, bk, ks, &
                     gridstruct, flagstruct, neststruct, idiag, bd, &
-                    domain, n_map==1, i_pack, last_step, diss_est,time_total)
+                    domain, n_map==1, i_pack, last_step, diss_est, lagrangian_tendency_of_hydrostatic_pressure, time_total)
                                          call timing_off('DYN_CORE')
       !$ser savepoint DynCore-Out
       !$ser data cappa=cappa u=u v=v w=w delz=delz pt=pt delp=delp pe=pe pk=pk phis=phis wsd=ws omga=omga ptop=ptop pfull=pfull ua=ua va=va uc=uc vc=vc mfxd=mfx mfyd=mfy cxd=cx cyd=cy pkz=pkz peln=peln q_con=q_con diss_estd=diss_est  
+
+     call mpp_clock_end(id_dyn_core)
+     call mpp_clock_begin(id_tracer_adv)
 
 #ifdef SW_DYNAMICS
 !!$OMP parallel do default(none) shared(is,ie,js,je,ps,delp,agrav)
@@ -775,6 +797,9 @@ contains
          endif
       endif
      
+      call mpp_clock_end(id_tracer_adv)
+      call mpp_clock_begin(id_remap)
+
       if ( npz > 4 ) then
 !------------------------------------------------------------------------
 ! Perform vertical remapping from Lagrangian control-volume to
@@ -805,7 +830,7 @@ contains
                      ng, ua, va, omga, dp1, ws, fill, reproduce_sum,                    &
                      idiag%id_mdt>0, dtdt_m, ptop, ak, bk, pfull, gridstruct, domain,   &
                      flagstruct%do_sat_adj, hydrostatic, hybrid_z, do_omega,            &
-                     flagstruct%adiabatic, do_adiabatic_init)
+                     flagstruct%adiabatic, do_adiabatic_init, lagrangian_tendency_of_hydrostatic_pressure)
          !$ser savepoint Remapping-Out
          !$ser data te_2d=te_2d pk=pk tracers=q delp=delp pe=pe ps=ps u=u v=v w=w pt=pt delz=delz q_con=q_con cappa=cappa ua=ua va=va omga=omga peln=peln pkz=pkz dp1=dp1
 
@@ -846,13 +871,20 @@ contains
 !--------------------------
             if(flagstruct%nf_omega>0)    &
             call del2_cubed(omga, 0.18*gridstruct%da_min, gridstruct, domain, npx, npy, npz, flagstruct%nf_omega, bd)
+            if (allocated(lagrangian_tendency_of_hydrostatic_pressure)) then
+               call del2_cubed(lagrangian_tendency_of_hydrostatic_pressure, 0.18*gridstruct%da_min, gridstruct, domain, npx, npy, npz, flagstruct%nf_omega, bd)
+            endif
          endif
       end if
-      
+
+      call mpp_clock_end(id_remap)
+
 #endif
   enddo    ! n_map loop
                                                   call timing_off('FV_DYN_LOOP')
- 
+
+  call mpp_clock_begin(id_other)
+
   if ( idiag%id_mdt > 0 .and. (.not.do_adiabatic_init) ) then
 ! Output temperature tendency due to inline moist physics:
 #if defined(CCPP) && defined(__GFORTRAN__)
@@ -1041,6 +1073,7 @@ contains
 #ifdef CCPP
   end associate ccpp_associate
 #endif
+  call mpp_clock_end(id_other)
 
   end subroutine fv_dynamics
 

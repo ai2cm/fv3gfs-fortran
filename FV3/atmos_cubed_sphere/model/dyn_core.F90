@@ -178,7 +178,7 @@ contains
                      u,  v,  w, delz, pt, q, delp, pe, pk, phis, ws, omga, ptop, pfull, ua, va, & 
                      uc, vc, mfx, mfy, cx, cy, pkz, peln, q_con, ak, bk, &
                      ks, gridstruct, flagstruct, neststruct, idiag, bd, domain, &
-                     init_step, i_pack, end_step, diss_est,time_total)
+                     init_step, i_pack, end_step, diss_est, lagrangian_tendency_of_hydrostatic_pressure, time_total)
 
     integer, intent(IN) :: npx
     integer, intent(IN) :: npy
@@ -230,6 +230,7 @@ contains
 !-----------------------------------------------------------------------
     real, intent(out  ):: ws(bd%is:bd%ie,bd%js:bd%je)        !< w at surface
     real, intent(inout):: omga(bd%isd:bd%ied,bd%jsd:bd%jed,npz)    !< Vertical pressure velocity (pa/s)
+    real, allocatable, intent(inout):: lagrangian_tendency_of_hydrostatic_pressure(:,:,:)          !< Alternate vertical pressure velocity (pa/s)
     real, intent(inout):: uc(bd%isd:bd%ied+1,bd%jsd:bd%jed  ,npz)  !< (uc, vc) are mostly used as the C grid winds
     real, intent(inout):: vc(bd%isd:bd%ied  ,bd%jsd:bd%jed+1,npz)
     real, intent(inout), dimension(bd%isd:bd%ied,bd%jsd:bd%jed,npz):: ua, va
@@ -786,7 +787,7 @@ contains
      
                                                      call timing_on('d_sw')
 !$OMP parallel do default(none) shared(npz,flagstruct,nord_v,pfull,damp_vt,hydrostatic,last_step, &
-!$OMP                                  is,ie,js,je,isd,ied,jsd,jed,omga,delp,gridstruct,npx,npy,  &
+!$OMP                                  is,ie,js,je,isd,ied,jsd,jed,omga,lagrangian_tendency_of_hydrostatic_pressure,delp,gridstruct,npx,npy,  &
 !$OMP                                  ng,zh,vt,ptc,pt,u,v,w,uc,vc,ua,va,divgd,mfx,mfy,cx,cy,     &
 !$OMP                                  crx,cry,xfx,yfx,q_con,zvir,sphum,nq,q,dt,bd,rdt,iep1,jep1, &
 !$OMP                                  heat_source,diss_est,ptop,first_call)                                      &
@@ -884,6 +885,13 @@ contains
                enddo
             enddo
        endif
+       if (last_step .and. allocated(lagrangian_tendency_of_hydrostatic_pressure)) then
+         do j=js,je
+            do i=is,ie
+               lagrangian_tendency_of_hydrostatic_pressure(i,j,k) = delp(i,j,k)
+            enddo
+         enddo
+       endif
 
 !--- external mode divergence damping ---
        if ( flagstruct%d_ext > 0. )  &
@@ -922,6 +930,14 @@ contains
                enddo
             enddo
        endif
+       if (last_step .and. allocated(lagrangian_tendency_of_hydrostatic_pressure)) then
+         do j=js,je
+              do i=is,ie
+                 lagrangian_tendency_of_hydrostatic_pressure(i,j,k) = lagrangian_tendency_of_hydrostatic_pressure(i,j,k)*(xfx(i,j,k)-xfx(i+1,j,k)+yfx(i,j,k)-yfx(i,j+1,k))*gridstruct%rarea(i,j)*rdt
+              enddo
+           enddo
+        endif
+
 
        if ( flagstruct%d_ext > 0. ) then
             do j=js,jep1
@@ -1366,6 +1382,41 @@ contains
           used=send_data(idiag%id_ws, ws, fv_time)
       endif
     endif
+    if (last_step .and. allocated(lagrangian_tendency_of_hydrostatic_pressure)) then
+      if ( flagstruct%use_old_omega ) then
+!$OMP parallel do default(none) shared(is,ie,js,je,npz,lagrangian_tendency_of_hydrostatic_pressure,pe,pem,rdt)
+         do k=1,npz
+            do j=js,je
+               do i=is,ie
+                  lagrangian_tendency_of_hydrostatic_pressure(i,j,k) = (pe(i,k+1,j) - pem(i,k+1,j)) * rdt
+               enddo
+            enddo
+         enddo
+!------------------------------
+! Compute the "advective term"
+!------------------------------
+         call adv_pe(ua, va, pem, lagrangian_tendency_of_hydrostatic_pressure, gridstruct, bd, npx, npy,  npz, ng)
+      else
+!$OMP parallel do default(none) shared(is,ie,js,je,npz,lagrangian_tendency_of_hydrostatic_pressure) private(om2d)
+         do j=js,je
+            do k=1,npz
+               do i=is,ie
+                  om2d(i,k) = lagrangian_tendency_of_hydrostatic_pressure(i,j,k)
+               enddo
+            enddo
+            do k=2,npz
+               do i=is,ie
+                  om2d(i,k) = om2d(i,k-1) + lagrangian_tendency_of_hydrostatic_pressure(i,j,k)
+               enddo
+            enddo
+            do k=2,npz
+               do i=is,ie
+                  lagrangian_tendency_of_hydrostatic_pressure(i,j,k) = om2d(i,k)
+               enddo
+            enddo
+         enddo
+      endif
+   endif
 #endif
 
     if (gridstruct%nested) then
@@ -2318,6 +2369,9 @@ do 1000 j=jfirst,jlast
       dpmin = 0.01 * ( ak(k+1)-ak(k) + (bk(k+1)-bk(k))*1.E5 )
       do i=ifirst, ilast
          if(delp(i,j,k) < dpmin) then
+#ifdef SERIALIZE
+            stop 'Encountered gridpoint where mix_dp() is applied. Not ported in fv3core!'
+#endif
             if (fv_debug) write(*,*) 'Mix_dp: ', i, j, k, mpp_pe(), delp(i,j,k), pt(i,j,k)
             ! Remap from below and mix pt
             dp = dpmin - delp(i,j,k)
@@ -2335,7 +2389,10 @@ do 1000 j=jfirst,jlast
    do i=ifirst, ilast
       if(delp(i,j,km) < dpmin) then
          if (fv_debug) write(*,*) 'Mix_dp: ', i, j, km, mpp_pe(), delp(i,j,km), pt(i,j,km)
-         ! Remap from above and mix pt
+#ifdef SERIALIZE
+         stop 'Encountered gridpoint where mix_dp() is applied. Not ported in fv3core!'
+#endif
+      ! Remap from above and mix pt
          dp = dpmin - delp(i,j,km)
          pt(i,j,km) = (pt(i,j,km)*delp(i,j,km) + pt(i,j,km-1)*dp)/dpmin
          if ( .not.hydrostatic ) w(i,j,km) = (w(i,j,km)*delp(i,j,km) + w(i,j,km-1)*dp) / dpmin

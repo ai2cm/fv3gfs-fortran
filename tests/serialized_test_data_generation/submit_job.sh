@@ -13,9 +13,16 @@ mkdir -p $TEST_DATA_DIR
 
 # setup environment
 
+# Setting this variable is so we can use mpich with 54 ranks on
+# a single node. The alternative is to set --shm-size in the docker
+# run command.
+export MPIR_CVAR_CH3_NOLOCAL=1
+# Setting this to allow finer resolution on 1 rank
+export OMP_STACKSIZE=10G
+
 # setup run environment
 cd $RUNDIR
-NUM_RANKS=`python ${RUNDIR}/count_ranks.py $RUNDIR/fv3config.yml`
+NUM_RANKS=`python3 ${RUNDIR}/count_ranks.py $RUNDIR/fv3config.yml`
 ulimit -s unlimited
 
 # run the model (deduce MPI configuration from config file)
@@ -27,13 +34,13 @@ if [ $? -ne 0 ] ; then
     echo ">>> Error occurred while running the model"
     echo ">>>>> cmd:"
     echo "mpirun -l -np $NUM_RANKS $RUNDIR/fv3.exe"
-    echo ">>>>> stderr:"
-    cat $RUNDIR/stderr.out
+    echo ">>>>> env:"
+    env
     echo ">>>>> stdout:"
     cat $RUNDIR/stdout.out
-    echo ">>>>> env:"
-    cat $RUNDIR/env.out
-    echo ">>>>> Aborting"
+    echo ">>>>> stderr:"
+    cat $RUNDIR/stderr.out
+    echo ">>>>> Aborting due to error when executing fv3.exe"
     exit 1
 else
     echo ">>> Success"
@@ -42,7 +49,9 @@ set -e
 
 # copy artefacts to test_data directory
 cp $RUNDIR/input.nml $TEST_DATA_DIR/
-cp $RUNDIR/fortran_sha.txt $TEST_DATA_DIR/
+if [ -f $RUNDIR/fortran_sha.txt ] ; then
+    cp $RUNDIR/fortran_sha.txt $TEST_DATA_DIR/
+fi
 cp $RUNDIR/logfile.*.out $TEST_DATA_DIR/
 cp $RUNDIR/std*.out $TEST_DATA_DIR
 env > $TEST_DATA_DIR/env.out

@@ -63,21 +63,19 @@ else
 fi
 echo "FORCE_PUSH:      ${FORCE_PUSH}"
 echo "=== the following setup is being used ==="
-
+export CUDA=y
 # set up virtual env, if not already set up
 echo ">> Running pip install -r requirements.txt in venv"
 python3 -m venv venv
 . ./venv/bin/activate
 pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
-
 # configure Docker builds
 export DOCKER_BUILDKIT=1
 export BUILD_ARGS="-q"
 export BUILD_FROM_INTERMEDIATE=y
 export BUILDKIT_PROGRESS=plain
 make pull_deps
-
 # do the work
 echo ">> Running ./make_all_datasets.sh in ./tests/serialize_test_data_generation"
 cd tests/serialized_test_data_generation

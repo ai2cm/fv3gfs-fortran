@@ -141,7 +141,7 @@ contains
                       akap, cappa, kord_mt, kord_wz, kord_tr, kord_tm,  peln, te0_2d,        &
                       ng, ua, va, omga, te, ws, fill, reproduce_sum, out_dt, dtdt,      &
                       ptop, ak, bk, pfull, gridstruct, domain, do_sat_adj, &
-                      hydrostatic, hybrid_z, do_omega, adiabatic, do_adiabatic_init)
+                      hydrostatic, hybrid_z, do_omega, adiabatic, do_adiabatic_init, lagrangian_tendency_of_hydrostatic_pressure)
   logical, intent(in):: last_step
   real,    intent(in):: mdt                    !< remap time step
   real,    intent(in):: pdt                    !< phys time step
@@ -197,6 +197,7 @@ contains
   real, intent(inout)::   ua(isd:ied,jsd:jed,km)   !< u-wind (m/s) on physics grid
   real, intent(inout)::   va(isd:ied,jsd:jed,km)   !< v-wind (m/s) on physics grid
   real, intent(inout):: omga(isd:ied,jsd:jed,km)   !< vertical press. velocity (pascal/sec)
+  real, allocatable, intent(inout):: lagrangian_tendency_of_hydrostatic_pressure(:,:,:)   !< alternate vertical press. velocity (pascal/sec)
   real, intent(inout)::   peln(is:ie,km+1,js:je)   !< log(pe)
   real, intent(inout)::   dtdt(is:ie,js:je,km)
   real, intent(out)::    pkz(is:ie,js:je,km)       !< layer-mean pk for converting t to pt
@@ -219,6 +220,7 @@ contains
   real, dimension(is:ie+1,km+1):: pe0, pe3
   real, dimension(is:ie):: gz, cvm, qv
   real rcp, rg, rrg, bkh, dtmp, k1k
+  real, allocatable, dimension(:,:) :: vulcan_pe3
 #ifndef CCPP
   logical:: fast_mp_consv
 #endif
@@ -237,6 +239,8 @@ contains
   !$ser verbatim jedp1=jed+1
   !$ser verbatim js2d=js
 #endif
+
+if (allocated(lagrangian_tendency_of_hydrostatic_pressure)) allocate(vulcan_pe3(is:ie+1,km+1))
 
 #ifdef CCPP
       ccpp_associate: associate( fast_mp_consv => CCPP_interstitial%fast_mp_consv, &
@@ -280,9 +284,9 @@ contains
 #ifdef MULTI_GASES
 !$OMP                                  num_gas,                                          &
 #endif
-!$OMP                                  hs,w,ws,kord_wz,do_omega,omga,rrg,kord_mt,ua)    &
+!$OMP                                  hs,w,ws,kord_wz,do_omega,omga,lagrangian_tendency_of_hydrostatic_pressure,rrg,kord_mt,ua)    &
 !$OMP                          private(qv,gz,cvm,kp,k_next,bkh,dp2,   &
-!$OMP                                  pe0,pe1,pe2,pe3,pk1,pk2,pn2,phis,q2)
+!$OMP                                  pe0,pe1,pe2,pe3,pk1,pk2,pn2,phis,q2,vulcan_pe3)
   do 1000 j=js,je+1
 
      do k=1,km+1
@@ -535,6 +539,18 @@ contains
       enddo
    endif
 
+
+   if (last_step .and. allocated(lagrangian_tendency_of_hydrostatic_pressure)) then
+      do i=is,ie
+         vulcan_pe3(i,1) = 0.
+      enddo
+      do k=2,km+1
+         do i=is,ie
+            vulcan_pe3(i,k) = lagrangian_tendency_of_hydrostatic_pressure(i,j,k-1)
+         enddo
+      enddo
+   endif
+
    do k=1,km+1
       do i=is,ie
           pe0(i,k)   = peln(i,k,j)
@@ -633,6 +649,28 @@ contains
        enddo
    enddo
    endif     ! end do_omega
+
+   if ( last_step .and. allocated(lagrangian_tendency_of_hydrostatic_pressure)) then
+      do k=1,km
+         do i=is,ie
+            dp2(i,k) = 0.5*(peln(i,k,j) + peln(i,k+1,j))
+         enddo
+      enddo
+      do i=is,ie
+          k_next = 1
+          do n=1,km
+             kp = k_next
+             do k=kp,km
+                if( dp2(i,n) <= pe0(i,k+1) .and. dp2(i,n) >= pe0(i,k) ) then
+                    lagrangian_tendency_of_hydrostatic_pressure(i,j,n) = vulcan_pe3(i,k)  +  (vulcan_pe3(i,k+1) - vulcan_pe3(i,k)) *    &
+                          (dp2(i,n)-pe0(i,k)) / (pe0(i,k+1)-pe0(i,k) )
+                    k_next = k
+                    exit
+                endif
+             enddo
+          enddo      
+      enddo
+   endif     ! end last_step
 
   endif !(j < je+1)
 
@@ -741,7 +779,7 @@ contains
 #else
 !$OMP parallel default(none) shared(is,ie,js,je,km,kmp,ptop,u,v,pe,ua,isd,ied,jsd,jed,kord_mt, &
 #ifdef SERIALIZE
-!$OMP  ppser_savepoint, ppser_serializer, ppser_serializer_ref, ppser_zrperturb,mode,js2d, &
+!$OMP  ppser_savepoint, ppser_serializer, ppser_serializer_ref, ppser_zrperturb,mode,js2d,pfull, &
 #endif
 !$OMP                               te_2d,te,delp,hydrostatic,hs,rg,pt,peln, adiabatic,        &
 !$OMP                               cp,delz,nwat,rainwat,liq_wat,ice_wat,snowwat,              &
@@ -919,7 +957,7 @@ endif        ! end last_step check
 #else
     
 !$ser savepoint SatAdjust3d-In
-!$ser data dpln=dpln peln=peln mdt=mdt r_vir=r_vir fast_mp_consv=fast_mp_consv te=te  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel)  qcld=q(:,:,:,cld_amt)  hs=hs delz=delz pt=pt delp=delp q_con=q_con cappa=cappa  out_dt=out_dt last_step=last_step  pkz=pkz rrg=rrg akap=akap kmp=kmp
+!$ser data dpln=dpln peln=peln mdt=mdt r_vir=r_vir fast_mp_consv=fast_mp_consv te=te  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel)  qcld=q(:,:,:,cld_amt)  hs=hs delz=delz pt=pt delp=delp q_con=q_con cappa=cappa  out_dt=out_dt last_step=last_step  pkz=pkz rrg=rrg akap=akap kmp=kmp pfull=pfull
 !$OMP do
            do k=kmp,km
               do j=js,je

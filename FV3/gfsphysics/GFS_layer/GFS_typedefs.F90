@@ -19,6 +19,8 @@ module GFS_typedefs
        use h2o_def,                  only: levh2o,      h2o_coeff
        use aerclm_def,               only: ntrcaer,     ntrcaerm
 #endif
+       use mpp_mod,                  only: mpp_error, FATAL
+
 
        implicit none
 
@@ -1077,7 +1079,7 @@ module GFS_typedefs
     character(len=240)   :: iau_inc_files(7)! list of increment files
     real(kind=kind_phys) :: iaufhrs(7)      ! forecast hours associated with increment files
     logical :: iau_filter_increments
-
+    real(kind=kind_phys) :: sst_perturbation  ! Sea surface temperature perturbation to climatology or nudging SST (default 0.0 K)
 #ifdef CCPP
     ! From physcons.F90, updated/set in control_initialize
     real(kind=kind_phys) :: dxinv           ! inverse scaling factor for critical relative humidity, replaces dxinv in physcons.F90
@@ -3097,6 +3099,7 @@ module GFS_typedefs
 !--- aerosol scavenging factors
     character(len=20) :: fscav_aero(20) = 'default'
 
+    real(kind=kind_phys) :: sst_perturbation = 0.0  ! Sea surface temperature perturbation [K]
 !--- END NAMELIST VARIABLES
 
     NAMELIST /gfs_physics_nml/                                                              &
@@ -3186,7 +3189,8 @@ module GFS_typedefs
                                max_lon, max_lat, min_lon, min_lat, rhcmax,                  &
                                phys_version,                                                &
                           !--- aerosol scavenging factors ('name:value' string array)
-                               fscav_aero
+                               fscav_aero, &
+                               sst_perturbation
 
 !--- other parameters 
     integer :: nctp    =  0                !< number of cloud types in CS scheme
@@ -3653,6 +3657,7 @@ module GFS_typedefs
     Model%iau_filter_increments = iau_filter_increments
     if(Model%me==0) print *,' model init,iaufhrs=',Model%iaufhrs
 
+    Model%sst_perturbation = sst_perturbation
 !--- tracer handling
     Model%ntrac            = size(tracer_names)
 #ifdef CCPP
@@ -3701,6 +3706,10 @@ module GFS_typedefs
         n = get_tracer_index(Model%tracer_names, 'msa', Model%me, Model%master, Model%debug) - Model%ntchs + 1
         if (n > 0) Model%ntdiag(n) = .false.
       endif
+    endif
+
+    if (Model%satmedmf .and. Model%ntke .lt. 0) then
+      call mpp_error(FATAL, 'GFS_typedefs::control_initialize An sgs_tke tracer must be defined in the field_table if gfs_physics_nml.satmedmf is true.')
     endif
 
     ! -- setup aerosol scavenging factors
@@ -4455,7 +4464,7 @@ module GFS_typedefs
 #endif
       print *, ' ivegsrc           : ', Model%ivegsrc
       print *, ' isot              : ', Model%isot
-
+      print *, ' sst_perturbation  : ', Model%sst_perturbation
       if (Model%lsm == Model%lsm_noahmp) then
       print *, ' Noah MP LSM is used, the options are'
       print *, ' iopt_dveg         : ', Model%iopt_dveg

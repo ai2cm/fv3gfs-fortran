@@ -299,7 +299,7 @@ integer, public :: clock_flag_default
 
 !   ---- private data for check_nml_error ----
 
-   integer, private :: num_nml_error_codes, nml_error_codes(20)
+   !integer, private :: num_nml_error_codes, nml_error_codes(20)
    logical, private :: do_nml_error_init = .true.
    private  nml_error_init
 
@@ -444,7 +444,7 @@ subroutine fms_init (localcomm )
     if (mpp_pe() == mpp_root_pe()) then
       unit = stdlog()
       write (unit, nml=fms_nml)
-      write (unit,*) 'nml_error_codes=', nml_error_codes(1:num_nml_error_codes)
+      !write (unit,*) 'nml_error_codes=', nml_error_codes(1:num_nml_error_codes)
     endif
 
     call memutils_init( print_memory_usage )
