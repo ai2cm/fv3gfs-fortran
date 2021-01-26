@@ -63,7 +63,7 @@ def stdout_to_json(stdout_file_regex, run_directory):
     # convert into format for plotting
     times = {}
     for json_name, fv3_names in TIMER_MAPPING.items():
-        times[json_name] = {"hits": 0, "minimum": 0., "maximum": 0., "median": 0.}
+        times[json_name] = {"hits": 0, "minimum": 0., "maximum": 0., "mean": 0.}
         for fv3_name in fv3_names:
             times[json_name]["hits"] += raw_timers[fv3_name]["hits"]
             times[json_name]["minimum"] += raw_timers[fv3_name]["tmin"]

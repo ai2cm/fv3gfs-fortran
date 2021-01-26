@@ -150,6 +150,9 @@ for config in ${CONFIGURATION_LIST} ; do
 
     # convert to JSON file and store
     ./stdout_to_json.py ${work_dir} | tee /tmp/perf_$$.json
+    if [ $? -ne 0 ] ; then
+        exitError 725 ${LINENO} "Error converting standard output to JSON format"
+    fi
     mv /tmp/perf_$$.json ${PERFORMANCE_DIR}/`date +%Y-%m-%d-%H-%M-%S`_${compiler}_${config}.json
 
     # copy latest run to /project
