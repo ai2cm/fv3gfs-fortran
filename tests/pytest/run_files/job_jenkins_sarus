@@ -5,7 +5,6 @@
 #SBATCH --constraint=mc
 #SBATCH --time=00:04:00
 #SBATCH --nodes=1
-#SBATCH --ntasks=6
 #SBATCH --hint=nomultithread
 
 ##
