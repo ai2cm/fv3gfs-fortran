@@ -74,7 +74,7 @@ def stdout_to_json(stdout_file_regex, run_directory):
     setup = {}
     setup["experiment time"] = datetime.datetime.fromtimestamp(os.path.getmtime(stdout_file)).strftime("%d/%m/%Y %H:%M:%S")
     with open(os.path.join(run_directory, 'config.yml'), 'r+') as f:
-        config = yaml.safe_load(yaml_file)
+        config = yaml.safe_load(f)
         setup["data set"] = config["experiment_name"]
     dynamics_timer = TIMER_MAPPING["fv_dynamics"][0]
     setup["timesteps"] = raw_timers[dynamics_timer]["hits"] + 1
