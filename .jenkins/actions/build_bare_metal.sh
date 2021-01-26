@@ -1,7 +1,8 @@
 #!/bin/bash
 
-# stop on all errors
+# stop on all errors (also on commands with a pipe-redirection)
 set -e
+set -o pipefail
 
 INSTALL_DIR=${PROJECT}/../install
 FV3GFSEXE_DIR=${INSTALL_DIR}/fv3gfs-fortran/
