@@ -34,6 +34,12 @@ a46cf23fc104cb8f969a613190abea6d  grid_spec.tile4.nc
 65010426615309c679c311b0536a0be5  grid_spec_coarse.tile4.nc
 f6b3bc81016db6b54159e55dbe9ce878  grid_spec_coarse.tile5.nc
 a055ea60898cf38317b4e1acb532f1e5  grid_spec_coarse.tile6.nc
+1ceee68509eee70201f2c12385cf6c3b  physics_tendencies_15min_coarse.tile1.nc
+14c840dd3033fd45b2a0844e5724f6fa  physics_tendencies_15min_coarse.tile2.nc
+22f844347d55b529da371471457ab581  physics_tendencies_15min_coarse.tile3.nc
+2f953fd874ede125148d598d9f106a3f  physics_tendencies_15min_coarse.tile4.nc
+bcf140a10c429a441ff017e2839a4017  physics_tendencies_15min_coarse.tile5.nc
+7928ab2ef3b2ac1405c6ff44b5efeecf  physics_tendencies_15min_coarse.tile6.nc
 1e48ebf5fd835669a07008b61837b3ce  RESTART/20160801.001500.fv_core_coarse.res.tile1.nc
 eb554b99f55b50ca7ddf4e11a6eaaf23  RESTART/20160801.001500.fv_core_coarse.res.tile2.nc
 ec32914ff733d153fd85f53e449275e9  RESTART/20160801.001500.fv_core_coarse.res.tile3.nc

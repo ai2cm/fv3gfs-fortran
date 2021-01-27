@@ -1462,8 +1462,10 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: dv3dt (:,:,:)  => null()   !< v momentum change due to physics
     real (kind=kind_phys), pointer :: dt3dt (:,:,:)  => null()   !< temperature change due to physics
     real (kind=kind_phys), pointer :: t_dt(:,:,:)    => null()   !< temperature change due to physics scaled by cp / cvm or cp / cpm
+    real (kind=kind_phys), pointer :: t_dt_int(:,:)  => null()   !< vertically integrated temperature change due to physics scaled by cp / cvm or cp / cpm
     real (kind=kind_phys), pointer :: dq3dt (:,:,:)  => null()   !< moisture change due to physics
     real (kind=kind_phys), pointer :: q_dt  (:,:,:)  => null()   !< moisture tendency due to physics, adjusted to dycore mass fraction convention
+    real (kind=kind_phys), pointer :: q_dt_int(:,:)  => null()   !< vertically integrated moisture tendency due to physics, adjusted to dycore mass fraction convention
     real (kind=kind_phys), pointer :: refdmax (:)    => null()   !< max hourly 1-km agl reflectivity
     real (kind=kind_phys), pointer :: refdmax263k(:) => null()   !< max hourly -10C reflectivity
     real (kind=kind_phys), pointer :: t02max  (:)    => null()   !< max hourly 2m T
@@ -5132,8 +5134,10 @@ module GFS_typedefs
       allocate (Diag%dv3dt  (IM,Model%levs,4))
       allocate (Diag%dt3dt  (IM,Model%levs,9))
       allocate (Diag%t_dt   (IM,Model%levs,9))
+      allocate (Diag%t_dt_int (IM,9))
       allocate (Diag%dq3dt  (IM,Model%levs,9))
       allocate (Diag%q_dt   (IM,Model%levs,5))
+      allocate (Diag%q_dt_int (IM,5))
 !      allocate (Diag%dq3dt  (IM,Model%levs,oz_coeff+5))
 !--- needed to allocate GoCart coupling fields
 !      allocate (Diag%upd_mf (IM,Model%levs))
@@ -5433,9 +5437,7 @@ module GFS_typedefs
       Diag%du3dt    = zero
       Diag%dv3dt    = zero
       Diag%dt3dt    = zero
-      Diag%t_dt     = zero
       Diag%dq3dt    = zero
-      Diag%q_dt     = zero
 !     Diag%upd_mf   = zero
 !     Diag%dwn_mf   = zero
 !     Diag%det_mf   = zero

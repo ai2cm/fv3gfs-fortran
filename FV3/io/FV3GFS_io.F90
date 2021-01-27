@@ -76,6 +76,8 @@ module FV3GFS_io_mod
   public  fv3gfs_diag_register, fv3gfs_diag_output
   public  FV3GFS_restart_write_coarse
   public  fv3gfs_diag_register_coarse
+  public  register_diag_manager_controlled_diagnostics
+  public  send_diag_manager_controlled_diagnostic_data
 #ifdef use_WRTCOMP
   public  fv_phys_bundle_setup
 #endif
@@ -2901,6 +2903,21 @@ module FV3GFS_io_mod
 
   end subroutine fv3gfs_diag_register
 
+  subroutine register_diag_manager_controlled_diagnostics(Diag, Time, axes)
+    type(IPD_diag_type), intent(inout) :: Diag(:)
+    type(time_type), intent(in) :: Time
+    integer, intent(in) :: axes(4)
+
+    integer :: index
+
+    do index = 1, DIAG_SIZE
+      if (trim(Diag(index)%name) .eq. '') exit  ! No need to populate non-existent diagnostics
+      Diag(index)%id = register_diag_field(trim(Diag(index)%mod_name), trim(Diag(index)%name),  &
+        axes(1:Diag(index)%axes), Time, trim(Diag(index)%desc), &
+        trim(Diag(index)%unit), missing_value=real(missing_value))
+    enddo
+  end subroutine register_diag_manager_controlled_diagnostics
+
   subroutine populate_coarse_diag_type(diagnostic, coarse_diagnostic)
     type(IPD_diag_type), intent(in) :: diagnostic
     type(IPD_diag_type), intent(inout) :: coarse_diagnostic
@@ -2941,6 +2958,106 @@ module FV3GFS_io_mod
   end subroutine fv3gfs_diag_register_coarse
   
 !-------------------------------------------------------------------------      
+
+  subroutine send_diag_manager_controlled_diagnostic_data(Time, Diag, Atm_block, IPD_Data, nx, ny, levs, &
+    write_coarse_diagnostics, Diag_coarse, delp, coarsening_strategy, ptop)
+    type(time_type),           intent(in) :: Time
+    type(IPD_diag_type),       intent(in) :: Diag(:)
+    type(block_control_type),  intent(in) :: Atm_block
+    type(IPD_data_type),       intent(in) :: IPD_Data(:)
+    integer,                   intent(in) :: nx, ny, levs
+    logical,                   intent(in) :: write_coarse_diagnostics
+    type(IPD_diag_type),       intent(in) :: Diag_coarse(:)
+    real(kind=kind_phys),      intent(in) :: delp(isco:ieco,jsco:jeco,1:levo)
+    character(len=64),         intent(in) :: coarsening_strategy
+    real(kind=kind_phys),      intent(in) :: ptop
+
+    logical :: require_area, require_masked_area, require_mass, require_masked_mass, require_vertical_remapping
+    real(kind=kind_phys), allocatable :: area(:,:)
+    real(kind=kind_phys), allocatable :: mass(:,:,:), phalf(:,:,:), phalf_coarse_on_fine(:,:,:)
+    real(kind=kind_phys), allocatable :: masked_area(:,:,:)
+
+    real(kind=kind_phys) :: var2d(nx, ny)
+    real(kind=kind_phys) :: var3d(nx, ny, levs)
+    integer :: i, j, ii, jj, k, isc, jsc, ix, nb, index, used
+
+    isc   = atm_block%isc
+    jsc   = atm_block%jsc
+
+    if (write_coarse_diagnostics) then
+      call determine_required_coarse_graining_weights(diag_coarse, coarsening_strategy, require_area, require_masked_area, require_mass, require_vertical_remapping)
+      if (.not. require_vertical_remapping) then
+        if (require_area) then
+          allocate(area(nx, ny))
+          call get_area(Atm_block, IPD_Data, nx, ny, area)
+        endif
+        if (require_mass) then
+          allocate(mass(nx, ny, levs))
+          call get_mass(Atm_block, IPD_Data, delp, nx, ny, levs, mass)
+        endif
+      else
+        allocate(area(nx, ny))
+        allocate(phalf(nx, ny, levs + 1))
+        allocate(phalf_coarse_on_fine(nx, ny, levs + 1))
+        allocate(masked_area(nx, ny, levs))
+        call get_area(Atm_block, IPD_Data, nx, ny, area)
+        call vertical_remapping_requirements(delp, area, ptop, phalf, phalf_coarse_on_fine)
+        call mask_area_weights(area, phalf, phalf_coarse_on_fine, masked_area)
+      endif
+    endif
+
+    do index = 1, DIAG_SIZE
+      if (trim(Diag(index)%name) .eq. '') exit
+      if (Diag(index)%id .gt. 0 .or. Diag_coarse(index)%id .gt. 0) then
+        if (Diag(index)%axes .eq. 2) then
+          do j = 1, ny
+            jj = j + jsc - 1
+            do i = 1, nx
+                ii = i + isc - 1
+                nb = Atm_block%blkno(ii,jj)
+                ix = Atm_block%ixp(ii,jj)
+                var2d(i,j) = Diag(index)%data(nb)%var2(ix)
+            enddo
+          enddo
+          if (Diag(index)%id > 0) then
+            used = send_data(Diag(index)%id, var2d, Time)
+          endif
+          if (Diag_coarse(index)%id > 0) then
+            call store_data2D_coarse(Diag_coarse(index)%id, Diag_coarse(index)%name, &
+              Diag_coarse(index)%coarse_graining_method, nx, ny, var2d, area, Time)
+          endif
+        elseif (Diag(index)%axes .eq. 3) then
+          do k=1, levs
+            do j = 1, ny
+              jj = j + jsc - 1
+              do i = 1, nx
+                  ii = i + isc - 1
+                  nb = Atm_block%blkno(ii,jj)
+                  ix = Atm_block%ixp(ii,jj)
+                  var3d(i,j,k) = Diag(index)%data(nb)%var3(ix,levs - k + 1)
+              enddo
+            enddo
+          enddo
+          if (Diag(index)%id .gt. 0) then
+            used = send_data(Diag(index)%id, var3d, Time)
+          endif
+          if (Diag_coarse(index)%id > 0) then
+            if (trim(coarsening_strategy) .eq. MODEL_LEVEL) then
+              call store_data3D_coarse_model_level(Diag_coarse(index)%id, Diag_coarse(index)%name, &
+                  Diag_coarse(index)%coarse_graining_method, &
+                  nx, ny, levs, var3d, area, mass, Time)
+            elseif (trim(coarsening_strategy) .eq. PRESSURE_LEVEL) then
+              call store_data3D_coarse_pressure_level(Diag_coarse(index)%id, Diag_coarse(index)%name, &
+                Diag_coarse(index)%coarse_graining_method, &
+                nx, ny, levs, var3d, phalf, phalf_coarse_on_fine, masked_area, Time, ptop)
+            else
+              call mpp_error(FATAL, 'Invalid coarse-graining strategy provided.')
+            endif
+          endif
+        endif
+      endif
+    enddo
+  end subroutine send_diag_manager_controlled_diagnostic_data
 
 !-------------------------------------------------------------------------      
 !--- gfs_diag_output ---
