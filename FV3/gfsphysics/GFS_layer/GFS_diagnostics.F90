@@ -46,11 +46,357 @@ module GFS_diagnostics
   public  GFS_externaldiag_type
 
   !--- public interfaces ---
-  public  GFS_externaldiag_populate
+  public  GFS_externaldiag_populate, GFS_populate_diag_manager_controlled_diagnostics
  
   CONTAINS
 
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+subroutine GFS_populate_diag_manager_controlled_diagnostics(Diag, IntDiag, nblks)
+  type(GFS_externaldiag_type), intent(inout) :: Diag(:)
+  type(GFS_diag_type), intent(in) :: IntDiag(:)
+  integer, intent(in) :: nblks
+
+  integer :: nb
+  integer :: index = 1
+  
+  Diag(index)%axes = 3
+  Diag(index)%name = 'tendency_of_air_temperature_due_to_longwave_heating'
+  Diag(index)%desc = 'temperature tendency due to longwave radiation'
+  Diag(index)%unit = 'K/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'mass_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,1)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 3
+  Diag(index)%name = 'tendency_of_air_temperature_due_to_shortwave_heating'
+  Diag(index)%desc = 'temperature tendency due to shortwave radiation'
+  Diag(index)%unit = 'K/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'mass_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,2)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 3
+  Diag(index)%name = 'tendency_of_air_temperature_due_to_turbulence'
+  Diag(index)%desc = 'temperature tendency due to turbulence scheme'
+  Diag(index)%unit = 'K/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'mass_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,3)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 3
+  Diag(index)%name = 'tendency_of_air_temperature_due_to_deep_convection'
+  Diag(index)%desc = 'temperature tendency due to deep convection'
+  Diag(index)%unit = 'K/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'mass_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,4)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 3
+  Diag(index)%name = 'tendency_of_air_temperature_due_to_shallow_convection'
+  Diag(index)%desc = 'temperature tendency due to shallow convection'
+  Diag(index)%unit = 'K/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'mass_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,5)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 3
+  Diag(index)%name = 'tendency_of_air_temperature_due_to_microphysics'
+  Diag(index)%desc = 'temperature tendency due to micro-physics'
+  Diag(index)%unit = 'K/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'mass_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,6)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 3
+  Diag(index)%name = 'tendency_of_air_temperature_due_to_dissipation_of_gravity_waves'
+  Diag(index)%desc = 'temperature tendency due to gravity wave drag'
+  Diag(index)%unit = 'K/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'mass_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,7)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 3
+  Diag(index)%name = 'tendency_of_air_temperature_due_to_longwave_heating_assuming_clear_sky'
+  Diag(index)%desc = 'temperature tendency due to clear sky longwave radiation'
+  Diag(index)%unit = 'K/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'mass_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,8)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 3
+  Diag(index)%name = 'tendency_of_air_temperature_due_to_shortwave_heating_assuming_clear_sky'
+  Diag(index)%desc = 'temperature tendency due to clear sky shortwave radiation'
+  Diag(index)%unit = 'K/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'mass_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,9)
+  enddo
+
+! Vertically integrated instantaneous temperature tendency diagnostics
+  index = index + 1
+  Diag(index)%axes = 2
+  Diag(index)%name = 'vertically_integrated_tendency_of_air_temperature_due_to_longwave_heating'
+  Diag(index)%desc = 'vertically integrated temperature tendency due to longwave radiation'
+  Diag(index)%unit = 'W/m**2'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'area_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var2 => IntDiag(nb)%t_dt_int(:,1)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 2
+  Diag(index)%name = 'vertically_integrated_tendency_of_air_temperature_due_to_shortwave_heating'
+  Diag(index)%desc = 'vertically integrated temperature tendency due to shortwave radiation'
+  Diag(index)%unit = 'W/m**2'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'area_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var2 => IntDiag(nb)%t_dt_int(:,2)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 2
+  Diag(index)%name = 'vertically_integrated_tendency_of_air_temperature_due_to_turbulence'
+  Diag(index)%desc = 'vertically integrated temperature tendency due to turbulence scheme'
+  Diag(index)%unit = 'W/m**2'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'area_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var2 => IntDiag(nb)%t_dt_int(:,3)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 2
+  Diag(index)%name = 'vertically_integrated_tendency_of_air_temperature_due_to_deep_convection'
+  Diag(index)%desc = 'vertically integrated temperature tendency due to deep convection'
+  Diag(index)%unit = 'W/m**2'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'area_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var2 => IntDiag(nb)%t_dt_int(:,4)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 2
+  Diag(index)%name = 'vertically_integrated_tendency_of_air_temperature_due_to_shallow_convection'
+  Diag(index)%desc = 'vertically integrated temperature tendency due to shallow convection'
+  Diag(index)%unit = 'W/m**2'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'area_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var2 => IntDiag(nb)%t_dt_int(:,5)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 2
+  Diag(index)%name = 'vertically_integrated_tendency_of_air_temperature_due_to_microphysics'
+  Diag(index)%desc = 'vertically integrated temperature tendency due to micro-physics'
+  Diag(index)%unit = 'W/m**2'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'area_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var2 => IntDiag(nb)%t_dt_int(:,6)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 2
+  Diag(index)%name = 'vertically_integrated_tendency_of_air_temperature_due_to_dissipation_of_gravity_waves'
+  Diag(index)%desc = 'vertically integrated temperature tendency due to gravity wave drag'
+  Diag(index)%unit = 'W/m**2'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'area_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var2 => IntDiag(nb)%t_dt_int(:,7)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 2
+  Diag(index)%name = 'vertically_integrated_tendency_of_air_temperature_due_to_longwave_heating_assuming_clear_sky'
+  Diag(index)%desc = 'vertically integrated temperature tendency due to clear sky longwave radiation'
+  Diag(index)%unit = 'W/m**2'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'area_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var2 => IntDiag(nb)%t_dt_int(:,8)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 2
+  Diag(index)%name = 'vertically_integrated_tendency_of_air_temperature_due_to_shortwave_heating_assuming_clear_sky'
+  Diag(index)%desc = 'vertically integrated temperature tendency due to clear sky shortwave radiation'
+  Diag(index)%unit = 'W/m**2'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'area_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var2 => IntDiag(nb)%t_dt_int(:,9)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 3
+  Diag(index)%name = 'tendency_of_specific_humidity_due_to_turbulence'
+  Diag(index)%desc = 'water vapor tendency due to turbulence scheme'
+  Diag(index)%unit = 'kg/kg/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'mass_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,1)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 3
+  Diag(index)%name = 'tendency_of_specific_humidity_due_to_deep_convection'
+  Diag(index)%desc = 'water vapor tendency due to deep convection'
+  Diag(index)%unit = 'kg/kg/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'mass_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,2)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 3
+  Diag(index)%name = 'tendency_of_specific_humidity_due_to_shallow_convection'
+  Diag(index)%desc = 'water vapor tendency due to shallow convection'
+  Diag(index)%unit = 'kg/kg/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'mass_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,3)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 3
+  Diag(index)%name = 'tendency_of_specific_humidity_due_to_microphysics'
+  Diag(index)%desc = 'water vapor tendency due to microphysics'
+  Diag(index)%unit = 'kg/kg/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'mass_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,4)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 3
+  Diag(index)%name = 'tendency_of_specific_humidity_due_to_change_in_atmosphere_mass'
+  Diag(index)%desc = 'residual water vapor tendency'
+  Diag(index)%unit = 'kg/kg/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'mass_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,5)
+  enddo
+
+  ! Vertically integrated instantaneous specific humidity tendency diagnostics
+  index = index + 1
+  Diag(index)%axes = 2
+  Diag(index)%name = 'vertically_integrated_tendency_of_specific_humidity_due_to_turbulence'
+  Diag(index)%desc = 'vertically integrated water vapor tendency due to turbulence scheme'
+  Diag(index)%unit = 'kg/m**2/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'area_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var2 => IntDiag(nb)%q_dt_int(:,1)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 2
+  Diag(index)%name = 'vertically_integrated_tendency_of_specific_humidity_due_to_deep_convection'
+  Diag(index)%desc = 'vertically integrated water vapor tendency due to deep convection'
+  Diag(index)%unit = 'kg/m**2/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'area_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var2 => IntDiag(nb)%q_dt_int(:,2)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 2
+  Diag(index)%name = 'vertically_integrated_tendency_of_specific_humidity_due_to_shallow_convection'
+  Diag(index)%desc = 'vertically integrated water vapor tendency due to shallow convection'
+  Diag(index)%unit = 'kg/m**2/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'area_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var2 => IntDiag(nb)%q_dt_int(:,3)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 2
+  Diag(index)%name = 'vertically_integrated_tendency_of_specific_humidity_due_to_microphysics'
+  Diag(index)%desc = 'vertically integrated water vapor tendency due to microphysics'
+  Diag(index)%unit = 'kg/m**2/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'area_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var2 => IntDiag(nb)%q_dt_int(:,4)
+  enddo
+
+  index = index + 1
+  Diag(index)%axes = 2
+  Diag(index)%name = 'vertically_integrated_tendency_of_specific_humidity_due_to_change_in_atmosphere_mass'
+  Diag(index)%desc = 'vertically integrated residual water vapor tendency'
+  Diag(index)%unit = 'kg/m**2/s'
+  Diag(index)%mod_name = 'gfs_phys'
+  Diag(index)%coarse_graining_method = 'area_weighted'
+  allocate (Diag(index)%data(nblks))
+  do nb = 1,nblks
+    Diag(index)%data(nb)%var2 => IntDiag(nb)%q_dt_int(:,5)
+  enddo
+end subroutine GFS_populate_diag_manager_controlled_diagnostics
 
 !-------------------------------------------------------------------------      
 !--- GFS_externaldiag_populate ---
@@ -2397,114 +2743,6 @@ module GFS_diagnostics
 
     idx = idx + 1
     ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_longwave_heating'
-    ExtDiag(idx)%desc = 'instantaneous temperature tendency due to longwave radiation'
-    ExtDiag(idx)%unit = 'K/s'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
-    ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
-    allocate (ExtDiag(idx)%data(nblks))
-    do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,1)
-    enddo
-
-    idx = idx + 1
-    ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_shortwave_heating'
-    ExtDiag(idx)%desc = 'instantaneous temperature tendency due to shortwave radiation'
-    ExtDiag(idx)%unit = 'K/s'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
-    ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
-    allocate (ExtDiag(idx)%data(nblks))
-    do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,2)
-    enddo
-
-    idx = idx + 1
-    ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_turbulence'
-    ExtDiag(idx)%desc = 'instantaneous temperature tendency due to turbulence scheme'
-    ExtDiag(idx)%unit = 'K/s'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
-    ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
-    allocate (ExtDiag(idx)%data(nblks))
-    do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,3)
-    enddo
-
-    idx = idx + 1
-    ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_deep_convection'
-    ExtDiag(idx)%desc = 'instantaneous temperature tendency due to deep convection'
-    ExtDiag(idx)%unit = 'K/s'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
-    ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
-    allocate (ExtDiag(idx)%data(nblks))
-    do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,4)
-    enddo
-
-    idx = idx + 1
-    ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_shallow_convection'
-    ExtDiag(idx)%desc = 'instantaneous temperature tendency due to shallow convection'
-    ExtDiag(idx)%unit = 'K/s'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
-    ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
-    allocate (ExtDiag(idx)%data(nblks))
-    do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,5)
-    enddo
-
-    idx = idx + 1
-    ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_microphysics'
-    ExtDiag(idx)%desc = 'instantaneous temperature tendency due to micro-physics'
-    ExtDiag(idx)%unit = 'K/s'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
-    ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
-    allocate (ExtDiag(idx)%data(nblks))
-    do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,6)
-    enddo
-
-    idx = idx + 1
-    ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_dissipation_of_gravity_waves'
-    ExtDiag(idx)%desc = 'instantaneous temperature tendency due to gravity wave drag'
-    ExtDiag(idx)%unit = 'K/s'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
-    ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
-    allocate (ExtDiag(idx)%data(nblks))
-    do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,7)
-    enddo
-
-    idx = idx + 1
-    ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_longwave_heating_assuming_clear_sky'
-    ExtDiag(idx)%desc = 'instantaneous temperature tendency due to clear sky longwave radiation'
-    ExtDiag(idx)%unit = 'K/s'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
-    ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
-    allocate (ExtDiag(idx)%data(nblks))
-    do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,8)
-    enddo
-
-    idx = idx + 1
-    ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_shortwave_heating_assuming_clear_sky'
-    ExtDiag(idx)%desc = 'instantaneous temperature tendency due to clear sky shortwave radiation'
-    ExtDiag(idx)%unit = 'K/s'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
-    ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
-    allocate (ExtDiag(idx)%data(nblks))
-    do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%t_dt(:,:,9)
-    enddo
-
-    idx = idx + 1
-    ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'du3dt_pbl'
     ExtDiag(idx)%desc = 'u momentum change due to PBL'
     ExtDiag(idx)%unit = 'XXX'
@@ -2590,61 +2828,6 @@ module GFS_diagnostics
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%dv3dt(:,:,4)
-    enddo
-
-    idx = idx + 1
-    ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'tendency_of_specific_humidity_due_to_turbulence'
-    ExtDiag(idx)%desc = 'instantaneous water vapor tendency due to turbulence scheme'
-    ExtDiag(idx)%unit = 'kg/kg/s'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
-    allocate (ExtDiag(idx)%data(nblks))
-    do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,1)
-    enddo
-
-    idx = idx + 1
-    ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'tendency_of_specific_humidity_due_to_deep_convection'
-    ExtDiag(idx)%desc = 'instantaneous water vapor tendency due to deep convection'
-    ExtDiag(idx)%unit = 'kg/kg/s'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
-    allocate (ExtDiag(idx)%data(nblks))
-    do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,2)
-    enddo
-
-    idx = idx + 1
-    ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'tendency_of_specific_humidity_due_to_shallow_convection'
-    ExtDiag(idx)%desc = 'instantaneous water vapor tendency due to shallow convection'
-    ExtDiag(idx)%unit = 'kg/kg/s'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
-    allocate (ExtDiag(idx)%data(nblks))
-    do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,3)
-    enddo
-
-    idx = idx + 1
-    ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'tendency_of_specific_humidity_due_to_microphysics'
-    ExtDiag(idx)%desc = 'instantaneous water vapor tendency due to microphysics'
-    ExtDiag(idx)%unit = 'kg/kg/s'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
-    allocate (ExtDiag(idx)%data(nblks))
-    do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,4)
-    enddo
-
-    idx = idx + 1
-    ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'tendency_of_specific_humidity_due_to_change_in_atmosphere_mass'
-    ExtDiag(idx)%desc = 'instantaneous residual water vapor tendency'
-    ExtDiag(idx)%unit = 'kg/kg/s'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
-    allocate (ExtDiag(idx)%data(nblks))
-    do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var3 => IntDiag(nb)%q_dt(:,:,5)
     enddo
 
 !rab
