@@ -205,9 +205,10 @@ contains
     real, intent(in):: p_ref
 
     real, allocatable :: grid_xt(:), grid_yt(:), grid_xe(:), grid_ye(:), grid_xn(:), grid_yn(:)
-    real, allocatable :: grid_x(:),  grid_y(:)
+    real, allocatable :: grid_x(:),  grid_y(:), component(:)
     real              :: vrange(2), vsrange(2), wrange(2), trange(2), slprange(2), rhrange(2), skrange(2)
     real, allocatable :: a3(:,:,:)
+    real, allocatable :: work_vector(:,:,:)
     real              :: pfull(npz)
     real              :: hyam(npz), hybm(npz)
 
@@ -215,6 +216,7 @@ contains
     integer :: id_bk, id_pk, id_area, id_dx, id_dy, id_lon, id_lat, id_lont, id_latt, id_phalf, id_pfull
     integer :: id_hyam, id_hybm
     integer :: id_plev
+    integer :: id_a11, id_a12, id_a21, id_a22, id_ec1, id_ec2, id_vlon, id_vlat, id_component
     integer :: i, j, k, n, ntileMe, id_xt, id_yt, id_x, id_y, id_xe, id_ye, id_xn, id_yn
     integer :: isc, iec, jsc, jec
     logical :: used
@@ -294,6 +296,9 @@ contains
     grid_x = (/ (i, i=1,npx) /)
     grid_y = (/ (j, j=1,npy) /)
 
+    allocate(component(3))
+    component = (/ (i, i=1,3) /)
+
     n=1
     isc = Atm(n)%bd%isc; iec = Atm(n)%bd%iec
     jsc = Atm(n)%bd%jsc; jec = Atm(n)%bd%jec
@@ -330,6 +335,9 @@ contains
                            set_name=trim(field),Domain2=Atm(n)%Domain, tile_count=n)
        id_y = diag_axis_init('grid_y',grid_y,'degrees_N','y','cell corner latitude',  &
                            set_name=trim(field), Domain2=Atm(n)%Domain, tile_count=n)
+
+       id_component = diag_axis_init('component', component, 'dimensionless', 'N', &
+                                     'vector component', set_name=trim(field))
 
 !    end do
 !   deallocate(grid_xt, grid_yt, grid_xe, grid_ye, grid_xn, grid_yn)
@@ -409,6 +417,26 @@ contains
                                          'cell width in x-direction', 'm' )
        id_dy = register_static_field ( trim(field), 'dy', (/id_x, id_yt/),  &
                                          'cell width in y-direction', 'm' )
+
+       id_a11 = register_static_field(trim(field), 'eastward_wind_u_coeff', (/id_xt, id_yt/), &
+                                      'eastward_wind_u_coeff', 'dimensionless')
+       id_a12 = register_static_field(trim(field), 'eastward_wind_v_coeff', (/id_xt, id_yt/), &
+                                      'eastward_wind_v_coeff', 'dimensionless')
+       id_a21 = register_static_field(trim(field), 'northward_wind_u_coeff', (/id_xt, id_yt/), &
+                                      'northward_wind_u_coeff', 'dimensionless')
+       id_a22 = register_static_field(trim(field), 'northward_wind_v_coeff', (/id_xt, id_yt/), &
+                                      'northward_wind_v_coeff', 'dimensionless')
+
+       id_ec1 = register_static_field(trim(field), 'x_unit_vector', (/id_xt, id_yt, id_component/), &
+                                      'x_unit_vector', 'dimensionless')
+       id_ec2 = register_static_field(trim(field), 'y_unit_vector', (/id_xt, id_yt, id_component/), &
+                                      'y_unit_vector', 'dimensionless')
+       id_vlon = register_static_field(trim(field), 'lon_unit_vector', (/id_xt, id_yt, id_component/), &
+                                      'lon_unit_vector', 'dimensionless')
+       id_vlat = register_static_field(trim(field), 'lat_unit_vector', (/id_xt, id_yt, id_component/), &
+                                      'lat_unit_vector', 'dimensionless')
+
+
 #ifndef DYNAMICS_ZS
        idiag%id_zsurf = register_static_field ( trim(field), 'zsurf', axes(1:2),  &
                                          'surface height', 'm' )
@@ -468,6 +496,27 @@ contains
        if (id_area > 0) used = send_data(id_area, Atm(n)%gridstruct%area(isc:iec,jsc:jec), Time)
        if (id_dx > 0) used = send_data(id_dx, Atm(n)%gridstruct%dx(isc:iec,jsc:jec+1), Time)
        if (id_dy > 0) used = send_data(id_dy, Atm(n)%gridstruct%dy(isc:iec+1,jsc:jec), Time)
+       if (id_a11 > 0) used = send_data(id_a11, Atm(n)%gridstruct%a11(isc:iec,jsc:jec), Time)
+       if (id_a12 > 0) used = send_data(id_a12, Atm(n)%gridstruct%a12(isc:iec,jsc:jec), Time)
+       if (id_a21 > 0) used = send_data(id_a21, Atm(n)%gridstruct%a21(isc:iec,jsc:jec), Time)
+       if (id_a22 > 0) used = send_data(id_a22, Atm(n)%gridstruct%a22(isc:iec,jsc:jec), Time)
+
+       ! Horizontal dimensions need to come first when writing out diagnostics, therefore we need to transpose
+       ! the x and y unit vectors before sending them to the diagnostics manager.
+       if (id_ec1 > 0 .or. id_ec2 > 0) allocate(work_vector(isc:iec,jsc:jec,1:3))
+
+       if (id_ec1 > 0) then
+         call transpose_unit_vector(Atm(n)%gridstruct%ec1(:,isc:iec,jsc:jec), isc, iec, jsc, jec, work_vector)
+         used = send_data(id_ec1, work_vector, Time)
+       endif
+
+       if (id_ec2 > 0) then
+         call transpose_unit_vector(Atm(n)%gridstruct%ec2(:,isc:iec,jsc:jec), isc, iec, jsc, jec, work_vector)
+         used = send_data(id_ec2, work_vector, Time)
+       endif
+   
+       if (id_vlon > 0) used = send_data(id_vlon, Atm(n)%gridstruct%vlon(isc:iec,jsc:jec,:), Time)
+       if (id_vlat > 0) used = send_data(id_vlat, Atm(n)%gridstruct%vlat(isc:iec,jsc:jec,:), Time)
 #ifndef DYNAMICS_ZS
        if (idiag%id_zsurf > 0) used = send_data(idiag%id_zsurf, idiag%zsurf, Time)
 #endif
@@ -5783,6 +5832,22 @@ end subroutine eqv_pot
 
     return
   end function getqvi
+
+  subroutine transpose_unit_vector(source, is, ie, js, je, result)
+   integer, intent(in) :: is, ie, js, je
+   real, intent(in), dimension(1:3,is:ie,js:je) :: source
+   real, intent(out), dimension(is:ie,js:je,1:3) :: result
+
+   integer :: i, j, k
+
+   do i = is, ie
+      do j = js, je
+         do k = 1, 3
+            result(i,j,k) = source(k,i,j)
+         enddo
+      enddo
+   enddo
+  end subroutine transpose_unit_vector
 !-----------------------------------------------------------------------
 
 end module fv_diagnostics_mod
