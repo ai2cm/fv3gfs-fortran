@@ -13,6 +13,7 @@ set -o pipefail
 
 # the following environment variables need to be set
 #   CONFIGURATION_LIST - Space-separated list of configurations to test executables with
+#                        (yml file must reside in /tests/serialized_test_data_generation/configs)
 #   EXECUTABLE_SUFFIX  - Suffix to add to executable name when copied to /project
 #   EXECUTABLE_NAME    - Name of executable to use for tests
 
