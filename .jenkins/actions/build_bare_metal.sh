@@ -1,8 +1,21 @@
 #!/bin/bash
 
-# stop on all errors (also on commands with a pipe-redirection)
+# This script provides a Jenkins action to build bare metal executables
+# on the Piz Daint system at CSCS. Several environment variables (see below)
+# are expected to be set upon execution.
+# If the build runs through successfully, the resulting executables are stored.
+
+# 2021/01/22 Oliver Fuhrer, Vulcan Inc, oliverf@vulcan.com
+
+# stop on all errors (also on errors in a pipe-redirection)
 set -e
 set -o pipefail
+
+# the following environment variables need to be set
+#   CONFIGURATION_LIST - Space-separated list of configurations to test executables with
+#                        (yml file must reside in /tests/serialized_test_data_generation/configs)
+#   EXECUTABLE_SUFFIX  - Suffix to add to executable name when copied to /project
+#   EXECUTABLE_NAME    - Name of executable to use for tests
 
 INSTALL_DIR=${PROJECT}/../install
 FV3GFSEXE_DIR=${INSTALL_DIR}/fv3gfs-fortran/
@@ -104,7 +117,7 @@ echo "==== module list ===="
 module list
 echo "====================="
 
-./compile
+./compile GT4PY_DEV=Y
 
 num_exe=`/bin/ls -1d *.exe | wc -l`
 if [ "$num_exe" -lt 1 ] ; then
@@ -116,7 +129,7 @@ cd -
 # note: we setup the rundir using fv3config in a separate script in order to keep
 #       the environment of this script clean (no modules loaded etc.)
 echo "### run install and example"
-for config in c12_6ranks_standard c48_6ranks_standard ; do
+for config in ${CONFIGURATION_LIST} ; do
 
     script=/tmp/create_rundir_$$.sh
     configdir=${rootdir}/tests/serialized_test_data_generation/configs
@@ -151,7 +164,7 @@ EOF1
     sed -i 's|set -x||g' ${jobfile}
     sed -i 's|<OUTFILE>|'"${jobfile}.out"'|g' ${jobfile}
     sed -i 's|<G2G>|'"source ./module.env; module list"'|g' ${jobfile}
-    sed -i 's|<CMD>|'"srun -n 6 ./fv3_64bit.exe"'|g' ${jobfile}
+    sed -i 's|<CMD>|'"srun -n 6 ./${EXECUTABLE_NAME}"'|g' ${jobfile}
     sed -i 's|<NAME>|'"fv3_test"'|g' ${jobfile}
     sed -i 's|<NTASKS>|12|g' ${jobfile}
     sed -i 's|<NTASKSPERNODE>|'"12"'|g' ${jobfile}
@@ -173,7 +186,10 @@ done
 # copy executables to install dir (and add meta-information)
 echo "### saving executables"
 mkdir -p ${INSTALL_DIR}/fv3gfs-fortran/${compiler}
-cp ${rootdir}/FV3/*.exe ${INSTALL_DIR}/fv3gfs-fortran/${compiler}/
+for f in ${rootdir}/FV3/*.exe ; do
+    exe_name=`basename ${f} | sed 's/\.exe$//g'`
+    cp ${f} ${INSTALL_DIR}/fv3gfs-fortran/${compiler}/${exe_name}${EXECUTABLE_SUFFIX}.exe
+done
 cp ${rootdir}/FV3/conf/modules.fv3 ${INSTALL_DIR}/fv3gfs-fortran/${compiler}/module.env
 cat > ${INSTALL_DIR}/fv3gfs-fortran/${compiler}/git.env <<EOF2
 GIT_URL = ${GIT_URL}
