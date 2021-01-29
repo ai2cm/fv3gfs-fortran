@@ -76,7 +76,6 @@ module FV3GFS_io_mod
   public  fv3gfs_diag_register, fv3gfs_diag_output
   public  FV3GFS_restart_write_coarse
   public  fv3gfs_diag_register_coarse
-  public  register_diag_manager_controlled_diagnostics
   public  send_diag_manager_controlled_diagnostic_data
 #ifdef use_WRTCOMP
   public  fv_phys_bundle_setup
@@ -2903,21 +2902,6 @@ module FV3GFS_io_mod
 
   end subroutine fv3gfs_diag_register
 
-  subroutine register_diag_manager_controlled_diagnostics(Diag, Time, axes)
-    type(IPD_diag_type), intent(inout) :: Diag(:)
-    type(time_type), intent(in) :: Time
-    integer, intent(in) :: axes(4)
-
-    integer :: index
-
-    do index = 1, DIAG_SIZE
-      if (trim(Diag(index)%name) .eq. '') exit  ! No need to populate non-existent diagnostics
-      Diag(index)%id = register_diag_field(trim(Diag(index)%mod_name), trim(Diag(index)%name),  &
-        axes(1:Diag(index)%axes), Time, trim(Diag(index)%desc), &
-        trim(Diag(index)%unit), missing_value=real(missing_value))
-    enddo
-  end subroutine register_diag_manager_controlled_diagnostics
-
   subroutine populate_coarse_diag_type(diagnostic, coarse_diagnostic)
     type(IPD_diag_type), intent(in) :: diagnostic
     type(IPD_diag_type), intent(inout) :: coarse_diagnostic
@@ -2979,6 +2963,7 @@ module FV3GFS_io_mod
 
     real(kind=kind_phys) :: var2d(nx, ny)
     real(kind=kind_phys) :: var3d(nx, ny, levs)
+    logical :: requested
     integer :: i, j, ii, jj, k, isc, jsc, ix, nb, index, used
 
     isc   = atm_block%isc
@@ -3008,7 +2993,8 @@ module FV3GFS_io_mod
 
     do index = 1, DIAG_SIZE
       if (trim(Diag(index)%name) .eq. '') exit
-      if (Diag(index)%id .gt. 0 .or. Diag_coarse(index)%id .gt. 0) then
+      requested = Diag(index)%id .gt. 0 .or. Diag_coarse(index)%id .gt. 0
+      if (requested .and. Diag(index)%diag_manager_controlled) then
         if (Diag(index)%axes .eq. 2) then
           do j = 1, ny
             jj = j + jsc - 1
@@ -3099,6 +3085,7 @@ module FV3GFS_io_mod
     real(kind=kind_phys) :: rtime_radsw, rtime_radlw
     logical :: used
     logical :: require_area, require_masked_area, require_mass, require_masked_mass, require_vertical_remapping
+    logical :: requested
     real(kind=kind_phys), allocatable :: area(:,:)
     real(kind=kind_phys), allocatable :: mass(:,:,:), phalf(:,:,:), phalf_coarse_on_fine(:,:,:)
     real(kind=kind_phys), allocatable :: masked_area(:,:,:)
@@ -3139,7 +3126,8 @@ module FV3GFS_io_mod
      
 !     if(mpp_pe()==mpp_root_pe())print *,'in,fv3gfs_io. time avg, time_int=',time_int
      do idx = 1,tot_diag_idx
-       if ((diag(idx)%id > 0) .or. (diag_coarse(idx)%id > 0)) then
+      requested = diag(idx)%id > 0 .or. diag_coarse(idx)%id > 0
+       if (requested .and. .not. diag(idx)%diag_manager_controlled) then
          lcnvfac = diag(idx)%cnvfac
          if (diag(idx)%time_avg) then
            if ( trim(diag(idx)%time_avg_kind) == 'full' ) then
