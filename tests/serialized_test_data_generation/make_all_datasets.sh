@@ -3,13 +3,17 @@
 # This is a utility script which allows to generate serialized data for multiple
 # experiment files matching a certain search pattern.
 
+# 2021/01/22 Oliver Fuhrer, Vulcan Inc, oliverf@vulcan.com
+
 # Environment variables:
 # EXPERIMENT_PATTERN  search pattern for experiment files (default: *.yml)
 # FORTRAN_VERSION     override value in Makefile (see docu there)
-# VALIDATE_ONLY       only compare data against version stored in cloud (instead of pushing)
+# VALIDATE_ONLY       set to "true" to only compare data against version stored in cloud (instead of pushing)
+# FORCE_PUSH          set to "true" to overwrite pre-existing data on cloud storage
 
-# stop on all errors
+# stop on all errors (also on error in a pipe-redirection)
 set -e
+set -o pipefail
 
 # directory containing the experiment files
 EXPERIMENT_DIR=configs
@@ -54,9 +58,9 @@ for exp_file in ${EXPERIMENTS} ; do
       export SER_ENV="ALL"
   fi
   if [ "${VALIDATE_ONLY}" == "true" ] ; then
-      EXPERIMENT=${exp_name} make generate_data validate_data
+      EXPERIMENT=${exp_name} make generate_data validate_data clean
   else
-      EXPERIMENT=${exp_name} make generate_data pack_data push_data
+      EXPERIMENT=${exp_name} make generate_data pack_data push_data clean
   fi
   echo "====================================================="
   echo ""
