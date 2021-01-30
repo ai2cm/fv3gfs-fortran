@@ -39,7 +39,7 @@ fi
 
 # generate list of experiments (and abort if none found)
 set +e
-EXPERIMENTS=`/bin/ls -1d ${EXPERIMENT_DIR}/${EXPERIMENT_PATTERN} 2> /dev/null`
+EXPERIMENTS=`/bin/ls -1d ${EXPERIMENT_DIR}/${EXPERIMENT_PATTERN} 2> /dev/null | sort -t '_' -n -k1.2 -k2.1`
 set -e
 if [ -z "${EXPERIMENTS}" ] ; then
     echo "Error: No matching experiment files for pattern ${EXPERIMENT_PATTERN} in ${EXPERIMENT_DIR} found."
