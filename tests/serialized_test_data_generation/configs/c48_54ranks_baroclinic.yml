@@ -132,8 +132,8 @@ namelist:
     hord_vt: 6
     hydrostatic: false
     io_layout:
-    - 3
-    - 3
+    - 1
+    - 1
     k_split: 1
     ke_bg: 0.0
     kord_mt: 9
@@ -141,8 +141,8 @@ namelist:
     kord_tr: 9
     kord_wz: 9
     layout:
-    - 1
-    - 1
+    - 3
+    - 3
     make_nh: true
     mountain: false
     n_split: 1
