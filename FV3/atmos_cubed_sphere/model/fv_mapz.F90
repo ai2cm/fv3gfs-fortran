@@ -904,6 +904,8 @@ if( last_step .and. (.not.do_adiabatic_init)  ) then
       else
            dtmp = dtmp / (cv_air*g_sum(domain, zsum1, is, ie, js, je, ng, gridstruct%area_64, 0, reproduce=.true.))
       endif
+      ! Because the first version of the gt4py port will not do an mpi allReduce
+      !$ser verbatim dtmp = 1.0  
 !$OMP end single
 
   elseif ( consv < -consv_min ) then
