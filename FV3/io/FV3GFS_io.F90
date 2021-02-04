@@ -3126,7 +3126,7 @@ module FV3GFS_io_mod
      
 !     if(mpp_pe()==mpp_root_pe())print *,'in,fv3gfs_io. time avg, time_int=',time_int
      do idx = 1,tot_diag_idx
-      requested = diag(idx)%id > 0 .or. diag_coarse(idx)%id > 0
+       requested = diag(idx)%id > 0 .or. diag_coarse(idx)%id > 0
        if (requested .and. .not. diag(idx)%diag_manager_controlled) then
          lcnvfac = diag(idx)%cnvfac
          if (diag(idx)%time_avg) then
