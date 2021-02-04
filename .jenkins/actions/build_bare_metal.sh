@@ -128,9 +128,9 @@ cd -
 # install and run example
 # note: we setup the rundir using fv3config in a separate script in order to keep
 #       the environment of this script clean (no modules loaded etc.)
-echo "### run install and example"
 for config in ${CONFIGURATION_LIST} ; do
 for exe_name in ${EXECUTABLE_NAMES} ; do
+echo "### run check (${config} with ${exe_name})"
 
     script=/tmp/create_rundir_$$.sh
     configdir=${rootdir}/tests/serialized_test_data_generation/configs
