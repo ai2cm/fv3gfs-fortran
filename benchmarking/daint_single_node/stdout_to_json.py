@@ -70,9 +70,9 @@ def stdout_to_json(stdout_file_regex, run_directory):
                 times[json_name]["hits"] = raw_timers[fv3_name]["hits"]
             else:
                 assert times[json_name]["hits"] == raw_timers[fv3_name]["hits"], 'Can only accumulate timers with equal hit count'
-            times[json_name]["minimum"] += raw_timers[fv3_name].get("tmin", default=0.)
-            times[json_name]["maximum"] += raw_timers[fv3_name].get("tmax", default=0.)
-            times[json_name]["mean"] += raw_timers[fv3_name].get("tavg", default=0.)
+            times[json_name]["minimum"] += raw_timers[fv3_name]["tmin"]
+            times[json_name]["maximum"] += raw_timers[fv3_name]["tmax"]
+            times[json_name]["mean"] += raw_timers[fv3_name]["tavg"]
 
     # assemble meta-data
     setup = {}
