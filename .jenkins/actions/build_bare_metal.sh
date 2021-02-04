@@ -129,8 +129,8 @@ cd -
 # note: we setup the rundir using fv3config in a separate script in order to keep
 #       the environment of this script clean (no modules loaded etc.)
 for config in ${CONFIGURATION_LIST} ; do
-for exe_name in ${EXECUTABLE_NAMES} ; do
-echo "### run check (${config} with ${exe_name} compiled by ${compiler})"
+  for exe_name in ${EXECUTABLE_NAMES} ; do
+    echo "### run check (${config} with ${exe_name} compiled by ${compiler})"
 
     script=/tmp/create_rundir_$$.sh
     configdir=${rootdir}/tests/serialized_test_data_generation/configs
@@ -184,7 +184,7 @@ EOF1
     cd -
     /bin/rm -rf "${rundir}"
 
-done
+  done
 done
 
 # copy executables to install dir (and add meta-information)
