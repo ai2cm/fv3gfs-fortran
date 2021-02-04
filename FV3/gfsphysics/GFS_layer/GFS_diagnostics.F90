@@ -3268,7 +3268,7 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 2
     ExtDiag(idx)%name = 'ifd'
-    ExtDiag(idx)%desc = 'nsst idx to start dtlm run or not'
+    ExtDiag(idx)%desc = 'nsst index to start dtlm run or not'
     ExtDiag(idx)%unit = 'n/a'
     ExtDiag(idx)%mod_name = 'gfs_sfc'
     allocate (ExtDiag(idx)%data(nblks))
