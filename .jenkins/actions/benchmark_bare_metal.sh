@@ -121,6 +121,7 @@ for config in ${CONFIGURATION_LIST} ; do
 
     # create the run directory (will erase pre-existing directories) and run benchmark
     # note: this waits until completion
+    partition=normal
     ./run_benchmark.py \
         --hyperthreading \
         --threads_per_rank=4 \
@@ -159,7 +160,7 @@ for config in ${CONFIGURATION_LIST} ; do
         /bin/rm -f ${tarfile}
     fi
     mkdir -p `dirname ${tarfile}`
-    (cd ${work_dir}/..; tar cvf ${tarfile} ${work_name})
+    (cd ${work_dir}/..; tar cvfz ${tarfile} ${work_name})
 
 done
 
