@@ -159,7 +159,7 @@ for config in ${CONFIGURATION_LIST} ; do
         /bin/rm -f ${tarfile}
     fi
     mkdir -p `dirname ${tarfile}`
-    (cd ${work_dir}/..; tar cvf ${tarfile} ${work_name})
+    (cd ${work_dir}/..; tar cvfz ${tarfile} ${work_name})
 
 done
 
