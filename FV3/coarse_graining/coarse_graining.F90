@@ -75,13 +75,13 @@ module coarse_graining_mod
   end interface weighted_block_edge_average_y_pre_downsampled
 
   ! Global variables for the module, initialized in coarse_graining_init
-  integer :: is, ie, js, je, npz
+  integer :: is = 1, ie = 1, js = 1, je = 1, npz = 1
   integer :: is_coarse, ie_coarse, js_coarse, je_coarse
   character(len=11) :: MODEL_LEVEL = 'model_level'
   character(len=14) :: PRESSURE_LEVEL = 'pressure_level'
 
   ! Namelist parameters initialized with default values
-  integer :: coarsening_factor = 8
+  integer :: coarsening_factor = 0
   integer :: coarse_io_layout(2) = (/1, 1/)
   character(len=64) :: strategy = 'model_level'  ! Valid values are 'model_level'
   
@@ -107,12 +107,14 @@ contains
     read(input_nml_file, coarse_graining_nml, iostat=iostat)
     error_code = check_nml_error(iostat, 'coarse_graining_nml')
 
-    call assert_valid_strategy(strategy)
-    call compute_nx_coarse(npx, coarsening_factor, nx_coarse)
-    call assert_valid_domain_layout(nx_coarse, layout)
-    call define_cubic_mosaic(coarse_domain, nx_coarse, nx_coarse, layout)
-    call mpp_define_io_domain(coarse_domain, coarse_io_layout)
-    call mpp_get_compute_domain(coarse_domain, is_coarse, ie_coarse, js_coarse, je_coarse)
+    if (coarsening_factor > 0) then
+        call assert_valid_strategy(strategy)
+        call compute_nx_coarse(npx, coarsening_factor, nx_coarse)
+        call assert_valid_domain_layout(nx_coarse, layout)
+        call define_cubic_mosaic(coarse_domain, nx_coarse, nx_coarse, layout)
+        call mpp_define_io_domain(coarse_domain, coarse_io_layout)
+        call mpp_get_compute_domain(coarse_domain, is_coarse, ie_coarse, js_coarse, je_coarse)
+    end if
     call set_fine_array_bounds(is_fine, ie_fine, js_fine, je_fine)
     npz = atm_npz
     factor = coarsening_factor
@@ -128,6 +130,10 @@ contains
     integer :: nx
     
     nx = npx - 1
+    if (coarsening_factor < 1) then
+       write(error_message, *) 'Invalid coarsening_factor chosen'
+       call mpp_error(FATAL, error_message)
+    endif
     if (mod(nx, coarsening_factor) > 0) then
        write(error_message, *) 'coarse_graining_init: coarsening_factor does not evenly divide the native resolution.'
        call mpp_error(FATAL, error_message)

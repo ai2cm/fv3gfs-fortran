@@ -86,6 +86,11 @@ contains
 ! Top layer
       do i=1,im
          if( q(i,1,ic) < 0. ) then
+#ifdef GT4PY_DEV
+             if (dp(i,2) == 0.) then
+               print *, 'zero in dp(i,2) at i=', i
+             end if
+#endif
              q(i,2,ic) = q(i,2,ic) + q(i,1,ic)*dp(i,1)/dp(i,2)
              q(i,1,ic) = 0.
           endif

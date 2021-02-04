@@ -1593,7 +1593,7 @@ module FV3GFS_io_mod
     type (domain2d),           intent(in)    :: fv_domain
     !--- local variables
     integer :: i, j, k, ix, lsoil, num, nb
-    integer :: isc, iec, jsc, jec, npz, nx, ny, ios
+    integer :: isc, jsc, ios
 
     logical :: ideal_sst = .false.
     real(kind=kind_phys) :: sst_max = 300.
@@ -1636,6 +1636,9 @@ module FV3GFS_io_mod
     call qsmith_init
 
     call mpp_error(NOTE, "Calling sfc_prop_override")
+
+    isc = Atm_block%isc
+    jsc = Atm_block%jsc
 
     if (ideal_sst) then
        do nb = 1, Atm_block%nblks

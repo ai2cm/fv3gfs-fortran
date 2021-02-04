@@ -1779,6 +1779,11 @@ contains
    do j=js, je
        do i=is, ie
           if( qv(i,j,k) < 0. ) then
+#ifdef GT4PY_DEV
+              if (dp(i,j,k+1) == 0.) then
+                print *, 'zero in dp(i,j,K=1) encountered at i,j,k=', i, j, k
+              end if
+#endif
               qv(i,j,k+1) = qv(i,j,k+1) + qv(i,j,k)*dp(i,j,k)/dp(i,j,k+1)
               qv(i,j,k  ) = 0.
           endif
