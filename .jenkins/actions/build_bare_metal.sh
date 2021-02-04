@@ -154,10 +154,15 @@ EOF1
     cp ${rootdir}/FV3/conf/modules.fv3 ./module.env
 
     sed -i 's|^ *months *= *[0-9][0-9]* *$|months = 0|g' input.nml
-    sed -i 's|^ *days *= *[0-9][0-9]* *$|days = 0|g' input.nml
-    sed -i 's|^ *hours *= *[0-9][0-9]* *$|hours = 1|g' input.nml
     sed -i 's|^ *minutes *= *[0-9][0-9]* *$|minutes = 0|g' input.nml
     sed -i 's|^ *seconds *= *[0-9][0-9]* *$|seconds = 0|g' input.nml
+    if [[ "${exe_name}" == *"debug"* ]] ; then
+      sed -i 's|^ *days *= *[0-9][0-9]* *$|days = 0|g' input.nml
+      sed -i 's|^ *hours *= *[0-9][0-9]* *$|hours = 1|g' input.nml
+    else
+      sed -i 's|^ *days *= *[0-9][0-9]* *$|days = 1|g' input.nml
+      sed -i 's|^ *hours *= *[0-9][0-9]* *$|hours = 0|g' input.nml
+    fi
 
     jobfile=job
     cp ${envloc}/env/submit.${host}.${scheduler}  ./${jobfile}
