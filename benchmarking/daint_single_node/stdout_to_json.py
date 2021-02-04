@@ -13,12 +13,12 @@ import yaml
 # timers reported in stdout of FV3GFS, multiple entries are accumulated
 TIMER_MAPPING = {
   "total": ["Total runtime"],
-  "init": ["1-Initialization", "2-Main-loop-1st-trip"],
-  "main_loop": ["3-Main-loop"],
-  "fv_dynamics": ["3.1.1-fv_dynamics"],
-  "dyn_core": ["3.1.1.1-dyn_core"],
-  "tracer_adv": ["3.1.1.2-Tracer-advection"],
-  "remapping": ["3.1.1.3-Remapping"]
+  "initialization": ["1-Initialization", "2-Main-loop-1st-trip"],
+  "mainloop": ["3-Main-loop"],
+  "FVDynamics": ["3.1.1-fv_dynamics"],
+  "DynCore": ["3.1.1.1-dyn_core"],
+  "TracerAdvection": ["3.1.1.2-Tracer-advection"],
+  "Remapping": ["3.1.1.3-Remapping"]
 }
 
 def num(s):
