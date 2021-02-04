@@ -130,7 +130,7 @@ cd -
 #       the environment of this script clean (no modules loaded etc.)
 for config in ${CONFIGURATION_LIST} ; do
 for exe_name in ${EXECUTABLE_NAMES} ; do
-echo "### run check (${config} with ${exe_name})"
+echo "### run check (${config} with ${exe_name} compiled by ${compiler})"
 
     script=/tmp/create_rundir_$$.sh
     configdir=${rootdir}/tests/serialized_test_data_generation/configs
