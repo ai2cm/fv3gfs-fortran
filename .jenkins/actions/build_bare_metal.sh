@@ -186,6 +186,7 @@ EOF1
     /bin/rm -rf "${rundir}"
 
 done
+done
 
 # copy executables to install dir (and add meta-information)
 echo "### saving executables"
