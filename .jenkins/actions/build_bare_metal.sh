@@ -155,8 +155,8 @@ EOF1
 
     sed -i 's|^ *months *= *[0-9][0-9]* *$|months = 0|g' input.nml
     sed -i 's|^ *days *= *[0-9][0-9]* *$|days = 0|g' input.nml
-    sed -i 's|^ *hours *= *[0-9][0-9]* *$|hours = 0|g' input.nml
-    sed -i 's|^ *minutes *= *[0-9][0-9]* *$|minutes = 30|g' input.nml
+    sed -i 's|^ *hours *= *[0-9][0-9]* *$|hours = 1|g' input.nml
+    sed -i 's|^ *minutes *= *[0-9][0-9]* *$|minutes = 0|g' input.nml
     sed -i 's|^ *seconds *= *[0-9][0-9]* *$|seconds = 0|g' input.nml
 
     jobfile=job
