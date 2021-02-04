@@ -144,7 +144,6 @@ source ${FV3CONFIG_VENV}/bin/activate
 module load gcloud
 write_run_directory ${configdir}/${config}.yml ${rundir}
 deactivate
-cd -
 EOF1
     chmod 755 ${script}
     ${script}
