@@ -11,6 +11,7 @@ import yaml
 
 # this dict maps the names of the timer in the JSON file to the actual
 # timers reported in stdout of FV3GFS, multiple entries are accumulated
+# (note that only timers with the same hit count can be accumulated)
 TIMER_MAPPING = {
   "total": ["Total runtime"],
   "initialization": ["1-Initialization", "2-Main-loop-1st-trip"],
@@ -63,9 +64,12 @@ def stdout_to_json(stdout_file_regex, run_directory):
     # convert into format for plotting
     times = {}
     for json_name, fv3_names in TIMER_MAPPING.items():
-        times[json_name] = {"hits": 0, "minimum": 0., "maximum": 0., "mean": 0.}
+        times[json_name] = {"hits": None, "minimum": 0., "maximum": 0., "mean": 0.}
         for fv3_name in fv3_names:
-            times[json_name]["hits"] += raw_timers[fv3_name]["hits"]
+            if times[json_name]["hits"] is None:
+                times[json_name]["hits"] = raw_timers[fv3_name]["hits"]
+            else:
+                assert times[json_name]["hits"] == raw_timers[fv3_name]["hits"], 'Can only accumulate timers with equal hit count'
             times[json_name]["minimum"] += raw_timers[fv3_name]["tmin"]
             times[json_name]["maximum"] += raw_timers[fv3_name]["tmax"]
             times[json_name]["mean"] += raw_timers[fv3_name]["tavg"]
