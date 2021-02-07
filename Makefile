@@ -36,7 +36,7 @@ ifeq ($(BUILD_FROM_INTERMEDIATE),y)
 	BUILD_ARGS += --build-arg FMS_IMAGE=$(FMS_IMAGE) --build-arg ESMF_IMAGE=$(ESMF_IMAGE) --build-arg SERIALBOX_IMAGE=$(SERIALBOX_IMAGE) --build-arg MPI_IMAGE=$(MPI_IMAGE)
 endif
 
-.PHONY: help build build_environment build_compiled build_serialize build_serialize_gt4py_dev build_debug build_coverage
+.PHONY: help build build_environment build_compiled build_serialize build_debug
 .PHONY: build_deps push_deps pull_deps enter enter_serialize test update_circleci_reference clean
 
 help:
@@ -56,17 +56,13 @@ build_compiled: ## build production container image
 		-t $(COMPILED_IMAGE) \
 		--target $(COMPILE_TARGET) .
 
-build_serialize:
+build_debug: ## build container image for debugging
+	COMPILED_TAG_NAME=$(COMPILED_TAG_NAME)-debug COMPILE_OPTION="REPRO=\\\nDEBUG=Y" $(MAKE) build
+
+build_serialize: ## build container image for serialization
 	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
 	COMPILED_IMAGE=$(SERIALIZE_IMAGE) \
 	$(MAKE) build_compiled
-
-build_debug: ## build container image for debugging
-	COMPILED_TAG_NAME=debug COMPILE_OPTION="REPRO=\\\nDEBUG=Y" $(MAKE) build
-
-build_coverage: build_environment ## build container image for code coverage analysis
-	COMPILED_TAG_NAME=gcov COMPILED_IMAGE=$(GCR_URL)/$(COMPILE_TARGET):gcov \
-	COMPILE_OPTION="OPENMP=\\\nREPRO=\\\nDEBUG=Y\\\nGCOV=Y" $(MAKE) build
 
 build_deps: ## build container images of dependnecies (FMS, ESMF, SerialBox)
 	docker build -f $(DOCKERFILE) -t $(MPI_IMAGE) $(BUILD_ARGS) --target fv3gfs-mpi .
