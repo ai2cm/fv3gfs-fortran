@@ -895,6 +895,7 @@ subroutine update_atmos_model_state (Atmos)
   integer :: isec, seconds, isec_fhzero
   integer :: rc
   real(kind=IPD_kind_phys) :: time_int, time_intfull
+  integer :: is, ie, js, je, nk
 !
     call mpp_clock_begin(otherClock)
     call set_atmosphere_pelist()
@@ -919,10 +920,11 @@ subroutine update_atmos_model_state (Atmos)
     call get_time (Atmos%Time - diag_time, isec)
     call get_time (Atmos%Time - Atmos%Time_init, seconds)
     call atmosphere_nggps_diag(Atmos%Time,ltavg=.true.,avg_max_length=avg_max_length)
+    call get_fine_array_bounds(is, ie, js, je)
     call send_diag_manager_controlled_diagnostic_data(Atmos%Time, IPD_Diag, &
       Atm_block, IPD_Data, IPD_Control%nx, IPD_Control%ny, IPD_Control%levs, &
       Atm(mytile)%coarse_graining%write_coarse_diagnostics, &
-      IPD_Diag_coarse, Atm(mytile)%delp, &
+      IPD_Diag_coarse, Atm(mytile)%delp(is:ie,js:je,:), &
       Atmos%coarsening_strategy, Atm(mytile)%ptop)
     if (ANY(nint(fdiag(:)*3600.0) == seconds) .or. (IPD_Control%kdt == first_kdt) .or. nsout > 0) then
       if (mpp_pe() == mpp_root_pe()) write(6,*) "---isec,seconds",isec,seconds
@@ -944,12 +946,13 @@ subroutine update_atmos_model_state (Atmos)
       endif
       if (mpp_pe() == mpp_root_pe()) write(6,*) ' gfs diags time since last bucket empty: ',time_int/3600.,'hrs'
       call atmosphere_nggps_diag(Atmos%Time)
+      call atmosphere_control_data(is, ie, js, je, nk)
       call FV3GFS_diag_output(Atmos%Time, IPD_DIag, Atm_block, IPD_Data, IPD_Control%nx, IPD_Control%ny, &
                             IPD_Control%levs, 1, 1, 1.d0, time_int, time_intfull,              &
                             IPD_Control%fhswr, IPD_Control%fhlwr, &
                             Atm(mytile)%coarse_graining%write_coarse_diagnostics, &
                             IPD_Diag_coarse, &
-                            Atm(mytile)%delp, Atmos%coarsening_strategy, Atm(mytile)%ptop)
+                            Atm(mytile)%delp(is:ie,js:je,:), Atmos%coarsening_strategy, Atm(mytile)%ptop)
       if (nint(IPD_Control%fhzero) > 0) then 
         if (mod(isec,3600*nint(IPD_Control%fhzero)) == 0) diag_time = Atmos%Time
       else

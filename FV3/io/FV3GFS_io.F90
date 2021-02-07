@@ -30,7 +30,6 @@ module FV3GFS_io_mod
   use diag_util_mod,      only: find_input_field
   use constants_mod,      only: grav, rdgas
   use coarse_graining_mod, only: block_mode, block_upsample, block_min, block_max, block_sum, weighted_block_average
-  use coarse_graining_mod, only: get_fine_array_bounds
 !
 !--- GFS physics modules
 !#ifndef CCPP
@@ -2956,7 +2955,7 @@ module FV3GFS_io_mod
     integer,                   intent(in) :: nx, ny, levs
     logical,                   intent(in) :: write_coarse_diagnostics
     type(IPD_diag_type),       intent(in) :: Diag_coarse(:)
-    real(kind=kind_phys),      intent(in) :: delp(:, :, :)
+    real(kind=kind_phys),      intent(in) :: delp(isco:ieco,jsco:jeco,1:levo)
     character(len=64),         intent(in) :: coarsening_strategy
     real(kind=kind_phys),      intent(in) :: ptop
 
@@ -2982,7 +2981,7 @@ module FV3GFS_io_mod
         endif
         if (require_mass) then
           allocate(mass(nx, ny, levs))
-          call get_mass(Atm_block, IPD_Data, delp(isco:ieco,jsco:jeco,1:levo), nx, ny, levs, mass)
+          call get_mass(Atm_block, IPD_Data, delp, nx, ny, levs, mass)
         endif
       else
         allocate(area(nx, ny))
@@ -2990,7 +2989,7 @@ module FV3GFS_io_mod
         allocate(phalf_coarse_on_fine(nx, ny, levs + 1))
         allocate(masked_area(nx, ny, levs))
         call get_area(Atm_block, IPD_Data, nx, ny, area)
-        call vertical_remapping_requirements(delp(isco:ieco,jsco:jeco,1:levo), area, ptop, phalf, phalf_coarse_on_fine)
+        call vertical_remapping_requirements(delp, area, ptop, phalf, phalf_coarse_on_fine)
         call mask_area_weights(area, phalf, phalf_coarse_on_fine, masked_area)
       endif
     endif
@@ -3074,7 +3073,7 @@ module FV3GFS_io_mod
     real(kind=kind_phys),      intent(in) :: time_radlw
     logical, intent(in) :: write_coarse_diagnostics
     type(IPD_diag_type), intent(in) :: diag_coarse(:)
-    real(kind=kind_phys),      intent(in) :: delp(:, :, :)
+    real(kind=kind_phys),      intent(in) :: delp(isco:ieco,jsco:jeco,1:levo)
     character(len=64),         intent(in) :: coarsening_strategy
     real,                      intent(in) :: ptop
 !--- local variables
@@ -3093,7 +3092,7 @@ module FV3GFS_io_mod
     real(kind=kind_phys), allocatable :: area(:,:)
     real(kind=kind_phys), allocatable :: mass(:,:,:), phalf(:,:,:), phalf_coarse_on_fine(:,:,:)
     real(kind=kind_phys), allocatable :: masked_area(:,:,:)
-
+    
      nblks         = atm_block%nblks
      rdt           = 1.0d0/dt
      rtime_int     = 1.0d0/time_int
@@ -3115,7 +3114,7 @@ module FV3GFS_io_mod
           endif
           if (require_mass) then
             allocate(mass(nx, ny, levs))
-            call get_mass(Atm_block, IPD_Data, delp(isco:ieco,jsco:jeco,1:levo), nx, ny, levs, mass)
+            call get_mass(Atm_block, IPD_Data, delp, nx, ny, levs, mass)
           endif
         else
           allocate(area(nx, ny))
@@ -3123,7 +3122,7 @@ module FV3GFS_io_mod
           allocate(phalf_coarse_on_fine(nx, ny, levs + 1))
           allocate(masked_area(nx, ny, levs))
           call get_area(Atm_block, IPD_Data, nx, ny, area)
-          call vertical_remapping_requirements(delp(isco:ieco,jsco:jeco,1:levo), area, ptop, phalf, phalf_coarse_on_fine)
+          call vertical_remapping_requirements(delp, area, ptop, phalf, phalf_coarse_on_fine)
           call mask_area_weights(area, phalf, phalf_coarse_on_fine, masked_area)
         endif
      endif
@@ -3263,7 +3262,7 @@ module FV3GFS_io_mod
             !---
             if (trim(Diag(idx)%name) .eq. 'delp_phys') then
                if (Diag(idx)%id > 0) then
-                  call store_data3D(Diag(idx)%id, delp(isco:ieco,jsco:jeco,1:levo), Time, idx, Diag(idx)%intpl_method, Diag(idx)%name)
+                  call store_data3D(Diag(idx)%id, delp, Time, idx, Diag(idx)%intpl_method, Diag(idx)%name)
                endif  
             else
                if(mpp_pe()==mpp_root_pe())print *,'in,fv3gfs_io. 3D fields, idx=',idx,'varname=',trim(diag(idx)%name), &
