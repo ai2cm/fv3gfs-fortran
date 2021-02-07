@@ -2969,19 +2969,11 @@ module FV3GFS_io_mod
     real(kind=kind_phys) :: var3d(nx, ny, levs)
     logical :: requested
     integer :: i, j, ii, jj, k, isc, jsc, ix, nb, index, used
-    integer :: is2, ie2, js2, je2, npz2
 
     isc   = atm_block%isc
     jsc   = atm_block%jsc
 
     if (write_coarse_diagnostics) then
-      call get_fine_array_bounds(is2, ie2, js2, je2)
-      write(700+mpp_pe(),*) 'is2',is2,'ie2',ie2
-      write(700+mpp_pe(),*) 'js2',js2,'je2',je2
-      write(700+mpp_pe(),*) 'isco',isco,'ieco',ieco
-      write(700+mpp_pe(),*) 'jsco',jsco,'jeco',jeco
-      write(700+mpp_pe(),*) '1',1,'levo',levo
-      write(700+mpp_pe(),*) '--------------------------'
       call determine_required_coarse_graining_weights(diag_coarse, coarsening_strategy, require_area, require_masked_area, require_mass, require_vertical_remapping)
       if (.not. require_vertical_remapping) then
         if (require_area) then
@@ -3101,7 +3093,7 @@ module FV3GFS_io_mod
     real(kind=kind_phys), allocatable :: area(:,:)
     real(kind=kind_phys), allocatable :: mass(:,:,:), phalf(:,:,:), phalf_coarse_on_fine(:,:,:)
     real(kind=kind_phys), allocatable :: masked_area(:,:,:)
-    
+
      nblks         = atm_block%nblks
      rdt           = 1.0d0/dt
      rtime_int     = 1.0d0/time_int
