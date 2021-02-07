@@ -346,12 +346,15 @@ contains
       if (grids_on_this_pe(n)) mytile = n
    enddo
 
-   call coarse_graining_init(Atm(mytile)%flagstruct%npx, Atm(mytile)%npz, &
-        Atm(mytile)%layout, Atm(mytile)%bd%is, Atm(mytile)%bd%ie, &
-        Atm(mytile)%bd%js, Atm(mytile)%bd%je, Atm(mytile)%coarse_graining%factor, &
-        Atm(mytile)%coarse_graining%nx_coarse, &
-        Atm(mytile)%coarse_graining%strategy, &
-        Atm(mytile)%coarse_graining%domain)
+   if (Atm(mytile)%coarse_graining%write_coarse_restart_files .or. &
+        Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
+      call coarse_graining_init(Atm(mytile)%flagstruct%npx, Atm(mytile)%npz, &
+           Atm(mytile)%layout, Atm(mytile)%bd%is, Atm(mytile)%bd%ie, &
+           Atm(mytile)%bd%js, Atm(mytile)%bd%je, Atm(mytile)%coarse_graining%factor, &
+           Atm(mytile)%coarse_graining%nx_coarse, &
+           Atm(mytile)%coarse_graining%strategy, &
+           Atm(mytile)%coarse_graining%domain)
+   end if
 
    Atm(mytile)%Time_init = Time_init
 

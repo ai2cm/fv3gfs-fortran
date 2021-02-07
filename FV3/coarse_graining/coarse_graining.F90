@@ -81,7 +81,7 @@ module coarse_graining_mod
   character(len=14) :: PRESSURE_LEVEL = 'pressure_level'
 
   ! Namelist parameters initialized with default values
-  integer :: coarsening_factor = 0
+  integer :: coarsening_factor = 8
   integer :: coarse_io_layout(2) = (/1, 1/)
   character(len=64) :: strategy = 'model_level'  ! Valid values are 'model_level'
   
@@ -107,14 +107,12 @@ contains
     read(input_nml_file, coarse_graining_nml, iostat=iostat)
     error_code = check_nml_error(iostat, 'coarse_graining_nml')
 
-    if (coarsening_factor > 0) then
-        call assert_valid_strategy(strategy)
-        call compute_nx_coarse(npx, coarsening_factor, nx_coarse)
-        call assert_valid_domain_layout(nx_coarse, layout)
-        call define_cubic_mosaic(coarse_domain, nx_coarse, nx_coarse, layout)
-        call mpp_define_io_domain(coarse_domain, coarse_io_layout)
-        call mpp_get_compute_domain(coarse_domain, is_coarse, ie_coarse, js_coarse, je_coarse)
-    end if
+    call assert_valid_strategy(strategy)
+    call compute_nx_coarse(npx, coarsening_factor, nx_coarse)
+    call assert_valid_domain_layout(nx_coarse, layout)
+    call define_cubic_mosaic(coarse_domain, nx_coarse, nx_coarse, layout)
+    call mpp_define_io_domain(coarse_domain, coarse_io_layout)
+    call mpp_get_compute_domain(coarse_domain, is_coarse, ie_coarse, js_coarse, je_coarse)
     call set_fine_array_bounds(is_fine, ie_fine, js_fine, je_fine)
     npz = atm_npz
     factor = coarsening_factor
