@@ -63,7 +63,7 @@ def get_n_processes(config):
 @pytest.mark.parametrize(
     ("config_filename", "tag"), 
     [
-#        ("default.yml", "{version}-debug"),
+        ("default.yml", "{version}-debug"),
         ("default.yml", "{version}"),
         ("default.yml", "{version}-serialize"),
         ("restart.yml", "{version}"),
