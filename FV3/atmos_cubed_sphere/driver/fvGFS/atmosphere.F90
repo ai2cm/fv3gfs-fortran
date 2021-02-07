@@ -354,7 +354,7 @@ contains
            Atm(mytile)%coarse_graining%nx_coarse, &
            Atm(mytile)%coarse_graining%strategy, &
            Atm(mytile)%coarse_graining%domain)
-   end if
+   endif
 
    Atm(mytile)%Time_init = Time_init
 
