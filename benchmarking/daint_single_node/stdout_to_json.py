@@ -80,7 +80,7 @@ def stdout_to_json(stdout_file_regex, run_directory):
     with open(os.path.join(run_directory, 'config.yml'), 'r+') as f:
         config = yaml.safe_load(f)
         setup["data set"] = config["experiment_name"]
-    dynamics_timer = TIMER_MAPPING["fv_dynamics"][0]
+    dynamics_timer = TIMER_MAPPING["FVDynamics"][0]
     setup["timesteps"] = raw_timers[dynamics_timer]["hits"] + 1
     setup["version"] = "fortran"
     with open(os.path.join(run_directory, "git.env"), 'r+') as f:
