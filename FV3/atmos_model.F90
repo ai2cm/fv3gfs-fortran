@@ -121,7 +121,6 @@ use FV3GFS_io_mod,      only: FV3GFS_restart_read, FV3GFS_restart_write, &
                               send_diag_manager_controlled_diagnostic_data
 use fv_iau_mod,         only: iau_external_data_type,getiauforcing,iau_initialize
 use module_fv3_config,  only: output_1st_tstep_rst, first_kdt, nsout
-use coarse_graining_mod, only: get_fine_array_bounds
 !-----------------------------------------------------------------------
 
 implicit none
@@ -920,7 +919,7 @@ subroutine update_atmos_model_state (Atmos)
     call get_time (Atmos%Time - diag_time, isec)
     call get_time (Atmos%Time - Atmos%Time_init, seconds)
     call atmosphere_nggps_diag(Atmos%Time,ltavg=.true.,avg_max_length=avg_max_length)
-    call get_fine_array_bounds(is, ie, js, je)
+    call atmosphere_control_data(is, ie, js, je, nk)
     call send_diag_manager_controlled_diagnostic_data(Atmos%Time, IPD_Diag, &
       Atm_block, IPD_Data, IPD_Control%nx, IPD_Control%ny, IPD_Control%levs, &
       Atm(mytile)%coarse_graining%write_coarse_diagnostics, &

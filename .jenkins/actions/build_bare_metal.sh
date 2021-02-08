@@ -15,7 +15,7 @@ set -o pipefail
 #   CONFIGURATION_LIST - Space-separated list of configurations to test executables with
 #                        (yml file must reside in /tests/serialized_test_data_generation/configs)
 #   EXECUTABLE_SUFFIX  - Suffix to add to executable name when copied to /project
-#   EXECUTABLE_NAME    - Name of executable to use for tests
+#   EXECUTABLE_NAMES   - Names of executable to use for tests (space separated)
 
 INSTALL_DIR=${PROJECT}/../install
 FV3GFSEXE_DIR=${INSTALL_DIR}/fv3gfs-fortran/
@@ -128,8 +128,9 @@ cd -
 # install and run example
 # note: we setup the rundir using fv3config in a separate script in order to keep
 #       the environment of this script clean (no modules loaded etc.)
-echo "### run install and example"
 for config in ${CONFIGURATION_LIST} ; do
+  for exe_name in ${EXECUTABLE_NAMES} ; do
+    echo "### run check (${config} with ${exe_name} compiled by ${compiler})"
 
     script=/tmp/create_rundir_$$.sh
     configdir=${rootdir}/tests/serialized_test_data_generation/configs
@@ -143,7 +144,6 @@ source ${FV3CONFIG_VENV}/bin/activate
 module load gcloud
 write_run_directory ${configdir}/${config}.yml ${rundir}
 deactivate
-cd -
 EOF1
     chmod 755 ${script}
     ${script}
@@ -154,17 +154,22 @@ EOF1
     cp ${rootdir}/FV3/conf/modules.fv3 ./module.env
 
     sed -i 's|^ *months *= *[0-9][0-9]* *$|months = 0|g' input.nml
-    sed -i 's|^ *days *= *[0-9][0-9]* *$|days = 1|g' input.nml
-    sed -i 's|^ *hours *= *[0-9][0-9]* *$|hours = 0|g' input.nml
     sed -i 's|^ *minutes *= *[0-9][0-9]* *$|minutes = 0|g' input.nml
     sed -i 's|^ *seconds *= *[0-9][0-9]* *$|seconds = 0|g' input.nml
+    if [[ "${exe_name}" == *"debug"* ]] ; then
+      sed -i 's|^ *days *= *[0-9][0-9]* *$|days = 0|g' input.nml
+      sed -i 's|^ *hours *= *[0-9][0-9]* *$|hours = 1|g' input.nml
+    else
+      sed -i 's|^ *days *= *[0-9][0-9]* *$|days = 1|g' input.nml
+      sed -i 's|^ *hours *= *[0-9][0-9]* *$|hours = 0|g' input.nml
+    fi
 
     jobfile=job
     cp ${envloc}/env/submit.${host}.${scheduler}  ./${jobfile}
     sed -i 's|set -x||g' ${jobfile}
     sed -i 's|<OUTFILE>|'"${jobfile}.out"'|g' ${jobfile}
     sed -i 's|<G2G>|'"source ./module.env; module list"'|g' ${jobfile}
-    sed -i 's|<CMD>|'"srun -n 6 ./${EXECUTABLE_NAME}"'|g' ${jobfile}
+    sed -i 's|<CMD>|'"srun -n 6 ./${exe_name}"'|g' ${jobfile}
     sed -i 's|<NAME>|'"fv3_test"'|g' ${jobfile}
     sed -i 's|<NTASKS>|12|g' ${jobfile}
     sed -i 's|<NTASKSPERNODE>|'"12"'|g' ${jobfile}
@@ -181,6 +186,10 @@ EOF1
     fi
     set -e
 
+    cd -
+    /bin/rm -rf "${rundir}"
+
+  done
 done
 
 # copy executables to install dir (and add meta-information)
