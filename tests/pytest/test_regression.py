@@ -67,8 +67,8 @@ def get_n_processes(config):
         ("default.yml", "{version}"),
         ("default.yml", "{version}-serialize"),
         ("restart.yml", "{version}"),
-        ("model-level-coarse-graining.yml", "{version}"),
-        ("pressure-level-coarse-graining.yml", "{version}")
+        ("model-level-coarse-graining.yml", "{version}-debug"),
+        ("pressure-level-coarse-graining.yml", "{version}-debug")
     ]
 )
 def test_regression(
