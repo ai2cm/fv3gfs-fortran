@@ -22,7 +22,7 @@
 # JOB_URL            Full URL of this job, like http://server:port/jenkins/job/foo/
 
 # stop on all errors
-set +e
+set -e
 
 # get root directory of where jenkins.sh is sitting
 root=`dirname $0`
@@ -30,16 +30,20 @@ envloc=`dirname $0`
 
 # some global variables
 action="$1"
-optarg="$2"
+shift
+optarg="$@"
 
 # get latest version of buildenv
 git submodule update --init --recursive
 
 # setup module environment and default queue
+# note: disable error checking since script uses fails for checks
+set +e
 . ${envloc}/env/machineEnvironment.sh
+set -e
 
 # load machine dependent environment
-. ${envloc}/env/env.${host}.sh
+#. ${envloc}/env/env.${host}.sh
 
 # check if action script exists
 script="${root}/actions/${action}.sh"

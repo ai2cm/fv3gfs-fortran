@@ -1,7 +1,21 @@
 #!/bin/bash -f
 
-# stop on all errors
+# This script provides an Jenkins action to run FV3GFS with serialization
+# activated in order to generate data for regression tests that are used
+# by fv3core. The data is generated and pushed to the GCP storage bucket.
+
+# 2021/01/22 Oliver Fuhrer, Vulcan Inc, oliverf@vulcan.com
+
+# stop on all errors (also on errors in a pipe-redirection)
 set -e
+set -o pipefail
+
+# the following environment variables need to be set
+#   EXPERIMENT_PATTERN - Regex pattern to select the *.yml files in the directory
+#                        /tests/serialized_test_data_generation/configs
+#   FORTRAN_VERSION    - Can be used to override the FORTRAN_VERSION number in the Makefile
+#   VALIDATE_ONLY      - Set to "true" if you only want to compare against data already on GCP
+#   FORCE_PUSH         - Set to "true" if you want to overwrite data already on GCP
 
 ##################################################
 # functions
@@ -61,8 +75,9 @@ else
     echo "FORTRAN_VERSION: (default)"
     unset FORTRAN_VERSION
 fi
+echo "VALIDATE_ONLY:   ${FORCE_PUSH}"
 echo "FORCE_PUSH:      ${FORCE_PUSH}"
-echo "=== the following setup is being used ==="
+echo "========================================="
 
 # set up virtual env, if not already set up
 echo ">> Running pip install -r requirements.txt in venv"
@@ -70,18 +85,23 @@ python3 -m venv venv
 . ./venv/bin/activate
 pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
-export CUDA=y
+
 # configure Docker builds
+export CUDA=y
 export DOCKER_BUILDKIT=1
 export BUILD_ARGS="-q"
 export BUILD_FROM_INTERMEDIATE=y
 export BUILDKIT_PROGRESS=plain
 make pull_deps
+
 # do the work
 echo ">> Running ./make_all_datasets.sh in ./tests/serialize_test_data_generation"
 cd tests/serialized_test_data_generation
 ./make_all_datasets.sh
 cd -
+
+# deactivate virtual env
+deactivate
 
 # end timer and report time taken
 T="$(($(date +%s)-T))"

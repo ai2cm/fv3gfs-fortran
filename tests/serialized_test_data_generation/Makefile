@@ -5,13 +5,12 @@ EXPERIMENT_DIR = $(CWD)/configs
 EXPERIMENT ?= c12_6ranks_standard
 # base images w/ or w/o CUDA
 CUDA ?=y
-
+SER_ENV ?= ALL
 # version number or tag (determines image tag and destination directory in cloud storage)
 # -convention: <tag>-<some large conceptual version change>.<serialization statement change>.<hotfix>
 # -version number should be increased when serialization data is expected to change
 # -omit tag (e.g. 7.1.1) for "operational" serialization data, use tag for experimental serialization data
-FORTRAN_VERSION ?= 7.2.3
-
+FORTRAN_VERSION ?= 7.2.5
 # docker container image setup (used for running model, see ../../README.md)
 GCR_URL = us.gcr.io/vcm-ml
 COMPILED_IMAGE = $(GCR_URL)/fv3gfs-compiled:$(FORTRAN_VERSION)-serialize-gt4pydev
@@ -67,12 +66,14 @@ run_model: ## run model using Docker image to generate serialized data
 	fi
 	mkdir -p $(DATA_DIR_HOST)
 	docker run -e USER_ID_HOST=$(USER_ID_HOST) -e GROUP_ID_HOST=$(GROUP_ID_HOST) \
+		-e SER_ENV=$(SER_ENV) \
 		--network host --rm -v $(RUN_DIR_HOST):$(RUN_DIR_CONTAINER) \
 		-v $(DATA_DIR_HOST):$(DATA_DIR_CONTAINER) $(COMPILED_IMAGE) \
 		/rundir/submit_job.sh
 	cd $(DATA_DIR_HOST) && \
 		md5sum `/bin/ls -1d * | egrep -v '^fortran_sha.txt$$|^logfile.000000.out$$|^stdout.out$$|^stderr.out$$|^env.out$$'` > md5sums.txt
 	./check_data_dir.sh $(DATA_DIR_HOST)
+	cp $(EXPERIMENT_DIR)/$(EXPERIMENT).yml $(DATA_DIR_HOST)
 
 pack_data: ## pack *.dat files into a *.tar.gz and delete them
 	@if [ -f $(TARFILE_HOST) ] ; then \
