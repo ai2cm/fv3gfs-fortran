@@ -1,5 +1,6 @@
 module coarse_graining_mod
 
+  use, intrinsic :: ieee_arithmetic
   use fms_mod, only: check_nml_error, close_file, open_namelist_file
   use mpp_domains_mod, only: domain2d, mpp_define_io_domain, mpp_define_mosaic, mpp_get_compute_domain
   use mappm_mod, only: mappm
@@ -251,10 +252,7 @@ contains
     call block_sum_2d(weighted_fine, weighted_block_sum)
     call block_sum_2d(weights, block_sum_weights)
     where (block_sum_weights .eq. 0.0)
-      ! If the weights sum to zero in a coarse cell, set the result to a huge number.
-      ! Ideally we'd use some form of NaN, but that causes crashes when running with
-      ! -ffpe-trap=invalid (as we do in debug mode).
-      coarse = huge(0.0)
+      coarse = ieee_value(ieee_quiet_nan)
     elsewhere
       coarse = weighted_block_sum / block_sum_weights
     endwhere
@@ -275,10 +273,7 @@ contains
     call masked_block_sum_2d(weighted_fine, mask, weighted_block_sum)
     call masked_block_sum_2d(weights, mask, block_sum_weights)
     where (block_sum_weights .eq. 0.0)
-      ! If the weights sum to zero in a coarse cell, set the result to a huge number.
-      ! Ideally we'd use some form of NaN, but that causes crashes when running with
-      ! -ffpe-trap=invalid (as we do in debug mode).
-      coarse = huge(0.0)
+      coarse = ieee_value(ieee_quiet_nan)
     elsewhere
       coarse = weighted_block_sum / block_sum_weights
     endwhere
