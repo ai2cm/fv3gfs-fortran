@@ -2432,8 +2432,8 @@ module FV3GFS_io_mod
     ! Temporarily suspend halting mode for NaNs; we do this because we expect
     ! the vegetation fraction to be zero in some places, generating NaNs in a
     ! first pass at coarse-graining zorl and canopy.  We fill these NaNs with
-    ! alternative values in a later step, at which point we turn back on NaN
-    ! halting.
+    ! alternative values in a later step, at which point we restore NaN halting
+    ! to its original setting.
     call ieee_get_halting_mode(ieee_invalid, halt)
     call ieee_set_halting_mode(ieee_invalid, .false.)
 
@@ -2460,7 +2460,8 @@ module FV3GFS_io_mod
        sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,13) = only_area_weighted_canopy
     endwhere
 
-    call ieee_get_halting_mode(ieee_invalid, halt)
+    ! Restore original NaN halting mode.
+    call ieee_set_halting_mode(ieee_invalid, halt)
 
     ! Take the area weighted average of the albedo variables
     call weighted_block_average(area, sfc_var2_fine(isc:iec,jsc:jec,6), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,6))
