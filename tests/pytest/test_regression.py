@@ -64,6 +64,7 @@ def get_n_processes(config):
     ("config_filename", "tag"), 
     [
         ("default.yml", "{version}-debug"),
+        ("baroclinic.yml", "{version}-debug"),
         ("default.yml", "{version}"),
         ("default.yml", "{version}-serialize"),
         ("restart.yml", "{version}"),
@@ -93,7 +94,7 @@ def test_regression(
             run_reference_dir, SERIALIZE_MD5SUM_FILENAME
         )
         check_rundir_md5sum(run_dir, serialize_md5sum_filename)
-    shutil.rmtree(run_dir)
+    #shutil.rmtree(run_dir)
 
 
 def check_rundir_md5sum(run_dir, md5sum_filename):
