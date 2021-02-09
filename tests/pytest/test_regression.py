@@ -94,7 +94,7 @@ def test_regression(
             run_reference_dir, SERIALIZE_MD5SUM_FILENAME
         )
         check_rundir_md5sum(run_dir, serialize_md5sum_filename)
-    #shutil.rmtree(run_dir)
+    shutil.rmtree(run_dir)
 
 
 def check_rundir_md5sum(run_dir, md5sum_filename):
@@ -213,7 +213,7 @@ def test_run_reproduces_across_layouts(
     run_reference_dir = join(reference_dir, reference_run_name)
     md5sum_filename = join(run_reference_dir, MD5SUM_FILENAME)
     check_rundir_md5sum(run_dir, md5sum_filename)
-    #shutil.rmtree(run_dir)
+    shutil.rmtree(run_dir)
 
 
 if __name__ == '__main__':
