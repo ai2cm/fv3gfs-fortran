@@ -13,6 +13,8 @@ module FV3GFS_io_mod
 !          parameterizations present in the GFS physics package.
 !-----------------------------------------------------------------------
 !
+  use, intrinsic :: ieee_exceptions
+
 !--- FMS/GFDL modules
   use block_control_mod,  only: block_control_type
   use mpp_mod,            only: mpp_error,  mpp_pe, mpp_root_pe, &
@@ -2246,7 +2248,7 @@ module FV3GFS_io_mod
     integer :: isc, iec, jsc, jec, npz, nx, ny
     integer :: id_restart
     integer :: nvar2m, nvar2o, nvar3
-    logical :: mand
+    logical :: mand, halt
 
     integer :: is_coarse, ie_coarse, js_coarse, je_coarse, nx_coarse, ny_coarse
     real(kind=kind_phys), allocatable, dimension(:,:,:) :: sfc_var2_fine
@@ -2427,6 +2429,14 @@ module FV3GFS_io_mod
     ! Take the area weighted average over the dominant surface type for vfrac
     call weighted_block_average(area, sfc_var2_fine(isc:iec,jsc:jec,12), sfc_type_mask, sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,12))
 
+    ! Temporarily suspend halting mode for NaNs; we do this because we expect
+    ! the vegetation fraction to be zero in some places, generating NaNs in a
+    ! first pass at coarse-graining zorl and canopy.  We fill these NaNs with
+    ! alternative values in a later step, at which point we restore NaN halting
+    ! to its original setting.
+    call ieee_get_halting_mode(ieee_invalid, halt)
+    call ieee_set_halting_mode(ieee_invalid, .false.)
+
     ! Take the area and vfrac weighted average over the dominant surface and vegetation type for zorl and canopy
     call weighted_block_average(area * sfc_var2_fine(isc:iec,jsc:jec,12), sfc_var2_fine(isc:iec,jsc:jec,5), sfc_and_vtype_mask, &
          sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,5))
@@ -2449,6 +2459,9 @@ module FV3GFS_io_mod
        sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,5) = only_area_weighted_zorl
        sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,13) = only_area_weighted_canopy
     endwhere
+
+    ! Restore original NaN halting mode.
+    call ieee_set_halting_mode(ieee_invalid, halt)
 
     ! Take the area weighted average of the albedo variables
     call weighted_block_average(area, sfc_var2_fine(isc:iec,jsc:jec,6), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,6))
@@ -2491,6 +2504,12 @@ module FV3GFS_io_mod
     ! Take the area weighted average over the dominant surface type for sncovr
     call weighted_block_average(area, sfc_var2_fine(isc:iec,jsc:jec,32), sfc_type_mask, sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,32))
 
+    ! Again temporarily suspend the halting mode for NaNs, because we expect
+    ! a first pass at coarse-graining sheleg, hice, and tisfc to produce them.
+    ! We fill the NaNs with alternative values immediately after in each case.
+    call ieee_get_halting_mode(ieee_invalid, halt)
+    call ieee_set_halting_mode(ieee_invalid, .false.)
+
     ! For sheleg take the area and sncovr weighted average; zero out any regions where the snow cover fraction is zero over the block.
     call weighted_block_average(area * sfc_var2_fine(isc:iec,jsc:jec,32), sfc_var2_fine(isc:iec,jsc:jec,3), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,3))
     call block_sum(area * sfc_var2_fine(isc:iec,jsc:jec,32), coarsened_area_times_sncovr)
@@ -2512,6 +2531,9 @@ module FV3GFS_io_mod
     where (sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1) .lt. 2.0)
        sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,24) = tisfc_area_average
     endwhere
+
+    ! Restore NaN halting mode to original setting.
+    call ieee_set_halting_mode(ieee_invalid, halt)
 
     ! Apply corrections to 2D variables based on surface_chgres.F90
     FREEZING = 273.16
