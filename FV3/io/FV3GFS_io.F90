@@ -2504,12 +2504,22 @@ module FV3GFS_io_mod
     ! Take the area weighted average over the dominant surface type for sncovr
     call weighted_block_average(area, sfc_var2_fine(isc:iec,jsc:jec,32), sfc_type_mask, sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,32))
 
+    ! Temporarily suspend halting mode for NaNs; we do this because we expect
+    ! the vegetation fraction to be zero in some places, generating NaNs in a
+    ! first pass at coarse-graining sheleg.  We fill these NaNs with
+    ! alternative values in a later step, at which point we restore NaN halting
+    ! to its original setting.
+    call ieee_get_halting_mode(ieee_invalid, halt)
+    call ieee_set_halting_mode(ieee_invalid, .false.)
+
     ! For sheleg take the area and sncovr weighted average; zero out any regions where the snow cover fraction is zero over the block.
     call weighted_block_average(area * sfc_var2_fine(isc:iec,jsc:jec,32), sfc_var2_fine(isc:iec,jsc:jec,3), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,3))
     call block_sum(area * sfc_var2_fine(isc:iec,jsc:jec,32), coarsened_area_times_sncovr)
     where (coarsened_area_times_sncovr .eq. 0.0)
        sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,3) = 0.0
     endwhere
+
+    call ieee_set_halting_mode(ieee_invalid, halt)
 
     ! Do something similar for hice
     call weighted_block_average(area * sfc_var2_fine(isc:iec,jsc:jec,23), sfc_var2_fine(isc:iec,jsc:jec,22), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,22))

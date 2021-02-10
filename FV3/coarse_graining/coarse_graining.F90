@@ -1,6 +1,5 @@
 module coarse_graining_mod
 
-  use, intrinsic :: ieee_arithmetic
   use fms_mod, only: check_nml_error, close_file, open_namelist_file
   use mpp_domains_mod, only: domain2d, mpp_define_io_domain, mpp_define_mosaic, mpp_get_compute_domain
   use mappm_mod, only: mappm
@@ -251,11 +250,7 @@ contains
     weighted_fine = weights * fine
     call block_sum_2d(weighted_fine, weighted_block_sum)
     call block_sum_2d(weights, block_sum_weights)
-    where (block_sum_weights .eq. 0.0)
-      coarse = ieee_value(1.0, ieee_quiet_nan)
-    elsewhere
-      coarse = weighted_block_sum / block_sum_weights
-    endwhere
+    coarse = weighted_block_sum / block_sum_weights
   end subroutine weighted_block_average_2d
 
   subroutine masked_weighted_block_average_2d(weights, fine, mask, coarse)
@@ -272,11 +267,7 @@ contains
     weighted_fine = weights * fine
     call masked_block_sum_2d(weighted_fine, mask, weighted_block_sum)
     call masked_block_sum_2d(weights, mask, block_sum_weights)
-    where (block_sum_weights .eq. 0.0)
-      coarse = ieee_value(1.0, ieee_quiet_nan)
-    elsewhere
-      coarse = weighted_block_sum / block_sum_weights
-    endwhere
+    coarse = weighted_block_sum / block_sum_weights
   end subroutine masked_weighted_block_average_2d
 
   subroutine weighted_block_average_3d_field_2d_weights(weights, fine, coarse)
