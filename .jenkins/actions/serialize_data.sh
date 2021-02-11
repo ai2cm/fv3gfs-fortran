@@ -89,7 +89,10 @@ python3 -m venv venv
 pip install --upgrade pip setuptools wheel
 pip install -r requirements.txt
 
-# configure Docker builds
+# configure Docker builds and pull dependencies
+echo ""
+echo "========================================="
+echo "> pulling Docker dependencies"
 export CUDA=y
 export DOCKER_BUILDKIT=1
 export BUILD_ARGS="-q"
