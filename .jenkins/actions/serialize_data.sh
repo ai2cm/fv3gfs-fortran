@@ -61,6 +61,7 @@ T="$(date +%s)"
 parseOptions $*
 
 # echo parameters
+echo ""
 echo "=== the following setup is being used ==="
 echo "BRANCH:          ${BRANCH}"
 if [ -n "${EXPERIMENT_PATTERN}" ] ; then
@@ -75,12 +76,14 @@ else
     echo "FORTRAN_VERSION: (default)"
     unset FORTRAN_VERSION
 fi
-echo "VALIDATE_ONLY:   ${FORCE_PUSH}"
+echo "VALIDATE_ONLY:   ${VALIDATE_ONLY}"
 echo "FORCE_PUSH:      ${FORCE_PUSH}"
 echo "========================================="
 
 # set up virtual env, if not already set up
-echo ">> Running pip install -r requirements.txt in venv"
+echo ""
+echo "========================================="
+echo "> Running pip install -r requirements.txt in venv"
 python3 -m venv venv
 . ./venv/bin/activate
 pip install --upgrade pip setuptools wheel
@@ -95,7 +98,9 @@ export BUILDKIT_PROGRESS=plain
 make pull_deps
 
 # do the work
-echo ">> Running ./make_all_datasets.sh in ./tests/serialize_test_data_generation"
+echo ""
+echo "========================================="
+echo "> Running ./make_all_datasets.sh in ./tests/serialize_test_data_generation"
 cd tests/serialized_test_data_generation
 ./make_all_datasets.sh
 cd -
@@ -105,6 +110,7 @@ deactivate
 
 # end timer and report time taken
 T="$(($(date +%s)-T))"
+echo ""
 printf "####### time taken: %02d:%02d:%02d:%02d\n" "$((T/86400))" "$((T/3600%24))" "$((T/60%60))" "$((T%60))"
 
 # no errors encountered
