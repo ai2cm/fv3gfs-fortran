@@ -15,7 +15,7 @@ FORTRAN_VERSION ?= 7.2.5
 GCR_URL = us.gcr.io/vcm-ml
 COMPILED_IMAGE = $(GCR_URL)/fv3gfs-compiled:$(FORTRAN_VERSION)-serialize-gt4pydev
 RUN_DIR_CONTAINER = /rundir
-DATA_DIR_CONTAINER = $(RUN_DIR_CONTAINER)/test_data
+DATA_DIR_CONTAINER = /data
 
 # local host setup
 CWD=$(shell pwd)
@@ -75,6 +75,8 @@ run_model: ## run model using Docker image to generate serialized data
 		-e SER_ENV=$(SER_ENV) \
 		--network host --rm -v $(RUN_DIR_HOST):$(RUN_DIR_CONTAINER) \
 		-v $(DATA_DIR_HOST):$(DATA_DIR_CONTAINER) \
+                --mount type=tmpfs,destination=$(RUN_DIR_CONTAINER)/test_data \
+                --shm-size=512m \
 		$(COMPILED_IMAGE) /rundir/submit_job.sh
 	cd $(DATA_DIR_HOST) && \
 		md5sum `/bin/ls -1d * | egrep -v '^fortran_sha.txt$$|^logfile.000000.out$$|^stdout.out$$|^stderr.out$$|^env.out$$'` > md5sums.txt
