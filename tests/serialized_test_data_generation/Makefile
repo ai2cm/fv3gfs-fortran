@@ -79,7 +79,7 @@ run_model: ## run model using Docker image to generate serialized data
                 --shm-size=512m \
 		$(COMPILED_IMAGE) /rundir/submit_job.sh
 	cd $(DATA_DIR_HOST) && \
-		md5sum `/bin/ls -1d * | egrep -v '^fortran_sha.txt$$|^logfile.000000.out$$|^stdout.out$$|^stderr.out$$|^env.out$$'` > md5sums.txt
+		find . -type f \( -name "*.dat" -o -name "*.nml" -o -name "*.json" \) -exec md5sum {} \; > md5sums.txt
 	./check_data_dir.sh $(DATA_DIR_HOST)
 	cp $(EXPERIMENT_DIR)/$(EXPERIMENT).yml $(DATA_DIR_HOST)
 
