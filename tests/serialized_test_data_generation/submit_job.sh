@@ -60,7 +60,7 @@ cp $RUNDIR/std*.out $TEST_DATA_DIR
 env > $TEST_DATA_DIR/env.out
 
 # copy data to mounted dir
-if [ "$TEST_DATA_DIR" != "$MOUNTED_DATA_DIR" ] ; then
+if [ -n "$MOUNTED_DATA_DIR" ] && [ "$TEST_DATA_DIR" != "$MOUNTED_DATA_DIR" ] ; then
   mv $TEST_DATA_DIR/* $MOUNTED_DATA_DIR/
 fi
 
