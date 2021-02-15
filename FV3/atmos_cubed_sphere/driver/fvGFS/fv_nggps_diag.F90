@@ -112,7 +112,7 @@ module fv_nggps_diags_mod
  integer :: id_maxvort02,kstt_maxvort02,kend_maxvort02
  integer :: isco, ieco, jsco, jeco, npzo, ncnsto
  integer :: isdo, iedo, jsdo, jedo
- integer :: nlevs
+ integer :: nlevs = 0
  logical :: hydrostatico
  integer, allocatable :: id_tracer(:), all_axes(:)
  integer, allocatable :: kstt_tracer(:), kend_tracer(:)
