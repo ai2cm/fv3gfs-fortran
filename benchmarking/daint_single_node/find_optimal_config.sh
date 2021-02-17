@@ -5,7 +5,7 @@ workdir=/scratch/snx3000/olifu/benchmarking
 partition="normal --no-wait"
 #partition="debug"
 
-for config in c96 c128 c192 c256 ; do
+for config in c128 ; do
 for compiler in gnu intel ; do
 
   exe=/project/s1053/install/fv3gfs-fortran/${compiler}/fv3_64bit.exe

@@ -156,6 +156,7 @@ def run_benchmark(nodes_per_tile_side, threads_per_rank, hyperthreading, executa
 
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 export CRAY_CUDA_MPS=1
+export OMP_STACKSIZE=32M
 
 if [ -f ./module.env ] ; then
   source ./module.env
