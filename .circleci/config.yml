@@ -50,8 +50,7 @@ jobs:
           then 
             nix-store --import < derivations.nar
           fi
-          drv=$(nix-instantiate shell.nix)
-      - run: |
+          drv=$(nix-build nix -j 4)
           nix-store --export $(nix-store -qR $drv) > derivations.nar
       - run:
           name: Test

@@ -1,11 +1,6 @@
 with import <nixpkgs> { };
 let
   p = import ./nix;
-  fv3 = with python3Packages; callPackage ./python-packages.nix { };
-  python = python3.override {
-    packageOverrides = fv3;
-  };
-  py = python.withPackages (ps: [ ps.pytest ps.pyyaml ps.fv3config ]);
 in mkShell {
   name = "fv3";
   buildInputs = [
@@ -13,7 +8,7 @@ in mkShell {
     p.esmf
     p.nceplibs
     p.fv3
-    py
+    p.python
     netcdf
     netcdffortran
     openssh # hidden dependency of openmpi
