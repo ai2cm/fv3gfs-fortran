@@ -4,7 +4,6 @@ from os.path import join
 import shutil
 from copy import deepcopy
 import yaml
-import xarray as xr
 import hashlib
 import subprocess
 
@@ -34,7 +33,7 @@ def setup_initial_runs(workdir, config_template):
 
 def setup_final_run(workdir, firsthalf_config, remove_phy_data=False):
     """Set up run directory for second two-hour run. This must be done after
-    the first two-hour run has been performed so that the initial conditions 
+    the first two-hour run has been performed so that the initial conditions
     are linked appropriately"""
     secondhalf_config = deepcopy(firsthalf_config)
     secondhalf_config['initial_conditions'] = os.path.abspath(
@@ -56,7 +55,7 @@ def run_model(rundir, model_image, mounts):
     fv3out_filename = join(rundir, 'fv3out')
     fv3err_filename = join(rundir, 'fv3err')
     with open(fv3out_filename, 'w') as fv3out_f, open(fv3err_filename, 'w') as fv3err_f:
-        subprocess.call(
+        subprocess.check_call(
             docker_run + rundir_mount + mounts + [model_image] + RUN_IN_DOCKER_COMMAND,
             stdout=fv3out_f,
             stderr=fv3err_f
@@ -66,7 +65,7 @@ def run_model(rundir, model_image, mounts):
 def run_full_and_split(workdir, config_template, remove_phy_data=False):
     archive = fv3config.get_cache_dir()
     archive_mount = ['-v', f'{archive}:{archive}']
-    model_image = 'fv3gfs-compiled:default'
+    model_image = 'us.gcr.io/vcm-ml/fv3gfs-compiled:latest'
     _, firsthalf_config = setup_initial_runs(workdir, config_template)
     run_model(join(workdir, 'fullrun'), model_image, archive_mount)
     run_model(join(workdir, 'firsthalf'), model_image, archive_mount)
@@ -100,14 +99,8 @@ def get_default_config():
 
 
 def get_restart_config():
-    config = get_default_config()
-    config['initial_conditions'] = 'restart_example'
-    config['namelist']['fv_core_nml']['external_ic'] = False
-    config['namelist']['fv_core_nml']['nggps_ic'] = False
-    config['namelist']['fv_core_nml']['make_nh'] = False
-    config['namelist']['fv_core_nml']['mountain'] = True
-    config['namelist']['fv_core_nml']['warm_start'] = True
-    config['namelist']['fv_core_nml']['na_init'] = 0
+    with open(os.path.join(TEST_DIR, 'pytest/config/restart.yml'), 'r') as f:
+        config = yaml.safe_load(f)
     return config
 
 

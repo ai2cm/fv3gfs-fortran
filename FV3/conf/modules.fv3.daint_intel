@@ -1,0 +1,16 @@
+##
+## purge all currently loaded modules.
+## do not rely on user's environment
+##
+
+##
+## load programming environment
+## this typically includes compiler, MPI and job scheduler
+##
+module load daint-gpu
+module switch PrgEnv-cray PrgEnv-intel
+module load cray-netcdf
+
+##
+## load nwprod libraries
+##

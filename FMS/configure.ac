@@ -10,6 +10,8 @@ AC_INIT([GFDL FMS Library],
   [FMS],
   [https://www.gfdl.noaa.gov/fms])
 
+AC_CONFIG_AUX_DIR([.])
+
 # Find out about the host we're building on.
 AC_CANONICAL_HOST
 AC_CANONICAL_BUILD

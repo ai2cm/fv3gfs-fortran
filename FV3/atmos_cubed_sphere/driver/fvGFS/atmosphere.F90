@@ -1,4 +1,3 @@
-
 !***********************************************************************
 !*                   GNU Lesser General Public License                 
 !*
@@ -139,6 +138,7 @@ module atmosphere_mod
 
 #include <fms_platform.h>
 !$ser verbatim use mpi
+!$ser verbatim use m_serialize, ONLY: fs_is_serialization_on
 !-----------------
 ! FMS modules:
 !-----------------
@@ -173,7 +173,7 @@ use fv_iau_mod,             only: IAU_external_data_type
 !-----------------
 ! FV core modules:
 !-----------------
-use fv_arrays_mod,      only: fv_atmos_type, R_GRID
+use fv_arrays_mod,      only: fv_atmos_type, physics_tendency_diag_type, R_GRID
 use fv_control_mod,     only: fv_init, fv_end, ngrids
 use fv_eta_mod,         only: get_eta_level
 use fv_fill_mod,        only: fill_gfs
@@ -218,10 +218,13 @@ public :: atmosphere_resolution,   atmosphere_grid_bdry,         &
           atmosphere_diss_est,         & ! dissipation estimate for SKEB 
           atmosphere_get_bottom_layer, &
           atmosphere_nggps_diag,       &
-          set_atmosphere_pelist
+          set_atmosphere_pelist, atmosphere_coarse_diag_axes
 
 !--- physics/radiation data exchange routines
 public :: atmos_phys_driver_statein
+
+public :: atmosphere_coarse_graining_parameters
+public :: atmosphere_coarsening_strategy
 
 !-----------------------------------------------------------------------
 ! version number of this module
@@ -241,7 +244,8 @@ character(len=20)   :: mod_name = 'fvGFS/atmosphere_mod'
   integer :: isd, ied, jsd, jed
   integer :: nq                       !  number of transported tracers
   integer :: sec, seconds, days
-  integer :: id_dynam, id_fv_diag, id_subgridz
+  integer :: id_dynam = -1, id_subgridz = -1, id_dynam_other = -1
+  integer :: id_update = -1, id_fv_diag = -1, id_update_other = -1
   logical :: cold_start = .false.     !  used in initial condition
 
   integer, dimension(:), allocatable :: id_tracerdt_dyn
@@ -251,7 +255,9 @@ character(len=20)   :: mod_name = 'fvGFS/atmosphere_mod'
 #else
   !$ser verbatim integer::cld_amt
 #endif
-
+  !$ser verbatim integer :: o3mr, sgs_tke
+  !$ser verbatim character(len=256) :: ser_env
+  !$ser verbatim logical :: serialize_only_driver
   integer :: mytile  = 1
   integer :: p_split = 1
   integer, allocatable :: pelist(:)
@@ -385,7 +391,11 @@ contains
    rainwat = get_tracer_index (MODEL_ATMOS, 'rainwat' )
    snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat' )
    graupel = get_tracer_index (MODEL_ATMOS, 'graupel' )
-  
+  !$ser verbatim o3mr = get_tracer_index (MODEL_ATMOS, 'o3mr')
+  !$ser verbatim sgs_tke = get_tracer_index (MODEL_ATMOS, 'sgs_tke')
+  !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+  !$ser verbatim serialize_only_driver = (index(ser_env, "ONLY_DRIVER") /= 0)
+
 #ifdef CCPP
    cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
 #else
@@ -445,7 +455,7 @@ contains
    call fv_diag_init(Atm(mytile:mytile), Atm(mytile)%atmos_axes, Time, npx, npy, npz, Atm(mytile)%flagstruct%p_ref)
 
    if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
-      call fv_coarse_diag_init(Time, Atm(mytile)%atmos_axes(3), &
+      call fv_coarse_diag_init(Atm, Time, Atm(mytile)%atmos_axes(3), &
            Atm(mytile)%atmos_axes(4), Atm(mytile)%coarse_graining)
    endif
    if (Atm(mytile)%coarse_graining%write_coarse_restart_files) then
@@ -466,9 +476,13 @@ contains
     call get_eta_level ( npz, ps2, pref(1,2), dum1d, Atm(mytile)%ak, Atm(mytile)%bk )
 
 !  --- initialize clocks for dynamics, physics_down and physics_up
-   id_dynam     = mpp_clock_id ('FV dy-core',  flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
-   id_subgridz  = mpp_clock_id ('FV subgrid_z',flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
-   id_fv_diag   = mpp_clock_id ('FV Diag',     flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_dynam        = mpp_clock_id ('  3.1.1-fv_dynamics', flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_subgridz     = mpp_clock_id ('  3.1.2-fv_subgrid_z',  flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_dynam_other  = mpp_clock_id ('  3.1.3-Other',      flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+
+   id_update       = mpp_clock_id ('  3.6.1-fv_update_phys', flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_fv_diag      = mpp_clock_id ('  3.6.2-fv_diag',        flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_update_other = mpp_clock_id ('  3.6.3-Other',          flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
 
                     call timing_off('ATMOS_INIT')
 
@@ -573,7 +587,7 @@ contains
    call nullify_domain()
    call fv_diag(Atm(mytile:mytile), zvir, Time, -1)
 #endif
-
+   if (Atm(mytile)%flagstruct%nudge) allocate(Atm(mytile)%column_moistening_implied_by_nudging(isc:iec,jsc:jec))
    n = mytile
    call switch_current_Atm(Atm(n)) 
       
@@ -648,11 +662,12 @@ contains
    type(time_type) :: atmos_time
    !$ser verbatim integer :: mpi_rank,ier
    !$ser verbatim real :: bdt
+   !$ser verbatim logical :: ser_on
    !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, mpi_rank,ier)
    
 !---- Call FV dynamics -----
 
-   call mpp_clock_begin (id_dynam)
+   call mpp_clock_begin(id_dynam_other)
 
    n = mytile
 
@@ -677,12 +692,15 @@ contains
      call read_new_bc_data(Atm(n), Time, Time_step_atmos, p_split, &
                            isd, ied, jsd, jed )
    endif
+   call mpp_clock_end(id_dynam_other)
+
+   call mpp_clock_begin(id_dynam)
 
    do psc=1,abs(p_split)
      !$ser verbatim if (psc == abs(p_split) .and. a_step == 1) then                    
      !$ser on
      !$ser savepoint Grid-Info
-     !$ser data is_=Atm(n)%bd%is ie=Atm(n)%bd%ie isd=Atm(n)%bd%isd ied=Atm(n)%bd%ied js=Atm(n)%bd%js je=Atm(n)%bd%je jsd=Atm(n)%bd%jsd jed=Atm(n)%bd%jed npx=npx npy=npy npz=npz nested=Atm(n)%gridstruct%nested grid_type=Atm(n)%gridstruct%grid_type dya=Atm(n)%gridstruct%dya  dxa=Atm(n)%gridstruct%dxa dxc=Atm(n)%gridstruct%dxc dyc=Atm(n)%gridstruct%dyc rdxc=Atm(n)%gridstruct%rdxc rdx=Atm(n)%gridstruct%rdx rdyc=Atm(n)%gridstruct%rdyc  rdxa=Atm(n)%gridstruct%rdxa  rdya=Atm(n)%gridstruct%rdya rdy=Atm(n)%gridstruct%rdy cosa_u=Atm(n)%gridstruct%cosa_u cosa_v=Atm(n)%gridstruct%cosa_v  cosa_s=Atm(n)%gridstruct%cosa_s sina_v=Atm(n)%gridstruct%sina_v  sina_u=Atm(n)%gridstruct%sina_u rsin_u=Atm(n)%gridstruct%rsin_u rsin_v=Atm(n)%gridstruct%rsin_v rsin2=Atm(n)%gridstruct%rsin2 sin_sg=Atm(n)%gridstruct%sin_sg cos_sg=Atm(n)%gridstruct%cos_sg area=Atm(n)%gridstruct%area dy=Atm(n)%gridstruct%dy rarea=Atm(n)%gridstruct%rarea  rarea_c=Atm(n)%gridstruct%rarea_c area_64=Atm(n)%gridstruct%area_64 rsina=Atm(n)%gridstruct%rsina cosa=Atm(n)%gridstruct%cosa  dx=Atm(n)%gridstruct%dx fC=Atm(n)%gridstruct%fC da_min=Atm(n)%gridstruct%da_min da_min_c=Atm(n)%gridstruct%da_min_c del6_u=Atm(n)%gridstruct%del6_u del6_v=Atm(n)%gridstruct%del6_v f0=Atm(n)%gridstruct%f0 divg_u=Atm(n)%gridstruct%divg_u divg_v=Atm(n)%gridstruct%divg_v stretched_grid=Atm(n)%gridstruct%stretched_grid agrid1=Atm(n)%gridstruct%agrid(:,:,1) agrid2=Atm(n)%gridstruct%agrid(:,:,2) bgrid1=Atm(n)%gridstruct%grid(:,:,1) bgrid2=Atm(n)%gridstruct%grid(:,:,2) edge_w=Atm(n)%gridstruct%edge_w edge_e=Atm(n)%gridstruct%edge_e edge_s=Atm(n)%gridstruct%edge_s edge_n=Atm(n)%gridstruct%edge_n a11=Atm(n)%gridstruct%a11  a12=Atm(n)%gridstruct%a12  a21=Atm(n)%gridstruct%a21  a22=Atm(n)%gridstruct%a22
+     !$ser data is_=Atm(n)%bd%is ie=Atm(n)%bd%ie isd=Atm(n)%bd%isd ied=Atm(n)%bd%ied js=Atm(n)%bd%js je=Atm(n)%bd%je jsd=Atm(n)%bd%jsd jed=Atm(n)%bd%jed npx=npx npy=npy npz=npz nested=Atm(n)%gridstruct%nested grid_type=Atm(n)%gridstruct%grid_type dya=Atm(n)%gridstruct%dya  dxa=Atm(n)%gridstruct%dxa dxc=Atm(n)%gridstruct%dxc dyc=Atm(n)%gridstruct%dyc rdxc=Atm(n)%gridstruct%rdxc rdx=Atm(n)%gridstruct%rdx rdyc=Atm(n)%gridstruct%rdyc  rdxa=Atm(n)%gridstruct%rdxa  rdya=Atm(n)%gridstruct%rdya rdy=Atm(n)%gridstruct%rdy cosa_u=Atm(n)%gridstruct%cosa_u cosa_v=Atm(n)%gridstruct%cosa_v  cosa_s=Atm(n)%gridstruct%cosa_s sina_v=Atm(n)%gridstruct%sina_v  sina_u=Atm(n)%gridstruct%sina_u rsin_u=Atm(n)%gridstruct%rsin_u rsin_v=Atm(n)%gridstruct%rsin_v rsin2=Atm(n)%gridstruct%rsin2 sin_sg=Atm(n)%gridstruct%sin_sg cos_sg=Atm(n)%gridstruct%cos_sg area=Atm(n)%gridstruct%area dy=Atm(n)%gridstruct%dy rarea=Atm(n)%gridstruct%rarea  rarea_c=Atm(n)%gridstruct%rarea_c area_64=Atm(n)%gridstruct%area_64 rsina=Atm(n)%gridstruct%rsina cosa=Atm(n)%gridstruct%cosa  dx=Atm(n)%gridstruct%dx fC=Atm(n)%gridstruct%fC da_min=Atm(n)%gridstruct%da_min da_min_c=Atm(n)%gridstruct%da_min_c del6_u=Atm(n)%gridstruct%del6_u del6_v=Atm(n)%gridstruct%del6_v f0=Atm(n)%gridstruct%f0 divg_u=Atm(n)%gridstruct%divg_u divg_v=Atm(n)%gridstruct%divg_v stretched_grid=Atm(n)%gridstruct%stretched_grid agrid1=Atm(n)%gridstruct%agrid(:,:,1) agrid2=Atm(n)%gridstruct%agrid(:,:,2) bgrid1=Atm(n)%gridstruct%grid(:,:,1) bgrid2=Atm(n)%gridstruct%grid(:,:,2) edge_w=Atm(n)%gridstruct%edge_w edge_e=Atm(n)%gridstruct%edge_e edge_s=Atm(n)%gridstruct%edge_s edge_n=Atm(n)%gridstruct%edge_n a11=Atm(n)%gridstruct%a11  a12=Atm(n)%gridstruct%a12  a21=Atm(n)%gridstruct%a21  a22=Atm(n)%gridstruct%a22 
      !$ser verbatim call set_nz(npz)
      !$ser verbatim else
      !$ser off
@@ -692,8 +710,15 @@ contains
 !uc/vc only need be same on coarse grid? However BCs do need to be the same
      !$ser savepoint FVDynamics-In
      !$ser verbatim bdt=dt_atmos/real(abs(p_split))
-     !$ser data  bdt=bdt nq_tot=nq zvir=zvir ptop=Atm(n)%ptop ks=Atm(n)%ks ncnst=nq n_split=n_split_loc u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp  qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc ak=Atm(n)%ak bk=Atm(n)%bk mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
-      call fv_dynamics(npx, npy, npz, nq, Atm(n)%ng, dt_atmos/real(abs(p_split)),&
+                    !$ser data  bdt=bdt nq_tot=nq zvir=zvir ptop=Atm(n)%ptop ks=Atm(n)%ks ncnst=nq n_split=n_split_loc u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp  qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr)  ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc ak=Atm(n)%ak bk=Atm(n)%bk mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est consv_te=Atm(n)%flagstruct%consv_te do_adiabatic_init=do_adiabatic_init
+     !$ser verbatim if (sgs_tke > 0) then
+     !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
+     !$ser verbatim endif
+     !$ser verbatim if (serialize_only_driver) then  
+         !$ser verbatim ser_on=fs_is_serialization_on()
+         !$ser off
+     !$ser verbatim endif
+     call fv_dynamics(npx, npy, npz, nq, Atm(n)%ng, dt_atmos/real(abs(p_split)),&
                        Atm(n)%flagstruct%consv_te, Atm(n)%flagstruct%fill,       &
                        Atm(n)%flagstruct%reproduce_sum, kappa, cp_air, zvir,     &
                        Atm(n)%ptop, Atm(n)%ks, nq,                               &
@@ -710,9 +735,21 @@ contains
                        Atm(n)%flagstruct%hybrid_z,                               &
                        Atm(n)%gridstruct,  Atm(n)%flagstruct,                    &
                        Atm(n)%neststruct,  Atm(n)%idiag, Atm(n)%bd,              &
-                       Atm(n)%parent_grid, Atm(n)%domain,Atm(n)%diss_est)
+                       Atm(n)%parent_grid, Atm(n)%domain,Atm(n)%diss_est,        &
+                       Atm(n)%lagrangian_tendency_of_hydrostatic_pressure)
+     !$ser verbatim if (serialize_only_driver) then        
+       !$ser verbatim if (ser_on) then 
+       !$ser on
+       !$ser verbatim endif
+     !$ser verbatim endif    
      !$ser savepoint FVDynamics-Out
-     !$ser data  u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
+     !$ser data  u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
+     !$ser verbatim if (sgs_tke > 0) then
+     !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
+     !$ser verbatim endif
+     !$ser verbatim if (serialize_only_driver) then        
+     !$ser off                                                                                                  
+     !$ser verbatim endif
       call timing_off('fv_dynamics')
 
       if (ngrids > 1 .and. (psc < p_split .or. p_split < 0)) then
@@ -722,13 +759,13 @@ contains
       endif
 
     end do !p_split
-    call mpp_clock_end (id_dynam)
+    call mpp_clock_end(id_dynam)
 
 !-----------------------------------------------------
 !--- COMPUTE SUBGRID Z
 !-----------------------------------------------------
 !--- zero out tendencies
-    call mpp_clock_begin (id_subgridz)
+    call mpp_clock_begin(id_subgridz)
     u_dt(:,:,:)   = 0.
     v_dt(:,:,:)   = 0.
     t_dt(:,:,:)   = 0.
@@ -740,7 +777,10 @@ contains
         nt_dyn = nq - 1
       endif
      !$ser savepoint FVSubgridZ-In
-     !$ser data nt_dyn=nt_dyn dt_atmos=dt_atmos delp=Atm(n)%delp pe=Atm(n)%pe peln=Atm(n)%peln pkz=Atm(n)%pkz pt=Atm(n)%pt q4d=Atm(n)%q ua=Atm(n)%ua va=Atm(n)%va w=Atm(n)%w delz=Atm(n)%delz u_dt=u_dt d_dt=v_dt t_dt=t_dt 
+     !$ser data nq=nt_dyn dt=dt_atmos delp=Atm(n)%delp pe=Atm(n)%pe peln=Atm(n)%peln pkz=Atm(n)%pkz pt=Atm(n)%pt  qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ua=Atm(n)%ua va=Atm(n)%va w=Atm(n)%w delz=Atm(n)%delz u_dt=u_dt v_dt=v_dt t_dt=t_dt
+     !$ser verbatim if (sgs_tke > 0) then
+     !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
+     !$ser verbatim endif
       call fv_subgrid_z(isd, ied, jsd, jed, isc, iec, jsc, jec, Atm(n)%npz, &
                         nt_dyn, dt_atmos, Atm(n)%flagstruct%fv_sg_adj,      &
                         Atm(n)%flagstruct%nwat, Atm(n)%delp, Atm(n)%pe,     &
@@ -749,7 +789,10 @@ contains
                         Atm(n)%w, Atm(n)%delz, u_dt, v_dt, t_dt,            &
                         Atm(n)%flagstruct%n_sponge)
       !$ser savepoint FVSubgridZ-Out
-      !$ser data  pt=Atm(n)%pt q4d=Atm(n)%q ua=Atm(n)%ua va=Atm(n)%va w=Atm(n)%w u_dt=u_dt d_dt=v_dt t_dt=t_dt 
+      !$ser data  pt=Atm(n)%pt qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ua=Atm(n)%ua va=Atm(n)%va w=Atm(n)%w u_dt=u_dt v_dt=v_dt t_dt=t_dt
+      !$ser verbatim if (sgs_tke > 0) then
+      !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
+      !$ser verbatim endif
     endif
 
 #ifdef USE_Q_DT
@@ -764,7 +807,7 @@ contains
     endif
 #endif
 
-   call mpp_clock_end (id_subgridz)
+   call mpp_clock_end(id_subgridz)
 
  end subroutine atmosphere_dynamics
 
@@ -832,7 +875,7 @@ contains
   subroutine atmosphere_restart(timestamp)
     character(len=*),  intent(in) :: timestamp
 
-    call fv_write_restart(Atm, grids_on_this_pe, timestamp)
+    if (.not. Atm(mytile)%flagstruct%disable_fv_restart_write) call fv_write_restart(Atm, grids_on_this_pe, timestamp)
 
   end subroutine atmosphere_restart
  
@@ -966,6 +1009,19 @@ contains
    axes (1:size(axes(:))) = Atm(mytile)%atmos_axes (1:size(axes(:)))
 
  end subroutine atmosphere_diag_axes
+
+
+!>@brief The subroutine 'atmosphere_coarse_diag_axes' is an API to return the axis indices
+!! for the coarse atmospheric (mass) grid.
+ subroutine atmosphere_coarse_diag_axes(coarse_axes)
+   integer, intent(out) :: coarse_axes(4)
+
+   coarse_axes = (/ &
+        Atm(mytile)%coarse_graining%id_xt_coarse, &
+        Atm(mytile)%coarse_graining%id_yt_coarse, &
+        Atm(mytile)%coarse_graining%id_pfull, &
+        Atm(mytile)%coarse_graining%id_phalf /)
+ end subroutine atmosphere_coarse_diag_axes 
 
 
 !>@brief The subroutine 'atmosphere_etalvls' is an API to return the ak/bk
@@ -1452,7 +1508,7 @@ contains
 !! and compute a consistent prognostic state.
  subroutine atmosphere_state_update (Time, IPD_Data, IAU_Data, Atm_block, flip_vc)
    type(time_type),              intent(in) :: Time
-   type(IPD_data_type),          intent(in) :: IPD_Data(:)
+   type(IPD_data_type),          intent(inout) :: IPD_Data(:)
    type(IAU_external_data_type), intent(in) :: IAU_Data
    type(block_control_type),     intent(in) :: Atm_block
    logical,                      intent(in) :: flip_vc
@@ -1461,6 +1517,9 @@ contains
    integer :: i, j, ix, k, k1, n, w_diff, nt_dyn, iq
    integer :: nb, blen, nwat, dnats, nq_adv
    real(kind=kind_phys):: rcp, q0, qwat(nq), qt, rdt
+
+   call mpp_clock_begin(id_update_other)
+
    Time_prev = Time
    Time_next = Time + Time_step_atmos
    rdt = 1.d0 / dt_atmos
@@ -1518,6 +1577,9 @@ contains
    call set_domain ( Atm(mytile)%domain )
 
    call timing_on('GFS_TENDENCIES')
+
+   call atmos_phys_qdt_diag(Atm(n)%q, Atm(n)%physics_tendency_diag, nt_dyn, dt_atmos, .true.)
+
 !--- put u/v tendencies into haloed arrays u_dt and v_dt
 !$OMP parallel do default (none) & 
 !$OMP              shared (rdt, n, nq, dnats, npz, ncnst, nwat, mytile, u_dt, v_dt, t_dt,&
@@ -1596,6 +1658,8 @@ contains
 
    enddo  ! nb-loop
 
+   call atmos_phys_qdt_diag(Atm(n)%q, Atm(n)%physics_tendency_diag, nt_dyn, dt_atmos, .false.)
+
    call timing_off('GFS_TENDENCIES')
 
    w_diff = get_tracer_index (MODEL_ATMOS, 'w_diff' )
@@ -1624,8 +1688,9 @@ contains
        enddo
     endif
 #endif
+   call mpp_clock_end(id_update_other)
 
-   call mpp_clock_begin (id_dynam)
+   call mpp_clock_begin(id_update)
        call timing_on('FV_UPDATE_PHYS')
     call fv_update_phys( dt_atmos, isc, iec, jsc, jec, isd, ied, jsd, jed, Atm(n)%ng, nt_dyn, &
                          Atm(n)%u,  Atm(n)%v,   Atm(n)%w,  Atm(n)%delp, Atm(n)%pt,         &
@@ -1638,9 +1703,15 @@ contains
                          Atm(n)%gridstruct%agrid(:,:,1), Atm(n)%gridstruct%agrid(:,:,2),   &
                          Atm(n)%npx, Atm(n)%npy, Atm(n)%npz, Atm(n)%flagstruct,            &
                          Atm(n)%neststruct, Atm(n)%bd, Atm(n)%domain, Atm(n)%ptop,         &
-                         Atm(n)%nudge_diag)
+                         Atm(n)%nudge_diag, Atm(n)%physics_tendency_diag,                  &
+                         Atm(n)%column_moistening_implied_by_nudging)
+
        call timing_off('FV_UPDATE_PHYS')
-   call mpp_clock_end (id_dynam)
+   call mpp_clock_end(id_update)
+
+   call mpp_clock_begin(id_update_other)
+
+   if (Atm(n)%flagstruct%nudge) call update_physics_precipitation_for_qv_nudging(Atm_block, IPD_Data)
 
 !--- nesting update after updating atmospheric variables with
 !--- physics tendencies
@@ -1650,6 +1721,8 @@ contains
        call timing_off('TWOWAY_UPDATE')
     endif   
    call nullify_domain()
+
+   call mpp_clock_end(id_update_other)
 
   !---- diagnostics for FV dynamics -----
    if (Atm(mytile)%flagstruct%print_freq /= -99) then
@@ -1792,7 +1865,7 @@ contains
                         Atm(mytile)%cx, Atm(mytile)%cy, Atm(mytile)%ze0, Atm(mytile)%flagstruct%hybrid_z,         &
                         Atm(mytile)%gridstruct, Atm(mytile)%flagstruct,                                           &
                         Atm(mytile)%neststruct, Atm(mytile)%idiag, Atm(mytile)%bd, Atm(mytile)%parent_grid,       &
-                        Atm(mytile)%domain,Atm(mytile)%diss_est)
+                        Atm(mytile)%domain,Atm(mytile)%diss_est, Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure)
 ! Backward
        call fv_dynamics(Atm(mytile)%npx, Atm(mytile)%npy, npz,  nq, Atm(mytile)%ng, -dt_atmos, 0.,                &
                         Atm(mytile)%flagstruct%fill, Atm(mytile)%flagstruct%reproduce_sum, kappa, cp_air, zvir,   &
@@ -1807,7 +1880,7 @@ contains
                         Atm(mytile)%cx,    Atm(mytile)%cy,   Atm(mytile)%ze0, Atm(mytile)%flagstruct%hybrid_z,    &
                         Atm(mytile)%gridstruct, Atm(mytile)%flagstruct,                                           &
                         Atm(mytile)%neststruct, Atm(mytile)%idiag, Atm(mytile)%bd, Atm(mytile)%parent_grid,       &
-                        Atm(mytile)%domain,Atm(mytile)%diss_est)
+                        Atm(mytile)%domain,Atm(mytile)%diss_est, Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure)
 !Nudging back to IC
 !$omp parallel do default (none) &
 !$omp              shared (pref, npz, jsc, jec, isc, iec, n, sphum, Atm, u0, v0, t0, dp0, xt, zvir, mytile, nudge_dz, dz0) &
@@ -1884,7 +1957,7 @@ contains
                         Atm(mytile)%cx, Atm(mytile)%cy, Atm(mytile)%ze0, Atm(mytile)%flagstruct%hybrid_z,         &
                         Atm(mytile)%gridstruct, Atm(mytile)%flagstruct,                                           &
                         Atm(mytile)%neststruct, Atm(mytile)%idiag, Atm(mytile)%bd, Atm(mytile)%parent_grid,       &
-                        Atm(mytile)%domain,Atm(mytile)%diss_est)
+                        Atm(mytile)%domain,Atm(mytile)%diss_est, Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure)
 ! Forward call
        call fv_dynamics(Atm(mytile)%npx, Atm(mytile)%npy, npz,  nq, Atm(mytile)%ng, dt_atmos, 0.,                 &
                         Atm(mytile)%flagstruct%fill, Atm(mytile)%flagstruct%reproduce_sum, kappa, cp_air, zvir,   &
@@ -1899,7 +1972,7 @@ contains
                         Atm(mytile)%cx, Atm(mytile)%cy, Atm(mytile)%ze0, Atm(mytile)%flagstruct%hybrid_z,         &
                         Atm(mytile)%gridstruct, Atm(mytile)%flagstruct,                                           &
                         Atm(mytile)%neststruct, Atm(mytile)%idiag, Atm(mytile)%bd, Atm(mytile)%parent_grid,       &
-                        Atm(mytile)%domain,Atm(mytile)%diss_est)
+                        Atm(mytile)%domain,Atm(mytile)%diss_est, Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure)
 ! Nudging back to IC
 !$omp parallel do default (none) &
 !$omp              shared (nudge_dz,npz, jsc, jec, isc, iec, n, sphum, Atm, u0, v0, t0, dz0, dp0, xt, zvir, mytile) &
@@ -2158,8 +2231,131 @@ contains
            enddo
         enddo
     endif
+    IPD_Data(nb)%Statein%dycore_hydrostatic = Atm(mytile)%flagstruct%hydrostatic
+    IPD_Data(nb)%Statein%nwat = Atm(mytile)%flagstruct%nwat
   enddo
 
  end subroutine atmos_phys_driver_statein
 
+ subroutine atmos_phys_qdt_diag(q, physics_tendency_diag, nq, dt, begin)
+   integer, intent(in) :: nq
+   real, intent(in) :: q(isd:ied,jsd:jed,1:npz,1:nq)
+   real, intent(in) :: dt
+   logical, intent(in) :: begin
+   type(physics_tendency_diag_type), intent(inout) :: physics_tendency_diag
+
+   integer :: sphum, liq_wat, ice_wat, rainwat, snowwat, graupel
+
+   sphum = get_tracer_index (MODEL_ATMOS, 'sphum')
+   liq_wat = get_tracer_index (MODEL_ATMOS, 'liq_wat')
+   ice_wat = get_tracer_index (MODEL_ATMOS, 'ice_wat')
+   rainwat = get_tracer_index (MODEL_ATMOS, 'rainwat')
+   snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
+   graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
+
+   if (begin) then
+      if (sphum > 0) then
+        if (allocated(physics_tendency_diag%qv_dt)) physics_tendency_diag%qv_dt = q(isc:iec,jsc:jec,1:npz,sphum)
+      endif
+      if (liq_wat > 0) then
+        if (allocated(physics_tendency_diag%liq_wat_dt)) physics_tendency_diag%liq_wat_dt = q(isc:iec,jsc:jec,1:npz,liq_wat)
+      endif
+      if (ice_wat > 0) then
+        if (allocated(physics_tendency_diag%ice_wat_dt)) physics_tendency_diag%ice_wat_dt = q(isc:iec,jsc:jec,1:npz,ice_wat)
+      endif
+      if (rainwat > 0) then
+        if (allocated(physics_tendency_diag%qr_dt)) physics_tendency_diag%qr_dt = q(isc:iec,jsc:jec,1:npz,rainwat)
+      endif
+      if (snowwat > 0) then
+        if (allocated(physics_tendency_diag%qs_dt)) physics_tendency_diag%qs_dt = q(isc:iec,jsc:jec,1:npz,snowwat)
+      endif
+      if (graupel > 0) then
+        if (allocated(physics_tendency_diag%qg_dt)) physics_tendency_diag%qg_dt = q(isc:iec,jsc:jec,1:npz,graupel)
+      endif
+   else
+      if (sphum > 0) then
+        if (allocated(physics_tendency_diag%qv_dt)) physics_tendency_diag%qv_dt = (q(isc:iec,jsc:jec,1:npz,sphum) - physics_tendency_diag%qv_dt) / dt
+      endif
+      if (liq_wat > 0) then
+        if (allocated(physics_tendency_diag%liq_wat_dt)) physics_tendency_diag%liq_wat_dt = (q(isc:iec,jsc:jec,1:npz,liq_wat) - physics_tendency_diag%liq_wat_dt) / dt
+      endif
+      if (ice_wat > 0) then
+        if (allocated(physics_tendency_diag%ice_wat_dt)) physics_tendency_diag%ice_wat_dt = (q(isc:iec,jsc:jec,1:npz,ice_wat) - physics_tendency_diag%ice_wat_dt) / dt
+      endif
+      if (rainwat > 0) then
+        if (allocated(physics_tendency_diag%qr_dt)) physics_tendency_diag%qr_dt = (q(isc:iec,jsc:jec,1:npz,rainwat) - physics_tendency_diag%qr_dt) / dt
+      endif
+      if (snowwat > 0) then
+        if (allocated(physics_tendency_diag%qs_dt)) physics_tendency_diag%qs_dt = (q(isc:iec,jsc:jec,1:npz,snowwat) - physics_tendency_diag%qs_dt) / dt
+      endif
+      if (graupel > 0) then
+        if (allocated(physics_tendency_diag%qg_dt)) physics_tendency_diag%qg_dt = (q(isc:iec,jsc:jec,1:npz,graupel) - physics_tendency_diag%qg_dt) / dt
+      endif
+   endif
+ end subroutine atmos_phys_qdt_diag
+
+ subroutine atmosphere_column_moistening_implied_by_nudging(nb, im, Atm_block, column_moistening_implied_by_nudging)
+   integer, intent(in) :: nb, im
+   type (block_control_type), intent(in) :: Atm_block
+   real(kind=kind_phys) :: column_moistening_implied_by_nudging(1:im)
+
+   integer :: i, j, ix
+
+   do ix = 1, im
+      i = Atm_block%index(nb)%ii(ix)
+      j = Atm_block%index(nb)%jj(ix)
+      column_moistening_implied_by_nudging(ix) = _DBL_(_RL_(Atm(mytile)%column_moistening_implied_by_nudging(i,j)))
+   enddo
+ end subroutine atmosphere_column_moistening_implied_by_nudging
+
+! If nudging the specific humidity to NCEP analysis, subtract the column-integrated
+! specific humidity nudging tendency from the precipitation felt by the surface.
+ subroutine subtract_column_moistening_from_precipitation(moistening, im, timestep, precipitation)
+   integer, intent(in) :: im
+   real(kind=kind_phys), intent(in) :: timestep
+   real(kind=kind_phys), intent(in) :: moistening(1:im)
+   real(kind=kind_phys), intent(inout) :: precipitation(1:im)
+   real(kind=kind_phys) :: m_per_mm
+
+   m_per_mm = 1.0 / 1000.0
+
+   precipitation = precipitation - moistening * timestep * m_per_mm
+   where (precipitation .lt. 0.0)
+      precipitation = 0.0
+   endwhere
+ end subroutine subtract_column_moistening_from_precipitation
+
+ subroutine update_physics_precipitation_for_qv_nudging(Atm_block, IPD_Data)
+   type(block_control_type), intent(in) :: Atm_block
+   type(IPD_data_type), intent(inout) :: IPD_Data(:)
+
+   real(kind=kind_phys), allocatable :: column_moistening_implied_by_nudging(:)
+   integer :: nb, im
+
+   do nb = 1, Atm_block%nblks
+     im = Atm_block%blksz(nb)
+     allocate(column_moistening_implied_by_nudging(1:im))
+     call atmosphere_column_moistening_implied_by_nudging(nb, im, Atm_block, column_moistening_implied_by_nudging)
+     call subtract_column_moistening_from_precipitation( &
+       column_moistening_implied_by_nudging, &
+       im, &
+       dt_atmos, &
+       IPD_Data(nb)%Sfcprop%tprcp)
+     deallocate(column_moistening_implied_by_nudging)
+   enddo
+ end subroutine update_physics_precipitation_for_qv_nudging
+
+ subroutine atmosphere_coarse_graining_parameters(coarse_domain, write_coarse_restart_files, write_only_coarse_intermediate_restarts)
+   type(domain2d), intent(out) :: coarse_domain
+   logical, intent(out) :: write_coarse_restart_files, write_only_coarse_intermediate_restarts
+
+   coarse_domain = Atm(mytile)%coarse_graining%domain
+   write_coarse_restart_files = Atm(mytile)%coarse_graining%write_coarse_restart_files
+   write_only_coarse_intermediate_restarts = Atm(mytile)%coarse_graining%write_only_coarse_intermediate_restarts
+ end subroutine atmosphere_coarse_graining_parameters
+ subroutine atmosphere_coarsening_strategy(coarsening_strategy)
+   character(len=64), intent(out) :: coarsening_strategy
+
+   coarsening_strategy = Atm(mytile)%coarse_graining%strategy
+ end subroutine atmosphere_coarsening_strategy
 end module atmosphere_mod

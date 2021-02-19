@@ -183,6 +183,7 @@ contains
     id_tracer(:) = 0
     kstt_tracer(:) = 0
     kend_tracer(:) = 0
+    nlevs = 0
 
     if (Atm(n)%flagstruct%write_3d_diags) then
 !-------------------
