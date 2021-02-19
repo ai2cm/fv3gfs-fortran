@@ -38,7 +38,7 @@ jobs:
       FV3CONFIG_CACHE_DIR: /tmp/.fv3config
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
     steps:
-      - run: nix-env -i git openssh
+      - run: nix-env -i git openssh google-cloud-sdk
       - checkout
       - run:
           name: "gcloud auth"
