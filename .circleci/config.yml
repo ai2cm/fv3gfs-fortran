@@ -50,14 +50,9 @@ jobs:
           then 
             nix-store --import < derivations.nar
           fi
-          drv=$(nix-instantiate nix -A fv3)
-      - run: nix-build -A fv3 nix
+          drv=$(nix-instantiate shell.nix)
       - run: |
           nix-store --export $(nix-store -qR $drv) > derivations.nar
-      - save_cache:
-          paths:
-            - derivations.nar
-          key: key
       - run:
           name: Test
           command: nix-shell --run "pytest tests/pytest --capture=no --verbose --refdir /Users/noah/workspace/VulcanClimateModeling/fv3gfs-fortran/tests/pytest/reference/circleci --image_runner native"
