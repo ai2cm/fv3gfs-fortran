@@ -395,9 +395,6 @@ subroutine update_atmos_radiation_physics (Atmos)
  end subroutine update_atmos_radiation
 
  subroutine update_atmos_physics(Atmos)
-#ifdef OPENMP
-   use omp_lib
-#endif
    type (atmos_data_type), intent(in) :: Atmos
 
    integer :: nb
