@@ -34,9 +34,18 @@ jobs:
   nix:
     docker:
       - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
     steps:
       - run: nix-env -i git openssh
       - checkout
+      - run:
+          name: "gcloud auth"
+          command: |
+            echo $ENCODED_GCR_KEY | base64 -d > $GOOGLE_APPLICATION_CREDENTIALS
+            echo "export GCLOUD_SERVICE_KEY=\$(echo \$ENCODED_GCR_KEY | base64 --decode)" >> $BASH_ENV
+      - gcp-gcr/gcr-auth
       - run:
           name: "Pull Submodules"
           command: |
@@ -52,6 +61,10 @@ jobs:
           fi
           drv=$(nix-build nix -j 4 -A fv3)
           nix-store --export $(nix-store -qR $drv) > derivations.nar
+      - save_cache:
+          paths:
+            - "derivations.nar"
+          key: key
       - run:
           name: Test
           command: nix-shell --run "pytest tests/pytest --capture=no --verbose --refdir /Users/noah/workspace/VulcanClimateModeling/fv3gfs-fortran/tests/pytest/reference/circleci --image_runner native"
