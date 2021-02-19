@@ -62,8 +62,8 @@ config = ./configure.fv3;
 
 configurePhase = ''
   cd FV3
-  ./configure --prefix="$out"
-
+  cp $config conf/configure.fv3
+  # ./configure gnu_docker
   cd ..
 '';
 
@@ -72,7 +72,7 @@ buildPhase = ''
 '';
 
 installPhase = ''
-    make -C FV3 install
+    PREFIX=$out make -C FV3 install -j 4
 '';
 
 

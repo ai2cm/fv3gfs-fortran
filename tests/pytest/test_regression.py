@@ -110,6 +110,18 @@ def ensure_reference_exists(filename):
         )
 
 
+def run_model_native(rundir, n_processes):
+    if USE_LOCAL_ARCHIVE:
+        archive = fv3config.get_cache_dir()
+        archive_mount = ['-v', f'{archive}:{archive}']
+    else:
+        archive_mount = []
+    
+    rundir_abs = os.path.abspath(rundir)
+    flags = ["--oversubscribe"]
+    subprocess.check_call([ 'mpirun'] + flags + ['-np', str(n_processes), 'fv3.exe' ], cwd=rundir_abs)
+    
+
 def run_model_docker(rundir, model_image, n_processes):
     if USE_LOCAL_ARCHIVE:
         archive = fv3config.get_cache_dir()
@@ -179,6 +191,8 @@ def run_model(config, run_dir, model_image, image_runner):
         run_model_docker(run_dir, model_image, n_processes)
     elif image_runner == "sarus":
         run_model_sarus(run_dir, model_image, n_processes)
+    elif image_runner == "native":
+        run_model_native(run_dir, n_processes)
     else:
         raise NotImplementedError("image_runner must be one of 'docker' or 'sarus'")
 

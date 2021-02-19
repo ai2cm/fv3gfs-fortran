@@ -52,6 +52,9 @@ jobs:
           fi
           drv=$(nix-instantiate nix -A fv3)
       - run: nix-build -A fv3 nix
+      - run:
+          name: Test
+          command: pytest tests/pytest --capture=no --verbose --refdir /Users/noah/workspace/VulcanClimateModeling/fv3gfs-fortran/tests/pytest/reference/circleci --image_runner native
       - run: |
           nix-store --export $(nix-store -qR $drv) > derivations.nar
       - save_cache:

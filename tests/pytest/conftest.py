@@ -9,7 +9,7 @@ def pytest_addoption(parser):
         "--image_version", action="store", default="latest", help="The image version to run"
     )
     parser.addoption(
-        "--image_runner", action="store", default="docker", choices=("docker", "sarus"), help="The image runner to use"
+        "--image_runner", action="store", default="docker", choices=("docker", "sarus", "native"), help="The image runner to use"
     )
     parser.addoption(
         "--image", action="store", default=DEFAULT_MODEL_IMAGE, help="The image name to run, without tags"
