@@ -281,18 +281,18 @@ subroutine update_atmos_radiation_physics (Atmos)
    integer :: nthrds
 
 #ifdef CCPP
-   integer :: ierr
+    integer :: ierr
 #endif
 
 #ifdef OPENMP
-   nthrds = omp_get_max_threads()
+    nthrds = omp_get_max_threads()
 #else
-   nthrds = 1
+    nthrds = 1
 #endif
 
-   if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "statein driver"
-   !--- get atmospheric state from the dynamic core
-   
+    if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "statein driver"
+!--- get atmospheric state from the dynamic core
+
     call mpp_clock_begin(otherClock)
     call set_atmosphere_pelist()
     if (IPD_control%do_skeb) call atmosphere_diss_est (IPD_control%skeb_npass) !  do smoothing for SKEB
@@ -405,74 +405,74 @@ subroutine update_atmos_radiation_physics (Atmos)
    integer :: nthrds
 
 #ifdef CCPP
-   integer :: ierr
+    integer :: ierr
 #endif
 
 #ifdef OPENMP
-   nthrds = omp_get_max_threads()
+    nthrds = omp_get_max_threads()
 #else
-   nthrds = 1
+    nthrds = 1
 #endif
 
-   if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "physics driver"
+  if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "physics driver"
 
 !--- execute the IPD atmospheric physics step1 subcomponent (main physics driver)
 
-    call mpp_clock_begin(physClock)
+      call mpp_clock_begin(physClock)
 #ifdef CCPP
-    call CCPP_step (step="physics", nblks=Atm_block%nblks, ierr=ierr)
-    if (ierr/=0)  call mpp_error(FATAL, 'Call to CCPP physics step failed')
+      call CCPP_step (step="physics", nblks=Atm_block%nblks, ierr=ierr)
+      if (ierr/=0)  call mpp_error(FATAL, 'Call to CCPP physics step failed')
 #else
-    Func0d => physics_step1
+      Func0d => physics_step1
 !$OMP parallel do default (none) &
 !$OMP            schedule (dynamic,1), &
 !$OMP            shared   (Atm_block, IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Func0d) &
 !$OMP            private  (nb)
-    do nb = 1,Atm_block%nblks
-      call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d)
-    enddo
+      do nb = 1,Atm_block%nblks
+        call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d)
+      enddo
 #endif
-    call mpp_clock_end(physClock)
+      call mpp_clock_end(physClock)
 
-    call mpp_clock_begin(otherClock)
-    if (chksum_debug) then
-      if (mpp_pe() == mpp_root_pe()) print *,'PHYSICS STEP1   ', IPD_Control%kdt, IPD_Control%fhour
-      call FV3GFS_IPD_checksum(IPD_Control, IPD_Data, Atm_block)
-    endif
-    call mpp_clock_end(otherClock)
+      call mpp_clock_begin(otherClock)
+      if (chksum_debug) then
+        if (mpp_pe() == mpp_root_pe()) print *,'PHYSICS STEP1   ', IPD_Control%kdt, IPD_Control%fhour
+        call FV3GFS_IPD_checksum(IPD_Control, IPD_Data, Atm_block)
+      endif
+      call mpp_clock_end(otherClock)
 
-    if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "stochastic physics driver"
+      if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "stochastic physics driver"
 
 !--- execute the IPD atmospheric physics step2 subcomponent (stochastic physics driver)
 
-    call mpp_clock_begin(physClock)
+      call mpp_clock_begin(physClock)
 #ifdef CCPP
-    call CCPP_step (step="stochastics", nblks=Atm_block%nblks, ierr=ierr)
-    if (ierr/=0)  call mpp_error(FATAL, 'Call to CCPP stochastics step failed')
+      call CCPP_step (step="stochastics", nblks=Atm_block%nblks, ierr=ierr)
+      if (ierr/=0)  call mpp_error(FATAL, 'Call to CCPP stochastics step failed')
 #else
-    Func0d => physics_step2
+      Func0d => physics_step2
 !$OMP parallel do default (none) &
 !$OMP            schedule (dynamic,1), &
 !$OMP            shared   (Atm_block, IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Func0d) &
 !$OMP            private  (nb)
-    do nb = 1,Atm_block%nblks
-      call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d)
-    enddo
+      do nb = 1,Atm_block%nblks
+        call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d)
+      enddo
 #endif
-    call mpp_clock_end(physClock)
+      call mpp_clock_end(physClock)
 
-    call mpp_clock_begin(otherClock)
-    if (chksum_debug) then
-      if (mpp_pe() == mpp_root_pe()) print *,'PHYSICS STEP2   ', IPD_Control%kdt, IPD_Control%fhour
-      call FV3GFS_IPD_checksum(IPD_Control, IPD_Data, Atm_block)
-    endif
-    call getiauforcing(IPD_Control,IAU_data)
-    if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "end of radiation and physics step"
-    call mpp_clock_end(otherClock)
+      call mpp_clock_begin(otherClock)
+      if (chksum_debug) then
+        if (mpp_pe() == mpp_root_pe()) print *,'PHYSICS STEP2   ', IPD_Control%kdt, IPD_Control%fhour
+        call FV3GFS_IPD_checksum(IPD_Control, IPD_Data, Atm_block)
+      endif
+      call getiauforcing(IPD_Control,IAU_data)
+      if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "end of radiation and physics step"
+      call mpp_clock_end(otherClock)
 
 #ifdef CCPP
-  ! Update flag for first time step of time integration
-  IPD_Control%first_time_step = .false.
+    ! Update flag for first time step of time integration
+    IPD_Control%first_time_step = .false.
 #endif
 
  end subroutine update_atmos_physics
