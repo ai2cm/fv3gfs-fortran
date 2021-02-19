@@ -149,7 +149,7 @@ namelist:
     mountain: false
     n_split: 8
     n_sponge: 20
-    na_init: 1
+    na_init: 0
     ncep_ic: false
     nggps_ic: false
     nord: 3
