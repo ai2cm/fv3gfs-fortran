@@ -54,13 +54,13 @@ jobs:
       - run: nix-build -A fv3 nix
       - run: |
           nix-store --export $(nix-store -qR $drv) > derivations.nar
-      - run:
-          name: Test
-          command: nix-shell --run "pytest tests/pytest --capture=no --verbose --refdir /Users/noah/workspace/VulcanClimateModeling/fv3gfs-fortran/tests/pytest/reference/circleci --image_runner native"
       - save_cache:
           paths:
             - derivations.nar
           key: key
+      - run:
+          name: Test
+          command: nix-shell --run "pytest tests/pytest --capture=no --verbose --refdir /Users/noah/workspace/VulcanClimateModeling/fv3gfs-fortran/tests/pytest/reference/circleci --image_runner native"
   build_default:
     machine:
       docker_layer_caching: true
