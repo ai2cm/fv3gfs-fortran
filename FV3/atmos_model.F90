@@ -402,16 +402,9 @@ subroutine update_atmos_radiation_physics (Atmos)
 
    integer :: nb
    procedure(IPD_func0d_proc), pointer :: Func0d => NULL()
-   integer :: nthrds
 
 #ifdef CCPP
     integer :: ierr
-#endif
-
-#ifdef OPENMP
-    nthrds = omp_get_max_threads()
-#else
-    nthrds = 1
 #endif
   
   if (.not. dycore_only) then
