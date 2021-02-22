@@ -190,6 +190,9 @@ module GFS_typedefs
  
     logical, pointer :: dycore_hydrostatic        => null()  !< whether the dynamical core is hydrostatic
     integer, pointer :: nwat                      => null()  !< number of water species used in the model
+    real (kind=kind_phys), pointer :: adjsfcdlw_correction_or_override(:) => null()  !< correction or override to the downward longwave radiation flux at the surface
+    real (kind=kind_phys), pointer :: adjsfcdsw_correction_or_override(:) => null()  !< correction or override to the downward shortwave radiation flux at the surface
+    real (kind=kind_phys), pointer :: adjsfcnsw_correction_or_override(:) => null()  !< correction or override to the net shortwave radiation flux at the surface
     contains
       procedure :: create  => statein_create  !<   allocate array data
   end type GFS_statein_type
@@ -1080,6 +1083,8 @@ module GFS_typedefs
     real(kind=kind_phys) :: iaufhrs(7)      ! forecast hours associated with increment files
     logical :: iau_filter_increments
     real(kind=kind_phys) :: sst_perturbation  ! Sea surface temperature perturbation to climatology or nudging SST (default 0.0 K)
+    logical :: correct_surface_radiative_fluxes  ! Whether to use Statein to correct the surface radiative fluxes
+    logical :: override_surface_radiative_fluxes  ! Whether to use Statein to override the surface radiative fluxes
 #ifdef CCPP
     ! From physcons.F90, updated/set in control_initialize
     real(kind=kind_phys) :: dxinv           ! inverse scaling factor for critical relative humidity, replaces dxinv in physcons.F90
@@ -2009,6 +2014,12 @@ module GFS_typedefs
 
     allocate(Statein%nwat)
     Statein%nwat = 6
+
+    if (Model%correct_surface_radiative_fluxes .or. Model%override_surface_radiative_fluxes) then
+      allocate(Statein%adjsfcdlw_correction_or_override(IM))
+      allocate(Statein%adjsfcdsw_correction_or_override(IM))
+      allocate(Statein%adjsfcnsw_correction_or_override(IM))
+    endif
   end subroutine statein_create
 
 
@@ -3102,6 +3113,8 @@ module GFS_typedefs
     character(len=20) :: fscav_aero(20) = 'default'
 
     real(kind=kind_phys) :: sst_perturbation = 0.0  ! Sea surface temperature perturbation [K]
+    logical :: correct_surface_radiative_fluxes = .false.
+    logical :: override_surface_radiative_fluxes = .false.
 !--- END NAMELIST VARIABLES
 
     NAMELIST /gfs_physics_nml/                                                              &
@@ -3192,7 +3205,8 @@ module GFS_typedefs
                                phys_version,                                                &
                           !--- aerosol scavenging factors ('name:value' string array)
                                fscav_aero, &
-                               sst_perturbation
+                               sst_perturbation, correct_surface_radiative_fluxes,          & 
+                               override_surface_radiative_fluxes
 
 !--- other parameters 
     integer :: nctp    =  0                !< number of cloud types in CS scheme
@@ -3660,6 +3674,8 @@ module GFS_typedefs
     if(Model%me==0) print *,' model init,iaufhrs=',Model%iaufhrs
 
     Model%sst_perturbation = sst_perturbation
+    Model%correct_surface_radiative_fluxes = correct_surface_radiative_fluxes
+    Model%override_surface_radiative_fluxes = override_surface_radiative_fluxes
 !--- tracer handling
     Model%ntrac            = size(tracer_names)
 #ifdef CCPP
@@ -4467,6 +4483,8 @@ module GFS_typedefs
       print *, ' ivegsrc           : ', Model%ivegsrc
       print *, ' isot              : ', Model%isot
       print *, ' sst_perturbation  : ', Model%sst_perturbation
+      print *, ' correct_surface_radiative_fluxes: ', Model%correct_surface_radiative_fluxes
+      print *, ' override_surface_radiative_fluxes: ', Model%override_surface_radiative_fluxes
       if (Model%lsm == Model%lsm_noahmp) then
       print *, ' Noah MP LSM is used, the options are'
       print *, ' iopt_dveg         : ', Model%iopt_dveg
