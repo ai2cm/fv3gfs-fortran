@@ -2019,6 +2019,9 @@ module GFS_typedefs
       allocate(Statein%adjsfcdlw_correction_or_override(IM))
       allocate(Statein%adjsfcdsw_correction_or_override(IM))
       allocate(Statein%adjsfcnsw_correction_or_override(IM))
+      Statein%adjsfcdlw_correction_or_override = 0.0
+      Statein%adjsfcdsw_correction_or_override = 0.0
+      Statein%adjsfcnsw_correction_or_override = 0.0
     endif
   end subroutine statein_create
 
