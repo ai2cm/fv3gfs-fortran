@@ -1513,10 +1513,8 @@ endif        ! end last_step check
           !$ser savepoint CS_Profile_2d-In
           !$ser data q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:) dp1_2d=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord
         !$ser verbatim else
-          !$ser verbatim if (iv != -2) then
-            !$ser savepoint CS_Profile_2d-2-In
-            !$ser data qs_column_2=qs q4_1_2=q4(1,:,:) q4_2_2=q4(2,:,:) q4_3_2=q4(3,:,:) q4_4_2=q4(4,:,:) dp1_2d_2=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord
-          !$ser verbatim endif
+          !$ser savepoint CS_Profile_2d-2-In
+          !$ser data qs_column_2=qs q4_1_2=q4(1,:,:) q4_2_2=q4(2,:,:) q4_3_2=q4(3,:,:) q4_4_2=q4(4,:,:) dp1_2d_2=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord
         !$ser verbatim endif
       !$ser verbatim endif
       call  cs_profile( qs, q4, dp1, km, i1, i2, iv, kord )
@@ -1525,10 +1523,8 @@ endif        ! end last_step check
           !$ser savepoint CS_Profile_2d-Out
           !$ser data  q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:)
         !$ser verbatim else
-          !$ser verbatim if (iv != -2) then
-            !$ser savepoint CS_Profile_2d-2-Out
-            !$ser data  q4_1_2=q4(1,:,:) q4_2_2=q4(2,:,:) q4_3_2=q4(3,:,:) q4_4_2=q4(4,:,:)
-          !$ser verbatim endif
+          !$ser savepoint CS_Profile_2d-2-Out
+          !$ser data q4_1_2=q4(1,:,:) q4_2_2=q4(2,:,:) q4_3_2=q4(3,:,:) q4_4_2=q4(4,:,:)
         !$ser verbatim endif
       !$ser verbatim endif
    else
@@ -1539,7 +1535,7 @@ endif        ! end last_step check
       call ppm_profile( q4, dp1, km, i1, i2, iv, kord )
       !$ser verbatim if(j == jbeg + 3 .and. mod(i2-i1+1, 2)==1) then
         !$ser savepoint PPM_Profile_2d-Out
-        !$ser data  q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:)
+        !$ser data q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:)
       !$ser verbatim endif
    endif
 
