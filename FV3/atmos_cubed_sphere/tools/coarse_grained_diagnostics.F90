@@ -667,13 +667,15 @@ contains
          Domain2=coarse_domain, tile_count=tile_count)
   end subroutine initialize_coarse_diagnostic_axes
   
-  subroutine fv_coarse_diag(Atm, Time)
+  subroutine fv_coarse_diag(Atm, Time, zvir)
     type(fv_atmos_type), intent(in), target :: Atm(:)
     type(time_type), intent(in) :: Time
+    real, intent(in) :: zvir
     
     real, allocatable :: work_2d(:,:), work_2d_coarse(:,:), work_3d_coarse(:,:,:)
     real, allocatable :: mass(:,:,:), height_on_interfaces(:,:,:), masked_area(:,:,:)
     real, allocatable :: phalf(:,:,:), upsampled_coarse_phalf(:,:,:)
+    real, allocatable :: zsurf(:,:)
     integer :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz
     logical :: used
     logical :: need_2d_work_array, need_3d_work_array, need_mass_array, need_height_array, need_masked_area_array
@@ -739,28 +741,18 @@ contains
 
     if (need_height_array) then
       allocate(height_on_interfaces(is:ie,js:je,1:npz+1))
-      if(Atm(tile_count)%flagstruct%hydrostatic) then
-        call compute_height_on_interfaces_hydrostatic( &
-          is, &
-          ie, &
-          js, &
-          je, &
-          npz, &
-          Atm(tile_count)%pt(is:ie,js:je,1:npz), &
-          Atm(tile_count)%peln(is:ie,1:npz+1,js:je), &
-          height_on_interfaces(is:ie,js:je,1:npz) &
-        )
-      else
-        call compute_height_on_interfaces_nonhydrostatic( &
-          is, &
-          ie, &
-          js, &
-          je, &
-          npz, &
-          Atm(tile_count)%delz(is:ie,js:je,1:npz), &
-          height_on_interfaces(is:ie,js:je,1:npz) &
-        )
-      endif
+      allocate(zsurf(is:ie,js:je))
+      zsurf = Atm(tile_count)%phis(is:ie,js:je) / grav
+      call get_height_field(is, ie, js, je, Atm(tile_count)%ng, npz, &
+           Atm(tile_count)%flagstruct%hydrostatic, &
+           zsurf, &
+           Atm(tile_count)%delz, &
+           height_on_interfaces, &
+           Atm(tile_count)%pt, &
+           Atm(tile_count)%q, &
+           Atm(tile_count)%peln, &
+           zvir &
+      )
       if (.not. allocated(work_2d_coarse)) allocate(work_2d_coarse(is_coarse:ie_coarse,js_coarse:je_coarse))
       allocate(work_2d(is:ie,js:je))
     endif
@@ -1056,43 +1048,6 @@ contains
     result = work(is:ie,js:je,1)
   end subroutine interpolate_to_pressure_level
 
-  subroutine compute_height_on_interfaces_hydrostatic(is, ie, js, je, npz, temperature, phalf, height)
-    integer, intent(in) :: is, ie, js, je, npz
-    real, intent(in) :: temperature(is:ie,js:je,1:npz), phalf(is:ie,1:npz+1,js:je)
-    real, intent(out) :: height(is:ie,js:je,1:npz+1)
-
-    integer :: i, j, k
-    real :: rgrav
-
-    rgrav = 1.0 / grav
-
-    do j = js, je
-      do i = is, ie
-        height(i,j,npz+1) = 0.0
-        do k = npz, 1, -1
-          height(i,j,k) = height(i,j,k+1) - (rdgas / grav) * temperature(i,j,k) * (phalf(i,k,j) - phalf(i,k+1,j))
-        enddo
-      enddo
-    enddo
-  end subroutine compute_height_on_interfaces_hydrostatic
-
-  subroutine compute_height_on_interfaces_nonhydrostatic(is, ie, js, je, npz, delz, height)
-    integer, intent(in) :: is, ie, js, je, npz
-    real, intent(in) :: delz(is:ie,js:je,1:npz)
-    real, intent(out) :: height(is:ie,js:je,1:npz+1)
-
-    integer :: i, j, k
-
-    do j = js, je
-      do i = is, ie
-        height(i,j,npz+1) = 0.0
-        do k = npz, 1, -1
-          height(i,j,k) = height(i,j,k+1) - delz(i,j,k)
-        enddo
-      enddo
-    enddo
-  end subroutine compute_height_on_interfaces_nonhydrostatic
-
   subroutine height_given_pressure_level(is, ie, js, je, npz, height, phalf, pressure_level, result)
     integer, intent(in) :: is, ie, js, je, npz, pressure_level
     real, intent(in) :: height(is:ie,js:je,1:npz+1), phalf(is:ie,1:npz+1,js:je)
@@ -1316,4 +1271,44 @@ contains
     factor = Atm(tile_count)%coarse_graining%factor
     grid_coarse = Atm(tile_count)%gridstruct%grid(is:ie+1:factor,js:je+1:factor,:)
   end subroutine compute_grid_coarse
+
+  subroutine get_height_field(is, ie, js, je, ng, km, hydrostatic, zsurf, delz, wz, pt, q, peln, zvir)
+    integer, intent(in):: is, ie, js, je, km, ng
+    real, intent(in):: peln(is:ie,km+1,js:je)
+    real, intent(in):: pt(is-ng:ie+ng,js-ng:je+ng,km)
+    real, intent(in)::  q(is-ng:ie+ng,js-ng:je+ng,km,*) ! water vapor
+    real, intent(in):: delz(is-ng:ie+ng,js-ng:je+ng,1:km)
+    real, intent(in):: zvir
+    logical, intent(in):: hydrostatic
+    real, intent(in) :: zsurf(is:ie,js:je)
+    real, intent(out):: wz(is:ie,js:je,km+1)
+  !
+    integer i,j,k, sphum
+    real gg
+  
+        sphum = get_tracer_index (MODEL_ATMOS, 'sphum')
+        gg  = rdgas / grav
+  
+        do j=js,je
+           do i=is,ie
+              wz(i,j,km+1) = zsurf(i,j)
+           enddo
+        if (hydrostatic ) then
+           do k=km,1,-1
+              do i=is,ie
+                 wz(i,j,k) = wz(i,j,k+1) + gg*pt(i,j,k)*(1.+ zvir*q(i,j,k,sphum))  &
+                            *(peln(i,k+1,j)-peln(i,k,j))
+              enddo
+           enddo
+        else
+           do k=km,1,-1
+              do i=is,ie
+                 wz(i,j,k) = wz(i,j,k+1)  - delz(i,j,k)
+              enddo
+           enddo
+        endif
+        enddo
+  
+   end subroutine get_height_field
+  
 end module coarse_grained_diagnostics_mod
