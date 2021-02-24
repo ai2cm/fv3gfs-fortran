@@ -1530,7 +1530,7 @@ endif        ! end last_step check
    else
       !$ser verbatim if(j == jbeg + 3 .and. mod(i2-i1+1, 2)==1) then
         !$ser savepoint PPM_Profile_2d-In
-        !$ser data qs_column=qs q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:) dp1_2d=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord
+        !$ser data q4_1=q4(1,:,:) q4_2=q4(2,:,:) q4_3=q4(3,:,:) q4_4=q4(4,:,:) dp1_2d=dp1 i1=i1 i2=i2 km=km iv=iv kord=kord
       !$ser verbatim endif
       call ppm_profile( q4, dp1, km, i1, i2, iv, kord )
       !$ser verbatim if(j == jbeg + 3 .and. mod(i2-i1+1, 2)==1) then
