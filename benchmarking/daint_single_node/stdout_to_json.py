@@ -58,7 +58,7 @@ def stdout_to_json(stdout_file_regex, run_directory):
     with open(stdout_file, "r+") as f:
         stdout = f.read()
     match = re.search(
-        r"^Total runtime.*^4-Termination", stdout, re.MULTILINE | re.DOTALL
+        r"^Total runtime.*^ *MPP_STACK", stdout, re.MULTILINE | re.DOTALL
     )
     assert match, "Issue extracting timings from stdout of SLURM job"
 
@@ -78,7 +78,8 @@ def stdout_to_json(stdout_file_regex, run_directory):
     for line in match.group().splitlines():
         name = line[0:32].strip()
         values = [num(val) for val in line[32:].split()]
-        raw_timers[name] = dict(zip(labels, values))
+        if values:
+            raw_timers[name] = dict(zip(labels, values))
 
     # convert into format for plotting
     times = {}
