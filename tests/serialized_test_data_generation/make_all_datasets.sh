@@ -49,20 +49,23 @@ fi
 # loop over experiments
 for exp_file in ${EXPERIMENTS} ; do
   exp_name=`basename ${exp_file} .yml`
-  echo "====================================================="
-  echo "Generating data for ${exp_name} ..."
+  echo ""
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+  echo "> Generating data for ${exp_name} ..."
   npx=`cat ${exp_file} | grep npx | sed s/npx://g | sed 's/^ *//g'`
   if [ ${npx} -gt 49 ] ; then
       export SER_ENV="ONLY_DRIVER"
   else
       export SER_ENV="ALL"
   fi
+  make distclean
   if [ "${VALIDATE_ONLY}" == "true" ] ; then
-      EXPERIMENT=${exp_name} make generate_data validate_data clean
+      EXPERIMENT=${exp_name} make generate_data validate_data
   else
-      EXPERIMENT=${exp_name} make generate_data pack_data push_data clean
+      EXPERIMENT=${exp_name} make generate_data pack_data push_data
   fi
-  echo "====================================================="
+  make distclean
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   echo ""
 done
 
