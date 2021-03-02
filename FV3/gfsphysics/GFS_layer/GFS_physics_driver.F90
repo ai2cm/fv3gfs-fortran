@@ -673,7 +673,6 @@ module module_physics_driver
       real    :: pshltr,QCQ,rh02
       real(kind=kind_phys), allocatable, dimension(:,:) :: den
       real(kind=kind_phys), allocatable, dimension(:,:) :: dqdt_work
-      real(kind=kind_phys), target, allocatable, dimension(:) :: modified_adjsfcdlw, modified_adjsfcdsw, modified_adjsfcnsw
       real(kind=kind_phys), pointer :: adjsfcdsw_for_lsm(:), adjsfcnsw_for_lsm(:)
       integer :: nwat
 
@@ -719,12 +718,9 @@ module module_physics_driver
         dq3dt_initial = Diag%dq3dt
       endif
 
-      if (Model%correct_surface_radiative_fluxes .or. Model%override_surface_radiative_fluxes) then
-        allocate(modified_adjsfcdlw(1:im))
-        allocate(modified_adjsfcdsw(1:im))
-        allocate(modified_adjsfcnsw(1:im))
-        adjsfcdsw_for_lsm => modified_adjsfcdsw
-        adjsfcnsw_for_lsm => modified_adjsfcnsw
+      if (Model%override_surface_radiative_fluxes) then
+        adjsfcdsw_for_lsm => Statein%adjsfcdsw_override
+        adjsfcnsw_for_lsm => Statein%adjsfcnsw_override
       else
         adjsfcdsw_for_lsm => adjsfcdsw
         adjsfcnsw_for_lsm => adjsfcnsw
@@ -1451,22 +1447,11 @@ module module_physics_driver
 !        net = up - down = sfcemis * (sigma*T**4 - adjsfcdlw)
 
 !  --- ...  define the downward lw flux absorbed by ground
-
-      if (Model%correct_surface_radiative_fluxes) then
-        modified_adjsfcdlw = adjsfcdlw + Statein%adjsfcdlw_correction_or_override
-        modified_adjsfcdsw = adjsfcdsw + Statein%adjsfcdsw_correction_or_override
-        modified_adjsfcnsw = adjsfcnsw + Statein%adjsfcnsw_correction_or_override
-      elseif (Model%override_surface_radiative_fluxes) then
-        modified_adjsfcdlw = Statein%adjsfcdlw_correction_or_override
-        modified_adjsfcdsw = Statein%adjsfcdsw_correction_or_override
-        modified_adjsfcnsw = Statein%adjsfcnsw_correction_or_override
-      endif
-
-      if (Model%correct_surface_radiative_fluxes .or. Model%override_surface_radiative_fluxes) then
+      if (Model%override_surface_radiative_fluxes) then
         do i=1,im
-          if (dry(i)) gabsbdlw3(i,1) = semis3(i,1) * modified_adjsfcdlw(i)
-          if (icy(i)) gabsbdlw3(i,2) = semis3(i,2) * modified_adjsfcdlw(i)
-          if (wet(i)) gabsbdlw3(i,3) = semis3(i,3) * modified_adjsfcdlw(i)
+          if (dry(i)) gabsbdlw3(i,1) = semis3(i,1) * Statein%adjsfcdlw_override(i)
+          if (icy(i)) gabsbdlw3(i,2) = semis3(i,2) * Statein%adjsfcdlw_override(i)
+          if (wet(i)) gabsbdlw3(i,3) = semis3(i,3) * Statein%adjsfcdlw_override(i)
         enddo
       else
         do i=1,im
