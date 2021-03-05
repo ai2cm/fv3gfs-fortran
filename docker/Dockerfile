@@ -3,7 +3,7 @@ ARG BASE_IMAGE
 ARG MPI_IMAGE=fv3gfs-mpi
 ARG FMS_IMAGE=fv3gfs-fms
 ARG ESMF_IMAGE=fv3gfs-esmf
-ARG SERIALBOX_IMAGE=fv3gfs-serialbox
+ARG SERIALBOX_IMAGE=fv3gfs-environment-serialbox
 
 FROM $BASE_IMAGE AS fv3gfs-mpi
 
@@ -140,7 +140,7 @@ RUN git clone -b ESMF_8_0_0 --depth 1 https://git.code.sf.net/p/esmf/esmf $ESMF_
     make install && \
     make installcheck
 
-## Build Serialbox2
+## Copy FV3GFS sources for non-serialize image
 ##---------------------------------------------------------------------------------
 FROM fv3gfs-environment as fv3gfs-serialbox
 
@@ -175,8 +175,7 @@ RUN cd serialbox2 && \
 FROM $BASE_IMAGE AS fv3gfs-src-serialize-false
 
 ARG compile_option
-ARG serialize
-ARG configure_file=configure.fv3.gnu_docker$serialize
+ARG configure_file=configure.fv3.gnu_docker
 
 COPY stochastic_physics /stochastic_physics
 COPY FV3/coarse_graining /FV3/coarse_graining
@@ -193,13 +192,31 @@ COPY FV3/makefile FV3/mkDepends.pl FV3/atmos_model.F90 FV3/LICENSE.md \
 COPY FV3/atmos_cubed_sphere /FV3/atmos_cubed_sphere
 
 # copy appropriate configuration file to configure.fv3
-RUN cp /FV3/conf/$configure_file /FV3/conf/configure.fv3 && \
-    if [ ! -z "$compile_option" ]; then sed -i "33i $compile_option" \
+RUN cp /FV3/conf/$configure_file \
+        /FV3/conf/configure.fv3 && \
+    if [ ! -z $compile_option ]; then sed -i "33i $compile_option" \
         /FV3/conf/configure.fv3; fi
+
+## Convert FV3GFS sources for serialize image
+##---------------------------------------------------------------------------------
+FROM $SERIALBOX_IMAGE AS serialbox_image2
+FROM fv3gfs-src-serialize-false AS fv3gfs-src-serialize-true
+
+ARG configure_file=configure.fv3.gnu_docker_serialize
+
+COPY --from=serialbox_image2 /serialbox/install /serialbox
+
+# copy appropriate configuration file to configure.fv3
+RUN cp /FV3/conf/$configure_file \
+        /FV3/conf/configure.fv3 && \
+    if [ ! -z $compile_option ]; then sed -i "33i $compile_option" \
+        /FV3/conf/configure.fv3; fi
+
+RUN cd /FV3 && ./preprocess.sh true
 
 ## Build FV3 executable in its own image
 ##---------------------------------------------------------------------------------
-FROM $NCEP_IMAGE AS ncep_image
+FROM fv3gfs-src-serialize-$serialize AS fv3gfs-sources
 FROM $FMS_IMAGE AS fms_image
 FROM $ESMF_IMAGE AS esmf_image
 FROM $SERIALBOX_IMAGE AS serialbox_image
@@ -208,8 +225,7 @@ FROM fv3gfs-environment AS fv3gfs-build
 ENV SERIALBOX_DIR=/serialbox \
     SERIALBOX_OUTDIR=/FV3 \
     FMS_DIR=/FMS \
-    ESMF_DIR=/usr/local/esmf \
-    SERIALBOX_DIR=/serialbox2
+    ESMF_DIR=/usr/local/esmf
 
 ENV ESMF_INC="-I/usr/local/esmf/include" \
     LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ESMF_DIR}/lib:${FMS_DIR}/libFMS/.libs/:${SERIALBOX_DIR}/lib \
@@ -218,15 +234,13 @@ ENV ESMF_INC="-I/usr/local/esmf/include" \
 COPY --from=serialbox_image /serialbox/install $SERIALBOX_DIR
 COPY --from=fms_image /FMS $FMS_DIR
 COPY --from=esmf_image /usr/local/esmf $ESMF_DIR
-COPY --from=serialbox_image /serialbox2/install $SERIALBOX_DIR
 
-COPY --from=fv3gfs-src /FV3 /FV3
-COPY --from=fv3gfs-src /stochastic_physics /stochastic_physics
-COPY --from=fv3gfs-src FV3/atmos_cubed_sphere /FV3/atmos_cubed_sphere
+COPY --from=fv3gfs-sources /FV3 /FV3
+COPY --from=fv3gfs-sources /stochastic_physics /stochastic_physics
+COPY --from=fv3gfs-sources /FV3/atmos_cubed_sphere /FV3/atmos_cubed_sphere
 
-RUN cd /FV3 && ./preprocess.sh "$serialize"
-RUN cd /FV3 && make clean_no_dycore && make libs_no_dycore -j8
-RUN cd /FV3/atmos_cubed_sphere && make clean && cd /FV3 && make -j8
+RUN cd /FV3 && make clean_no_dycore && make libs_no_dycore -j16
+RUN cd /FV3/atmos_cubed_sphere && make clean && cd /FV3 && make -j16
 
 ## Define final "user" image for running tests
 ##---------------------------------------------------------------------------------
@@ -241,4 +255,3 @@ RUN apt-get update && apt-get install -y \
 
 # run model
 CMD ["bash", "/rundir/submit_job.sh"]
-

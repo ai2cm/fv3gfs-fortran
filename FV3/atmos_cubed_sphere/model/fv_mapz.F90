@@ -250,8 +250,6 @@ if (allocated(lagrangian_tendency_of_hydrostatic_pressure)) allocate(vulcan_pe3(
        snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
        graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
        cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
-       !$ser verbatim o3mr = get_tracer_index (MODEL_ATMOS, 'o3mr')
-       !$ser verbatim sgs_tke = get_tracer_index (MODEL_ATMOS, 'sgs_tke')
        if ( do_sat_adj ) then
             fast_mp_consv = (.not.do_adiabatic_init) .and. consv>consv_min
 #ifndef CCPP
@@ -1565,16 +1563,7 @@ endif        ! end last_step check
       enddo
 555   continue
 1000  continue
-      !$ser verbatim if(j == js2d ) then
-       !$ser verbatim im = i2-i1+1
-       !$ser savepoint Fillz-In
-      !$ser data im=im km=km nq=nq dp2=dp2  q2tracers=q2(:,:,1:nq)
-      !$ser verbatim endif
   if (fill) call fillz(i2-i1+1, km, nq, q2, dp2)
-  !$ser verbatim if(j == js2d ) then
-  !$ser savepoint Fillz-Out
-  !$ser data  q2tracers=q2(:,:,1:nq)
-  !$ser verbatim endif
   do iq=1,nq
 !    if (fill) call fillz(i2-i1+1, km, 1, q2(i1,1,iq), dp2)
      do k=1,km

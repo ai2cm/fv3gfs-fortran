@@ -403,6 +403,7 @@ module GFS_driver
 #endif
 
     !--- initialize soil vegetation
+    print *, 'INFO', Model%me, Model%isot, Model%ivegsrc, Model%nlunit
     call set_soilveg(Model%me, Model%isot, Model%ivegsrc, Model%nlunit)
 
     !--- lsidea initialization

@@ -53,7 +53,6 @@ module fv_cmp_mod
 !         rad_rain, rad_snow, rad_graupel, dw_ocean, dw_land, tintqs</td>
 !   </tr>
 ! </table>
-    !$ser verbatim USE m_serialize, ONLY: fs_is_serialization_on
     use constants_mod, only: rvgas, rdgas, grav, hlv, hlf, cp_air
     use fv_mp_mod, only: is_master
     use fv_arrays_mod, only: r_grid
@@ -1034,7 +1033,6 @@ subroutine qs_init (kmp)
     integer, parameter :: length = 2621
     
     integer :: i
-    !$ser verbatim logical :: ser_on
     if (mp_initialized) return
     
     if (is_master ()) write (*, *) 'top layer for gfdl_mp = ', kmp

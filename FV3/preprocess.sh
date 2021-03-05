@@ -6,7 +6,7 @@
 # to *.orig
 
 # Note: This script is setup to run inside a container with a
-# serialbox2 installation under /serialbox2/
+# serialbox installation under /serialbox/
 
 # Note 2: This script needs to be called with a non-empty string
 # as an argument to actually do something
@@ -19,9 +19,9 @@ if [ -z "$1" ] ; then
 fi
 
 process_dir="./"
-serialbox_dir=/serialbox2/
+serialbox_dir=/serialbox/
 ppser_exe=${serialbox_dir}/python/pp_ser/pp_ser.py
-ppser_flags="--verbose --ignore-identical -m utils_ppser_kbuff"
+ppser_flags="--verbose --ignore-identical -m utils_ppser_kbuff --sp-as-var"
 
 # check for pp_ser.py
 if [ ! -d "${serialbox_dir}" ] ; then
