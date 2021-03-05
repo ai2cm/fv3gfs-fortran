@@ -406,7 +406,7 @@ subroutine fv_sat_adj (mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te, te0
                 ! factor = - min (1., fac_l2v * sqrt (max (0., ql (i, j)) / 1.e-5) * 10. * (1. - qv (i, j) / wqsat (i)))
                 ! factor = - fac_l2v
                 ! factor = - 1
-                factor = - fac_l2v * min (1., 10. * (1. - qv (i, j) / wqsat (i))) ! the rh dependent factor = 1 at 90%
+                factor = - min (1., fac_l2v * 10. * (1. - qv (i, j) / wqsat (i))) ! the rh dependent factor = 1 at 90%
                 src (i) = - min (ql (i, j), factor * dq0)
             endif
             qv (i, j) = qv (i, j) - src (i)
@@ -449,7 +449,7 @@ subroutine fv_sat_adj (mdt, zvir, is, ie, js, je, ng, hydrostatic, consv_te, te0
                     ! factor = - min (1., fac_l2v * sqrt (max (0., ql (i, j)) / 1.e-5) * 10. * (1. - qv (i, j) / wqsat (i))) ! the rh dependent factor = 1 at 90%
                     ! factor = - fac_l2v
                     ! factor = - 1
-                    factor = - fac_l2v * min (1., 10. * (1. - qv (i, j) / wqsat (i))) ! the rh dependent factor = 1 at 90%
+                    factor = - min (1., fac_l2v * 10. * (1. - qv (i, j) / wqsat (i))) ! the rh dependent factor = 1 at 90%
                     src (i) = - min (ql (i, j), factor * dq0)
                 endif
                 adj_fac = 1.
