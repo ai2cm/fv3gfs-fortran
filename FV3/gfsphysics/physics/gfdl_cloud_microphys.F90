@@ -2083,7 +2083,7 @@ subroutine subgrid_z_proc (ktop, kbot, p1, den, denfac, dts, rh_adj, tz, qv, &
             ! factor = min (1., fac_l2v * sqrt (max (0., ql (k)) / 1.e-5) * 10. * dq0 / qsw)
             ! factor = fac_l2v
             ! factor = 1
-            factor = fac_l2v * min (1., 1. * dq0 / qsw) ! the rh dependent factor = 1 at 90%
+            factor = fac_l2v * min (1., 0.5 * dq0 / qsw) ! the rh dependent factor = 1 at 90%
             evap = min (ql (k), factor * dq0 / (1. + tcp3 (k) * dwsdt))
         else ! condensate all excess vapor into cloud water
             ! -----------------------------------------------------------------------
