@@ -142,36 +142,6 @@ RUN git clone -b ESMF_8_0_0 --depth 1 https://git.code.sf.net/p/esmf/esmf $ESMF_
 
 ## Copy FV3GFS sources for non-serialize image
 ##---------------------------------------------------------------------------------
-FROM fv3gfs-environment as fv3gfs-serialbox
-
-# install dependencies for serialbox
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=US/Pacific
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-RUN apt-get update && apt-get install -y \
-    cmake \
-    libssl-dev \
-    libboost-all-dev \ 
-    clang \
-    clang-format \
-    clang-tidy \
-    python3-numpy \
-    python3-nose \
-    python3-sphinx
-
-# install serialbox2 from source
-COPY serialbox2 serialbox2
-RUN cd serialbox2 && \
-    mkdir build && \
-    cd build && \
-    cmake -DSERIALBOX_USE_NETCDF=ON -DSERIALBOX_ENABLE_FORTRAN=ON \
-      -DSERIALBOX_TESTING=ON  ../ && \
-    make -j8 && \
-    make test && \
-    make install
-
-## Copy FV3GFS sources into image
-##---------------------------------------------------------------------------------
 FROM $BASE_IMAGE AS fv3gfs-src-serialize-false
 
 ARG compile_option
