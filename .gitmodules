@@ -1,6 +1,3 @@
-[submodule "physics_standalone"]
-	path = physics_standalone
-	url = https://github.com/VulcanClimateModeling/physics_standalone.git
 [submodule "serialbox"]
 	path = serialbox
 	url = https://github.com/GridTools/serialbox.git
