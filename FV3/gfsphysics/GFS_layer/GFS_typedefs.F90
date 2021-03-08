@@ -1351,9 +1351,9 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: totprcpb(:)    => null()   !< accumulated total precipitation in bucket(kg/m2)
     real (kind=kind_phys), pointer :: gflux  (:)     => null()   !< groud conductive heat flux
     real (kind=kind_phys), pointer :: dlwsfc (:)     => null()   !< time accumulated sfc dn lw flux ( w/m**2 )
-    real (kind=kind_phys), pointer :: uswsfc (:)     => null()   !< time accumulated sfc up lw flux ( w/m**2 )
+    real (kind=kind_phys), pointer :: ulwsfc (:)     => null()   !< time accumulated sfc up lw flux ( w/m**2 )
     real (kind=kind_phys), pointer :: dswsfc (:)     => null()   !< time accumulated sfc dn sw flux ( w/m**2 ) when gfs_physics_nml.override_surface_radiative_fluxes == .true.
-    real (kind=kind_phys), pointer :: ulwsfc (:)     => null()   !< time accumulated sfc up sw flux ( w/m**2 ) when gfs_physics_nml.override_surface_radiative_fluxes == .true.
+    real (kind=kind_phys), pointer :: uswsfc (:)     => null()   !< time accumulated sfc up sw flux ( w/m**2 ) when gfs_physics_nml.override_surface_radiative_fluxes == .true.
     real (kind=kind_phys), pointer :: suntim (:)     => null()   !< sunshine duration time (s)
     real (kind=kind_phys), pointer :: runoff (:)     => null()   !< total water runoff
     real (kind=kind_phys), pointer :: ep     (:)     => null()   !< potential evaporation
