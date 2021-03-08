@@ -204,9 +204,15 @@ module GFS_diagnostics
     ExtDiag(idx)%intpl_method = 'bilinear'
     ExtDiag(idx)%coarse_graining_method = 'area_weighted'
     allocate (ExtDiag(idx)%data(nblks))
-    do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%fluxr(:,4)
-    enddo
+    if (Model%override_surface_radiative_fluxes) then
+      do nb = 1,nblks
+        ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%dswsfc(:)
+      enddo
+    else
+      do nb = 1,nblks
+        ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%fluxr(:,4)
+      enddo
+    endif
 
     idx = idx + 1
     ExtDiag(idx)%axes = 2
@@ -233,9 +239,15 @@ module GFS_diagnostics
     ExtDiag(idx)%intpl_method = 'bilinear'
     ExtDiag(idx)%coarse_graining_method = 'area_weighted'
     allocate (ExtDiag(idx)%data(nblks))
-    do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%fluxr(:,3)
-    enddo
+    if (Model%override_surface_radiative_fluxes) then
+      do nb = 1,nblks
+        ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%uswsfc(:)
+      enddo
+    else
+      do nb = 1,nblks
+        ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%fluxr(:,3)
+      enddo  
+    endif
 
     idx = idx + 1
     ExtDiag(idx)%axes = 2

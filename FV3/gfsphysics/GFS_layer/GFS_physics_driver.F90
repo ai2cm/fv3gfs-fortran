@@ -529,7 +529,7 @@ module module_physics_driver
            stress, t850, ep1d, gamt, gamq, sigmaf,                      &
            wind, work1, work2, work3, work4, runof, xmu, fm10, fh2,     &
                    tx1, tx2, tx3, tx4, ctei_r, evbs, evcw, trans, sbsno,&
-           snowc, frland, adjsfcdlw, adjsfculw,   &
+           snowc, frland, adjsfculw,   &
            adjnirbmu, adjnirdfu, adjvisbmu, adjvisdfu, adjnirbmd,       &
            adjnirdfd, adjvisbmd, adjvisdfd,           xcosz, tseal,     &
 !          adjnirdfd, adjvisbmd, adjvisdfd, gabsbdlw, xcosz, tseal,     &
@@ -542,7 +542,7 @@ module module_physics_driver
 !          dtsfc_cice, dqsfc_cice, dusfc_cice, dvsfc_cice, ulwsfc_cice, &
 !--- for CS-convection
            wcbmax
-      real(kind=kind_phys), target, dimension(size(Grid%xlon,1)) :: adjsfcdsw, adjsfcnsw
+      real(kind=kind_phys), target, dimension(size(Grid%xlon,1)) :: adjsfcdlw, adjsfcdsw, adjsfcnsw
 
 !  1 - land, 2 - ice, 3 - ocean
       real(kind=kind_phys), dimension(size(Grid%xlon,1),3)  ::           &
@@ -673,7 +673,7 @@ module module_physics_driver
       real    :: pshltr,QCQ,rh02
       real(kind=kind_phys), allocatable, dimension(:,:) :: den
       real(kind=kind_phys), allocatable, dimension(:,:) :: dqdt_work
-      real(kind=kind_phys), pointer :: adjsfcdsw_for_lsm(:), adjsfcnsw_for_lsm(:)
+      real(kind=kind_phys), pointer :: adjsfcdlw_for_lsm(:), adjsfcdsw_for_lsm(:), adjsfcnsw_for_lsm(:)
       integer :: nwat
 
       !! Initialize local variables (mainly for debugging purposes, because the
@@ -719,9 +719,11 @@ module module_physics_driver
       endif
 
       if (Model%override_surface_radiative_fluxes) then
+        adjsfcdlw_for_lsm => Statein%adjsfcdlw_override
         adjsfcdsw_for_lsm => Statein%adjsfcdsw_override
         adjsfcnsw_for_lsm => Statein%adjsfcnsw_override
       else
+        adjsfcdlw_for_lsm => adjsfcdlw
         adjsfcdsw_for_lsm => adjsfcdsw
         adjsfcnsw_for_lsm => adjsfcnsw
       endif
@@ -1447,19 +1449,11 @@ module module_physics_driver
 !        net = up - down = sfcemis * (sigma*T**4 - adjsfcdlw)
 
 !  --- ...  define the downward lw flux absorbed by ground
-      if (Model%override_surface_radiative_fluxes) then
-        do i=1,im
-          if (dry(i)) gabsbdlw3(i,1) = semis3(i,1) * Statein%adjsfcdlw_override(i)
-          if (icy(i)) gabsbdlw3(i,2) = semis3(i,2) * Statein%adjsfcdlw_override(i)
-          if (wet(i)) gabsbdlw3(i,3) = semis3(i,3) * Statein%adjsfcdlw_override(i)
-        enddo
-      else
-        do i=1,im
-          if (dry(i)) gabsbdlw3(i,1) = semis3(i,1) * adjsfcdlw(i)
-          if (icy(i)) gabsbdlw3(i,2) = semis3(i,2) * adjsfcdlw(i)
-          if (wet(i)) gabsbdlw3(i,3) = semis3(i,3) * adjsfcdlw(i)
-        enddo
-      endif
+      do i=1,im
+        if (dry(i)) gabsbdlw3(i,1) = semis3(i,1) * adjsfcdlw_for_lsm(i)
+        if (icy(i)) gabsbdlw3(i,2) = semis3(i,2) * adjsfcdlw_for_lsm(i)
+        if (wet(i)) gabsbdlw3(i,3) = semis3(i,3) * adjsfcdlw_for_lsm(i)
+      enddo
 
       if (Model%lssav) then      !  --- ...  accumulate/save output variables
 
@@ -1519,10 +1513,15 @@ module module_physics_driver
 !       ' adjsfculw3=',adjsfculw3(ipr,:),' icefr=',Sfcprop%fice(ipr),' tsfc3=',tsfc3(ipr,:)
 !
         do i=1,im
-          Diag%dlwsfc(i) = Diag%dlwsfc(i) +   adjsfcdlw(i)*dtf
+          Diag%dlwsfc(i) = Diag%dlwsfc(i) +   adjsfcdlw_for_lsm(i)*dtf
           Diag%ulwsfc(i) = Diag%ulwsfc(i) +   adjsfculw(i)*dtf
           Diag%psmean(i) = Diag%psmean(i) + Statein%pgr(i)*dtf        ! mean surface pressure
         enddo
+
+        if (Model%override_surface_radiative_fluxes) then
+          Diag%dswsfc(i) = Diag%dswsfc(i) + adjsfcdsw_for_lsm(i)*dtf
+          Diag%uswsfc(i) = Diag%uswsfc(i) + (adjsfcdsw_for_lsm(i) - adjsfcnsw_for_lsm(i))*dtf
+        endif
 
         if (Model%ldiag3d) then
           if (Model%lsidea) then
@@ -2091,10 +2090,10 @@ module module_physics_driver
 
       do i=1,im
         Diag%epi(i)     = ep1d(i)
-        Diag%dlwsfci(i) = adjsfcdlw(i)
+        Diag%dlwsfci(i) = adjsfcdlw_for_lsm(i)
         Diag%ulwsfci(i) = adjsfculw(i)
-        Diag%uswsfci(i) = adjsfcdsw(i) - adjsfcnsw(i)
-        Diag%dswsfci(i) = adjsfcdsw(i)
+        Diag%uswsfci(i) = adjsfcdsw_for_lsm(i) - adjsfcnsw_for_lsm(i)
+        Diag%dswsfci(i) = adjsfcdsw_for_lsm(i)
         Diag%gfluxi(i)  = gflx(i)
         Diag%t1(i)      = Statein%tgrs(i,1)
         Diag%q1(i)      = Statein%qgrs(i,1,1)
