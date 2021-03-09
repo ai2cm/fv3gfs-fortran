@@ -25,7 +25,9 @@ FROM $MPI_IMAGE AS mpi_image
 
 FROM $BASE_IMAGE AS fv3gfs-environment
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends tzdata && \
+    apt-get install -y \
     wget \
     gcc \
     libtool-bin \
@@ -59,9 +61,6 @@ RUN git config --global http.sslverify false && \
 ## Setup environment for Serialbox
 ##---------------------------------------------------------------------------------
 FROM fv3gfs-environment as fv3gfs-environment-serialbox
-# set TZ
-ENV DEBIAN_FRONTEND=noninteractive TZ=US/Pacific
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # install dependencies for serialbox
 RUN apt-get update && apt-get install -y \

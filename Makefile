@@ -13,7 +13,7 @@ OTHER_MOUNTS ?=
 
 # base images w/ or w/o CUDA
 ifeq ($(CUDA),n)
-	BASE_IMAGE ?=ubuntu:18.04
+	BASE_IMAGE ?=ubuntu:20.04
 	DEP_TAG_NAME ?=gnu7-mpich314-nocuda
 else
 	BASE_IMAGE ?=nvidia/cuda:10.2-devel-ubuntu18.04
