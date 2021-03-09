@@ -262,6 +262,123 @@ module GFS_diagnostics
       ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%uswsfci(:)
     enddo
 
+    if (Model%override_surface_radiative_fluxes) then
+      idx = idx + 1
+      ExtDiag(idx)%axes = 2
+      ExtDiag(idx)%name = 'DLWRF_rrtmg'
+      ExtDiag(idx)%desc = 'surface downward longwave flux due to RRTMG'
+      ExtDiag(idx)%unit = 'W/m**2'
+      ExtDiag(idx)%mod_name = 'gfs_phys'
+      ExtDiag(idx)%cnvfac = cn_one
+      ExtDiag(idx)%time_avg = .TRUE.
+      ExtDiag(idx)%intpl_method = 'bilinear'
+      ExtDiag(idx)%coarse_graining_method = 'area_weighted'
+      allocate (ExtDiag(idx)%data(nblks))
+      do nb = 1,nblks
+        ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%dlwsfc_rrtmg(:)
+      enddo
+
+      idx = idx + 1
+      ExtDiag(idx)%axes = 2
+      ExtDiag(idx)%name = 'DLWRFI_rrtmg'
+      ExtDiag(idx)%desc = 'instantaneous surface downward longwave flux due to RRTMG'
+      ExtDiag(idx)%unit = 'W/m**2'
+      ExtDiag(idx)%mod_name = 'gfs_phys'
+      ExtDiag(idx)%intpl_method = 'bilinear'
+      ExtDiag(idx)%coarse_graining_method = 'area_weighted'
+      allocate (ExtDiag(idx)%data(nblks))
+      do nb = 1,nblks
+        ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%dlwsfci_rrtmg(:)
+      enddo
+
+
+      idx = idx + 1
+      ExtDiag(idx)%axes = 2
+      ExtDiag(idx)%name = 'ULWRF_rrtmg'
+      ExtDiag(idx)%desc = 'surface upward longwave flux due to RRTMG'
+      ExtDiag(idx)%unit = 'W/m**2'
+      ExtDiag(idx)%mod_name = 'gfs_phys'
+      ExtDiag(idx)%cnvfac = cn_one
+      ExtDiag(idx)%time_avg = .TRUE.
+      ExtDiag(idx)%intpl_method = 'bilinear'
+      ExtDiag(idx)%coarse_graining_method = 'area_weighted'
+      allocate (ExtDiag(idx)%data(nblks))
+      do nb = 1,nblks
+        ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%ulwsfc_rrtmg(:)
+      enddo
+
+      idx = idx + 1
+      ExtDiag(idx)%axes = 2
+      ExtDiag(idx)%name = 'ULWRFI_rrtmg'
+      ExtDiag(idx)%desc = 'instantaneous surface upward longwave flux due to RRTMG'
+      ExtDiag(idx)%unit = 'W/m**2'
+      ExtDiag(idx)%mod_name = 'gfs_phys'
+      ExtDiag(idx)%intpl_method = 'bilinear'
+      ExtDiag(idx)%coarse_graining_method = 'area_weighted'
+      allocate (ExtDiag(idx)%data(nblks))
+      do nb = 1,nblks
+        ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%ulwsfci_rrtmg(:)
+      enddo
+
+      idx = idx + 1
+      ExtDiag(idx)%axes = 2
+      ExtDiag(idx)%name = 'DSWRF_rrtmg'
+      ExtDiag(idx)%desc = 'averaged surface downward shortwave flux due to RRTMG'
+      ExtDiag(idx)%unit = 'W/m**2'
+      ExtDiag(idx)%mod_name = 'gfs_phys'
+      ExtDiag(idx)%cnvfac = cn_one
+      ExtDiag(idx)%time_avg = .TRUE.
+      ExtDiag(idx)%time_avg_kind = 'rad_sw'
+      ExtDiag(idx)%intpl_method = 'bilinear'
+      ExtDiag(idx)%coarse_graining_method = 'area_weighted'
+      allocate (ExtDiag(idx)%data(nblks))
+      do nb = 1,nblks
+        ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%dswsfc_rrtmg(:)
+      enddo
+
+      idx = idx + 1
+      ExtDiag(idx)%axes = 2
+      ExtDiag(idx)%name = 'DSWRFI_rrtmg'
+      ExtDiag(idx)%desc = 'instantaneous surface downward shortwave flux due to RRTMG'
+      ExtDiag(idx)%unit = 'W/m**2'
+      ExtDiag(idx)%mod_name = 'gfs_phys'
+      ExtDiag(idx)%intpl_method = 'bilinear'
+      ExtDiag(idx)%coarse_graining_method = 'area_weighted'
+      allocate (ExtDiag(idx)%data(nblks))
+      do nb = 1,nblks
+        ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%dswsfci_rrtmg(:)
+      enddo
+
+      idx = idx + 1
+      ExtDiag(idx)%axes = 2
+      ExtDiag(idx)%name = 'USWRF_rrtmg'
+      ExtDiag(idx)%desc = 'averaged surface upward shortwave flux due to RRTMG'
+      ExtDiag(idx)%unit = 'W/m**2'
+      ExtDiag(idx)%mod_name = 'gfs_phys'
+      ExtDiag(idx)%cnvfac = cn_one
+      ExtDiag(idx)%time_avg = .TRUE.
+      ExtDiag(idx)%time_avg_kind = 'rad_sw'
+      ExtDiag(idx)%intpl_method = 'bilinear'
+      ExtDiag(idx)%coarse_graining_method = 'area_weighted'
+      allocate (ExtDiag(idx)%data(nblks))
+      do nb = 1,nblks
+        ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%uswsfc_rrtmg(:)
+      enddo
+
+      idx = idx + 1
+      ExtDiag(idx)%axes = 2
+      ExtDiag(idx)%name = 'USWRFI_rrtmg'
+      ExtDiag(idx)%desc = 'instantaneous surface upward shortwave flux due to RRTMG'
+      ExtDiag(idx)%unit = 'W/m**2'
+      ExtDiag(idx)%mod_name = 'gfs_phys'
+      ExtDiag(idx)%intpl_method = 'bilinear'
+      ExtDiag(idx)%coarse_graining_method = 'area_weighted'
+      allocate (ExtDiag(idx)%data(nblks))
+      do nb = 1,nblks
+        ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%uswsfci_rrtmg(:)
+      enddo
+    endif
+
     idx = idx + 1
     ExtDiag(idx)%axes = 2
     ExtDiag(idx)%name = 'duvb_ave'

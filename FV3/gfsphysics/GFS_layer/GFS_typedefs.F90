@@ -1354,6 +1354,12 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: ulwsfc (:)     => null()   !< time accumulated sfc up lw flux ( w/m**2 )
     real (kind=kind_phys), pointer :: dswsfc (:)     => null()   !< time accumulated sfc dn sw flux ( w/m**2 ) when gfs_physics_nml.override_surface_radiative_fluxes == .true.
     real (kind=kind_phys), pointer :: uswsfc (:)     => null()   !< time accumulated sfc up sw flux ( w/m**2 ) when gfs_physics_nml.override_surface_radiative_fluxes == .true.
+
+    real (kind=kind_phys), pointer :: dlwsfc_rrtmg (:)     => null()   !< time accumulated sfc dn lw flux ( w/m**2 ) as predicted by RRTMG when gfs_physics_nml.override_surface_radiative_fluxes == .true.
+    real (kind=kind_phys), pointer :: ulwsfc_rrtmg (:)     => null()   !< time accumulated sfc up lw flux ( w/m**2 ) as predicted by RRTMG when gfs_physics_nml.override_surface_radiative_fluxes == .true.
+    real (kind=kind_phys), pointer :: dswsfc_rrtmg (:)     => null()   !< time accumulated sfc dn sw flux ( w/m**2 ) as predicted by RRTMG when gfs_physics_nml.override_surface_radiative_fluxes == .true.
+    real (kind=kind_phys), pointer :: uswsfc_rrtmg (:)     => null()   !< time accumulated sfc up sw flux ( w/m**2 ) as predicted by RRTMG when gfs_physics_nml.override_surface_radiative_fluxes == .true.
+
     real (kind=kind_phys), pointer :: suntim (:)     => null()   !< sunshine duration time (s)
     real (kind=kind_phys), pointer :: runoff (:)     => null()   !< total water runoff
     real (kind=kind_phys), pointer :: ep     (:)     => null()   !< potential evaporation
@@ -1437,6 +1443,12 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: nswsfci(:)     => null()   !< instantaneous sfc net dnwd sw flux ( w/m**2 )
 #endif
     real (kind=kind_phys), pointer :: uswsfci(:)     => null()   !< instantaneous sfc upwd sw flux ( w/m**2 )
+
+    real (kind=kind_phys), pointer :: dlwsfci_rrtmg(:)     => null()   !< instantaneous sfc dnwd lw flux ( w/m**2 ) as predicted by RRTMG when gfs_physics_nml.override_surface_radiative_fluxes == .true.
+    real (kind=kind_phys), pointer :: ulwsfci_rrtmg(:)     => null()   !< instantaneous sfc upwd lw flux ( w/m**2 ) as predicted by RRTMG when gfs_physics_nml.override_surface_radiative_fluxes == .true.
+    real (kind=kind_phys), pointer :: dswsfci_rrtmg(:)     => null()   !< instantaneous sfc dnwd sw flux ( w/m**2 ) as predicted by RRTMG when gfs_physics_nml.override_surface_radiative_fluxes == .true.
+    real (kind=kind_phys), pointer :: uswsfci_rrtmg(:)     => null()   !< instantaneous sfc upwd sw flux ( w/m**2 ) as predicted by RRTMG when gfs_physics_nml.override_surface_radiative_fluxes == .true.
+
     real (kind=kind_phys), pointer :: dusfci (:)     => null()   !< instantaneous u component of surface stress
     real (kind=kind_phys), pointer :: dvsfci (:)     => null()   !< instantaneous v component of surface stress
     real (kind=kind_phys), pointer :: dtsfci (:)     => null()   !< instantaneous sfc sensible heat flux
@@ -5073,6 +5085,15 @@ module GFS_typedefs
     if (Model%override_surface_radiative_fluxes) then
       allocate (Diag%dswsfc(IM))
       allocate (Diag%uswsfc(IM))
+
+      allocate (Diag%dlwsfc_rrtmg(IM))
+      allocate (Diag%ulwsfc_rrtmg(IM))
+      allocate (Diag%dswsfc_rrtmg(IM))
+      allocate (Diag%uswsfc_rrtmg(IM))
+      allocate (Diag%dlwsfci_rrtmg(IM))
+      allocate (Diag%ulwsfci_rrtmg(IM))
+      allocate (Diag%dswsfci_rrtmg(IM))
+      allocate (Diag%uswsfci_rrtmg(IM))
     endif
     allocate (Diag%suntim  (IM))
     allocate (Diag%runoff  (IM))
@@ -5419,6 +5440,19 @@ module GFS_typedefs
     Diag%nswsfci    = zero
 #endif
     Diag%uswsfci    = zero
+    if (Model%override_surface_radiative_fluxes) then
+      Diag%dswsfc    = zero
+      Diag%uswsfc    = zero
+
+      Diag%dlwsfc_rrtmg    = zero
+      Diag%ulwsfc_rrtmg    = zero
+      Diag%dswsfc_rrtmg    = zero
+      Diag%uswsfc_rrtmg    = zero
+      Diag%dlwsfci_rrtmg    = zero
+      Diag%ulwsfci_rrtmg    = zero
+      Diag%dswsfci_rrtmg    = zero
+      Diag%uswsfci_rrtmg    = zero
+    endif
     Diag%dusfci     = zero
     Diag%dvsfci     = zero
     Diag%dtsfci     = zero

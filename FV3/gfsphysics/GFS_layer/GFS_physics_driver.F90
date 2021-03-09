@@ -1519,8 +1519,15 @@ module module_physics_driver
         enddo
 
         if (Model%override_surface_radiative_fluxes) then
-          Diag%dswsfc(i) = Diag%dswsfc(i) + adjsfcdsw_for_lsm(i)*dtf
-          Diag%uswsfc(i) = Diag%uswsfc(i) + (adjsfcdsw_for_lsm(i) - adjsfcnsw_for_lsm(i))*dtf
+          do i=1,im
+            Diag%dswsfc(i) = Diag%dswsfc(i) + adjsfcdsw_for_lsm(i)*dtf
+            Diag%uswsfc(i) = Diag%uswsfc(i) + (adjsfcdsw_for_lsm(i) - adjsfcnsw_for_lsm(i))*dtf
+
+            Diag%dlwsfc_rrtmg(i) = Diag%dlwsfc_rrtmg(i) + adjsfcdlw(i)*dtf
+            Diag%ulwsfc_rrtmg(i) = Diag%ulwsfc_rrtmg(i) + adjsfculw(i)*dtf
+            Diag%dswsfc_rrtmg(i) = Diag%dswsfc_rrtmg(i) + adjsfcdsw(i)*dtf
+            Diag%uswsfc_rrtmg(i) = Diag%uswsfc_rrtmg(i) + (adjsfcdsw(i) - adjsfcnsw(i))*dtf
+          enddo
         endif
 
         if (Model%ldiag3d) then
@@ -2100,6 +2107,13 @@ module module_physics_driver
         Diag%u1(i)      = Statein%ugrs(i,1)
         Diag%v1(i)      = Statein%vgrs(i,1)
       enddo
+
+      if (Model%override_surface_radiative_fluxes) then
+        Diag%dlwsfci_rrtmg(i) = adjsfcdlw(i)
+        Diag%ulwsfci_rrtmg(i) = adjsfculw(i)
+        Diag%uswsfci_rrtmg(i) = adjsfcdsw(i) - adjsfcnsw(i)
+        Diag%dswsfci_rrtmg(i) = adjsfcdsw(i)
+      endif
 
 !  --- ...  update near surface fields
 
