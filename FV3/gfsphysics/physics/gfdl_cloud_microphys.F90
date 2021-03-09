@@ -1275,7 +1275,7 @@ subroutine warm_rain (dt, ktop, kbot, dp, dz, tz, qv, ql, qr, qi, qs, qg, &
         
         do k = ktop, kbot
             qc0 = fac_rc * ccn (k)
-            if (tz (k) > t_wfr + dt_fr) then
+            if (tz (k) > t_wfr) then
                 dl (k) = min (max (1.e-6, dl (k)), 0.5 * ql (k))
                 ! --------------------------------------------------------------------
                 ! as in klein's gfdl am2 stratiform scheme (with subgrid variations)
