@@ -6,7 +6,6 @@ ENVIRONMENT_TAG_NAME ?= latest
 COMPILE_OPTION ?=
 COMPILE_TARGET ?= fv3gfs-compiled
 BUILD_ARGS ?=
-BUILD_FROM_INTERMEDIATE ?= n
 ENVIRONMENT_TARGET ?= fv3gfs-environment
 CUDA ?= n
 OTHER_MOUNTS ?= 
@@ -31,10 +30,9 @@ FMS_IMAGE ?= $(GCR_URL)/fms-build:$(DEP_TAG_NAME)
 ESMF_IMAGE ?= $(GCR_URL)/esmf-build:$(DEP_TAG_NAME)
 SERIALBOX_IMAGE ?= $(GCR_URL)/serialbox-build:$(DEP_TAG_NAME)
 
-# used to shorten build times in CircleCI
-ifeq ($(BUILD_FROM_INTERMEDIATE),y)
-	BUILD_ARGS += --build-arg FMS_IMAGE=$(FMS_IMAGE) --build-arg ESMF_IMAGE=$(ESMF_IMAGE) --build-arg SERIALBOX_IMAGE=$(SERIALBOX_IMAGE) --build-arg MPI_IMAGE=$(MPI_IMAGE)
-endif
+CACHE_IMAGE = us.gcr.io/vcm-ml/fv3gfs-compiled:gnu7-mpich314-nocuda-fe24ba87da00c61ea93d1a140124211e3f83ee1c
+DOCKER_BUILD = docker/build_docker_cached.sh $(CACHE_IMAGE)
+
 
 .PHONY: help build build_environment build_compiled build_serialize build_debug
 .PHONY: build_deps push_deps pull_deps enter enter_serialize test update_circleci_reference clean
@@ -45,11 +43,11 @@ help:
 build: build_compiled ## build default container image (production)
 
 build_environment: ## build environment container image
-	docker build -f $(DOCKERFILE) -t $(ENVIRONMENT_IMAGE) \
+	$(DOCKER_BUILD) -f $(DOCKERFILE) -t $(ENVIRONMENT_IMAGE) \
 	--target $(ENVIRONMENT_TARGET) .
 
 build_compiled: ## build production container image
-	docker build \
+	$(DOCKER_BUILD) \
 		--build-arg compile_option=$(COMPILE_OPTION) \
 		$(BUILD_ARGS) \
 		-f $(DOCKERFILE) \
@@ -65,24 +63,20 @@ build_serialize: ## build container image for serialization
 	$(MAKE) build_compiled
 
 build_deps: ## build container images of dependnecies (FMS, ESMF, SerialBox)
-	docker build -f $(DOCKERFILE) -t $(MPI_IMAGE) $(BUILD_ARGS) --target fv3gfs-mpi .
-	docker build -f $(DOCKERFILE) -t $(FMS_IMAGE) $(BUILD_ARGS) --target fv3gfs-fms .
-	docker build -f $(DOCKERFILE) -t $(ESMF_IMAGE) $(BUILD_ARGS) --target fv3gfs-esmf .
-	docker build -f $(DOCKERFILE) -t $(SERIALBOX_IMAGE) $(BUILD_ARGS) --target fv3gfs-environment-serialbox .
+	$(DOCKER_BUILD) -f $(DOCKERFILE) -t $(MPI_IMAGE) $(BUILD_ARGS) --target fv3gfs-mpi .
+	$(DOCKER_BUILD) -f $(DOCKERFILE) -t $(FMS_IMAGE) $(BUILD_ARGS) --target fv3gfs-fms .
+	$(DOCKER_BUILD) -f $(DOCKERFILE) -t $(ESMF_IMAGE) $(BUILD_ARGS) --target fv3gfs-esmf .
+	$(DOCKER_BUILD) -f $(DOCKERFILE) -t $(SERIALBOX_IMAGE) $(BUILD_ARGS) --target fv3gfs-environment-serialbox .
 
 push_image_%:
 	docker tag $(GCR_URL)/$*:$(DEP_TAG_NAME) $(GCR_URL)/$*:$(DEP_TAG_NAME)-$(COMMIT_SHA)
-	docker push $(GCR_URL)/$*:$(DEP_TAG_NAME)
+	# docker push $(GCR_URL)/$*:$(DEP_TAG_NAME)
 	docker push $(GCR_URL)/$*:$(DEP_TAG_NAME)-$(COMMIT_SHA)
+
+push: push_image_fv3gfs-compiled
 
 ## push container images of dependencies to GCP 
 push_deps: push_image_mpi-build push_image_fms-build push_image_esmf-build push_image_serialbox-build
-
-pull_deps: ## pull container images of dependencies from GCP (for faster builds)
-	docker pull $(MPI_IMAGE)
-	docker pull $(FMS_IMAGE)
-	docker pull $(ESMF_IMAGE)
-	docker pull $(SERIALBOX_IMAGE)
 
 enter: ## run and enter production container for development
 	docker run --rm \

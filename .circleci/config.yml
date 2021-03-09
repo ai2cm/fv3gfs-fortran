@@ -20,17 +20,12 @@ jobs:
             echo $ENCODED_GCR_KEY | base64 -d > $GOOGLE_APPLICATION_CREDENTIALS
             echo "export GCLOUD_SERVICE_KEY=\$(echo \$ENCODED_GCR_KEY | base64 --decode)" >> $BASH_ENV
       - gcp-gcr/gcr-auth
-      - run: 
-          name: "Pull dependency images"
-          command: |
-            echo "$ENCODED_GCR_KEY" | base64 --decode | docker login --username _json_key --password-stdin https://gcr.io
-            make pull_deps
       - run:
           name: "Pull Submodules"
           command: |
             git submodule init
             git submodule update
-      - run: DOCKER_BUILDKIT=1 BUILDKIT_PROGRESS=plain BUILD_FROM_INTERMEDIATE=y make build build_debug build_serialize
+      - run: make build build_debug build_serialize
       - restore_cache:
           keys:
             - v1.4-{{ checksum "requirements.txt"}}
@@ -53,7 +48,7 @@ jobs:
           command: |
             make test
           no_output_timeout: 1200
-      - run: make push_deps
+      - run: make push
       - run:
           name: "Delete data files"
           command: |
