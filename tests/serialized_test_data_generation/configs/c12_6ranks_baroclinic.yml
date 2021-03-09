@@ -121,7 +121,7 @@ namelist:
     dwind_2d: false
     external_ic: false
     fill: true
-    fill_dp: true
+    fill_dp: false
     fv_debug: false
     fv_sg_adj: 0
     gfs_phil: false
@@ -147,7 +147,7 @@ namelist:
     mountain: false
     n_split: 1
     n_sponge: 48
-    na_init: 1
+    na_init: 0
     ncep_ic: false
     nggps_ic: false
     nord: 3

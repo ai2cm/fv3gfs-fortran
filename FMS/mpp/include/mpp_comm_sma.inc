@@ -224,7 +224,7 @@ subroutine mpp_exit()
         write( outunit,'(/a,i6,a)' ) 'Tabulating mpp_clock statistics across ', npes, ' PEs...'
         if( ANY(clocks(1:clock_num)%detailed) ) &
              write( outunit,'(a)' )'   ... see mpp_clock.out.#### for details on individual PEs.'
-        write( outunit,'(/32x,a)' ) '          tmin          tmax          tavg          tstd  tfrac grain pemin pemax'
+        write( outunit,'(/32x,a)' ) '      hits          tmin          tmax          tavg          tstd  tfrac grain pemin pemax'
      end if
      write( logunit, '(/37x,a)' ) 'time'
      call FLUSH( outunit )
@@ -238,8 +238,8 @@ subroutine mpp_exit()
         tmax = t; call mpp_max(tmax)
         tavg = t; call mpp_sum(tavg); tavg = tavg/mpp_npes()
         tstd = (t-tavg)**2; call mpp_sum(tstd); tstd = sqrt( tstd/mpp_npes() )
-        if( pe.EQ.root_pe )write( outunit,'(a32,4f14.6,f7.3,3i6)' ) &
-             clocks(i)%name, tmin, tmax, tavg, tstd, tavg/t_total, &
+        if( pe.EQ.root_pe )write( outunit,'(a32,i10,4f14.6,f7.3,3i6)' ) &
+             clocks(i)%name, clocks(i)%hits, tmin, tmax, tavg, tstd, tavg/t_total, &
              clocks(i)%grain, minval(peset(clocks(i)%peset_num)%list), &
              maxval(peset(clocks(i)%peset_num)%list)
          write(logunit,'(a32,f14.6)') clocks(i)%name, clocks(i)%total_ticks*tick_rate

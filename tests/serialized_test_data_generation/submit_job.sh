@@ -9,6 +9,7 @@ cp /FV3/fv3.exe $RUNDIR/fv3.exe
 
 # setup directory for serialized data
 TEST_DATA_DIR=$RUNDIR/test_data
+MOUNTED_DATA_DIR=/data
 mkdir -p $TEST_DATA_DIR
 
 # setup environment
@@ -17,7 +18,8 @@ mkdir -p $TEST_DATA_DIR
 # a single node. The alternative is to set --shm-size in the docker
 # run command.
 export MPIR_CVAR_CH3_NOLOCAL=1
-
+# Setting this to allow finer resolution on 1 rank
+export OMP_STACKSIZE=10G
 
 # setup run environment
 cd $RUNDIR
@@ -46,6 +48,8 @@ else
 fi
 set -e
 
+echo ">>> Copy artefacts to data directory and setting permissions"
+
 # copy artefacts to test_data directory
 cp $RUNDIR/input.nml $TEST_DATA_DIR/
 if [ -f $RUNDIR/fortran_sha.txt ] ; then
@@ -55,10 +59,18 @@ cp $RUNDIR/logfile.*.out $TEST_DATA_DIR/
 cp $RUNDIR/std*.out $TEST_DATA_DIR
 env > $TEST_DATA_DIR/env.out
 
+# copy data to mounted dir
+if [ -n "$MOUNTED_DATA_DIR" ] && [ "$TEST_DATA_DIR" != "$MOUNTED_DATA_DIR" ] ; then
+  mv $TEST_DATA_DIR/* $MOUNTED_DATA_DIR/
+fi
+
 # fix permissions (avoids root permission problem outside of container)
 # --> use -e USER_ID_HOST=`id -u` -e GROUP_ID_HOST=`id -g` in the docker run command
 if [ -n "${USER_ID_HOST}" -a -n "${GROUP_ID_HOST}" ] ; then
     chown -R ${USER_ID_HOST}:${GROUP_ID_HOST} ${RUNDIR}
+    chown -R ${USER_ID_HOST}:${GROUP_ID_HOST} ${MOUNTED_DATA_DIR}
 fi
+
+echo ">>> Success"
 
 exit 0

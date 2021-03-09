@@ -27,7 +27,7 @@ module coarse_grained_diagnostics_mod
     integer :: id = -99
     integer :: axes  ! 2 or 3, depending on whether the variable is 2D or 3D
     character(len=64) :: module_name
-    character(len=128) :: name
+    character(len=128) :: name = ''
     character(len=128) :: description
     character(len=64) :: units
     character(len=64) :: reduction_method
@@ -1128,7 +1128,11 @@ contains
 
     string_length = len(trim(string))
     suffix_length = len(trim(suffix))
-    ends_with = string(string_length - suffix_length + 1:string_length) .eq. trim(suffix)
+    if (string_length .lt. suffix_length) then
+      ends_with = .false.
+    else
+      ends_with = string(string_length - suffix_length + 1:string_length) .eq. trim(suffix)
+    endif
     return
   end function ends_with
   

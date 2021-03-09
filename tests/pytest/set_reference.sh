@@ -19,6 +19,12 @@ fi
 REF_DIR=$2
 if [ -z "${REF_DIR}" ] ; then
   echo "Error: You must specify a directory to store the md5 sums as the second argument"
+  exit 1
+fi
+REF_DIR=`realpath ${REF_DIR}`
+if [ ! -d "${REF_DIR}" ] ; then
+  echo "Error: Problem with specified directory to store md5 sums"
+  exit 1
 fi
 
 CWD=$(pwd)

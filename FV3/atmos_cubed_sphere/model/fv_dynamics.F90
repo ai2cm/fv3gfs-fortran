@@ -147,8 +147,11 @@ module fv_dynamics_mod
    use fv_arrays_mod,       only: fv_grid_type, fv_flags_type, fv_atmos_type, fv_nest_type, fv_diag_type, fv_grid_bounds_type
    use fv_nwp_nudge_mod,    only: do_adiabatic_init
 #ifdef MULTI_GASES
-   use multi_gases_mod,  only:  virq, virqd, vicpqd
+   use multi_gases_mod,     only:  virq, virqd, vicpqd
 #endif
+  use mpp_mod,              only: mpp_clock_id, mpp_clock_begin,     &
+                                  mpp_clock_end, CLOCK_MODULE
+  use fms_mod,              only: clock_flag_default
 
 implicit none
    logical :: RF_initialized = .false.
@@ -299,6 +302,18 @@ contains
                                  last_step => CCPP_interstitial%last_step, &
                                  te_2d     => CCPP_interstitial%te0_2d     )
 #endif
+
+    integer, save :: id_dyn_core = -1, id_tracer_adv = -1, id_remap = -1, id_other = -1
+
+    if (id_dyn_core < 0) &
+        id_dyn_core = mpp_clock_id('   3.1.1.1-dyn_core', flags = clock_flag_default, grain=CLOCK_MODULE)
+    if (id_tracer_adv < 0) &
+        id_tracer_adv = mpp_clock_id('   3.1.1.2-Tracer-advection', flags = clock_flag_default, grain=CLOCK_MODULE)
+    if (id_remap < 0) &
+        id_remap = mpp_clock_id('   3.1.1.3-Remapping', flags = clock_flag_default, grain=CLOCK_MODULE)
+    if (id_other < 0) &
+        id_other = mpp_clock_id('   3.1.1.4-Other', flags = clock_flag_default, grain=CLOCK_MODULE)
+    call mpp_clock_begin(id_other)
 
       is  = bd%is
       ie  = bd%ie
@@ -652,8 +667,11 @@ contains
        enddo
   endif
 #endif
+  call mpp_clock_end(id_other)
+
                                                   call timing_on('FV_DYN_LOOP')
   do n_map=1, k_split   ! first level of time-split
+     call mpp_clock_begin(id_dyn_core)
      !$ser verbatim n_map_step=n_map
      k_step = n_map
     
@@ -717,6 +735,9 @@ contains
       !$ser savepoint DynCore-Out
       !$ser data cappa=cappa u=u v=v w=w delz=delz pt=pt delp=delp pe=pe pk=pk phis=phis wsd=ws omga=omga ptop=ptop pfull=pfull ua=ua va=va uc=uc vc=vc mfxd=mfx mfyd=mfy cxd=cx cyd=cy pkz=pkz peln=peln q_con=q_con diss_estd=diss_est  
 
+     call mpp_clock_end(id_dyn_core)
+     call mpp_clock_begin(id_tracer_adv)
+
 #ifdef SW_DYNAMICS
 !!$OMP parallel do default(none) shared(is,ie,js,je,ps,delp,agrav)
       do j=js,je
@@ -776,6 +797,9 @@ contains
          endif
       endif
      
+      call mpp_clock_end(id_tracer_adv)
+      call mpp_clock_begin(id_remap)
+
       if ( npz > 4 ) then
 !------------------------------------------------------------------------
 ! Perform vertical remapping from Lagrangian control-volume to
@@ -852,11 +876,15 @@ contains
             endif
          endif
       end if
-      
+
+      call mpp_clock_end(id_remap)
+
 #endif
   enddo    ! n_map loop
                                                   call timing_off('FV_DYN_LOOP')
- 
+
+  call mpp_clock_begin(id_other)
+
   if ( idiag%id_mdt > 0 .and. (.not.do_adiabatic_init) ) then
 ! Output temperature tendency due to inline moist physics:
 #if defined(CCPP) && defined(__GFORTRAN__)
@@ -1045,6 +1073,7 @@ contains
 #ifdef CCPP
   end associate ccpp_associate
 #endif
+  call mpp_clock_end(id_other)
 
   end subroutine fv_dynamics
 
