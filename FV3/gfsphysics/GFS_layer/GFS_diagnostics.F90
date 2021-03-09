@@ -200,7 +200,9 @@ module GFS_diagnostics
     ExtDiag(idx)%mod_name = 'gfs_phys'
     ExtDiag(idx)%cnvfac = cn_one
     ExtDiag(idx)%time_avg = .TRUE.
-    ExtDiag(idx)%time_avg_kind = 'rad_sw'
+    if (.not. Model%override_surface_radiative_fluxes) then
+      ExtDiag(idx)%time_avg_kind = 'rad_sw'
+    endif
     ExtDiag(idx)%intpl_method = 'bilinear'
     ExtDiag(idx)%coarse_graining_method = 'area_weighted'
     allocate (ExtDiag(idx)%data(nblks))
@@ -235,7 +237,9 @@ module GFS_diagnostics
     ExtDiag(idx)%mod_name = 'gfs_phys'
     ExtDiag(idx)%cnvfac = cn_one
     ExtDiag(idx)%time_avg = .TRUE.
-    ExtDiag(idx)%time_avg_kind = 'rad_sw'
+    if (.not. Model%override_surface_radiative_fluxes) then
+      ExtDiag(idx)%time_avg_kind = 'rad_sw'
+    endif
     ExtDiag(idx)%intpl_method = 'bilinear'
     ExtDiag(idx)%coarse_graining_method = 'area_weighted'
     allocate (ExtDiag(idx)%data(nblks))
