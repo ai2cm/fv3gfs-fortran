@@ -265,7 +265,7 @@ module GFS_diagnostics
     if (Model%override_surface_radiative_fluxes) then
       idx = idx + 1
       ExtDiag(idx)%axes = 2
-      ExtDiag(idx)%name = 'DLWRF_rrtmg'
+      ExtDiag(idx)%name = 'DLWRF_from_rrtmg'
       ExtDiag(idx)%desc = 'surface downward longwave flux due to RRTMG'
       ExtDiag(idx)%unit = 'W/m**2'
       ExtDiag(idx)%mod_name = 'gfs_phys'
@@ -280,7 +280,7 @@ module GFS_diagnostics
 
       idx = idx + 1
       ExtDiag(idx)%axes = 2
-      ExtDiag(idx)%name = 'DLWRFI_rrtmg'
+      ExtDiag(idx)%name = 'DLWRFI_from_rrtmg'
       ExtDiag(idx)%desc = 'instantaneous surface downward longwave flux due to RRTMG'
       ExtDiag(idx)%unit = 'W/m**2'
       ExtDiag(idx)%mod_name = 'gfs_phys'
@@ -294,7 +294,7 @@ module GFS_diagnostics
 
       idx = idx + 1
       ExtDiag(idx)%axes = 2
-      ExtDiag(idx)%name = 'ULWRF_rrtmg'
+      ExtDiag(idx)%name = 'ULWRF_from_rrtmg'
       ExtDiag(idx)%desc = 'surface upward longwave flux due to RRTMG'
       ExtDiag(idx)%unit = 'W/m**2'
       ExtDiag(idx)%mod_name = 'gfs_phys'
@@ -309,7 +309,7 @@ module GFS_diagnostics
 
       idx = idx + 1
       ExtDiag(idx)%axes = 2
-      ExtDiag(idx)%name = 'ULWRFI_rrtmg'
+      ExtDiag(idx)%name = 'ULWRFI_from_rrtmg'
       ExtDiag(idx)%desc = 'instantaneous surface upward longwave flux due to RRTMG'
       ExtDiag(idx)%unit = 'W/m**2'
       ExtDiag(idx)%mod_name = 'gfs_phys'
@@ -322,7 +322,7 @@ module GFS_diagnostics
 
       idx = idx + 1
       ExtDiag(idx)%axes = 2
-      ExtDiag(idx)%name = 'DSWRF_rrtmg'
+      ExtDiag(idx)%name = 'DSWRF_from_rrtmg'
       ExtDiag(idx)%desc = 'averaged surface downward shortwave flux due to RRTMG'
       ExtDiag(idx)%unit = 'W/m**2'
       ExtDiag(idx)%mod_name = 'gfs_phys'
@@ -338,7 +338,7 @@ module GFS_diagnostics
 
       idx = idx + 1
       ExtDiag(idx)%axes = 2
-      ExtDiag(idx)%name = 'DSWRFI_rrtmg'
+      ExtDiag(idx)%name = 'DSWRFI_from_rrtmg'
       ExtDiag(idx)%desc = 'instantaneous surface downward shortwave flux due to RRTMG'
       ExtDiag(idx)%unit = 'W/m**2'
       ExtDiag(idx)%mod_name = 'gfs_phys'
@@ -351,7 +351,7 @@ module GFS_diagnostics
 
       idx = idx + 1
       ExtDiag(idx)%axes = 2
-      ExtDiag(idx)%name = 'USWRF_rrtmg'
+      ExtDiag(idx)%name = 'USWRF_from_rrtmg'
       ExtDiag(idx)%desc = 'averaged surface upward shortwave flux due to RRTMG'
       ExtDiag(idx)%unit = 'W/m**2'
       ExtDiag(idx)%mod_name = 'gfs_phys'
@@ -367,7 +367,7 @@ module GFS_diagnostics
 
       idx = idx + 1
       ExtDiag(idx)%axes = 2
-      ExtDiag(idx)%name = 'USWRFI_rrtmg'
+      ExtDiag(idx)%name = 'USWRFI_from_rrtmg'
       ExtDiag(idx)%desc = 'instantaneous surface upward shortwave flux due to RRTMG'
       ExtDiag(idx)%unit = 'W/m**2'
       ExtDiag(idx)%mod_name = 'gfs_phys'
