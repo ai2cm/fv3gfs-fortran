@@ -337,7 +337,7 @@ module GFS_diagnostics
       ExtDiag(idx)%coarse_graining_method = 'area_weighted'
       allocate (ExtDiag(idx)%data(nblks))
       do nb = 1,nblks
-        ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%dswsfc_rrtmg(:)
+        ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%fluxr(:,4)
       enddo
 
       idx = idx + 1
@@ -366,7 +366,7 @@ module GFS_diagnostics
       ExtDiag(idx)%coarse_graining_method = 'area_weighted'
       allocate (ExtDiag(idx)%data(nblks))
       do nb = 1,nblks
-        ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%uswsfc_rrtmg(:)
+        ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%fluxr(:,3)
       enddo
 
       idx = idx + 1

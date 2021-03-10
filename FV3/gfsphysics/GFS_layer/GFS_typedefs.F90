@@ -1357,8 +1357,6 @@ module GFS_typedefs
 
     real (kind=kind_phys), pointer :: dlwsfc_rrtmg (:)     => null()   !< time accumulated sfc dn lw flux ( w/m**2 ) as predicted by RRTMG when gfs_physics_nml.override_surface_radiative_fluxes == .true.
     real (kind=kind_phys), pointer :: ulwsfc_rrtmg (:)     => null()   !< time accumulated sfc up lw flux ( w/m**2 ) as predicted by RRTMG when gfs_physics_nml.override_surface_radiative_fluxes == .true.
-    real (kind=kind_phys), pointer :: dswsfc_rrtmg (:)     => null()   !< time accumulated sfc dn sw flux ( w/m**2 ) as predicted by RRTMG when gfs_physics_nml.override_surface_radiative_fluxes == .true.
-    real (kind=kind_phys), pointer :: uswsfc_rrtmg (:)     => null()   !< time accumulated sfc up sw flux ( w/m**2 ) as predicted by RRTMG when gfs_physics_nml.override_surface_radiative_fluxes == .true.
 
     real (kind=kind_phys), pointer :: suntim (:)     => null()   !< sunshine duration time (s)
     real (kind=kind_phys), pointer :: runoff (:)     => null()   !< total water runoff
@@ -5088,8 +5086,6 @@ module GFS_typedefs
 
       allocate (Diag%dlwsfc_rrtmg(IM))
       allocate (Diag%ulwsfc_rrtmg(IM))
-      allocate (Diag%dswsfc_rrtmg(IM))
-      allocate (Diag%uswsfc_rrtmg(IM))
       allocate (Diag%dlwsfci_rrtmg(IM))
       allocate (Diag%ulwsfci_rrtmg(IM))
       allocate (Diag%dswsfci_rrtmg(IM))
@@ -5446,8 +5442,6 @@ module GFS_typedefs
 
       Diag%dlwsfc_rrtmg    = zero
       Diag%ulwsfc_rrtmg    = zero
-      Diag%dswsfc_rrtmg    = zero
-      Diag%uswsfc_rrtmg    = zero
       Diag%dlwsfci_rrtmg    = zero
       Diag%ulwsfci_rrtmg    = zero
       Diag%dswsfci_rrtmg    = zero

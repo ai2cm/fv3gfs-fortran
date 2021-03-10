@@ -1525,8 +1525,6 @@ module module_physics_driver
 
             Diag%dlwsfc_rrtmg(i) = Diag%dlwsfc_rrtmg(i) + adjsfcdlw(i)*dtf
             Diag%ulwsfc_rrtmg(i) = Diag%ulwsfc_rrtmg(i) + adjsfculw(i)*dtf
-            Diag%dswsfc_rrtmg(i) = Diag%dswsfc_rrtmg(i) + adjsfcdsw(i)*dtf
-            Diag%uswsfc_rrtmg(i) = Diag%uswsfc_rrtmg(i) + (adjsfcdsw(i) - adjsfcnsw(i))*dtf
           enddo
         endif
 
