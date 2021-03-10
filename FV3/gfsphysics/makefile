@@ -254,18 +254,6 @@ FFLAGS_LOPT1=$(subst CORE-AVX512,CORE-AVX-I,\
 ./GFS_layer/GFS_diagnostics.o : ./GFS_layer/GFS_diagnostics.F90
 	$(FC) $(CPPDEFS) $(FFLAGS) $(OTHER_FFLAGS) -O0 -c $< -o $@
 
-# Do preprocessing of the GFS drivers in two steps to be able
-# to look at the actual .f90 file that is compiled
-./GFS_layer/GFS_driver.o: ./GFS_layer/GFS_driver.F90
-	$(CPP) $(CPPDEFS) $(CPPFLAGS) $< > $*.tmp.f90
-	$(FC) $(FFLAGS) $(OTHER_FFLAGS) -c $*.tmp.f90 -o $@
-./GFS_layer/GFS_physics_driver.o: ./GFS_layer/GFS_physics_driver.F90
-	$(CPP) $(CPPDEFS) $(CPPFLAGS) $< > $*.tmp.f90
-	$(FC) $(FFLAGS) $(OTHER_FFLAGS) -c $*.tmp.f90 -o $@
-./GFS_layer/GFS_radiation_driver.o: ./GFS_layer/GFS_radiation_driver.F90
-	$(CPP) $(CPPDEFS) $(CPPFLAGS) $< > $*.tmp.f90
-	$(FC) $(FFLAGS) $(OTHER_FFLAGS) -c $*.tmp.f90 -o $@
-
 .PHONY: clean
 clean:
 	@echo "Cleaning gfsphysics  ... "
