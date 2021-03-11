@@ -3239,6 +3239,9 @@ contains
      if (idiag%id_t_dt_nudge > 0) then
         used = send_data(idiag%id_t_dt_nudge, Atm(n)%nudge_diag%nudge_t_dt(isc:iec,jsc:jec,1:npz), Time)
      endif
+     if (idiag%id_column_heating_nudge > 0) then
+        used = send_data(idiag%id_column_heating_nudge, Atm(n)%nudge_diag%column_heating(isc:iec,jsc:jec), Time)
+     endif
      if (idiag%id_ps_dt_nudge > 0) then
         used = send_data(idiag%id_ps_dt_nudge, Atm(n)%nudge_diag%nudge_ps_dt(isc:iec,jsc:jec), Time)
      endif
@@ -3254,8 +3257,14 @@ contains
      if (idiag%id_u_dt_nudge > 0) then
         used = send_data(idiag%id_u_dt_nudge, Atm(n)%nudge_diag%nudge_u_dt(isc:iec,jsc:jec,1:npz), Time)
      endif
+     if (idiag%id_column_eastward_acceleration_nudge > 0) then
+        used = send_data(idiag%id_column_eastward_acceleration_nudge, Atm(n)%nudge_diag%column_eastward_acceleration(isc:iec,jsc:jec), Time)
+     endif
      if (idiag%id_v_dt_nudge > 0) then
         used = send_data(idiag%id_v_dt_nudge, Atm(n)%nudge_diag%nudge_v_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+     if (idiag%id_column_northward_acceleration_nudge > 0) then
+        used = send_data(idiag%id_column_northward_acceleration_nudge, Atm(n)%nudge_diag%column_northward_acceleration(isc:iec,jsc:jec), Time)
      endif
 
      if (idiag%id_t_dt_phys > 0) then
