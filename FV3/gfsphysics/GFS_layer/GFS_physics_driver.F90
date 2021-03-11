@@ -2107,10 +2107,12 @@ module module_physics_driver
       enddo
 
       if (Model%override_surface_radiative_fluxes) then
-        Diag%dlwsfci_rrtmg(i) = adjsfcdlw(i)
-        Diag%ulwsfci_rrtmg(i) = adjsfculw(i)
-        Diag%uswsfci_rrtmg(i) = adjsfcdsw(i) - adjsfcnsw(i)
-        Diag%dswsfci_rrtmg(i) = adjsfcdsw(i)
+        do i=1,im
+          Diag%dlwsfci_rrtmg(i) = adjsfcdlw(i)
+          Diag%ulwsfci_rrtmg(i) = adjsfculw(i)
+          Diag%uswsfci_rrtmg(i) = adjsfcdsw(i) - adjsfcnsw(i)
+          Diag%dswsfci_rrtmg(i) = adjsfcdsw(i)
+        enddo
       endif
 
 !  --- ...  update near surface fields
