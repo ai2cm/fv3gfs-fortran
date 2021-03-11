@@ -117,7 +117,8 @@ module fv_arrays_mod
      integer :: id_u_dt_nudge, id_v_dt_nudge, id_q_dt_nudge
      integer :: id_t_dt_phys, id_qv_dt_phys, id_liq_wat_dt_phys, id_ice_wat_dt_phys
      integer :: id_qr_dt_phys, id_qs_dt_phys, id_qg_dt_phys
-     integer :: id_column_moistening_nudge
+     integer :: id_column_moistening_nudge, id_columnn_heating_nudge
+     integer :: id_column_eastward_acceleration_nudge, id_columnn_northward_acceleration_nudge
 
   end type fv_diag_type
 
@@ -1144,6 +1145,9 @@ module fv_arrays_mod
       real, allocatable :: nudge_v_dt(:,:,:)
       real, allocatable :: nudge_q_dt(:,:,:)
       real, allocatable :: column_moistening(:,:)
+      real, allocatable :: column_heating(:,:)
+      real, allocatable :: column_eastward_acceleration(:,:)
+      real, allocatable :: column_northward_acceleration(:,:)
 
    end type nudge_diag_type
 

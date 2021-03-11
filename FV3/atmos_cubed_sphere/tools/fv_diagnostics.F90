@@ -1087,6 +1087,15 @@ contains
         Atm(n)%nudge_diag%nudge_t_dt(isc:iec,jsc:jec,npz) = 0.0
     endif
 
+    idiag%id_column_heating_nudge = register_diag_field('dynamics', &
+          'column_heating_nudge', axes(1:2), Time, &
+          'column integrated heating from nudging', &
+          'W/m**2', missing_value=missing_value)
+    if (idiag%id_column_heating_nudge > 0) then
+        allocate(Atm(n)%nudge_diag%column_heating(isc:iec,jsc:jec))
+        Atm(n)%nudge_diag%column_heating(isc:iec,jsc:jec) = 0.0
+    endif
+
     idiag%id_ps_dt_nudge = register_diag_field('dynamics', &
           'ps_dt_nudge', axes(1:2), Time, &
           'surface pressure tendency from nudging', &
@@ -1132,6 +1141,15 @@ contains
         Atm(n)%nudge_diag%nudge_u_dt(isc:iec,jsc:jec,npz) = 0.0
     endif
 
+    idiag%id_column_eastward_acceleration_nudge = register_diag_field('dynamics', &
+          'column_eastward_acceleration_nudge', axes(1:2), Time, &
+          'column integrated eastward wind tendency from nudging', &
+          'Pa', missing_value=missing_value)
+    if (idiag%id_column_eastward_acceleration_nudge > 0) then
+        allocate(Atm(n)%nudge_diag%column_eastward_acceleration(isc:iec,jsc:jec))
+        Atm(n)%nudge_diag%column_eastward_acceleration(isc:iec,jsc:jec) = 0.0
+    endif
+
     idiag%id_v_dt_nudge = register_diag_field('dynamics', &
           'v_dt_nudge', axes(1:3), Time, &
           'meridional wind tendency from nudging', &
@@ -1139,6 +1157,15 @@ contains
     if (idiag%id_v_dt_nudge > 0) then
         allocate(Atm(n)%nudge_diag%nudge_v_dt(isc:iec,jsc:jec,npz))
         Atm(n)%nudge_diag%nudge_v_dt(isc:iec,jsc:jec,npz) = 0.0
+    endif
+
+    idiag%id_column_northward_acceleration_nudge = register_diag_field('dynamics', &
+          'column_northward_acceleration_nudge', axes(1:2), Time, &
+          'column integrated northward wind tendency from nudging', &
+          'Pa', missing_value=missing_value)
+    if (idiag%id_column_northward_acceleration_nudge > 0) then
+        allocate(Atm(n)%nudge_diag%column_northward_acceleration(isc:iec,jsc:jec))
+        Atm(n)%nudge_diag%column_northward_acceleration(isc:iec,jsc:jec) = 0.0
     endif
 
     idiag%id_t_dt_phys = register_diag_field('dynamics', &
