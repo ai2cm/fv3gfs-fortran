@@ -3,6 +3,45 @@ orbs:
   gcp-cli: circleci/gcp-cli@2.1.0
   gcp-gcr: circleci/gcp-gcr@0.6.1
 jobs:
+  nix-mac:
+    macos:
+      xcode: 11.3.0
+    steps:
+      - run: sudo sh <(curl -L https://nixos.org/nix/install) --darwin-use-unencrypted-nix-store-volume
+      - run: nix-env -i git openssh
+      - checkout
+      - run:
+          name: "Pull Submodules"
+          command: |
+            git submodule init
+            git submodule update
+      - restore_cache:
+          keys: 
+            - key
+      - run: nix-build . -j 4
+  nix:
+    docker:
+      - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+    steps:
+      - run: nix-env -i git openssh google-cloud-sdk
+      - checkout
+      - run:
+          name: "gcloud auth"
+          command: |
+            echo $ENCODED_GCR_KEY | base64 -d > $GOOGLE_APPLICATION_CREDENTIALS
+      - run:
+          name: "Pull Submodules"
+          command: |
+            git submodule init
+            git submodule update
+      - run: |
+          nix-build nix -j 4
+      - run:
+          name: Test
+          command: nix-shell --run "pytest tests/pytest --capture=no --verbose --refdir /Users/noah/workspace/VulcanClimateModeling/fv3gfs-fortran/tests/pytest/reference/circleci --image_runner native"
   build_default:
     machine:
       docker_layer_caching: true
@@ -67,3 +106,5 @@ workflows:
   build:
     jobs:
       - build_default
+      - nix
+      - nix-mac

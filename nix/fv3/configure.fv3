@@ -2,10 +2,13 @@
 ############
 # commands #
 ############
+SHELL = bash
 FC = mpif90
 CC = mpicc
 CXX = g++
 LD = mpif90
+CPP = cpp
+
 
 NETCDF_DIR = /usr
 
@@ -17,7 +20,7 @@ DEBUG =
 REPRO = Y
 VERBOSE =
 OPENMP = Y
-AVX2 = Y
+AVX2 = N
 HYDRO = N
 32BIT = N
 
@@ -36,7 +39,7 @@ $(error Need at least make version $(need).  Load module gmake/3.81)
 endif
 
 NETCDF_ROOT = $(NETCDF_DIR)
-INCLUDE = -I$(NETCDF_ROOT)/include
+INCLUDE ?= -I$(NETCDF_ROOT)/include
 
 FPPFLAGS := -cpp -Wp,-w $(INCLUDE) -fPIC
 CFLAGS := $(INCLUDE) -fPIC
@@ -45,10 +48,6 @@ FFLAGS := $(INCLUDE) -fcray-pointer -ffree-line-length-none -fno-range-check -fP
  
 CPPDEFS += -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO -Duse_LARGEFILE -DUSE_GFSL63 -DGFS_PHYS -DNO_INLINE_POST
 CPPDEFS += -DNEW_TAUCTMAX -DINTERNAL_FILE_NML
-
-ifeq ($(GT4PY_DEV),Y)
-CPPDEFS += -DGT4PY_DEV
-endif
 
 ifeq ($(HYDRO),Y)
 CPPDEFS += 
@@ -63,14 +62,13 @@ FFLAGS += -fdefault-double-8 -fdefault-real-8
 endif
 
 ifeq ($(AVX2),Y)
-FFLAGS += -mavx
-CFLAGS += -mavx
+FFLAGS += -xCORE-AVX2 -qno-opt-dynamic-align
+CFLAGS += -xCORE-AVX2 -qno-opt-dynamic-align
 endif
 
 FFLAGS_OPT = -O2 
 FFLAGS_REPRO = -O2 -g -fbacktrace
 FFLAGS_DEBUG = -O0 -g -fbacktrace -fno-fast-math -ffree-line-length-none -fno-backslash -pedantic -Waliasing -Wampersand -Wline-truncation -Wsurprising -Wtabs -Wunderflow -fdump-core -ffpe-trap=invalid,zero,overflow -fbounds-check -finit-real=nan -finit-integer=9999999 -finit-logical=true -finit-character=35
-FFLAGS_GCOV = --coverage
 
 TRANSCENDENTALS := -fast-transcendentals
 FFLAGS_OPENMP = -fopenmp
@@ -82,15 +80,19 @@ CFLAGS_OPT = -O2
 CFLAGS_REPRO = -O2 
 CFLAGS_OPENMP = -fopenmp
 CFLAGS_DEBUG = -O0 -g 
-CFLAGS_GCOV = --coverage
 
-LDFLAGS := -L${ESMF_DIR}/lib -L${FMS_DIR}/libFMS/.libs/
+# Optional Testing compile flags.  Mutually exclusive from DEBUG, REPRO, and OPT
+# *_TEST will match the production if no new option(s) is(are) to be tested.
+FFLAGS_TEST = -O3 -debug minimal -fp-model source -qoverride-limits
+CFLAGS_TEST = -O2
+
+#LDFLAGS := -L${ESMF_DIR}/lib/libO3/Darwin.gfortran.64.mpiuni.default/ -L${FMS_DIR}/libFMS/.libs/
 LDFLAGS_OPENMP := -fopenmp
 LDFLAGS_VERBOSE := -Wl,-V,--verbose,-cref,-M
-LDFLAGS_GCOV = --coverage
 
 # start with blank LIBS
 LIBS :=
+
 LIBS += -lgfortran
 
 ifneq ($(REPRO),)
@@ -111,16 +113,13 @@ FFLAGS += $(FFLAGS_OPT)
 FAST := $(TRANSCENDENTALS)
 endif
 
-ifneq ($(GCOV),)
-CFLAGS += $(CFLAGS_GCOV)
-FFLAGS += $(FFLAGS_GCOV)
-LDFLAGS += $(LDFLAGS_GCOV)
-endif
-
 ifneq ($(OPENMP),)
 CFLAGS += $(CFLAGS_OPENMP)
 FFLAGS += $(FFLAGS_OPENMP)
 LDFLAGS += $(LDFLAGS_OPENMP)
+# to correct a loader bug on gaea: envars below set by module load intel
+#LIBS += -L$(INTEL_PATH)/$(INTEL_MAJOR_VERSION)/$(INTEL_MINOR_VERSION)/lib/intel64 -lifcoremt
+#LIBS += -lifcoremt
 endif
 
 ifneq ($(VERBOSE),)
@@ -129,6 +128,8 @@ FFLAGS += $(FFLAGS_VERBOSE)
 LDFLAGS += $(LDFLAGS_VERBOSE)
 endif
 
-LIBS += -lFMS -L/usr/local/esmf/lib -lesmf -lnetcdff -lnetcdf -llapack -lblas -lc -lrt
+# static linking of esmf works on darwin
+#LIBS += -lFMS -lnetcdff -lnetcdf -llapack -lblas ${ESMF_DIR}/lib/libesmf.a -lstdc++ #-lc -lrt
+LIBS += -lFMS -lnetcdff -lnetcdf -llapack -lblas -lesmf #-lc -lrt
 
 LDFLAGS += $(LIBS)
