@@ -29,6 +29,10 @@ stdenv.mkDerivation {
       getopt
   ];
 
+  propagatedBuildInputs = [
+    mpich
+  ];
+
   srcs = [
     ../../FV3/.
     ../../stochastic_physics/.
