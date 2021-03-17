@@ -1,14 +1,3 @@
-with import <nixpkgs> {};
-# { stdenv
-# , netcdffortran
-# , perl
-# , gfortran
-# , lapack
-# , blas
-# , openmpi
-# , fetchgit
-# }:
-# 
 {
   stdenvNoCC
   ,netcdffortran
@@ -17,6 +6,7 @@ with import <nixpkgs> {};
   ,coreutils
   ,which
   ,llvmPackages
+  ,lib
 }:
 stdenvNoCC.mkDerivation rec {
   pname = "esmf";
@@ -63,22 +53,11 @@ stdenvNoCC.mkDerivation rec {
   # nativeBuildInputs = [ m4 ];
   # buildInputs = [ hdf5 curl mpi ];
   buildInputs = [ netcdffortran gfortran mpich gfortran.cc coreutils which 
-    (lib.optional stdenv.isDarwin llvmPackages.openmp)
+    (lib.optional stdenvNoCC.isDarwin llvmPackages.openmp)
   ] ;
   inherit netcdffortran gfortran;
   CXX="${gfortran}/bin/g++";
   CC="${gfortran}/bin/gcc";
   ESMF_CXXCOMPILER="${CXX}";
   ESMF_CCOMPILER="${CC}";
-
-
-
-  meta = {
-      description = "Libraries for the Unidata network Common Data Format";
-      platforms = stdenv.lib.platforms.unix;
-      homepage = "https://www.unidata.ucar.edu/software/netcdf/";
-      license = {
-        url = "https://www.unidata.ucar.edu/software/netcdf/docs/copyright.html";
-      };
-  };
 }

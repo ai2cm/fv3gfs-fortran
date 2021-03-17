@@ -40,12 +40,4 @@ stdenv.mkDerivation rec {
     ./configure --prefix=$out
   '';
 
-  meta = {
-      description = "Libraries for the Unidata network Common Data Format";
-      platforms = stdenv.lib.platforms.unix;
-      homepage = "https://www.unidata.ucar.edu/software/netcdf/";
-      license = {
-        url = "https://www.unidata.ucar.edu/software/netcdf/docs/copyright.html";
-      };
-  };
 }
