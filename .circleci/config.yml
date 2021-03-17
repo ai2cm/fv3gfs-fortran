@@ -7,7 +7,9 @@ jobs:
     macos:
       xcode: 11.3.0
     steps:
-      - run: sudo sh <(curl -L https://nixos.org/nix/install) --darwin-use-unencrypted-nix-store-volume
+      - run: |
+          curl -L -O https://nixos.org/nix/install
+          sudo sh install --darwin-use-unencrypted-nix-store-volume
       - run: |
           nix-env -i git openssh
           nix-env -iA cachix -f https://cachix.org/api/v1/install
