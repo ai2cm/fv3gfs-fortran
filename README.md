@@ -204,7 +204,7 @@ light weight means to distribute isolated software environments.
 
 To begin, install nix following [these instructions](https://nixos.org/download.html).
 
-We host binaries using a tool called cachix, and this will greatly speed up any builds. To use our binaries, [install cachix](https://github.com/cachix/cachix#installation) and then run
+(optional) We host binaries using a tool called cachix, and this will greatly speed up any builds. To use our binaries, [install cachix](https://github.com/cachix/cachix#installation) and then run
 
     cachix use vulcanclimatemodeling
 
