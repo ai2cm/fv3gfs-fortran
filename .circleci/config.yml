@@ -18,7 +18,7 @@ jobs:
           command: |
             git submodule init
             git submodule update
-      - run: nix-build -j 4 | cachix push
+      - run: nix-build -j 4 | cachix push nbren12
   nix:
     docker:
       - image: nixos/nix
@@ -43,7 +43,7 @@ jobs:
       - run: |
           nix-env -iA cachix -f https://cachix.org/api/v1/install
           cachix use nbren12
-          nix-build -j 4 | cachix push
+          nix-build -j 4 | cachix push nbren12
       - save_cache:
           paths:
             - $FV3CONFIG_CACHE_DIR
