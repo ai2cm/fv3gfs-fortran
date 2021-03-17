@@ -18,7 +18,7 @@ jobs:
       - restore_cache:
           keys: 
             - key
-      - run: nix-build . -j 4
+      - run: nix-build -j 4
   nix:
     docker:
       - image: nixos/nix
@@ -38,7 +38,7 @@ jobs:
             git submodule init
             git submodule update
       - run: |
-          nix-build nix -j 4
+          nix-build -j 4
       - run:
           name: Test
           command: nix-shell --run "pytest tests/pytest --capture=no --verbose --refdir /Users/noah/workspace/VulcanClimateModeling/fv3gfs-fortran/tests/pytest/reference/circleci --image_runner native"
