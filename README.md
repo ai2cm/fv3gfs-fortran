@@ -208,7 +208,25 @@ To begin, install nix following [these instructions](https://nixos.org/download.
 
     cachix use vulcanclimatemodeling
 
+Finally, you can build the model like this 
+
+    nix-build -A fv3
+
 Without using the cachix cache, FV3 and all its dependencies will need to build from source (~20 minutes). This only happens once per machine, but it is slow.
+
+## Running simple tests
+
+Now you can enter a shell with fv3 and all its dependencies installed by
+running
+
+    nix-shell tests.nix
+
+This will download all the dependencies from the internet, building any
+uncached packages from scratch.
+
+Then, you can run a simple test by running
+    
+    tox
 
 ## Developing
 
@@ -225,17 +243,3 @@ And build the model
 
     cd FV3
     make
-
-## Running simple tests
-
-Now you can enter a shell with fv3 and all its dependencies installed by
-running
-
-    nix-shell tests.nix
-
-This will download all the dependencies from the internet, building any
-uncached packages from scratch.
-
-Then, you can run a simple test by running
-    
-    tox
