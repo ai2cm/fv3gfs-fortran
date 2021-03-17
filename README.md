@@ -191,3 +191,51 @@ directory (it is `/FV3` by default) that you have bind-mounted in to the contain
 
 If you are using a version of docker that supports it, you can enable buildkit by
 setting `DOCKER_BUILDKIT=1` as an environment variable. This can be useful when building docker targets in this repo, because it will avoid building mulit-stage targets that are not required for the final image.
+
+# Nix
+
+
+
+FV3 can also be installed using the [nix](https://nixos.org/) package
+manager. This package manager is available on Mac and Linux, and provides a
+light weight means to distribute isolated software environments.
+
+## Installation
+
+To begin, install nix following [these instructions](https://nixos.org/download.html).
+
+We host binaries using a tool called cachix, and this will greatly speed up any builds. To use our binaries, [install cachix](https://github.com/cachix/cachix#installation) and then run
+
+    cachix use vulcanclimatemodeling
+
+Without using the cachix cache, FV3 and all its dependencies will need to build from source (~20 minutes).
+
+## Developing
+
+To develop the model, you can use the environment specified in `shell.nix` by running
+
+    nix-shell
+
+Then copy the nix build configuration file to the magic location harcoded in
+the FV3 makefiles:
+
+    cp -f conf/fv3/configure.fv3 FV3/conf/
+
+And build the model
+
+    cd FV3
+    make
+
+## Running simple tests
+
+Now you can enter a shell with fv3 and all its dependencies installed by
+running
+
+    nix-shell tests.nix
+
+This will download all the dependencies from the internet, building any
+uncached packages from scratch.
+
+Then, you can run a simple test by running
+    
+    tox
