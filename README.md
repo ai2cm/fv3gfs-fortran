@@ -208,7 +208,7 @@ We host binaries using a tool called cachix, and this will greatly speed up any 
 
     cachix use vulcanclimatemodeling
 
-Without using the cachix cache, FV3 and all its dependencies will need to build from source (~20 minutes).
+Without using the cachix cache, FV3 and all its dependencies will need to build from source (~20 minutes). This only happens once per machine, but it is slow.
 
 ## Developing
 
