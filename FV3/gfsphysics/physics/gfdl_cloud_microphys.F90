@@ -2189,13 +2189,13 @@ subroutine subgrid_z_proc (ktop, kbot, p1, den, denfac, dts, rh_adj, tz, qv, &
                     qi_crt = qi_gen / den (k)
                 if (igflag .eq. 2) &
                     ! WSM6 with 0 at 0 C
-                    qi_crt = qi_gen * min (qi_lim, 0.1 * tmp) / den (k)
+                    qi_crt = qi_gen * min (qi_lim, 1.0 * tmp) / den (k)
                 if (igflag .eq. 3) &
                     ! WSM6 with 0 at 0 C and fixed value at -10 C
-                    qi_crt = 1.82e-6 * min (qi_lim, 0.1 * tmp) / den (k)
+                    qi_crt = 1.82e-6 * min (qi_lim, 1.0 * tmp) / den (k)
                 if (igflag .eq. 4) &
                     ! combination of 1 and 3
-                    qi_crt = max (qi_gen, 1.82e-6) * min (qi_lim, 0.1 * tmp) / den (k)
+                    qi_crt = max (qi_gen, 1.82e-6) * min (qi_lim, 1.0 * tmp) / den (k)
                 sink = min (sink, max (qi_crt - qi (k), pidep), tmp / tcpk (k))
             else ! ice -- > vapor
                 pidep = pidep * min (1., dim (tz (k), t_sub) * 0.2)
