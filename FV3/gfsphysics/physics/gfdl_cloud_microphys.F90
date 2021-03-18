@@ -215,14 +215,6 @@ module gfdl_cloud_microphys_mod
     
     real :: rthresh = 10.0e-6 !< critical cloud drop radius (micro m)
     
-    ! -----------------------------------------------------------------------
-    ! wrf / wsm6 scheme: qi_gen = 4.92e-11 * (1.e3 * exp (0.1 * tmp)) ** 1.33
-    ! optimized: qi_gen = 4.92e-11 * exp (1.33 * log (1.e3 * exp (0.1 * tmp)))
-    ! qi_gen ~ 4.808e-7 at 0 c; 1.818e-6 at - 10 c, 9.82679e-5 at - 40c
-    ! the following value is constructed such that qc_crt = 0 at zero c and @ - 10c matches
-    ! wrf / wsm6 ice initiation scheme; qi_crt = qi_gen * min (qi_lim, 0.1 * tmp) / den
-    ! -----------------------------------------------------------------------
-    
     real :: sat_adj0 = 0.90 !< adjustment factor (0: no, 1: full) during fast_sat_adj
     
     real :: qc_crt = 5.0e-8 !< mini condensate mixing ratio to allow partial cloudiness
@@ -233,7 +225,6 @@ module gfdl_cloud_microphys_mod
     real :: qs_mlt = 1.0e-6 !< max cloud water due to snow melt
     
     real :: ql_gen = 1.0e-3 !< max cloud water generation during remapping step if fast_sat_adj = .t.
-    real :: qi_gen = 1.82e-6 !< max cloud ice generation during remapping step
     
     ! cloud condensate upper bounds: "safety valves" for ql & qi
     
@@ -291,6 +282,9 @@ module gfdl_cloud_microphys_mod
     ! real :: global_area = - 1.
     
     real :: log_10, tice0, t_wfr
+
+    integer :: inflag = 1 ! ice nucleation scheme
+    integer :: igflag = 3 ! ice generation scheme
     
     integer :: reiflag = 1
     ! 1: Heymsfield and Mcfarquhar, 1996
@@ -311,7 +305,7 @@ module gfdl_cloud_microphys_mod
     namelist / gfdl_cloud_microphysics_nml /                                  &
         mp_time, t_min, t_sub, tau_r2g, tau_smlt, tau_g2r, dw_land, dw_ocean, &
         vi_fac, vr_fac, vs_fac, vg_fac, ql_mlt, do_qa, fix_negative, vi_max,  &
-        vs_max, vg_max, vr_max, qs_mlt, qs0_crt, qi_gen, ql0_max, qi0_max,    &
+        vs_max, vg_max, vr_max, qs_mlt, qs0_crt, ql0_max, qi0_max,            &
         qi0_crt, qr0_crt, fast_sat_adj, rh_inc, rh_ins, rh_inr, const_vi,     &
         const_vs, const_vg, const_vr, use_ccn, rthresh, ccn_l, ccn_o, qc_crt, &
         tau_g2v, tau_v2g, sat_adj0, c_piacr, tau_imlt, tau_v2l, tau_l2v,      &
@@ -320,12 +314,12 @@ module gfdl_cloud_microphys_mod
         rad_snow, rad_graupel, rad_rain, cld_min, use_ppm, mono_prof,         &
         do_sedi_heat, sedi_transport, do_sedi_w, de_ice, icloud_f, irain_f,   &
         mp_print, reiflag, rewmin, rewmax, reimin, reimax, rermin, rermax,    &
-        resmin, resmax, regmin, regmax, tintqs
+        resmin, resmax, regmin, regmax, tintqs, inflag, igflag
     
     public                                                                    &
         mp_time, t_min, t_sub, tau_r2g, tau_smlt, tau_g2r, dw_land, dw_ocean, &
         vi_fac, vr_fac, vs_fac, vg_fac, ql_mlt, do_qa, fix_negative, vi_max,  &
-        vs_max, vg_max, vr_max, qs_mlt, qs0_crt, qi_gen, ql0_max, qi0_max,    &
+        vs_max, vg_max, vr_max, qs_mlt, qs0_crt, ql0_max, qi0_max,            &
         qi0_crt, qr0_crt, fast_sat_adj, rh_inc, rh_ins, rh_inr, const_vi,     &
         const_vs, const_vg, const_vr, use_ccn, rthresh, ccn_l, ccn_o, qc_crt, &
         tau_g2v, tau_v2g, sat_adj0, c_piacr, tau_imlt, tau_v2l, tau_l2v,      &
@@ -334,7 +328,7 @@ module gfdl_cloud_microphys_mod
         rad_snow, rad_graupel, rad_rain, cld_min, use_ppm, mono_prof,         &
         do_sedi_heat, sedi_transport, do_sedi_w, de_ice, icloud_f, irain_f,   &
         mp_print, reiflag, rewmin, rewmax, reimin, reimax, rermin, rermax,    &
-        resmin, resmax, regmin, regmax, tintqs 
+        resmin, resmax, regmin, regmax, tintqs, inflag, igflag
     
 contains
 
@@ -1562,7 +1556,7 @@ subroutine icloud (ktop, kbot, tzk, p1, qvk, qlk, qrk, qik, qsk, qgk, dp1, &
             dtmp = t_wfr - tzk (k)
             factor = min (1., dtmp / dt_fr)
             sink = min (qlk (k) * factor, dtmp / icpk (k))
-            qi_crt = qi_gen * min (qi_lim, 0.1 * (tice - tzk (k))) / den (k)
+            qi_crt = 1.82e-6 * min (qi_lim, 0.1 * (tice - tzk (k))) / den (k)
             tmp = min (sink, dim (qi_crt, qik (k)))
             qlk (k) = qlk (k) - sink
             qsk (k) = qsk (k) + sink - tmp
@@ -1977,7 +1971,7 @@ subroutine subgrid_z_proc (ktop, kbot, p1, den, denfac, dts, rh_adj, tz, qv, &
     
     real :: fac_v2l, fac_l2v
     
-    real :: pidep, qi_crt
+    real :: pidep, qi_crt, cin, qi_gen
     
     ! -----------------------------------------------------------------------
     ! qstar over water may be accurate only down to - 80 deg c with ~10% uncertainty
@@ -2167,18 +2161,41 @@ subroutine subgrid_z_proc (ktop, kbot, p1, den, denfac, dts, rh_adj, tz, qv, &
             dq = qv (k) - qsi
             sink = dq / (1. + tcpk (k) * dqsdt)
             if (qi (k) > qrmin) then
-                ! eq 9, hong et al. 2004, mwr
-                ! for a and b, see dudhia 1989: page 3103 eq (b7) and (b8)
-                pidep = dt_pisub * dq * 349138.78 * exp (0.875 * log (qi (k) * den (k))) &
+                if (inflag .eq. 1) &
+                    ! Hong et al., 2004
+                    cin = 5.38e7 * exp (0.75 * log (qi (k) * den (k)))
+                if (inflag .eq. 2) &
+                    ! Meyers et al., 1992
+                    cin = exp (-2.80 + 0.262 * (tice - tz (k))) * 1000.0
+                if (inflag .eq. 3) &
+                    ! Meyers et al., 1992
+                    cin = exp (-0.639 + 12.96 * (qv (k) / qsi - 1.0)) * 1000.0
+                if (inflag .eq. 4) &
+                    ! Cooper, 1986
+                    cin = 5.e-3 * exp (0.304 * (tice - tz (k))) * 1000.0
+                if (inflag .eq. 5) &
+                    ! Flecther, 1962
+                    cin = 1.e-5 * exp (0.5 * (tice - tz (k))) * 1000.0
+                pidep = dt_pisub * dq * 4.0 * 11.9 * exp (0.5 * log (qi (k) * den (k) * cin)) &
                      / (qsi * den (k) * lat2 / (0.0243 * rvgas * tz (k) ** 2) + 4.42478e4)
             else
                 pidep = 0.
             endif
             if (dq > 0.) then ! vapor - > ice
                 tmp = tice - tz (k)
-                ! 20160912: the following should produce more ice at higher altitude
-                ! qi_crt = 4.92e-11 * exp (1.33 * log (1.e3 * exp (0.1 * tmp))) / den (k)
-                qi_crt = qi_gen * min (qi_lim, 0.1 * tmp) / den (k)
+                qi_gen = 4.92e-11 * exp (1.33 * log (1.e3 * exp (0.1 * tmp)))
+                if (igflag .eq. 1) &
+                    ! WSM6
+                    qi_crt = qi_gen / den (k)
+                if (igflag .eq. 2) &
+                    ! WSM6 with 0 at 0 C
+                    qi_crt = qi_gen * min (qi_lim, 0.1 * tmp) / den (k)
+                if (igflag .eq. 3) &
+                    ! WSM6 with 0 at 0 C and fixed value at -10 C
+                    qi_crt = 1.82e-6 * min (qi_lim, 0.1 * tmp) / den (k)
+                if (igflag .eq. 4) &
+                    ! combination of 1 and 3
+                    qi_crt = max (qi_gen, 1.82e-6) * min (qi_lim, 0.1 * tmp) / den (k)
                 sink = min (sink, max (qi_crt - qi (k), pidep), tmp / tcpk (k))
             else ! ice -- > vapor
                 pidep = pidep * min (1., dim (tz (k), t_sub) * 0.2)
