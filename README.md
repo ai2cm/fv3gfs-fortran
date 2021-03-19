@@ -237,7 +237,7 @@ To develop the model, you can use the environment specified in `shell.nix` by ru
 Then copy the nix build configuration file to the magic location harcoded in
 the FV3 makefiles:
 
-    cp -f conf/fv3/configure.fv3 FV3/conf/
+    cp -f nix/fv3/configure.fv3 FV3/conf/
 
 And build the model
 
