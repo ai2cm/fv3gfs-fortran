@@ -298,6 +298,10 @@ module gfdl_cloud_microphys_mod
     real :: resmin = 150.0, resmax = 10000.0
     real :: regmin = 300.0, regmax = 10000.0
     
+    ! Linjiong-Noah custom tunining parameters
+    ! TODO give these better names
+    real :: p20210319 = 1.0
+
     ! -----------------------------------------------------------------------
     ! namelist
     ! -----------------------------------------------------------------------
@@ -314,7 +318,7 @@ module gfdl_cloud_microphys_mod
         rad_snow, rad_graupel, rad_rain, cld_min, use_ppm, mono_prof,         &
         do_sedi_heat, sedi_transport, do_sedi_w, de_ice, icloud_f, irain_f,   &
         mp_print, reiflag, rewmin, rewmax, reimin, reimax, rermin, rermax,    &
-        resmin, resmax, regmin, regmax, tintqs, inflag, igflag
+        resmin, resmax, regmin, regmax, tintqs, inflag, igflag, p20210319
     
     public                                                                    &
         mp_time, t_min, t_sub, tau_r2g, tau_smlt, tau_g2r, dw_land, dw_ocean, &
@@ -328,7 +332,7 @@ module gfdl_cloud_microphys_mod
         rad_snow, rad_graupel, rad_rain, cld_min, use_ppm, mono_prof,         &
         do_sedi_heat, sedi_transport, do_sedi_w, de_ice, icloud_f, irain_f,   &
         mp_print, reiflag, rewmin, rewmax, reimin, reimax, rermin, rermax,    &
-        resmin, resmax, regmin, regmax, tintqs, inflag, igflag
+        resmin, resmax, regmin, regmax, tintqs, inflag, igflag, p20210319
     
 contains
 
@@ -2198,7 +2202,7 @@ subroutine subgrid_z_proc (ktop, kbot, p1, den, denfac, dts, rh_adj, tz, qv, &
                     qi_crt = max (qi_gen, 1.82e-6) * min (qi_lim, 1.0 * tmp) / den (k)
                 sink = min (sink, max (qi_crt - qi (k), pidep), tmp / tcpk (k))
             else ! ice -- > vapor
-                pidep = pidep * min (1., dim (tz (k), t_sub) / (tice - t_sub))
+                pidep = pidep * min (1., dim (tz (k), t_sub) / (tice - t_sub) * p20210319)
                 sink = max (pidep, sink, - qi (k))
             endif
             qv (k) = qv (k) - sink
