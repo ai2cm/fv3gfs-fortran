@@ -10,10 +10,11 @@ let
 
   nixpkgs = import (builtins.fetchTarball {
   # Descriptive name to make the store path easier to identify
-  name = "release-20.09";
-  # Commit hash for nixos-unstable as of 2018-09-12
-  url = "https://github.com/nixos/nixpkgs/archive/20.09.tar.gz";
+  name = "nixos-unstable-as-of-2021-19";
+  # this commit has caches on cache.nixos.org, but doesn't update the mpich
+  # version from 20.09
+  url = "https://github.com/nixos/nixpkgs/archive/7750e6a2c95dd157d4f75a6af00923910870dd5e.tar.gz";
   # Hash obtained using `nix-prefetch-url --unpack <url>`
-  sha256 = "1wg61h4gndm3vcprdcg7rc4s1v3jkm5xd7lw8r2f67w502y94gcy";
+  sha256 = "0mw0w4mk65a6k2v6mdwa5id5rq01sjbx1klcmri9m7i77q7mzd5x";
 }) {overlays = [overlay];};
 in nixpkgs
