@@ -2198,7 +2198,7 @@ subroutine subgrid_z_proc (ktop, kbot, p1, den, denfac, dts, rh_adj, tz, qv, &
                     qi_crt = max (qi_gen, 1.82e-6) * min (qi_lim, 1.0 * tmp) / den (k)
                 sink = min (sink, max (qi_crt - qi (k), pidep), tmp / tcpk (k))
             else ! ice -- > vapor
-                pidep = pidep * min (1., dim (tz (k), t_sub) * 0.2)
+                pidep = pidep * min (1., dim (tz (k), t_sub) / (tice - t_sub))
                 sink = max (pidep, sink, - qi (k))
             endif
             qv (k) = qv (k) - sink
