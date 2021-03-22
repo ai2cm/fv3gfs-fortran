@@ -4,7 +4,7 @@ module coarse_grained_diagnostics_mod
   use diag_manager_mod, only: diag_axis_init, register_diag_field, register_static_field, send_data
   use field_manager_mod,  only: MODEL_ATMOS
   use fv_arrays_mod, only: fv_atmos_type, fv_coarse_graining_type
-  use fv_diagnostics_mod, only: cs3_interpolator, get_height_given_pressure
+  use fv_diagnostics_mod, only: cs3_interpolator, get_height_field, get_height_given_pressure
   use fv_mapz_mod, only: moist_cp, moist_cv
   use mpp_domains_mod, only: domain2d, EAST, NORTH
   use mpp_mod, only: FATAL, mpp_error
@@ -745,7 +745,6 @@ contains
       zsurf = Atm(tile_count)%phis(is:ie,js:je) / grav
       call get_height_field(is, ie, js, je, Atm(tile_count)%ng, npz, &
            Atm(tile_count)%flagstruct%hydrostatic, &
-           zsurf, &
            Atm(tile_count)%delz, &
            height_on_interfaces, &
            Atm(tile_count)%pt, &
@@ -1271,44 +1270,4 @@ contains
     factor = Atm(tile_count)%coarse_graining%factor
     grid_coarse = Atm(tile_count)%gridstruct%grid(is:ie+1:factor,js:je+1:factor,:)
   end subroutine compute_grid_coarse
-
-  subroutine get_height_field(is, ie, js, je, ng, km, hydrostatic, zsurf, delz, wz, pt, q, peln, zvir)
-    integer, intent(in):: is, ie, js, je, km, ng
-    real, intent(in):: peln(is:ie,km+1,js:je)
-    real, intent(in):: pt(is-ng:ie+ng,js-ng:je+ng,km)
-    real, intent(in)::  q(is-ng:ie+ng,js-ng:je+ng,km,*) ! water vapor
-    real, intent(in):: delz(is-ng:ie+ng,js-ng:je+ng,1:km)
-    real, intent(in):: zvir
-    logical, intent(in):: hydrostatic
-    real, intent(in) :: zsurf(is:ie,js:je)
-    real, intent(out):: wz(is:ie,js:je,km+1)
-  !
-    integer i,j,k, sphum
-    real gg
-  
-        sphum = get_tracer_index (MODEL_ATMOS, 'sphum')
-        gg  = rdgas / grav
-  
-        do j=js,je
-           do i=is,ie
-              wz(i,j,km+1) = zsurf(i,j)
-           enddo
-        if (hydrostatic ) then
-           do k=km,1,-1
-              do i=is,ie
-                 wz(i,j,k) = wz(i,j,k+1) + gg*pt(i,j,k)*(1.+ zvir*q(i,j,k,sphum))  &
-                            *(peln(i,k+1,j)-peln(i,k,j))
-              enddo
-           enddo
-        else
-           do k=km,1,-1
-              do i=is,ie
-                 wz(i,j,k) = wz(i,j,k+1)  - delz(i,j,k)
-              enddo
-           enddo
-        endif
-        enddo
-  
-   end subroutine get_height_field
-  
 end module coarse_grained_diagnostics_mod
