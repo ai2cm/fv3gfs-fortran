@@ -740,8 +740,6 @@ contains
 
     if (need_height_array) then
       allocate(height_on_interfaces(is:ie,js:je,1:npz+1))
-      allocate(zsurf(is:ie,js:je))
-      zsurf = Atm(tile_count)%phis(is:ie,js:je) / grav
       call get_height_field(is, ie, js, je, Atm(tile_count)%ng, npz, &
            Atm(tile_count)%flagstruct%hydrostatic, &
            Atm(tile_count)%delz, &
