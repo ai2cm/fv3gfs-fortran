@@ -674,6 +674,7 @@ module module_physics_driver
       real(kind=kind_phys), allocatable, dimension(:,:) :: den
       real(kind=kind_phys), allocatable, dimension(:,:) :: dqdt_work
       real(kind=kind_phys), pointer :: adjsfcdlw_for_lsm(:), adjsfcdsw_for_lsm(:), adjsfcnsw_for_lsm(:)
+      real(kind=kind_phys), pointer :: sea_surface_temperature(:)
       integer :: nwat
 
       !! Initialize local variables (mainly for debugging purposes, because the
@@ -728,6 +729,11 @@ module module_physics_driver
         adjsfcnsw_for_lsm => adjsfcnsw
       endif
 
+      if (Model%prescribe_sst_from_wrapper) then
+        sea_surface_temperature => Statein%sst_from_wrapper
+      else
+        sea_surface_temperature => Sfcprop%tsfc
+      endif
 !-------
 ! For COORDE-2019 averaging with fwindow, it was done before
 ! 3Diag fixes and averaging ingested using "fdaily"-factor
@@ -2089,16 +2095,6 @@ module module_physics_driver
             Sfcprop%tsfc(i) = Statein%atm_ts(i) + Model%sst_perturbation
             Sfcprop%tsfco(i) = Statein%atm_ts(i) + Model%sst_perturbation
             tsfc3(i,3) = Statein%atm_ts(i) + Model%sst_perturbation
-          endif
-        enddo
-      endif
-
-      if (Model%prescribe_sst_from_wrapper) then
-        do i = 1, im
-          if (islmsk(i) == 0 ) then
-            Sfcprop%tsfc(i) = Statein%sst_from_wrapper(i) + Model%sst_perturbation
-            Sfcprop%tsfco(i) = Statein%sst_from_wrapper(i) + Model%sst_perturbation
-            tsfc3(i,3) = Statein%sst_from_wrapper(i) + Model%sst_perturbation
           endif
         enddo
       endif
