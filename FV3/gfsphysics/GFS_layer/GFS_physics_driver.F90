@@ -2093,6 +2093,16 @@ module module_physics_driver
         enddo
       endif
 
+      if (Model%prescribe_sst_from_wrapper) then
+        do i = 1, im
+          if (islmsk(i) == 0 ) then
+            Sfcprop%tsfc(i) = Statein%sst_from_wrapper(i) + Model%sst_perturbation
+            Sfcprop%tsfco(i) = Statein%sst_from_wrapper(i) + Model%sst_perturbation
+            tsfc3(i,3) = Statein%sst_from_wrapper(i) + Model%sst_perturbation
+          endif
+        enddo
+      endif
+
       do i=1,im
         Diag%epi(i)     = ep1d(i)
         Diag%dlwsfci(i) = adjsfcdlw_for_lsm(i)

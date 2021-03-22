@@ -193,6 +193,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: adjsfcdlw_override(:) => null()  !< override to the downward longwave radiation flux at the surface
     real (kind=kind_phys), pointer :: adjsfcdsw_override(:) => null()  !< override to the downward shortwave radiation flux at the surface
     real (kind=kind_phys), pointer :: adjsfcnsw_override(:) => null()  !< override to the net shortwave radiation flux at the surface
+    real (kind=kind_phys), pointer :: sst_from_wrapper(:) => null()    !< sea surface temperature set by the Python wrapper
     contains
       procedure :: create  => statein_create  !<   allocate array data
   end type GFS_statein_type
@@ -1084,6 +1085,7 @@ module GFS_typedefs
     logical :: iau_filter_increments
     real(kind=kind_phys) :: sst_perturbation  ! Sea surface temperature perturbation to climatology or nudging SST (default 0.0 K)
     logical :: override_surface_radiative_fluxes  ! Whether to use Statein to override the surface radiative fluxes
+    logical :: prescribe_sst_from_wrapper  ! Whether to prescribe the sea surface temperature via the Python wrapper
 #ifdef CCPP
     ! From physcons.F90, updated/set in control_initialize
     real(kind=kind_phys) :: dxinv           ! inverse scaling factor for critical relative humidity, replaces dxinv in physcons.F90
@@ -2033,6 +2035,11 @@ module GFS_typedefs
       Statein%adjsfcdlw_override = 0.0
       Statein%adjsfcdsw_override = 0.0
       Statein%adjsfcnsw_override = 0.0
+    endif
+
+    if (Model%prescribe_sst_from_wrapper) then
+      allocate(Statein%sst_from_wrapper(IM))
+      Statein%sst_from_wrapper = 0.0
     endif
   end subroutine statein_create
 
@@ -3128,6 +3135,7 @@ module GFS_typedefs
 
     real(kind=kind_phys) :: sst_perturbation = 0.0  ! Sea surface temperature perturbation [K]
     logical :: override_surface_radiative_fluxes = .false.
+    logical :: prescribe_sst_from_wrapper = .false.
 !--- END NAMELIST VARIABLES
 
     NAMELIST /gfs_physics_nml/                                                              &
@@ -3219,7 +3227,7 @@ module GFS_typedefs
                           !--- aerosol scavenging factors ('name:value' string array)
                                fscav_aero, &
                                sst_perturbation,                                            & 
-                               override_surface_radiative_fluxes
+                               override_surface_radiative_fluxes, prescribe_sst_from_wrapper
 
 !--- other parameters 
     integer :: nctp    =  0                !< number of cloud types in CS scheme
@@ -3688,6 +3696,7 @@ module GFS_typedefs
 
     Model%sst_perturbation = sst_perturbation
     Model%override_surface_radiative_fluxes = override_surface_radiative_fluxes
+    Model%prescribe_sst_from_wrapper = prescribe_sst_from_wrapper
 !--- tracer handling
     Model%ntrac            = size(tracer_names)
 #ifdef CCPP
@@ -4496,6 +4505,7 @@ module GFS_typedefs
       print *, ' isot              : ', Model%isot
       print *, ' sst_perturbation  : ', Model%sst_perturbation
       print *, ' override_surface_radiative_fluxes: ', Model%override_surface_radiative_fluxes
+      print *, ' prescribe_sst_from_wrapper: ', Model%prescribe_sst_from_wrapper
       if (Model%lsm == Model%lsm_noahmp) then
       print *, ' Noah MP LSM is used, the options are'
       print *, ' iopt_dveg         : ', Model%iopt_dveg
