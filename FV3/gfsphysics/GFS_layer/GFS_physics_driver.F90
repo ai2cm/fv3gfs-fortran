@@ -1135,7 +1135,7 @@ module module_physics_driver
         do i = 1, IM
           frland(i) = zero
           if (islmsk(i) == 0) then
-            Sfcprop%tsfco(i) = Sfcprop%tsfc(i)
+            Sfcprop%tsfco(i) = sea_surface_temperature(i)
             wet(i)  = .true.
             fice(i) = zero
           elseif (islmsk(i) == 1) then
