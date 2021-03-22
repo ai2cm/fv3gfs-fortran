@@ -730,7 +730,7 @@ module module_physics_driver
       endif
 
       if (Model%prescribe_sst_from_wrapper) then
-        sea_surface_temperature => Statein%sst_from_wrapper
+        sea_surface_temperature => Sfcprop%tsfco
       else
         sea_surface_temperature => Sfcprop%tsfc
       endif

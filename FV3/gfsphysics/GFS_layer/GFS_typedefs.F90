@@ -193,7 +193,6 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: adjsfcdlw_override(:) => null()  !< override to the downward longwave radiation flux at the surface
     real (kind=kind_phys), pointer :: adjsfcdsw_override(:) => null()  !< override to the downward shortwave radiation flux at the surface
     real (kind=kind_phys), pointer :: adjsfcnsw_override(:) => null()  !< override to the net shortwave radiation flux at the surface
-    real (kind=kind_phys), pointer :: sst_from_wrapper(:) => null()    !< sea surface temperature set by the Python wrapper
     contains
       procedure :: create  => statein_create  !<   allocate array data
   end type GFS_statein_type
@@ -2035,11 +2034,6 @@ module GFS_typedefs
       Statein%adjsfcdlw_override = 0.0
       Statein%adjsfcdsw_override = 0.0
       Statein%adjsfcnsw_override = 0.0
-    endif
-
-    if (Model%prescribe_sst_from_wrapper) then
-      allocate(Statein%sst_from_wrapper(IM))
-      Statein%sst_from_wrapper = 0.0
     endif
   end subroutine statein_create
 
