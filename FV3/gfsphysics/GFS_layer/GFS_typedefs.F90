@@ -1084,7 +1084,7 @@ module GFS_typedefs
     logical :: iau_filter_increments
     real(kind=kind_phys) :: sst_perturbation  ! Sea surface temperature perturbation to climatology or nudging SST (default 0.0 K)
     logical :: override_surface_radiative_fluxes  ! Whether to use Statein to override the surface radiative fluxes
-    logical :: prescribe_sst_from_wrapper  ! Whether to prescribe the sea surface temperature via the Python wrapper
+    logical :: override_sea_surface_temperature  ! Whether to allow the Python wrapper to override the sea surface temperature
 #ifdef CCPP
     ! From physcons.F90, updated/set in control_initialize
     real(kind=kind_phys) :: dxinv           ! inverse scaling factor for critical relative humidity, replaces dxinv in physcons.F90
@@ -3129,7 +3129,7 @@ module GFS_typedefs
 
     real(kind=kind_phys) :: sst_perturbation = 0.0  ! Sea surface temperature perturbation [K]
     logical :: override_surface_radiative_fluxes = .false.
-    logical :: prescribe_sst_from_wrapper = .false.
+    logical :: override_sea_surface_temperature = .false.
 !--- END NAMELIST VARIABLES
 
     NAMELIST /gfs_physics_nml/                                                              &
@@ -3221,7 +3221,7 @@ module GFS_typedefs
                           !--- aerosol scavenging factors ('name:value' string array)
                                fscav_aero, &
                                sst_perturbation,                                            & 
-                               override_surface_radiative_fluxes, prescribe_sst_from_wrapper
+                               override_surface_radiative_fluxes, override_sea_surface_temperature
 
 !--- other parameters 
     integer :: nctp    =  0                !< number of cloud types in CS scheme
@@ -3690,7 +3690,7 @@ module GFS_typedefs
 
     Model%sst_perturbation = sst_perturbation
     Model%override_surface_radiative_fluxes = override_surface_radiative_fluxes
-    Model%prescribe_sst_from_wrapper = prescribe_sst_from_wrapper
+    Model%override_sea_surface_temperature = override_sea_surface_temperature
 !--- tracer handling
     Model%ntrac            = size(tracer_names)
 #ifdef CCPP
@@ -4499,7 +4499,7 @@ module GFS_typedefs
       print *, ' isot              : ', Model%isot
       print *, ' sst_perturbation  : ', Model%sst_perturbation
       print *, ' override_surface_radiative_fluxes: ', Model%override_surface_radiative_fluxes
-      print *, ' prescribe_sst_from_wrapper: ', Model%prescribe_sst_from_wrapper
+      print *, ' override_sea_surface_temperature: ', Model%override_sea_surface_temperature
       if (Model%lsm == Model%lsm_noahmp) then
       print *, ' Noah MP LSM is used, the options are'
       print *, ' iopt_dveg         : ', Model%iopt_dveg
