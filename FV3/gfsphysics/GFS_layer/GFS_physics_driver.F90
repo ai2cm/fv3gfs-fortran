@@ -729,7 +729,7 @@ module module_physics_driver
         adjsfcnsw_for_lsm => adjsfcnsw
       endif
 
-      if (Model%override_sea_surface_temperature) then
+      if (Model%override_ocean_surface_temperature) then
         sea_surface_temperature => Sfcprop%tsfco
       else
         sea_surface_temperature => Sfcprop%tsfc
