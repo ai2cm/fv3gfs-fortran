@@ -729,10 +729,10 @@ module module_physics_driver
         adjsfcnsw_for_lsm => adjsfcnsw
       endif
 
-      if (Model%override_ocean_surface_temperature) then
-        ocean_surface_temperature => Sfcprop%tsfco
-      else
+      if (Model%use_climatological_sst) then
         ocean_surface_temperature => Sfcprop%tsfc
+      else
+        ocean_surface_temperature => Sfcprop%tsfco
       endif
 !-------
 ! For COORDE-2019 averaging with fwindow, it was done before
