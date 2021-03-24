@@ -674,7 +674,7 @@ module module_physics_driver
       real(kind=kind_phys), allocatable, dimension(:,:) :: den
       real(kind=kind_phys), allocatable, dimension(:,:) :: dqdt_work
       real(kind=kind_phys), pointer :: adjsfcdlw_for_lsm(:), adjsfcdsw_for_lsm(:), adjsfcnsw_for_lsm(:)
-      real(kind=kind_phys), pointer :: ocean_surface_temperature(:)
+      real(kind=kind_phys), pointer :: sea_surface_temperature(:)
       integer :: nwat
 
       !! Initialize local variables (mainly for debugging purposes, because the
@@ -730,9 +730,9 @@ module module_physics_driver
       endif
 
       if (Model%use_climatological_sst) then
-        ocean_surface_temperature => Sfcprop%tsfc
+        sea_surface_temperature => Sfcprop%tsfc
       else
-        ocean_surface_temperature => Sfcprop%tsfco
+        sea_surface_temperature => Sfcprop%tsfco
       endif
 !-------
 ! For COORDE-2019 averaging with fwindow, it was done before
@@ -1135,7 +1135,7 @@ module module_physics_driver
         do i = 1, IM
           frland(i) = zero
           if (islmsk(i) == 0) then
-            Sfcprop%tsfco(i) = ocean_surface_temperature(i)
+            Sfcprop%tsfco(i) = sea_surface_temperature(i)
             wet(i)  = .true.
             fice(i) = zero
           elseif (islmsk(i) == 1) then
