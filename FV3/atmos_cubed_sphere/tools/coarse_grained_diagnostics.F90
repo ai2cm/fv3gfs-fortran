@@ -60,7 +60,6 @@ contains
 
     integer :: is, ie, js, je, npz, n_tracers, n_prognostic, t, p, n_pressure_levels
     integer :: index = 1
-    integer :: sphum
     character(len=128) :: tracer_name
     character(len=256) :: tracer_long_name, tracer_units
     character(len=8) :: DYNAMICS = 'dynamics'
@@ -71,7 +70,6 @@ contains
     npz = Atm(tile_count)%npz
     n_prognostic = size(Atm(tile_count)%q, 4)
     n_tracers = Atm(tile_count)%ncnst
-    sphum = get_tracer_index (MODEL_ATMOS, 'sphum')
     call get_fine_array_bounds(is, ie, js, je)
 
     coarse_diagnostics(index)%axes = 3
@@ -175,14 +173,21 @@ contains
     coarse_diagnostics(index)%reduction_method = EDDY_COVARIANCE
     coarse_diagnostics(index)%data%var3 => Atm(tile_count)%pt(is:ie,js:je,1:npz)
 
-    index = index + 1
-    coarse_diagnostics(index)%axes = 3
-    coarse_diagnostics(index)%module_name = DYNAMICS
-    coarse_diagnostics(index)%name = 'vertical_eddy_flux_of_specific_humidity_coarse'
-    coarse_diagnostics(index)%description = 'vertical eddy flux of specific humidity'
-    coarse_diagnostics(index)%units = 'kg/kg Pa/s'
-    coarse_diagnostics(index)%reduction_method = EDDY_COVARIANCE
-    coarse_diagnostics(index)%data%var3 => Atm(tile_count)%q(is:ie,js:je,1:npz,sphum)
+    do t = 1, n_tracers
+      call get_tracer_names(MODEL_ATMOS, t, tracer_name, tracer_long_name, tracer_units)
+      index = index + 1
+      coarse_diagnostics(index)%axes = 3
+      coarse_diagnostics(index)%module_name = DYNAMICS
+      coarse_diagnostics(index)%name = 'vertical_eddy_flux_of_' // trim(tracer_name) // '_coarse'
+      coarse_diagnostics(index)%description = 'coarse-grained vertical eddy flux of ' // trim(tracer_long_name)
+      coarse_diagnostics(index)%units = tracer_units
+      coarse_diagnostics(index)%reduction_method = EDDY_COVARIANCE
+      if (t .gt. n_prognostic) then
+        coarse_diagnostics(index)%data%var3 => Atm(tile_count)%qdiag(is:ie,js:je,1:npz,t)
+      else
+        coarse_diagnostics(index)%data%var3 => Atm(tile_count)%q(is:ie,js:je,1:npz,t)
+      endif
+    enddo
 
     index = index + 1
     coarse_diagnostics(index)%axes = 3
@@ -1185,11 +1190,7 @@ contains
 
     string_length = len(trim(string))
     suffix_length = len(trim(suffix))
-    if (string_length .lt. suffix_length) then
-      ends_with = .false.
-    else
-      ends_with = string(string_length - suffix_length + 1:string_length) .eq. trim(suffix)
-    endif
+    ends_with = string(string_length - suffix_length + 1:string_length) .eq. trim(suffix)
     return
   end function ends_with
   
