@@ -67,9 +67,9 @@ namelist:
     days: 0
     dt_atmos: 900
     dt_ocean: 900
-    hours: 0
+    hours: 1
     memuse_verbose: true
-    minutes: 30
+    minutes: 0
     months: 0
     ncores_per_node: 32
     seconds: 0

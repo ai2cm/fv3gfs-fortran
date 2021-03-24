@@ -13,6 +13,8 @@ module FV3GFS_io_mod
 !          parameterizations present in the GFS physics package.
 !-----------------------------------------------------------------------
 !
+  use, intrinsic :: ieee_exceptions
+
 !--- FMS/GFDL modules
   use block_control_mod,  only: block_control_type
   use mpp_mod,            only: mpp_error,  mpp_pe, mpp_root_pe, &
@@ -76,7 +78,6 @@ module FV3GFS_io_mod
   public  fv3gfs_diag_register, fv3gfs_diag_output
   public  FV3GFS_restart_write_coarse
   public  fv3gfs_diag_register_coarse
-  public  register_diag_manager_controlled_diagnostics
   public  send_diag_manager_controlled_diagnostic_data
 #ifdef use_WRTCOMP
   public  fv_phys_bundle_setup
@@ -1593,7 +1594,7 @@ module FV3GFS_io_mod
     type (domain2d),           intent(in)    :: fv_domain
     !--- local variables
     integer :: i, j, k, ix, lsoil, num, nb
-    integer :: isc, iec, jsc, jec, npz, nx, ny, ios
+    integer :: isc, jsc, ios
 
     logical :: ideal_sst = .false.
     real(kind=kind_phys) :: sst_max = 300.
@@ -1636,6 +1637,9 @@ module FV3GFS_io_mod
     call qsmith_init
 
     call mpp_error(NOTE, "Calling sfc_prop_override")
+
+    isc = Atm_block%isc
+    jsc = Atm_block%jsc
 
     if (ideal_sst) then
        do nb = 1, Atm_block%nblks
@@ -2244,7 +2248,7 @@ module FV3GFS_io_mod
     integer :: isc, iec, jsc, jec, npz, nx, ny
     integer :: id_restart
     integer :: nvar2m, nvar2o, nvar3
-    logical :: mand
+    logical :: mand, halt
 
     integer :: is_coarse, ie_coarse, js_coarse, je_coarse, nx_coarse, ny_coarse
     real(kind=kind_phys), allocatable, dimension(:,:,:) :: sfc_var2_fine
@@ -2425,6 +2429,14 @@ module FV3GFS_io_mod
     ! Take the area weighted average over the dominant surface type for vfrac
     call weighted_block_average(area, sfc_var2_fine(isc:iec,jsc:jec,12), sfc_type_mask, sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,12))
 
+    ! Temporarily suspend halting mode for NaNs; we do this because we expect
+    ! the vegetation fraction to be zero in some places, generating NaNs in a
+    ! first pass at coarse-graining zorl and canopy.  We fill these NaNs with
+    ! alternative values in a later step, at which point we restore NaN halting
+    ! to its original setting.
+    call ieee_get_halting_mode(ieee_invalid, halt)
+    call ieee_set_halting_mode(ieee_invalid, .false.)
+
     ! Take the area and vfrac weighted average over the dominant surface and vegetation type for zorl and canopy
     call weighted_block_average(area * sfc_var2_fine(isc:iec,jsc:jec,12), sfc_var2_fine(isc:iec,jsc:jec,5), sfc_and_vtype_mask, &
          sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,5))
@@ -2447,6 +2459,9 @@ module FV3GFS_io_mod
        sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,5) = only_area_weighted_zorl
        sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,13) = only_area_weighted_canopy
     endwhere
+
+    ! Restore original NaN halting mode.
+    call ieee_set_halting_mode(ieee_invalid, halt)
 
     ! Take the area weighted average of the albedo variables
     call weighted_block_average(area, sfc_var2_fine(isc:iec,jsc:jec,6), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,6))
@@ -2489,6 +2504,12 @@ module FV3GFS_io_mod
     ! Take the area weighted average over the dominant surface type for sncovr
     call weighted_block_average(area, sfc_var2_fine(isc:iec,jsc:jec,32), sfc_type_mask, sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,32))
 
+    ! Again temporarily suspend the halting mode for NaNs, because we expect
+    ! a first pass at coarse-graining sheleg, hice, and tisfc to produce them.
+    ! We fill the NaNs with alternative values immediately after in each case.
+    call ieee_get_halting_mode(ieee_invalid, halt)
+    call ieee_set_halting_mode(ieee_invalid, .false.)
+
     ! For sheleg take the area and sncovr weighted average; zero out any regions where the snow cover fraction is zero over the block.
     call weighted_block_average(area * sfc_var2_fine(isc:iec,jsc:jec,32), sfc_var2_fine(isc:iec,jsc:jec,3), sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,3))
     call block_sum(area * sfc_var2_fine(isc:iec,jsc:jec,32), coarsened_area_times_sncovr)
@@ -2510,6 +2531,9 @@ module FV3GFS_io_mod
     where (sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1) .lt. 2.0)
        sfc_var2_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,24) = tisfc_area_average
     endwhere
+
+    ! Restore NaN halting mode to original setting.
+    call ieee_set_halting_mode(ieee_invalid, halt)
 
     ! Apply corrections to 2D variables based on surface_chgres.F90
     FREEZING = 273.16
@@ -2903,21 +2927,6 @@ module FV3GFS_io_mod
 
   end subroutine fv3gfs_diag_register
 
-  subroutine register_diag_manager_controlled_diagnostics(Diag, Time, axes)
-    type(IPD_diag_type), intent(inout) :: Diag(:)
-    type(time_type), intent(in) :: Time
-    integer, intent(in) :: axes(4)
-
-    integer :: index
-
-    do index = 1, DIAG_SIZE
-      if (trim(Diag(index)%name) .eq. '') exit  ! No need to populate non-existent diagnostics
-      Diag(index)%id = register_diag_field(trim(Diag(index)%mod_name), trim(Diag(index)%name),  &
-        axes(1:Diag(index)%axes), Time, trim(Diag(index)%desc), &
-        trim(Diag(index)%unit), missing_value=real(missing_value))
-    enddo
-  end subroutine register_diag_manager_controlled_diagnostics
-
   subroutine populate_coarse_diag_type(diagnostic, coarse_diagnostic)
     type(IPD_diag_type), intent(in) :: diagnostic
     type(IPD_diag_type), intent(inout) :: coarse_diagnostic
@@ -2979,6 +2988,7 @@ module FV3GFS_io_mod
 
     real(kind=kind_phys) :: var2d(nx, ny)
     real(kind=kind_phys) :: var3d(nx, ny, levs)
+    logical :: requested
     integer :: i, j, ii, jj, k, isc, jsc, ix, nb, index, used
 
     isc   = atm_block%isc
@@ -3008,7 +3018,8 @@ module FV3GFS_io_mod
 
     do index = 1, DIAG_SIZE
       if (trim(Diag(index)%name) .eq. '') exit
-      if (Diag(index)%id .gt. 0 .or. Diag_coarse(index)%id .gt. 0) then
+      requested = Diag(index)%id .gt. 0 .or. Diag_coarse(index)%id .gt. 0
+      if (requested .and. Diag(index)%diag_manager_controlled) then
         if (Diag(index)%axes .eq. 2) then
           do j = 1, ny
             jj = j + jsc - 1
@@ -3099,6 +3110,7 @@ module FV3GFS_io_mod
     real(kind=kind_phys) :: rtime_radsw, rtime_radlw
     logical :: used
     logical :: require_area, require_masked_area, require_mass, require_masked_mass, require_vertical_remapping
+    logical :: requested
     real(kind=kind_phys), allocatable :: area(:,:)
     real(kind=kind_phys), allocatable :: mass(:,:,:), phalf(:,:,:), phalf_coarse_on_fine(:,:,:)
     real(kind=kind_phys), allocatable :: masked_area(:,:,:)
@@ -3139,7 +3151,8 @@ module FV3GFS_io_mod
      
 !     if(mpp_pe()==mpp_root_pe())print *,'in,fv3gfs_io. time avg, time_int=',time_int
      do idx = 1,tot_diag_idx
-       if ((diag(idx)%id > 0) .or. (diag_coarse(idx)%id > 0)) then
+       requested = diag(idx)%id > 0 .or. diag_coarse(idx)%id > 0
+       if (requested .and. .not. diag(idx)%diag_manager_controlled) then
          lcnvfac = diag(idx)%cnvfac
          if (diag(idx)%time_avg) then
            if ( trim(diag(idx)%time_avg_kind) == 'full' ) then

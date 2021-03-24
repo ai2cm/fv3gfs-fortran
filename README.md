@@ -44,7 +44,7 @@ built FV3 model. Both of these images can be built using the following command:
 make build
 ```
 
-This will make a `fv3gfs-compiled:latest` image with a compiled model executable
+This will make a `fv3gfs-compiled:gnu7-mpich314-nocuda` image with a compiled model executable
 that can be used for production simuliations. Other tag names and compile options can be set. For example, to build a debugging executable in a docker image:
 
 ```bash
@@ -152,7 +152,7 @@ The model can be compiled for the generation of serialize data which can be used
 To build a docker image for serialization use the command
 
 ```bash
-make build_serialize_gt4py_dev
+make build_serialize
 ```
 
 which will create an image where the source files have been pre-processed for serialization. Similarly to default compilation, you can interactively develop

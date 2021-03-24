@@ -1,11 +1,11 @@
 data_table: default
 diag_table: gs://vcm-fv3config/config/diag_table/baroclinic_test/v1.0/diag_table
 field_table: gs://vcm-fv3config/config/field_table/baroclinic_test/v1.0/field_table
-experiment_name: c48_54ranks_baroclinic
+experiment_name: baroclinic
 forcing: gs://vcm-fv3config/data/base_forcing/v1.1/
 orographic_forcing: gs://vcm-fv3config/data/orographic_data/v1.0
 # To use internal test cases, point to an empty ICs directory
-initial_conditions: ""
+initial_conditions: []
 namelist:
   amip_interp_nml:
     data_set: hurrell
@@ -77,10 +77,10 @@ namelist:
     dt_ocean: 225
     hours: 0
     memuse_verbose: false
-    minutes: 3
+    minutes: 15
     months: 0
     ncores_per_node: 32
-    seconds: 45
+    seconds: 0
     use_hyper_thread: false
   diag_manager_nml:
     max_axes: 240
@@ -141,18 +141,18 @@ namelist:
     kord_tr: 9
     kord_wz: 9
     layout:
-    - 3
-    - 3
+    - 1
+    - 1
     make_nh: true
     mountain: false
     n_split: 1
     n_sponge: 48
-    na_init: 1
+    na_init: 0
     ncep_ic: false
     nggps_ic: false
     nord: 3
-    npx: 49
-    npy: 49
+    npx: 13
+    npy: 13
     npz: 79
     ntiles: 6
     nudge: false
