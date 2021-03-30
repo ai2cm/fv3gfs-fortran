@@ -845,7 +845,6 @@ subroutine mpdrv (hydrostatic, uin, vin, w, delp, pt, qv, ql, qr, qi, qs,     &
         t_land = dw_land * s_leng
         t_ocean = dw_ocean * s_leng
         h_var = t_land * land (i) + t_ocean * (1. - land (i))
-        h_var = min (0.20, max (0.01, h_var))
         ! if (id_var > 0) w_var (i, j) = h_var
         
         ! -----------------------------------------------------------------------
