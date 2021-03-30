@@ -306,7 +306,7 @@ module gfdl_cloud_microphys_mod
     
     ! Linjiong-Noah custom tunining parameters
     ! TODO give these better names
-    real :: p20210319 = 1.0
+    real :: rs_factor = 0.2
 
     ! -----------------------------------------------------------------------
     ! namelist
@@ -324,7 +324,7 @@ module gfdl_cloud_microphys_mod
         rad_snow, rad_graupel, rad_rain, cld_min, use_ppm, mono_prof,         &
         do_sedi_heat, sedi_transport, do_sedi_w, de_ice, icloud_f, irain_f,   &
         mp_print, reiflag, rewmin, rewmax, reimin, reimax, rermin, rermax,    &
-        resmin, resmax, regmin, regmax, tintqs, p20210319
+        resmin, resmax, regmin, regmax, tintqs, rs_factor
     
     public                                                                    &
         mp_time, t_min, t_sub, tau_r2g, tau_smlt, tau_g2r, dw_land, dw_ocean, &
@@ -338,7 +338,7 @@ module gfdl_cloud_microphys_mod
         rad_snow, rad_graupel, rad_rain, cld_min, use_ppm, mono_prof,         &
         do_sedi_heat, sedi_transport, do_sedi_w, de_ice, icloud_f, irain_f,   &
         mp_print, reiflag, rewmin, rewmax, reimin, reimax, rermin, rermax,    &
-        resmin, resmax, regmin, regmax, tintqs, p20210319
+        resmin, resmax, regmin, regmax, tintqs, rs_factor
     
 contains
 
@@ -2185,7 +2185,7 @@ subroutine subgrid_z_proc (ktop, kbot, p1, den, denfac, dts, rh_adj, tz, qv, &
                 qi_crt = qi_gen * min (qi_lim, 0.1 * tmp) / den (k)
                 sink = min (sink, max (qi_crt - qi (k), pidep), tmp / tcpk (k))
             else ! ice -- > vapor
-                pidep = pidep * min (1., dim (tz (k), t_sub) / (tice - t_sub) * p20210319)
+                pidep = pidep * min (1., dim (tz (k), t_sub) * rs_factor)
                 sink = max (pidep, sink, - qi (k))
             endif
             qv (k) = qv (k) - sink
