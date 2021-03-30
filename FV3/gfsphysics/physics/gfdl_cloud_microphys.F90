@@ -307,6 +307,7 @@ module gfdl_cloud_microphys_mod
     ! Linjiong-Noah custom tunining parameters
     ! TODO give these better names
     real :: rs_factor = 0.2
+    real :: rh_factor = 10.0
 
     ! -----------------------------------------------------------------------
     ! namelist
@@ -324,7 +325,7 @@ module gfdl_cloud_microphys_mod
         rad_snow, rad_graupel, rad_rain, cld_min, use_ppm, mono_prof,         &
         do_sedi_heat, sedi_transport, do_sedi_w, de_ice, icloud_f, irain_f,   &
         mp_print, reiflag, rewmin, rewmax, reimin, reimax, rermin, rermax,    &
-        resmin, resmax, regmin, regmax, tintqs, rs_factor
+        resmin, resmax, regmin, regmax, tintqs, rs_factor, rh_factor
     
     public                                                                    &
         mp_time, t_min, t_sub, tau_r2g, tau_smlt, tau_g2r, dw_land, dw_ocean, &
@@ -338,7 +339,7 @@ module gfdl_cloud_microphys_mod
         rad_snow, rad_graupel, rad_rain, cld_min, use_ppm, mono_prof,         &
         do_sedi_heat, sedi_transport, do_sedi_w, de_ice, icloud_f, irain_f,   &
         mp_print, reiflag, rewmin, rewmax, reimin, reimax, rermin, rermax,    &
-        resmin, resmax, regmin, regmax, tintqs, rs_factor
+        resmin, resmax, regmin, regmax, tintqs, rs_factor, rh_factor
     
 contains
 
@@ -2087,7 +2088,7 @@ subroutine subgrid_z_proc (ktop, kbot, p1, den, denfac, dts, rh_adj, tz, qv, &
             ! factor = min (1., fac_l2v * sqrt (max (0., ql (k)) / 1.e-5) * 10. * dq0 / qsw)
             ! factor = fac_l2v
             ! factor = 1
-            factor = min (1., fac_l2v * (0.5 * dq0 / qsw)) ! the rh dependent factor = 1 at 90%
+            factor = min (1., fac_l2v * (rh_factor * dq0 / qsw)) ! the rh dependent factor = 1 at 90%
             evap = min (ql (k), factor * dq0 / (1. + tcp3 (k) * dwsdt))
         else ! condensate all excess vapor into cloud water
             ! -----------------------------------------------------------------------
