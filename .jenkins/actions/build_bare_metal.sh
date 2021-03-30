@@ -160,8 +160,8 @@ EOF1
       sed -i 's|^ *days *= *[0-9][0-9]* *$|days = 0|g' input.nml
       sed -i 's|^ *hours *= *[0-9][0-9]* *$|hours = 1|g' input.nml
     else
-      sed -i 's|^ *days *= *[0-9][0-9]* *$|days = 1|g' input.nml
-      sed -i 's|^ *hours *= *[0-9][0-9]* *$|hours = 0|g' input.nml
+      sed -i 's|^ *days *= *[0-9][0-9]* *$|days = 0|g' input.nml
+      sed -i 's|^ *hours *= *[0-9][0-9]* *$|hours = 12|g' input.nml
     fi
 
     jobfile=job
@@ -174,6 +174,7 @@ EOF1
     sed -i 's|<NTASKS>|12|g' ${jobfile}
     sed -i 's|<NTASKSPERNODE>|'"12"'|g' ${jobfile}
     sed -i 's|<CPUSPERTASK>|1|g' ${jobfile}
+    sed -i 's|--time=.*$|--time=01:00:00|g' ${jobfile}
 
     set +e
     launch_job ${jobfile} 3000
