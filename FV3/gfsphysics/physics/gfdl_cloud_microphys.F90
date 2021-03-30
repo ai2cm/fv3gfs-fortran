@@ -1353,7 +1353,6 @@ subroutine revap_racc (ktop, kbot, dt, tz, qv, ql, qr, qi, qs, qg, den, denfac, 
             qpz = qv (k) + ql (k)
             qsat = wqs2 (tin, den (k), dqsdt)
             dqh = max (ql (k), h_var * max (qpz, qcmin))
-            dqh = min (dqh, 0.2 * qpz) ! new limiter
             dqv = qsat - qv (k) ! use this to prevent super - sat the gird box
             q_minus = qpz - dqh
             q_plus = qpz + dqh
