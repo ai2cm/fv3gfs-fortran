@@ -167,6 +167,7 @@ SRCS_f90 = \
 	   ./physics/calpreciptype.f90                                               \
 	   ./physics/funcphys.f90                                                    \
 	   ./physics/gcm_shoc.f90                                                    \
+	   ./physics/neuralphys.f90                                                  \
 	   ./physics/get_prs_fv3.f90                                                 \
 	   ./physics/h2ointerp.f90                                                   \
 	   ./physics/module_nst_model.f90                                            \
