@@ -308,6 +308,7 @@ module gfdl_cloud_microphys_mod
     ! TODO give these better names
     real :: ts_factor = 0.2
     real :: rh_factor = 10.0
+    real :: re_factor = 100.0
 
     ! -----------------------------------------------------------------------
     ! namelist
@@ -325,7 +326,7 @@ module gfdl_cloud_microphys_mod
         rad_snow, rad_graupel, rad_rain, cld_min, use_ppm, mono_prof,         &
         do_sedi_heat, sedi_transport, do_sedi_w, de_ice, icloud_f, irain_f,   &
         mp_print, reiflag, rewmin, rewmax, reimin, reimax, rermin, rermax,    &
-        resmin, resmax, regmin, regmax, tintqs, ts_factor, rh_factor
+        resmin, resmax, regmin, regmax, tintqs, ts_factor, rh_factor, re_factor
     
     public                                                                    &
         mp_time, t_min, t_sub, tau_r2g, tau_smlt, tau_g2r, dw_land, dw_ocean, &
@@ -339,7 +340,7 @@ module gfdl_cloud_microphys_mod
         rad_snow, rad_graupel, rad_rain, cld_min, use_ppm, mono_prof,         &
         do_sedi_heat, sedi_transport, do_sedi_w, de_ice, icloud_f, irain_f,   &
         mp_print, reiflag, rewmin, rewmax, reimin, reimax, rermin, rermax,    &
-        resmin, resmax, regmin, regmax, tintqs, ts_factor, rh_factor
+        resmin, resmax, regmin, regmax, tintqs, ts_factor, rh_factor, re_factor
     
 contains
 
@@ -1332,7 +1333,7 @@ subroutine revap_racc (ktop, kbot, dt, tz, qv, ql, qr, qi, qs, qg, den, denfac, 
     real, dimension (ktop:kbot) :: lhl, cvm, q_liq, q_sol, lcpk
     
     real :: dqv, qsat, dqsdt, evap, t2, qden, q_plus, q_minus, sink
-    real :: qpz, dq, dqh, tin
+    real :: qpz, dq, dqh, tin, factor
     
     integer :: k
     
@@ -1382,7 +1383,8 @@ subroutine revap_racc (ktop, kbot, dt, tz, qv, ql, qr, qi, qs, qg, den, denfac, 
                 t2 = tin * tin
                 evap = crevp (1) * t2 * dq * (crevp (2) * sqrt (qden) + crevp (3) * &
                     exp (0.725 * log (qden))) / (crevp (4) * t2 + crevp (5) * qsat * den (k))
-                evap = min (qr (k), dt * evap, dqv / (1. + lcpk (k) * dqsdt))
+                factor = min (1., re_factor * dqv / qsat)
+                evap = min (qr (k), dt * evap, factor * dqv / (1. + lcpk (k) * dqsdt))
                 ! -----------------------------------------------------------------------
                 ! alternative minimum evap in dry environmental air
                 ! sink = min (qr (k), dim (rh_rain * qsat, qv (k)) / (1. + lcpk (k) * dqsdt))
