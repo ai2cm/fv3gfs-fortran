@@ -83,6 +83,7 @@
 !hchuang code change [+1L]
       integer, parameter :: NOG3DF  = 69
       integer, parameter :: NOLOGF  = 99
+      integer, parameter :: NONETF  = 104
 
 !  --- ...  in/out units
 
