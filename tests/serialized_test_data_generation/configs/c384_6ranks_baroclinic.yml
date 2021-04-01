@@ -1,7 +1,7 @@
 data_table: default
 diag_table: gs://vcm-fv3config/config/diag_table/no_output/v1.0/diag_table
 field_table: gs://vcm-fv3config/config/field_table/baroclinic_test/v1.0/field_table
-experiment_name: c128_6ranks_baroclinic
+experiment_name: c384_6ranks_baroclinic
 forcing: gs://vcm-fv3config/data/base_forcing/v1.1/
 orographic_forcing: gs://vcm-fv3config/data/orographic_data/v1.0
 # To use internal test cases, point to an empty ICs directory
@@ -153,8 +153,8 @@ namelist:
     ncep_ic: false
     nggps_ic: false
     nord: 3
-    npx: 129
-    npy: 129
+    npx: 385
+    npy: 385
     npz: 79
     ntiles: 6
     nudge: false

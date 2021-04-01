@@ -98,6 +98,7 @@ def stdout_to_json(stdout_file_regex, run_directory):
 
     # assemble meta-data
     setup = {}
+    setup["dirname"] = os.path.basename(run_directory)
     setup["timestamp"] = datetime.datetime.fromtimestamp(
         os.path.getmtime(stdout_file)
     ).strftime("%d/%m/%Y %H:%M:%S")
@@ -121,7 +122,6 @@ def stdout_to_json(stdout_file_regex, run_directory):
     experiment["setup"] = setup
     experiment["times"] = times
     json.dump(experiment, sys.stdout, indent=4)
-    print("")
 
 
 if __name__ == "__main__":

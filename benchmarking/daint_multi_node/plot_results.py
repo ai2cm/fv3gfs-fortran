@@ -53,22 +53,6 @@ def process_raw_data(raw_data, subdomain_size):
 
 
 def stacked_bar_chart(values, nodes, grid_size, modules, sypd, title):
-
-    # extrapolate to full Piz Daint
-    #nodes_extra = 5704
-    #f = interpolate.interp1d(np.arange(nodes.size), values, axis=0, kind='linear', bounds_error=False, fill_value="extrapolate")
-    #values_extra = f(nodes.size+1)
-    #grid_size_extra = grid_size[-1] * nodes[-1] / nodes_extra
-    #sypd_extra = sypd[-1] * grid_size_extra / grid_size[-1]
-
-    # append extrapolated values
-    #nodes = np.append(nodes, nodes_extra)
-    #values = np.vstack([values, values_extra])
-    #grid_size = np.append(grid_size, grid_size_extra)
-    #sypd = np.append(sypd, sypd_extra)
-
-    # plot the values
-
     labels = [str(x) for x in nodes]
     values_cum = values.cumsum(axis=1)
     category_colors = plt.get_cmap("RdYlGn")(
@@ -83,11 +67,8 @@ def stacked_bar_chart(values, nodes, grid_size, modules, sypd, title):
     for i, (colname, color) in enumerate(zip(modules, category_colors)):
         widths = values[:, i]
         starts = values_cum[:, i] - widths
-        #colors = np.tile(color, (values.shape[0], 1))
-        #colors[-1, :] = 1. - 0.5 * (1. - colors[-1,:])
         ax.barh(labels, widths, left=starts, height=0.5,
                 label=colname, color=color)
-        #ax.get_yticklabels()[-1].set_color('grey') 
 
         if not i:
             xcenters = starts
