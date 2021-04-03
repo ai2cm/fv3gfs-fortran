@@ -551,7 +551,7 @@ contains
       enddo
       !$ser savepoint C_SW-Out
       !$ser data delpcd=delpc delpd=delp ptcd=ptc ptd=pt ud=u vd=v wd=w ucd=uc vcd=vc uad=ua vad=va omgad=omga utd=ut vtd=vt divgdd=divgd
-      !$ser verbatim call finalize_kbuff()
+      !$ser verbatim call finalize_buff()
                                                      call timing_off('c_sw')
       if ( flagstruct%nord > 0 ) then
                                                    call timing_on('COMM_TOTAL')
@@ -959,7 +959,7 @@ contains
     enddo           ! end openMP k-loop
     !$ser savepoint D_SW-Out
     !$ser data delpcd=vt delpd=delp ptcd=ptc ptd=pt ud=u vd=v wd=w ucd=uc vcd=vc uad=ua vad=va divgdd=divgd mfxd=mfx mfyd=mfy cxd=cx cyd=cy crxd=crx cryd=cry xfxd=xfx yfxd=yfx q_cond=q_con heat_sourced=heat_source diss_estd=diss_est nord_vd=nord_v damp_vtd=damp_vt
-    !$ser verbatim call finalize_kbuff()
+    !$ser verbatim call finalize_buff()
     if (flagstruct%regional) then
        call exch_uv(domain, bd, npz, vc, uc)
        call exch_uv(domain, bd, npz, u,  v )
@@ -1567,7 +1567,7 @@ contains
   endif
   if( allocated(pem) )   deallocate ( pem )
   
-  !$ser verbatim call finalize_kbuff()  
+  !$ser verbatim call finalize_buff()  
   
 end subroutine dyn_core
 

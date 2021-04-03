@@ -172,7 +172,7 @@
 
       iep1 = ie+1; jep1 = je+1
       !$ser savepoint D2A2C_Vect-In
-      !$ser data_kbuff k=k k_size=nz uc=uc vc=vc u=u v=v ua=ua va=va utc=ut vtc=vt
+      !$ser data_buff k=k k_size=nz uc=uc vc=vc u=u v=v ua=ua va=va utc=ut vtc=vt
       !$ser verbatim if (k == nz) then 
       !$ser data dord4=dord4
       !$ser verbatim endif
@@ -180,7 +180,7 @@
       call d2a2c_vect(u, v, ua, va, uc, vc, ut, vt, dord4, gridstruct, bd, &
            npx, npy, nested, flagstruct%grid_type, regional )
       !$ser savepoint D2A2C_Vect-Out
-      !$ser data_kbuff k=k k_size=nz uc=uc vc=vc ua=ua va=va utc=ut vtc=vt
+      !$ser data_buff k=k k_size=nz uc=uc vc=vc ua=ua va=va utc=ut vtc=vt
 
 
       if( nord > 0 ) then
@@ -188,10 +188,10 @@
             call divergence_corner_nest(u, v, ua, va, divg_d, gridstruct, flagstruct, bd)
          else
             !$ser savepoint DivergenceCorner-In
-            !$ser data_kbuff k=k k_size=nz u=u v=v ua=ua va=va divg_d=divg_d
+            !$ser data_buff k=k k_size=nz u=u v=v ua=ua va=va divg_d=divg_d
             call divergence_corner(u, v, ua, va, divg_d, gridstruct, flagstruct, bd)
             !$ser savepoint DivergenceCorner-Out
-            !$ser data_kbuff k=k k_size=nz divg_d=divg_d
+            !$ser data_buff k=k k_size=nz divg_d=divg_d
          endif
       endif
 
@@ -219,18 +219,18 @@
 !----------------
 ! Xdir:
       !$ser savepoint TransportDelp-In
-      !$ser data_kbuff k=k k_size=nz delp=delp pt=pt w=w utc=ut vtc=vt wc=wc
+      !$ser data_buff k=k k_size=nz delp=delp pt=pt w=w utc=ut vtc=vt wc=wc
       !$ser verbatim dir=1
       !$ser verbatim if (flagstruct%grid_type < 3 .and. .not. (nested .or. regional)) then
       !$ser savepoint Fill2_4Corners-In
-      !$ser data_kbuff k=k k_size=nz q1c=delp q2c=pt
+      !$ser data_buff k=k k_size=nz q1c=delp q2c=pt
       !$ser verbatim if (k == nz) then 
       !$ser data dir=dir
       !$ser verbatim endif
       if (flagstruct%grid_type < 3 .and. .not. (nested .or. regional)) &
        call fill2_4corners(delp, pt, 1, bd, npx, npy, sw_corner, se_corner, ne_corner, nw_corner)
       !$ser savepoint Fill2_4Corners-Out
-      !$ser data_kbuff k=k k_size=nz q1c=delp q2c=pt
+      !$ser data_buff k=k k_size=nz q1c=delp q2c=pt
       !$ser verbatim endif
       if ( hydrostatic ) then
 #ifdef SW_DYNAMICS
@@ -261,14 +261,14 @@
 #endif
         else
            !$ser savepoint Fill4Corners-In
-           !$ser data_kbuff k=k k_size=nz q4c=w
+           !$ser data_buff k=k k_size=nz q4c=w
            !$ser verbatim if (k == nz) then 
            !$ser data dir=dir
            !$ser verbatim endif
            if (flagstruct%grid_type < 3)   &
                 call fill_4corners(w, 1, bd, npx, npy, sw_corner, se_corner, ne_corner, nw_corner)
            !$ser savepoint Fill4Corners-Out
-           !$ser data_kbuff k=k k_size=nz q4c=w
+           !$ser data_buff k=k k_size=nz q4c=w
            do j=js-1,je+1
               do i=is-1,ie+2      
                  if ( ut(i,j) > 0. ) then
@@ -292,14 +292,14 @@
       !$ser verbatim dir=2
       !$ser verbatim if (flagstruct%grid_type < 3 .and. .not. (nested .or. regional)) then
       !$ser savepoint Fill2_4Corners-In
-      !$ser data_kbuff k=k k_size=nz q1c=delp q2c=pt
+      !$ser data_buff k=k k_size=nz q1c=delp q2c=pt
       !$ser verbatim if (k == nz) then 
       !$ser data dir=dir
       !$ser verbatim endif
       if (flagstruct%grid_type < 3 .and. .not. (nested .or. regional))  &
        call fill2_4corners(delp, pt, 2, bd, npx, npy, sw_corner, se_corner, ne_corner, nw_corner)
        !$ser savepoint Fill2_4Corners-Out
-       !$ser data_kbuff k=k k_size=nz q1c=delp q2c=pt
+       !$ser data_buff k=k k_size=nz q1c=delp q2c=pt
        !$ser verbatim endif
       if ( hydrostatic ) then
            do j=js-1,jep1+1
@@ -328,13 +328,13 @@
            enddo
       else
            !$ser savepoint Fill4Corners-In
-           !$ser data_kbuff k=k k_size=nz q4c=w
+           !$ser data_buff k=k k_size=nz q4c=w
            !$ser verbatim if (k == nz) then 
            !$ser data dir=dir
            !$ser verbatim endif
            if (flagstruct%grid_type < 3) call fill_4corners(w, 2, bd, npx, npy, sw_corner, se_corner, ne_corner, nw_corner)
            !$ser savepoint Fill4Corners-Out
-           !$ser data_kbuff k=k k_size=nz q4c=w
+           !$ser data_buff k=k k_size=nz q4c=w
            do j=js-1,je+2
               do i=is-1,ie+1      
                  if ( vt(i,j) > 0. ) then
@@ -362,7 +362,7 @@
            enddo
       endif
       !$ser savepoint TransportDelp-Out
-      !$ser data_kbuff k=k k_size=nz delpc=delpc ptc=ptc wc=wc
+      !$ser data_buff k=k k_size=nz delpc=delpc ptc=ptc wc=wc
 !------------
 ! Compute KE:
 !------------
@@ -373,7 +373,7 @@
 !!! Need separate versions for nesting/single-tile
 !!!   and for cubed-sphere
       !$ser savepoint KE_C_SW-In
-      !$ser data_kbuff k=k k_size=nz uc=uc vc=vc u=u v=v ua=ua va=va
+      !$ser data_buff k=k k_size=nz uc=uc vc=vc u=u v=v ua=ua va=va
       !$ser verbatim if (k == nz) then 
       !$ser data dt2=dt2
       !$ser verbatim endif
@@ -448,13 +448,13 @@
          enddo
       enddo
       !$ser savepoint KE_C_SW-Out
-      !$ser data_kbuff k=k k_size=nz ke_c=ke vort_c=vort
+      !$ser data_buff k=k k_size=nz ke_c=ke vort_c=vort
 !------------------------------
 ! Compute circulation on C grid
 !------------------------------
 ! To consider using true co-variant winds at face edges?
       !$ser savepoint Circulation_Cgrid-In
-      !$ser data_kbuff k=k k_size=nz uc=uc vc=vc vort_c=vort
+      !$ser data_buff k=k k_size=nz uc=uc vc=vc vort_c=vort
       do j=js-1,je+1
          do i=is,ie+1
             fx(i,j) = uc(i,j) * dxc(i,j)
@@ -479,7 +479,7 @@
       if ( ne_corner ) vort(npx,npy) = vort(npx,npy) - fy(npx,npy)
       if ( nw_corner ) vort(1,  npy) = vort(1,  npy) + fy(0,  npy)
       !$ser savepoint Circulation_Cgrid-Out
-      !$ser data_kbuff k=k k_size=nz vort_c=vort
+      !$ser data_buff k=k k_size=nz vort_c=vort
 !----------------------------
 ! Compute absolute vorticity
 !----------------------------
@@ -497,7 +497,7 @@
 ! These cancel, leaving us with fy1 = dt2*v at the edges.
 ! (For the same reason we only divide by sin instead of sin**2 in the interior)
       !$ser savepoint VorticityTransport_Cgrid-In
-      !$ser data_kbuff k=k k_size=nz uc=uc vc=vc vort_c=vort ke_c=ke v=v u=u fxv=fx fyv=fy
+      !$ser data_buff k=k k_size=nz uc=uc vc=vc vort_c=vort ke_c=ke v=v u=u fxv=fx fyv=fy
       !$ser verbatim if (k == nz) then 
       !$ser data dt2=dt2
       !$ser verbatim endif
@@ -576,7 +576,7 @@
          enddo
       enddo
       !$ser savepoint VorticityTransport_Cgrid-Out
-      !$ser data_kbuff k=k k_size=nz uc=uc vc=vc
+      !$ser data_buff k=k k_size=nz uc=uc vc=vc
    end subroutine c_sw
 
 
@@ -747,7 +747,7 @@
       else
 #endif
      !$ser savepoint FxAdv-In
-     !$ser data_kbuff k=k k_size=nz uc=uc vc=vc ut=ut vt=vt yfx_adv=yfx_adv xfx_adv=xfx_adv  cry_adv=cry_adv  crx_adv=crx_adv    
+     !$ser data_buff k=k k_size=nz uc=uc vc=vc ut=ut vt=vt yfx_adv=yfx_adv xfx_adv=xfx_adv  cry_adv=cry_adv  crx_adv=crx_adv    
      !$ser verbatim if (k == nz) then 
      !$ser data dt=dt
      !$ser verbatim endif
@@ -1018,10 +1018,10 @@
       enddo
 
       !$ser savepoint FxAdv-Out
-      !$ser data_kbuff k=k k_size=nz ut=ut vt=vt yfx_adv=yfx_adv xfx_adv=xfx_adv  cry_adv=cry_adv  crx_adv=crx_adv ra_x=ra_x ra_y=ra_y
+      !$ser data_buff k=k k_size=nz ut=ut vt=vt yfx_adv=yfx_adv xfx_adv=xfx_adv  cry_adv=cry_adv  crx_adv=crx_adv ra_x=ra_x ra_y=ra_y
      
       !$ser savepoint FvTp2d-2-In
-      !$ser data_kbuff k=k k_size=nz q=delp crx=crx_adv cry=cry_adv fx=fx fy=fy xfx=xfx_adv yfx=yfx_adv ra_x=ra_x ra_y=ra_y damp_c=damp_v_dup nord_column=nord_v_dup
+      !$ser data_buff k=k k_size=nz q=delp crx=crx_adv cry=cry_adv fx=fx fy=fy xfx=xfx_adv yfx=yfx_adv ra_x=ra_x ra_y=ra_y damp_c=damp_v_dup nord_column=nord_v_dup
       !$ser verbatim if (k == nz) then 
       !$ser data hord=hord_dp
       !$ser verbatim endif
@@ -1029,12 +1029,12 @@
                     xfx_adv,yfx_adv, gridstruct, bd, ra_x, ra_y, flagstruct%lim_fac, & 
                     regional,nord=nord_v, damp_c=damp_v)
       !$ser savepoint FvTp2d-2-Out
-      !$ser data_kbuff k=k k_size=nz q=delp fx=fx fy=fy
+      !$ser data_buff k=k k_size=nz q=delp fx=fx fy=fy
       
       ! <<< Save the mass fluxes to the "Flux Capacitor" for tracer transport >>>
       
       !$ser savepoint FluxCapacitor-In
-      !$ser data_kbuff k=k k_size=nz cx=cx crx_adv=crx_adv xflux=xflux fx=fx cy=cy cry_adv=cry_adv yflux=yflux fy=fy
+      !$ser data_buff k=k k_size=nz cx=cx crx_adv=crx_adv xflux=xflux fx=fx cy=cy cry_adv=cry_adv yflux=yflux fy=fy
         do j=jsd,jed
             do i=is,ie+1
               cx(i,j) = cx(i,j) + crx_adv(i,j)
@@ -1054,7 +1054,7 @@
            enddo
         enddo 
         !$ser savepoint FluxCapacitor-Out
-        !$ser data_kbuff k=k k_size=nz cx=cx  xflux=xflux cy=cy yflux=yflux
+        !$ser data_buff k=k k_size=nz cx=cx  xflux=xflux cy=cy yflux=yflux
 #ifndef SW_DYNAMICS
         do j=js,je
            do i=is,ie
@@ -1069,13 +1069,13 @@
                  damp4 = (damp_w*gridstruct%da_min_c)**(nord_w+1)
                  !$ser verbatim damp4_dup(1,1)=damp4
                  !$ser savepoint Del6VtFlux-In
-                 !$ser data_kbuff k=k k_size=nz fx2=fx2 fy2=fy2 wq=w wd2=wk nord_w=nord_w_dup damp4=damp4_dup
+                 !$ser data_buff k=k k_size=nz fx2=fx2 fy2=fy2 wq=w wd2=wk nord_w=nord_w_dup damp4=damp4_dup
                  call del6_vt_flux(nord_w, npx, npy, damp4, w, wk, fx2, fy2, gridstruct, bd)
                  !$ser savepoint Del6VtFlux-Out
-                 !$ser data_kbuff k=k k_size=nz fx2=fx2 fy2=fy2 wq=w wd2=wk
+                 !$ser data_buff k=k k_size=nz fx2=fx2 fy2=fy2 wq=w wd2=wk
                  
                  !$ser savepoint HeatDiss-In
-                 !$ser data_kbuff k=k k_size=nz heat_source=heat_source diss_est=diss_est fx2=fx2 fy2=fy2 dw=dw w=w 
+                 !$ser data_buff k=k k_size=nz heat_source=heat_source diss_est=diss_est fx2=fx2 fy2=fy2 dw=dw w=w 
                  !$ser verbatim if (k == nz) then 
                  !$ser data dd8=dd8
                  !$ser verbatim endif
@@ -1090,20 +1090,20 @@
                    enddo
                 enddo
                 !$ser savepoint HeatDiss-Out
-                !$ser data_kbuff k=k k_size=nz heat_source=heat_source diss_est=diss_est dw=dw
+                !$ser data_buff k=k k_size=nz heat_source=heat_source diss_est=diss_est dw=dw
             endif
             call fv_tp_2d(w, crx_adv,cry_adv, npx, npy, hord_vt, gx, gy, xfx_adv, yfx_adv, &
                           gridstruct, bd, ra_x, ra_y, flagstruct%lim_fac,                  &
                           regional,mfx=fx, mfy=fy)
             !$ser savepoint Wdivergence-In
-            !$ser data_kbuff k=k k_size=nz delp=delp w=w gx=gx gy=gy
+            !$ser data_buff k=k k_size=nz delp=delp w=w gx=gx gy=gy
             do j=js,je
                do i=is,ie
                   w(i,j) = delp(i,j)*w(i,j) + (gx(i,j)-gx(i+1,j)+gy(i,j)-gy(i,j+1))*rarea(i,j)
                enddo
             enddo
             !$ser savepoint Wdivergence-Out
-            !$ser data_kbuff k=k k_size=nz w=w 
+            !$ser data_buff k=k k_size=nz w=w 
         endif
 
 #ifdef USE_COND
@@ -1125,7 +1125,7 @@
 !       enddo
 !    endif
       !$ser savepoint FvTp2d-In
-      !$ser data_kbuff k=k k_size=nz q=pt crx=crx_adv cry=cry_adv fx=gx fy=gy xfx=xfx_adv yfx=yfx_adv ra_x=ra_x ra_y=ra_y mfx=fx mfy=fy mass=delp damp_c=damp_v_dup nord_column=nord_v_dup
+      !$ser data_buff k=k k_size=nz q=pt crx=crx_adv cry=cry_adv fx=gx fy=gy xfx=xfx_adv yfx=yfx_adv ra_x=ra_x ra_y=ra_y mfx=fx mfy=fy mass=delp damp_c=damp_v_dup nord_column=nord_v_dup
       !$ser verbatim if (k == nz) then 
       !$ser data hord=hord_tm
       !$ser verbatim endif
@@ -1134,7 +1134,7 @@
                       regional,mfx=fx, mfy=fy, mass=delp, nord=nord_v, damp_c=damp_v)
 !                     mfx=fx, mfy=fy, mass=delp, nord=nord_t, damp_c=damp_t)
       !$ser savepoint FvTp2d-Out
-      !$ser data_kbuff k=k k_size=nz q=pt fx=gx fy=gy
+      !$ser data_buff k=k k_size=nz q=pt fx=gx fy=gy
 #endif
 
      if ( inline_q ) then
@@ -1206,7 +1206,7 @@
          js2 = max(2,js); je1 = min(npy-1,je+1)
       end if
       !$ser savepoint VbKE-In 
-      !$ser data_kbuff k=k k_size=nz vt=vt vc=vc uc=uc vb=vb 
+      !$ser data_buff k=k k_size=nz vt=vt vc=vc uc=uc vb=vb 
       !$ser verbatim if (k == nz) then 
       !$ser data dt5=dt5 dt4=dt4
       !$ser verbatim endif
@@ -1256,20 +1256,20 @@
          enddo
       endif
       !$ser savepoint VbKE-Out 
-      !$ser data_kbuff k=k k_size=nz vb=vb
+      !$ser data_buff k=k k_size=nz vb=vb
       !$ser savepoint YTP_V-In 
-      !$ser data_kbuff k=k k_size=nz vb=vb u=u v=v ub=ub 
+      !$ser data_buff k=k k_size=nz vb=vb u=u v=v ub=ub 
       call ytp_v(is,ie,js,je,isd,ied,jsd,jed, vb, u, v, ub, hord_mt, gridstruct%dy, gridstruct%rdy, &
                  npx, npy, flagstruct%grid_type, nested, flagstruct%lim_fac, regional)
       !$ser savepoint YTP_V-Out
-      !$ser data_kbuff k=k k_size=nz ub=ub
+      !$ser data_buff k=k k_size=nz ub=ub
       do j=js,je+1
          do i=is,ie+1
             ke(i,j) = vb(i,j)*ub(i,j)
          enddo
       enddo
       !$ser savepoint UbKE-In
-      !$ser data_kbuff k=k k_size=nz ub=ub uc=uc vc=vc ut=ut
+      !$ser data_buff k=k k_size=nz ub=ub uc=uc vc=vc ut=ut
       !$ser verbatim if (k == nz) then 
       !$ser data dt5=dt5 dt4=dt4
       !$ser verbatim endif
@@ -1322,14 +1322,14 @@
          enddo
       endif
       !$ser savepoint UbKE-Out
-      !$ser data_kbuff k=k k_size=nz ub=ub
+      !$ser data_buff k=k k_size=nz ub=ub
 
       !$ser savepoint XTP_U-In 
-      !$ser data_kbuff k=k k_size=nz vb=vb u=u v=v ub=ub 
+      !$ser data_buff k=k k_size=nz vb=vb u=u v=v ub=ub 
       call xtp_u(is,ie,js,je, isd,ied,jsd,jed, ub, u, v, vb, hord_mt, gridstruct%dx, gridstruct%rdx, &
                  npx, npy, flagstruct%grid_type, nested, flagstruct%lim_fac, regional)
       !$ser savepoint XTP_U-Out
-      !$ser data_kbuff k=k k_size=nz vb=vb
+      !$ser data_buff k=k k_size=nz vb=vb
       do j=js,je+1
          do i=is,ie+1
             ke(i,j) = 0.5*(ke(i,j) + ub(i,j)*vb(i,j))
@@ -1366,7 +1366,7 @@
       endif
     end if
     !$ser savepoint VorticityVolumeMean-In
-    !$ser data_kbuff k=k k_size=nz u=u v=v ut=ut vt=vt wk=wk
+    !$ser data_buff k=k k_size=nz u=u v=v ut=ut vt=vt wk=wk
 ! Compute vorticity:
        do j=jsd,jed+1
           do i=isd,ied
@@ -1386,7 +1386,7 @@
           enddo
        enddo
        !$ser savepoint VorticityVolumeMean-Out
-       !$ser data_kbuff k=k k_size=nz wk=wk vt=vt ut=ut
+       !$ser data_buff k=k k_size=nz wk=wk vt=vt ut=ut
      if ( .not. hydrostatic ) then
         if( flagstruct%do_f3d ) then
 #ifdef ROT3
@@ -1423,7 +1423,7 @@
      enddo
 #endif
      !$ser savepoint DivergenceDamping-In 
-     !$ser data_kbuff k=k k_size=nz u=u va=va ptc=ptc vort=vort v=v ua=ua  divg_d=divg_d  vc=vc uc=uc delpc=delpc ke=ke wk=wk z_rat=z_rat nord_col=nord_dup d2_bg=d2_bg_dup
+     !$ser data_buff k=k k_size=nz u=u va=va ptc=ptc vort=vort v=v ua=ua  divg_d=divg_d  vc=vc uc=uc delpc=delpc ke=ke wk=wk z_rat=z_rat nord_col=nord_dup d2_bg=d2_bg_dup
      !$ser verbatim if (k == nz) then 
      !$ser data  dt=dt
      !$ser verbatim endif
@@ -1435,21 +1435,21 @@
    if ( nord==0 ) then
 !         area ~ dxb*dyb*sin(alpha)
       !$ser savepoint FillCorners-In
-      !$ser data_kbuff k=k k_size=nz divg_d=divg_d nord_col=nord_dup
+      !$ser data_buff k=k k_size=nz divg_d=divg_d nord_col=nord_dup
       !$ser savepoint FillCorners-Out
-      !$ser data_kbuff k=k k_size=nz divg_d=divg_d 
+      !$ser data_buff k=k k_size=nz divg_d=divg_d 
       !$ser savepoint FillCorners-In
-      !$ser data_kbuff k=k k_size=nz divg_d=divg_d nord_col=nord_dup
+      !$ser data_buff k=k k_size=nz divg_d=divg_d nord_col=nord_dup
       !$ser savepoint FillCorners-Out
-      !$ser data_kbuff k=k k_size=nz divg_d=divg_d 
+      !$ser data_buff k=k k_size=nz divg_d=divg_d 
       !$ser savepoint FillCornersVector-In
-      !$ser data_kbuff k=k k_size=nz vc=vc uc=uc nord_col=nord_dup
+      !$ser data_buff k=k k_size=nz vc=vc uc=uc nord_col=nord_dup
       !$ser savepoint FillCornersVector-Out
-      !$ser data_kbuff k=k k_size=nz vc=vc uc=uc 
+      !$ser data_buff k=k k_size=nz vc=vc uc=uc 
       !$ser savepoint A2B_Ord4-In
-      !$ser data_kbuff k=k k_size=nz nord_col=nord_dup delpc=delpc wk=wk vort=vort
+      !$ser data_buff k=k k_size=nz nord_col=nord_dup delpc=delpc wk=wk vort=vort
       !$ser savepoint A2B_Ord4-Out 
-      !$ser data_kbuff k=k k_size=nz wk=wk vort=vort 
+      !$ser data_buff k=k k_size=nz wk=wk vort=vort 
       if (nested .or. regional) then
 
          do j=js,je+1
@@ -1550,7 +1550,7 @@
         !$ser verbatim if (n == 1) then 
         !$ser savepoint FillCorners-In
         !$ser verbatim dir=1
-        !$ser data_kbuff k=k k_size=nz divg_d=divg_d nord_col=nord_dup
+        !$ser data_buff k=k k_size=nz divg_d=divg_d nord_col=nord_dup
         !$ser verbatim if (k == nz) then 
         !$ser data dir=dir 
         !$ser verbatim endif
@@ -1558,7 +1558,7 @@
         if ( fill_c ) call fill_corners(divg_d, npx, npy, FILL=XDir, BGRID=.true.)
         !$ser verbatim if (n == 1) then 
         !$ser savepoint FillCorners-Out
-        !$ser data_kbuff k=k k_size=nz divg_d=divg_d 
+        !$ser data_buff k=k k_size=nz divg_d=divg_d 
         !$ser verbatim endif
         do j=js-nt,je+1+nt
            do i=is-1-nt,ie+1+nt
@@ -1568,7 +1568,7 @@
         !$ser verbatim if (n == 1) then 
         !$ser savepoint FillCorners-In
         !$ser verbatim dir=2
-        !$ser data_kbuff k=k k_size=nz divg_d=divg_d nord_col=nord_dup
+        !$ser data_buff k=k k_size=nz divg_d=divg_d nord_col=nord_dup
         !$ser verbatim if (k == nz) then 
         !$ser data dir=dir
         !$ser verbatim endif
@@ -1576,7 +1576,7 @@
         if ( fill_c ) call fill_corners(divg_d, npx, npy, FILL=YDir, BGRID=.true.)
         !$ser verbatim if (n == 1) then 
         !$ser savepoint FillCorners-Out
-        !$ser data_kbuff k=k k_size=nz divg_d=divg_d 
+        !$ser data_buff k=k k_size=nz divg_d=divg_d 
         !$ser verbatim endif
         do j=js-1-nt,je+1+nt
            do i=is-nt,ie+1+nt
@@ -1585,12 +1585,12 @@
         enddo
         !$ser verbatim if (n == 1) then 
         !$ser savepoint FillCornersVector-In
-        !$ser data_kbuff k=k k_size=nz vc=vc uc=uc nord_col=nord_dup
+        !$ser data_buff k=k k_size=nz vc=vc uc=uc nord_col=nord_dup
         !$ser verbatim endif
         if ( fill_c ) call fill_corners(vc, uc, npx, npy, VECTOR=.true., DGRID=.true.)
         !$ser verbatim if (n == 1) then 
         !$ser savepoint FillCornersVector-Out
-        !$ser data_kbuff k=k k_size=nz vc=vc uc=uc
+        !$ser data_buff k=k k_size=nz vc=vc uc=uc
         !$ser verbatim endif
         do j=js-nt,je+1+nt
            do i=is-nt,ie+1+nt
@@ -1614,7 +1614,7 @@
 
      enddo ! n-loop
      !$ser savepoint A2B_Ord4-In 
-     !$ser data_kbuff k=k k_size=nz nord_col=nord_dup delpc=delpc  wk=wk vort=vort
+     !$ser data_buff k=k k_size=nz nord_col=nord_dup delpc=delpc  wk=wk vort=vort
      !$ser verbatim if (k == nz) then 
      !$ser data  dt=dt 
      !$ser verbatim endif
@@ -1635,7 +1635,7 @@
       endif
      endif
      !$ser savepoint A2B_Ord4-Out 
-     !$ser data_kbuff k=k k_size=nz wk=wk vort=vort
+     !$ser data_buff k=k k_size=nz wk=wk vort=vort
      if (gridstruct%stretched_grid ) then
 ! Stretched grid with variable damping ~ area
          dd8 = gridstruct%da_min * d4_bg**n2
@@ -1653,7 +1653,7 @@
 
    endif
    !$ser savepoint DivergenceDamping-Out 
-   !$ser data_kbuff k=k k_size=nz vort=vort ke=ke delpc=delpc
+   !$ser data_buff k=k k_size=nz vort=vort ke=ke delpc=delpc
    if ( d_con > 1.e-5 ) then
       do j=js,je+1
          do i=is,ie
@@ -1709,10 +1709,10 @@
       damp4 = (damp_v*gridstruct%da_min_c)**(nord_v+1)
       !$ser verbatim damp4_dup(1,1)=damp4
       !$ser savepoint Del6VtFlux-In
-      !$ser data_kbuff k=k k_size=nz fx2=ut fy2=vt wq=wk wd2=vort nord_w=nord_v_dup damp4=damp4_dup
+      !$ser data_buff k=k k_size=nz fx2=ut fy2=vt wq=wk wd2=vort nord_w=nord_v_dup damp4=damp4_dup
       call del6_vt_flux(nord_v, npx, npy, damp4, wk, vort, ut, vt, gridstruct, bd)
       !$ser savepoint Del6VtFlux-Out
-      !$ser data_kbuff k=k k_size=nz fx2=ut fy2=vt wq=wk wd2=vort 
+      !$ser data_buff k=k k_size=nz fx2=ut fy2=vt wq=wk wd2=vort 
    endif
 
    if ( d_con > 1.e-5 .or. flagstruct%do_skeb ) then
