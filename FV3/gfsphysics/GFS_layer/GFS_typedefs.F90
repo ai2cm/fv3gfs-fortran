@@ -190,6 +190,9 @@ module GFS_typedefs
  
     logical, pointer :: dycore_hydrostatic        => null()  !< whether the dynamical core is hydrostatic
     integer, pointer :: nwat                      => null()  !< number of water species used in the model
+    real (kind=kind_phys), pointer :: adjsfcdlw_override(:) => null()  !< override to the downward longwave radiation flux at the surface
+    real (kind=kind_phys), pointer :: adjsfcdsw_override(:) => null()  !< override to the downward shortwave radiation flux at the surface
+    real (kind=kind_phys), pointer :: adjsfcnsw_override(:) => null()  !< override to the net shortwave radiation flux at the surface
     contains
       procedure :: create  => statein_create  !<   allocate array data
   end type GFS_statein_type
@@ -1080,6 +1083,8 @@ module GFS_typedefs
     real(kind=kind_phys) :: iaufhrs(7)      ! forecast hours associated with increment files
     logical :: iau_filter_increments
     real(kind=kind_phys) :: sst_perturbation  ! Sea surface temperature perturbation to climatology or nudging SST (default 0.0 K)
+    logical :: override_surface_radiative_fluxes  ! Whether to use Statein to override the surface radiative fluxes
+    logical :: use_climatological_sst  ! Whether to allow the Python wrapper to override the sea surface temperature
 #ifdef CCPP
     ! From physcons.F90, updated/set in control_initialize
     real(kind=kind_phys) :: dxinv           ! inverse scaling factor for critical relative humidity, replaces dxinv in physcons.F90
@@ -1348,6 +1353,12 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: gflux  (:)     => null()   !< groud conductive heat flux
     real (kind=kind_phys), pointer :: dlwsfc (:)     => null()   !< time accumulated sfc dn lw flux ( w/m**2 )
     real (kind=kind_phys), pointer :: ulwsfc (:)     => null()   !< time accumulated sfc up lw flux ( w/m**2 )
+    real (kind=kind_phys), pointer :: dswsfc (:)     => null()   !< time accumulated sfc dn sw flux ( w/m**2 ) when gfs_physics_nml.override_surface_radiative_fluxes == .true.
+    real (kind=kind_phys), pointer :: uswsfc (:)     => null()   !< time accumulated sfc up sw flux ( w/m**2 ) when gfs_physics_nml.override_surface_radiative_fluxes == .true.
+
+    real (kind=kind_phys), pointer :: dlwsfc_rrtmg (:)     => null()   !< time accumulated sfc dn lw flux ( w/m**2 ) as predicted by RRTMG when gfs_physics_nml.override_surface_radiative_fluxes == .true.
+    real (kind=kind_phys), pointer :: ulwsfc_rrtmg (:)     => null()   !< time accumulated sfc up lw flux ( w/m**2 ) as predicted by RRTMG when gfs_physics_nml.override_surface_radiative_fluxes == .true.
+
     real (kind=kind_phys), pointer :: suntim (:)     => null()   !< sunshine duration time (s)
     real (kind=kind_phys), pointer :: runoff (:)     => null()   !< total water runoff
     real (kind=kind_phys), pointer :: ep     (:)     => null()   !< potential evaporation
@@ -1431,6 +1442,12 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: nswsfci(:)     => null()   !< instantaneous sfc net dnwd sw flux ( w/m**2 )
 #endif
     real (kind=kind_phys), pointer :: uswsfci(:)     => null()   !< instantaneous sfc upwd sw flux ( w/m**2 )
+
+    real (kind=kind_phys), pointer :: dlwsfci_rrtmg(:)     => null()   !< instantaneous sfc dnwd lw flux ( w/m**2 ) as predicted by RRTMG when gfs_physics_nml.override_surface_radiative_fluxes == .true.
+    real (kind=kind_phys), pointer :: ulwsfci_rrtmg(:)     => null()   !< instantaneous sfc upwd lw flux ( w/m**2 ) as predicted by RRTMG when gfs_physics_nml.override_surface_radiative_fluxes == .true.
+    real (kind=kind_phys), pointer :: dswsfci_rrtmg(:)     => null()   !< instantaneous sfc dnwd sw flux ( w/m**2 ) as predicted by RRTMG when gfs_physics_nml.override_surface_radiative_fluxes == .true.
+    real (kind=kind_phys), pointer :: uswsfci_rrtmg(:)     => null()   !< instantaneous sfc upwd sw flux ( w/m**2 ) as predicted by RRTMG when gfs_physics_nml.override_surface_radiative_fluxes == .true.
+
     real (kind=kind_phys), pointer :: dusfci (:)     => null()   !< instantaneous u component of surface stress
     real (kind=kind_phys), pointer :: dvsfci (:)     => null()   !< instantaneous v component of surface stress
     real (kind=kind_phys), pointer :: dtsfci (:)     => null()   !< instantaneous sfc sensible heat flux
@@ -2009,6 +2026,15 @@ module GFS_typedefs
 
     allocate(Statein%nwat)
     Statein%nwat = 6
+
+    if (Model%override_surface_radiative_fluxes) then
+      allocate(Statein%adjsfcdlw_override(IM))
+      allocate(Statein%adjsfcdsw_override(IM))
+      allocate(Statein%adjsfcnsw_override(IM))
+      Statein%adjsfcdlw_override = 0.0
+      Statein%adjsfcdsw_override = 0.0
+      Statein%adjsfcnsw_override = 0.0
+    endif
   end subroutine statein_create
 
 
@@ -3102,6 +3128,8 @@ module GFS_typedefs
     character(len=20) :: fscav_aero(20) = 'default'
 
     real(kind=kind_phys) :: sst_perturbation = 0.0  ! Sea surface temperature perturbation [K]
+    logical :: override_surface_radiative_fluxes = .false.
+    logical :: use_climatological_sst = .true.
 !--- END NAMELIST VARIABLES
 
     NAMELIST /gfs_physics_nml/                                                              &
@@ -3192,7 +3220,8 @@ module GFS_typedefs
                                phys_version,                                                &
                           !--- aerosol scavenging factors ('name:value' string array)
                                fscav_aero, &
-                               sst_perturbation
+                               sst_perturbation,                                            & 
+                               override_surface_radiative_fluxes, use_climatological_sst
 
 !--- other parameters 
     integer :: nctp    =  0                !< number of cloud types in CS scheme
@@ -3660,6 +3689,8 @@ module GFS_typedefs
     if(Model%me==0) print *,' model init,iaufhrs=',Model%iaufhrs
 
     Model%sst_perturbation = sst_perturbation
+    Model%override_surface_radiative_fluxes = override_surface_radiative_fluxes
+    Model%use_climatological_sst = use_climatological_sst
 !--- tracer handling
     Model%ntrac            = size(tracer_names)
 #ifdef CCPP
@@ -4467,6 +4498,8 @@ module GFS_typedefs
       print *, ' ivegsrc           : ', Model%ivegsrc
       print *, ' isot              : ', Model%isot
       print *, ' sst_perturbation  : ', Model%sst_perturbation
+      print *, ' override_surface_radiative_fluxes: ', Model%override_surface_radiative_fluxes
+      print *, ' use_climatological_sst: ', Model%use_climatological_sst
       if (Model%lsm == Model%lsm_noahmp) then
       print *, ' Noah MP LSM is used, the options are'
       print *, ' iopt_dveg         : ', Model%iopt_dveg
@@ -5051,6 +5084,17 @@ module GFS_typedefs
     allocate (Diag%gflux   (IM))
     allocate (Diag%dlwsfc  (IM))
     allocate (Diag%ulwsfc  (IM))
+    if (Model%override_surface_radiative_fluxes) then
+      allocate (Diag%dswsfc(IM))
+      allocate (Diag%uswsfc(IM))
+
+      allocate (Diag%dlwsfc_rrtmg(IM))
+      allocate (Diag%ulwsfc_rrtmg(IM))
+      allocate (Diag%dlwsfci_rrtmg(IM))
+      allocate (Diag%ulwsfci_rrtmg(IM))
+      allocate (Diag%dswsfci_rrtmg(IM))
+      allocate (Diag%uswsfci_rrtmg(IM))
+    endif
     allocate (Diag%suntim  (IM))
     allocate (Diag%runoff  (IM))
     allocate (Diag%ep      (IM))
@@ -5396,6 +5440,17 @@ module GFS_typedefs
     Diag%nswsfci    = zero
 #endif
     Diag%uswsfci    = zero
+    if (Model%override_surface_radiative_fluxes) then
+      Diag%dswsfc    = zero
+      Diag%uswsfc    = zero
+
+      Diag%dlwsfc_rrtmg    = zero
+      Diag%ulwsfc_rrtmg    = zero
+      Diag%dlwsfci_rrtmg    = zero
+      Diag%ulwsfci_rrtmg    = zero
+      Diag%dswsfci_rrtmg    = zero
+      Diag%uswsfci_rrtmg    = zero
+    endif
     Diag%dusfci     = zero
     Diag%dvsfci     = zero
     Diag%dtsfci     = zero
