@@ -306,7 +306,9 @@ module gfdl_cloud_microphys_mod
     
     ! Linjiong-Noah custom tunining parameters
     ! TODO give these better names
-    real :: ts_factor = 0.2
+    real :: ice_sublimation_factor = 0.2
+    real :: snow_sublimation_factor = 0.2
+    real :: graupel_sublimation_factor = 0.1
     real :: rh_factor = 10.0
     real :: re_factor = 100.0
 
@@ -326,7 +328,9 @@ module gfdl_cloud_microphys_mod
         rad_snow, rad_graupel, rad_rain, cld_min, use_ppm, mono_prof,         &
         do_sedi_heat, sedi_transport, do_sedi_w, de_ice, icloud_f, irain_f,   &
         mp_print, reiflag, rewmin, rewmax, reimin, reimax, rermin, rermax,    &
-        resmin, resmax, regmin, regmax, tintqs, ts_factor, rh_factor, re_factor
+        resmin, resmax, regmin, regmax, tintqs, rh_factor, re_factor,         &
+        snow_sublimation_factor, ice_sublimation_factor,                      &
+        graupel_sublimation_factor
     
     public                                                                    &
         mp_time, t_min, t_sub, tau_r2g, tau_smlt, tau_g2r, dw_land, dw_ocean, &
@@ -340,7 +344,9 @@ module gfdl_cloud_microphys_mod
         rad_snow, rad_graupel, rad_rain, cld_min, use_ppm, mono_prof,         &
         do_sedi_heat, sedi_transport, do_sedi_w, de_ice, icloud_f, irain_f,   &
         mp_print, reiflag, rewmin, rewmax, reimin, reimax, rermin, rermax,    &
-        resmin, resmax, regmin, regmax, tintqs, ts_factor, rh_factor, re_factor
+        resmin, resmax, regmin, regmax, tintqs, rh_factor, re_factor,         &
+        snow_sublimation_factor, ice_sublimation_factor,                      &
+        graupel_sublimation_factor
     
 contains
 
@@ -2188,7 +2194,7 @@ subroutine subgrid_z_proc (ktop, kbot, p1, den, denfac, dts, rh_adj, tz, qv, &
                 qi_crt = qi_gen * min (qi_lim, 0.1 * tmp) / den (k)
                 sink = min (sink, max (qi_crt - qi (k), pidep), tmp / tcpk (k))
             else ! ice -- > vapor
-                pidep = pidep * min (1., dim (tz (k), t_sub) * ts_factor)
+                pidep = pidep * min (1., dim (tz (k), t_sub) * ice_sublimation_factor)
                 sink = max (pidep, sink, - qi (k))
             endif
             qv (k) = qv (k) - sink
@@ -2223,7 +2229,7 @@ subroutine subgrid_z_proc (ktop, kbot, p1, den, denfac, dts, rh_adj, tz, qv, &
                 sqrt (denfac (k))) / (cssub (4) * tsq + cssub (5) * qsi * den (k))
             pssub = (qsi - qv (k)) * dts * pssub
             if (pssub > 0.) then ! qs -- > qv, sublimation
-                pssub = min (pssub * min (1., dim (tz (k), t_sub) * 0.2), qs (k))
+                pssub = min (pssub * min (1., dim (tz (k), t_sub) * snow_sublimation_factor), qs (k))
             else
                 if (tz (k) > tice) then
                     pssub = 0. ! no deposition
@@ -2264,7 +2270,7 @@ subroutine subgrid_z_proc (ktop, kbot, p1, den, denfac, dts, rh_adj, tz, qv, &
                         (tice - tz (k)) / tcpk (k))
                 endif
             else ! submilation
-                pgsub = max (fac_g2v * pgsub, dq) * min (1., dim (tz (k), t_sub) * 0.1)
+                pgsub = max (fac_g2v * pgsub, dq) * min (1., dim (tz (k), t_sub) * graupel_sublimation_factor)
             endif
             qg (k) = qg (k) + pgsub
             qv (k) = qv (k) - pgsub
