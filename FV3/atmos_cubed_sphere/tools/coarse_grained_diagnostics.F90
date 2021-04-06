@@ -11,7 +11,7 @@ module coarse_grained_diagnostics_mod
   use coarse_graining_mod, only: block_sum, get_fine_array_bounds, get_coarse_array_bounds, MODEL_LEVEL, &
                                  weighted_block_average, PRESSURE_LEVEL, vertically_remap_field, &
                                  vertical_remapping_requirements, mask_area_weights, mask_mass_weights, &
-                                 block_edge_sum_x, block_edge_sum_y
+                                 block_edge_sum_x, block_edge_sum_y, eddy_covariance_2d_weights, eddy_covariance_3d_weights
   use time_manager_mod, only: time_type
   use tracer_manager_mod, only: get_tracer_index, get_tracer_names
   
@@ -49,6 +49,7 @@ module coarse_grained_diagnostics_mod
   ! Reduction methods
   character(len=11) :: AREA_WEIGHTED = 'area_weighted'
   character(len=11) :: MASS_WEIGHTED = 'mass_weighted'
+  character(len=15) :: EDDY_COVARIANCE = 'eddy_covariance'
   character(len=5) :: pressure_level_label
 
 contains
@@ -163,6 +164,31 @@ contains
 
     ! Defer pointer association for these diagnostics in case their arrays have
     ! not been allocated yet.
+    index = index + 1
+    coarse_diagnostics(index)%axes = 3
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'vertical_eddy_flux_of_temperature_coarse'
+    coarse_diagnostics(index)%description = 'vertical eddy flux of temperature'
+    coarse_diagnostics(index)%units = 'K Pa/s'
+    coarse_diagnostics(index)%reduction_method = EDDY_COVARIANCE
+    coarse_diagnostics(index)%data%var3 => Atm(tile_count)%pt(is:ie,js:je,1:npz)
+
+    do t = 1, n_tracers
+      call get_tracer_names(MODEL_ATMOS, t, tracer_name, tracer_long_name, tracer_units)
+      index = index + 1
+      coarse_diagnostics(index)%axes = 3
+      coarse_diagnostics(index)%module_name = DYNAMICS
+      coarse_diagnostics(index)%name = 'vertical_eddy_flux_of_' // trim(tracer_name) // '_coarse'
+      coarse_diagnostics(index)%description = 'coarse-grained vertical eddy flux of ' // trim(tracer_long_name)
+      coarse_diagnostics(index)%units = tracer_units
+      coarse_diagnostics(index)%reduction_method = EDDY_COVARIANCE
+      if (t .gt. n_prognostic) then
+        coarse_diagnostics(index)%data%var3 => Atm(tile_count)%qdiag(is:ie,js:je,1:npz,t)
+      else
+        coarse_diagnostics(index)%data%var3 => Atm(tile_count)%q(is:ie,js:je,1:npz,t)
+      endif
+    enddo
+
     index = index + 1
     coarse_diagnostics(index)%axes = 3
     coarse_diagnostics(index)%module_name = DYNAMICS
@@ -606,6 +632,11 @@ contains
              allocate(Atm(tile_count)%lagrangian_tendency_of_hydrostatic_pressure(isd:ied,jsd:jed,1:npz))
           endif
           coarse_diagnostic%data%var3 => Atm(tile_count)%lagrangian_tendency_of_hydrostatic_pressure(is:ie,js:je,1:npz)
+       elseif (trim(coarse_diagnostic%reduction_method) .eq. EDDY_COVARIANCE) then
+          if (.not. allocated(Atm(tile_count)%lagrangian_tendency_of_hydrostatic_pressure)) then
+             allocate(Atm(tile_count)%lagrangian_tendency_of_hydrostatic_pressure(isd:ied,jsd:jed,1:npz))
+             Atm(tile_count)%lagrangian_tendency_of_hydrostatic_pressure = 0.0
+          endif
        endif
     endif
   end subroutine maybe_allocate_reference_array
@@ -763,11 +794,15 @@ contains
           if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. MODEL_LEVEL .or. coarse_diagnostics(index)%always_model_level_coarse_grain) then
             call coarse_grain_3D_field_on_model_levels(is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz, &
                                                        coarse_diagnostics(index), Atm(tile_count)%gridstruct%area(is:ie,js:je),&
-                                                       mass, work_3d_coarse)
+                                                       mass, &
+                                                       Atm(tile_count)%lagrangian_tendency_of_hydrostatic_pressure(is:ie,js:je,1:npz), &
+                                                       work_3d_coarse)
           else if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL) then
              call coarse_grain_3D_field_on_pressure_levels(is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz, &
                                                           coarse_diagnostics(index), masked_area, mass, phalf, &
-                                                          upsampled_coarse_phalf, Atm(tile_count)%ptop, work_3d_coarse)
+                                                          upsampled_coarse_phalf, Atm(tile_count)%ptop, &
+                                                          Atm(tile_count)%lagrangian_tendency_of_hydrostatic_pressure(is:ie,js:je,1:npz), &
+                                                          work_3d_coarse)
           else
             write(error_message, *) 'fv_coarse_diag: invalid coarse-graining strategy provided for 3D variables, ' // &
             trim(Atm(tile_count)%coarse_graining%strategy)
@@ -780,10 +815,11 @@ contains
   end subroutine fv_coarse_diag
 
    subroutine coarse_grain_3D_field_on_model_levels(is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, &
-                                                    npz, coarse_diag, area, mass, result)
+                                                    npz, coarse_diag, area, mass, omega, result)
     integer, intent(in) :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz
     type(coarse_diag_type) :: coarse_diag
     real, intent(in) :: mass(is:ie,js:je,1:npz), area(is:ie,js:je)
+    real, intent(in) :: omega(is:ie,js:je,1:npz)
     real, intent(out) :: result(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz)
 
     character(len=256) :: error_message
@@ -800,6 +836,13 @@ contains
         coarse_diag%data%var3, &
         result &
       )
+    elseif (trim(coarse_diag%reduction_method) .eq. EDDY_COVARIANCE) then
+      call eddy_covariance_2d_weights( &
+         area(is:ie,js:je), &
+         omega(is:ie,js:je,1:npz), &
+         coarse_diag%data%var3, &
+         result &
+      )
     else
       write(error_message, *) 'coarse_grain_3D_field_on_model_levels: invalid reduction_method, ' // &
         trim(coarse_diag%reduction_method) // ', provided for 3D variable, ' // &
@@ -810,15 +853,16 @@ contains
 
    subroutine coarse_grain_3D_field_on_pressure_levels(is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, &
                                                        npz, coarse_diag, masked_area, masked_mass, phalf, upsampled_coarse_phalf, &
-                                                       ptop, result)
+                                                       ptop, omega, result)
     integer, intent(in) :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz
     type(coarse_diag_type) :: coarse_diag
     real, intent(in) :: masked_mass(is:ie,js:je,1:npz), masked_area(is:ie,js:je,1:npz)
     real, intent(in) :: phalf(is:ie,js:je,1:npz+1), upsampled_coarse_phalf(is:ie,js:je,1:npz+1)
     real, intent(in) :: ptop
+    real, intent(in) :: omega(is:ie,js:je,1:npz)
     real, intent(out) :: result(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz)
 
-    real, allocatable :: remapped_field(:,:,:)
+    real, allocatable :: remapped_field(:,:,:), remapped_omega(:,:,:)
     character(len=256) :: error_message
 
     allocate(remapped_field(is:ie,js:je,1:npz))
@@ -829,6 +873,15 @@ contains
       upsampled_coarse_phalf, &
       ptop, &
       remapped_field)
+    if (trim(coarse_diag%reduction_method) .eq. EDDY_COVARIANCE) then
+      allocate(remapped_omega(is:ie,js:je,1:npz))
+      call vertically_remap_field( &
+             phalf, &
+             omega, &
+             upsampled_coarse_phalf, &
+             ptop, &
+             remapped_omega)
+    endif
     if (trim(coarse_diag%reduction_method) .eq. AREA_WEIGHTED) then
       call weighted_block_average( &
         masked_area(is:ie,js:je,1:npz), &
@@ -841,6 +894,13 @@ contains
         remapped_field(is:ie,js:je,1:npz), &
         result &
       )
+    elseif (trim(coarse_diag%reduction_method) .eq. EDDY_COVARIANCE) then
+      call eddy_covariance_3d_weights( &
+        masked_area(is:ie,js:je,1:npz), &
+        remapped_omega(is:ie,js:je,1:npz), &
+        remapped_field(is:ie,js:je,1:npz), &
+        result &
+      )   
     else
       write(error_message, *) 'coarse_grain_3D_field_on_pressure_levels: invalid reduction_method, ' // &
         trim(coarse_diag%reduction_method) // ', provided for 3D variable, ' // &
@@ -1001,16 +1061,18 @@ contains
   subroutine get_need_masked_area_array(need_masked_area_array)
     logical, intent(out) :: need_masked_area_array
 
+    logical :: valid_axes, valid_reduction_method, valid_id
     integer :: index
 
     need_masked_area_array = .false.
     do index = 1, DIAG_SIZE
-      if ((coarse_diagnostics(index)%axes == 3) .and. & 
-          (trim(coarse_diagnostics(index)%reduction_method) .eq. AREA_WEIGHTED) .and. &
-          (coarse_diagnostics(index)%id > 0)) then
-         need_masked_area_array = .true.
-         exit
-      endif
+      valid_reduction_method = &
+        trim(coarse_diagnostics(index)%reduction_method) .eq. AREA_WEIGHTED .or. &
+        trim(coarse_diagnostics(index)%reduction_method) .eq. EDDY_COVARIANCE
+      valid_axes = coarse_diagnostics(index)%axes .eq. 3
+      valid_id = coarse_diagnostics(index)%id .gt. 0
+      need_masked_area_array = valid_reduction_method .and. valid_axes .and. valid_id
+      if (need_masked_area_array) exit
    enddo
  end subroutine get_need_masked_area_array
 
