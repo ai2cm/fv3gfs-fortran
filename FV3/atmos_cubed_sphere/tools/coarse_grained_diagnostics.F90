@@ -4,7 +4,7 @@ module coarse_grained_diagnostics_mod
   use diag_manager_mod, only: diag_axis_init, register_diag_field, register_static_field, send_data
   use field_manager_mod,  only: MODEL_ATMOS
   use fv_arrays_mod, only: fv_atmos_type, fv_coarse_graining_type
-  use fv_diagnostics_mod, only: cs3_interpolator, get_height_given_pressure
+  use fv_diagnostics_mod, only: cs3_interpolator, get_height_field, get_height_given_pressure
   use fv_mapz_mod, only: moist_cp, moist_cv
   use mpp_domains_mod, only: domain2d, EAST, NORTH
   use mpp_mod, only: FATAL, mpp_error
@@ -698,9 +698,10 @@ contains
          Domain2=coarse_domain, tile_count=tile_count)
   end subroutine initialize_coarse_diagnostic_axes
   
-  subroutine fv_coarse_diag(Atm, Time)
+  subroutine fv_coarse_diag(Atm, Time, zvir)
     type(fv_atmos_type), intent(in), target :: Atm(:)
     type(time_type), intent(in) :: Time
+    real, intent(in) :: zvir
     
     real, allocatable :: work_2d(:,:), work_2d_coarse(:,:), work_3d_coarse(:,:,:)
     real, allocatable :: mass(:,:,:), height_on_interfaces(:,:,:), masked_area(:,:,:)
@@ -770,28 +771,15 @@ contains
 
     if (need_height_array) then
       allocate(height_on_interfaces(is:ie,js:je,1:npz+1))
-      if(Atm(tile_count)%flagstruct%hydrostatic) then
-        call compute_height_on_interfaces_hydrostatic( &
-          is, &
-          ie, &
-          js, &
-          je, &
-          npz, &
-          Atm(tile_count)%pt(is:ie,js:je,1:npz), &
-          Atm(tile_count)%peln(is:ie,1:npz+1,js:je), &
-          height_on_interfaces(is:ie,js:je,1:npz) &
-        )
-      else
-        call compute_height_on_interfaces_nonhydrostatic( &
-          is, &
-          ie, &
-          js, &
-          je, &
-          npz, &
-          Atm(tile_count)%delz(is:ie,js:je,1:npz), &
-          height_on_interfaces(is:ie,js:je,1:npz) &
-        )
-      endif
+      call get_height_field(is, ie, js, je, Atm(tile_count)%ng, npz, &
+           Atm(tile_count)%flagstruct%hydrostatic, &
+           Atm(tile_count)%delz, &
+           height_on_interfaces, &
+           Atm(tile_count)%pt, &
+           Atm(tile_count)%q, &
+           Atm(tile_count)%peln, &
+           zvir &
+      )
       if (.not. allocated(work_2d_coarse)) allocate(work_2d_coarse(is_coarse:ie_coarse,js_coarse:je_coarse))
       allocate(work_2d(is:ie,js:je))
     endif
@@ -1117,43 +1105,6 @@ contains
     call cs3_interpolator(is, ie, js, je, npz, field, n_pressure_levels, output_pressures, height, phalf, ids, work, iv)
     result = work(is:ie,js:je,1)
   end subroutine interpolate_to_pressure_level
-
-  subroutine compute_height_on_interfaces_hydrostatic(is, ie, js, je, npz, temperature, phalf, height)
-    integer, intent(in) :: is, ie, js, je, npz
-    real, intent(in) :: temperature(is:ie,js:je,1:npz), phalf(is:ie,1:npz+1,js:je)
-    real, intent(out) :: height(is:ie,js:je,1:npz+1)
-
-    integer :: i, j, k
-    real :: rgrav
-
-    rgrav = 1.0 / grav
-
-    do j = js, je
-      do i = is, ie
-        height(i,j,npz+1) = 0.0
-        do k = npz, 1, -1
-          height(i,j,k) = height(i,j,k+1) - (rdgas / grav) * temperature(i,j,k) * (phalf(i,k,j) - phalf(i,k+1,j))
-        enddo
-      enddo
-    enddo
-  end subroutine compute_height_on_interfaces_hydrostatic
-
-  subroutine compute_height_on_interfaces_nonhydrostatic(is, ie, js, je, npz, delz, height)
-    integer, intent(in) :: is, ie, js, je, npz
-    real, intent(in) :: delz(is:ie,js:je,1:npz)
-    real, intent(out) :: height(is:ie,js:je,1:npz+1)
-
-    integer :: i, j, k
-
-    do j = js, je
-      do i = is, ie
-        height(i,j,npz+1) = 0.0
-        do k = npz, 1, -1
-          height(i,j,k) = height(i,j,k+1) - delz(i,j,k)
-        enddo
-      enddo
-    enddo
-  end subroutine compute_height_on_interfaces_nonhydrostatic
 
   subroutine height_given_pressure_level(is, ie, js, je, npz, height, phalf, pressure_level, result)
     integer, intent(in) :: is, ie, js, je, npz, pressure_level
