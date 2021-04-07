@@ -3829,6 +3829,8 @@ module module_physics_driver
 !
       do i=1,im
         Diag%rainc(i) = frain * rain1(i)
+        Diag%deep_cnvprcp(i) = Diag%deep_cnvprcp(i) + Diag%rainc(i)
+        Diag%deep_cnvprcpb(i) = Diag%deep_cnvprcpb(i) + Diag%rainc(i)
       enddo
 !
       if (Model%lssav) then
@@ -4102,6 +4104,8 @@ module module_physics_driver
 
             do i=1,im
               Diag%rainc(i) = Diag%rainc(i) + frain * rain1(i)
+              Diag%scnvprcp(i) = Diag%scnvprcp(i) + frain * rain1(i)
+              Diag%scnvprcpb(i) = Diag%scnvprcpb(i) + frain * rain1(i)
             enddo
 ! in shalcnv,  'cnvw' and 'cnvc' are not set to zero
             if (Model%shcnvcw .and. Model%num_p3d == 4 .and. Model%npdf3d == 3) then
@@ -4137,6 +4141,8 @@ module module_physics_driver
 
             do i=1,im
               Diag%rainc(i) = Diag%rainc(i) + frain * rain1(i)
+              Diag%scnvprcp(i) = Diag%scnvprcp(i) + frain * rain1(i)
+              Diag%scnvprcpb(i) = Diag%scnvprcpb(i) + frain * rain1(i)
             enddo
 ! in  mfshalcnv,  'cnvw' and 'cnvc' are set to zero before computation starts:
             if (Model%shcnvcw .and. Model%num_p3d == 4 .and. Model%npdf3d == 3) then

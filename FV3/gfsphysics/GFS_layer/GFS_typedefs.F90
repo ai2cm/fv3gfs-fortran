@@ -1368,6 +1368,10 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: psmean (:)     => null()   !< surface pressure (kPa)
     real (kind=kind_phys), pointer :: cnvprcp(:)     => null()   !< accumulated convective precipitation (kg/m2)
     real (kind=kind_phys), pointer :: cnvprcpb(:)    => null()   !< accumulated convective precipitation in bucket (kg/m2)
+    real (kind=kind_phys), pointer :: scnvprcp(:)     => null()   !< accumulated shallow convective precipitation (kg/m2)
+    real (kind=kind_phys), pointer :: scnvprcpb(:)    => null()   !< accumulated shallow convective precipitation in bucket (kg/m2)
+    real (kind=kind_phys), pointer :: deep_cnvprcp(:)     => null()   !< accumulated deep convective precipitation (kg/m2)
+    real (kind=kind_phys), pointer :: deep_cnvprcpb(:)    => null()   !< accumulated deep convective precipitation in bucket (kg/m2)
     real (kind=kind_phys), pointer :: spfhmin(:)     => null()   !< minimum specific humidity
     real (kind=kind_phys), pointer :: spfhmax(:)     => null()   !< maximum specific humidity
     real (kind=kind_phys), pointer :: u10mmax(:)     => null()   !< maximum u-wind
@@ -5104,6 +5108,10 @@ module GFS_typedefs
     allocate (Diag%psmean  (IM))
     allocate (Diag%cnvprcp (IM))
     allocate (Diag%cnvprcpb(IM))
+    allocate (Diag%scnvprcp (IM))
+    allocate (Diag%scnvprcpb(IM))
+    allocate (Diag%deep_cnvprcp (IM))
+    allocate (Diag%deep_cnvprcpb(IM))
     allocate (Diag%spfhmin (IM))
     allocate (Diag%spfhmax (IM))
     allocate (Diag%u10mmax (IM))
@@ -5474,6 +5482,8 @@ module GFS_typedefs
     Diag%zmtnblck   = zero
     Diag%totprcpb   = zero
     Diag%cnvprcpb   = zero
+    Diag%scnvprcpb   = zero
+    Diag%deep_cnvprcpb   = zero
     Diag%toticeb    = zero
     Diag%totsnwb    = zero
     Diag%totgrpb    = zero
@@ -5578,6 +5588,8 @@ module GFS_typedefs
     if (set_totprcp) then
       Diag%totprcp = zero
       Diag%cnvprcp = zero
+      Diag%scnvprcp = zero
+      Diag%deep_cnvprcp = zero
       Diag%totice  = zero
       Diag%totsnw  = zero
       Diag%totgrp  = zero
