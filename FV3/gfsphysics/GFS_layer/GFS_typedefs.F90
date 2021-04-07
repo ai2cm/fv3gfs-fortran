@@ -1368,8 +1368,8 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: psmean (:)     => null()   !< surface pressure (kPa)
     real (kind=kind_phys), pointer :: cnvprcp(:)     => null()   !< accumulated convective precipitation (kg/m2)
     real (kind=kind_phys), pointer :: cnvprcpb(:)    => null()   !< accumulated convective precipitation in bucket (kg/m2)
-    real (kind=kind_phys), pointer :: scnvprcp(:)     => null()   !< accumulated shallow convective precipitation (kg/m2)
-    real (kind=kind_phys), pointer :: scnvprcpb(:)    => null()   !< accumulated shallow convective precipitation in bucket (kg/m2)
+    real (kind=kind_phys), pointer :: shallow_cnvprcp(:)     => null()   !< accumulated shallow convective precipitation (kg/m2)
+    real (kind=kind_phys), pointer :: shallow_cnvprcpb(:)    => null()   !< accumulated shallow convective precipitation in bucket (kg/m2)
     real (kind=kind_phys), pointer :: deep_cnvprcp(:)     => null()   !< accumulated deep convective precipitation (kg/m2)
     real (kind=kind_phys), pointer :: deep_cnvprcpb(:)    => null()   !< accumulated deep convective precipitation in bucket (kg/m2)
     real (kind=kind_phys), pointer :: spfhmin(:)     => null()   !< minimum specific humidity
@@ -5108,8 +5108,8 @@ module GFS_typedefs
     allocate (Diag%psmean  (IM))
     allocate (Diag%cnvprcp (IM))
     allocate (Diag%cnvprcpb(IM))
-    allocate (Diag%scnvprcp (IM))
-    allocate (Diag%scnvprcpb(IM))
+    allocate (Diag%shallow_cnvprcp (IM))
+    allocate (Diag%shallow_cnvprcpb(IM))
     allocate (Diag%deep_cnvprcp (IM))
     allocate (Diag%deep_cnvprcpb(IM))
     allocate (Diag%spfhmin (IM))
@@ -5482,7 +5482,7 @@ module GFS_typedefs
     Diag%zmtnblck   = zero
     Diag%totprcpb   = zero
     Diag%cnvprcpb   = zero
-    Diag%scnvprcpb   = zero
+    Diag%shallow_cnvprcpb   = zero
     Diag%deep_cnvprcpb   = zero
     Diag%toticeb    = zero
     Diag%totsnwb    = zero
@@ -5588,7 +5588,7 @@ module GFS_typedefs
     if (set_totprcp) then
       Diag%totprcp = zero
       Diag%cnvprcp = zero
-      Diag%scnvprcp = zero
+      Diag%shallow_cnvprcp = zero
       Diag%deep_cnvprcp = zero
       Diag%totice  = zero
       Diag%totsnw  = zero

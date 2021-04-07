@@ -1361,7 +1361,7 @@ module GFS_diagnostics
     ExtDiag(idx)%coarse_graining_method = 'area_weighted'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%scnvprcp(:)
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%shallow_cnvprcp(:)
     enddo
 
     idx = idx + 1
@@ -1376,7 +1376,7 @@ module GFS_diagnostics
     ExtDiag(idx)%coarse_graining_method = 'area_weighted'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%scnvprcpb(:)
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%shallow_cnvprcpb(:)
     enddo
 
     idx = idx + 1
@@ -1388,7 +1388,7 @@ module GFS_diagnostics
     ExtDiag(idx)%coarse_graining_method = 'area_weighted'
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
-      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%scnvprcp(:)
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%shallow_cnvprcp(:)
     enddo
 
     idx = idx + 1
