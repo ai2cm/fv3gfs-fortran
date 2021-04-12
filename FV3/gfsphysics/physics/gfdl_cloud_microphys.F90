@@ -309,6 +309,7 @@ module gfdl_cloud_microphys_mod
     real :: ice_sublimation_factor = 0.2
     real :: snow_sublimation_factor = 0.2
     real :: graupel_sublimation_factor = 0.1
+    real :: graupel_deposition_factor = 0.2
     real :: rh_factor = 10.0
     real :: re_factor = 100.0
 
@@ -330,7 +331,7 @@ module gfdl_cloud_microphys_mod
         mp_print, reiflag, rewmin, rewmax, reimin, reimax, rermin, rermax,    &
         resmin, resmax, regmin, regmax, tintqs, rh_factor, re_factor,         &
         snow_sublimation_factor, ice_sublimation_factor,                      &
-        graupel_sublimation_factor
+        graupel_sublimation_factor, graupel_deposition_factor
     
     public                                                                    &
         mp_time, t_min, t_sub, tau_r2g, tau_smlt, tau_g2r, dw_land, dw_ocean, &
@@ -346,7 +347,7 @@ module gfdl_cloud_microphys_mod
         mp_print, reiflag, rewmin, rewmax, reimin, reimax, rermin, rermax,    &
         resmin, resmax, regmin, regmax, tintqs, rh_factor, re_factor,         &
         snow_sublimation_factor, ice_sublimation_factor,                      &
-        graupel_sublimation_factor
+        graupel_sublimation_factor, graupel_deposition_factor
     
 contains
 
@@ -2266,7 +2267,7 @@ subroutine subgrid_z_proc (ktop, kbot, p1, den, denfac, dts, rh_adj, tz, qv, &
                 if (tz (k) > tice) then
                     pgsub = 0. ! no deposition
                 else
-                    pgsub = min (fac_v2g * pgsub, 0.2 * dq, ql (k) + qr (k), &
+                    pgsub = min (fac_v2g * pgsub, graupel_deposition_factor * dq, ql (k) + qr (k), &
                         (tice - tz (k)) / tcpk (k))
                 endif
             else ! submilation
