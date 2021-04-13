@@ -177,7 +177,7 @@ contains
                                 gridstruct%sw_corner, gridstruct%se_corner, gridstruct%nw_corner, gridstruct%ne_corner)
    !$ser savepoint CopyCorners-Out
    !$ser data_kbuff k=k k_size=nz q=q
-
+   !$ser on 
    !$ser savepoint YPPM-In
    !$ser data_kbuff k=k k_size=nz q=q c=cry
    !$ser verbatim if (k == nz) then 
@@ -186,6 +186,7 @@ contains
    call yppm(fy2, q, cry, ord_in, isd,ied,isd,ied, js,je,jsd,jed, npx,npy, gridstruct%dya, gridstruct%nested, gridstruct%grid_type, lim_fac,regional)
    !$ser savepoint YPPM-Out
    !$ser data_kbuff k=k k_size=nz flux=fy2
+   !$ser off  
    do j=js,je+1
       do i=isd,ied
          fyy(i,j) = yfx(i,j) * fy2(i,j) 
@@ -234,6 +235,7 @@ contains
         q_j(i,j) = (q(i,j)*gridstruct%area(i,j) + fx1(i)-fx1(i+1))/ra_x(i,j)
      enddo
   enddo
+  !$ser on  
   !$ser savepoint YPPM-2-In
   !$ser data_kbuff k=k k_size=nz q_2=q_j c=cry
   !$ser verbatim if (k == nz) then 
@@ -242,6 +244,7 @@ contains
   call yppm(fy, q_j, cry, ord_ou, is,ie,isd,ied, js,je,jsd,jed, npx, npy, gridstruct%dya, gridstruct%nested, gridstruct%grid_type, lim_fac,regional)
   !$ser savepoint YPPM-2-Out
   !$ser data_kbuff k=k k_size=nz flux_2=fy
+  !$ser off  
 !----------------
 ! Flux averaging:
 !----------------
