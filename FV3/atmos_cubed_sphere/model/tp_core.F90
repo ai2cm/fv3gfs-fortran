@@ -206,7 +206,7 @@ contains
    call xppm(fx, q_i, crx(is,js), ord_ou, is,ie,isd,ied, js,je,jsd,jed, npx,npy, gridstruct%dxa, gridstruct%nested, gridstruct%grid_type, lim_fac,regional)
    !$ser savepoint XPPM-Out
    !$ser data_kbuff k=k k_size=nz xflux=fx
-   !$ser off
+   
    !$ser savepoint CopyCorners-In
    !$ser verbatim dir=1
    !$ser data_kbuff k=k k_size=nz q=q
@@ -226,7 +226,7 @@ contains
   call xppm(fx2, q, crx, ord_in, is,ie,isd,ied, jsd,jed,jsd,jed, npx,npy, gridstruct%dxa, gridstruct%nested, gridstruct%grid_type, lim_fac,regional)
    !$ser savepoint XPPM-2-Out
   !$ser data_kbuff k=k k_size=nz xflux_2=fx2
-  !$ser off
+  
   do j=jsd,jed
      do i=is,ie+1
         fx1(i) =  xfx(i,j) * fx2(i,j)
@@ -235,7 +235,7 @@ contains
         q_j(i,j) = (q(i,j)*gridstruct%area(i,j) + fx1(i)-fx1(i+1))/ra_x(i,j)
      enddo
   enddo
-  !$ser on  
+    
   !$ser savepoint YPPM-2-In
   !$ser data_kbuff k=k k_size=nz q_2=q_j c=cry
   !$ser verbatim if (k == nz) then 
