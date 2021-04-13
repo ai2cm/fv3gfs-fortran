@@ -80,10 +80,9 @@ run_model: ## run model using Docker image to generate serialized data
 		$(COMPILED_IMAGE) /rundir/submit_job.sh
 	cd $(DATA_DIR_HOST) && \
 		find . -type f \( -name "*.dat" -o -name "*.nml" -o -name "*.json" \) -exec md5sum {} \; > md5sums.txt
-	#./check_data_dir.sh $(DATA_DIR_HOST)
 	ls -lh rundir/c128_6ranks_baroclinic
 	ls -lh data/c128_6ranks_baroclinic
-	 cat rundir/c128_6ranks_baroclinic/stdout.out
+	cat rundir/c128_6ranks_baroclinic/stdout.out
         cat rundir/c128_6ranks_baroclinic/stderr.out
 	cp $(EXPERIMENT_DIR)/$(EXPERIMENT).yml $(DATA_DIR_HOST)
 
