@@ -84,7 +84,7 @@ run_model: ## run model using Docker image to generate serialized data
 	ls -lh data/c128_6ranks_baroclinic
 	cat rundir/c128_6ranks_baroclinic/stdout.out
 	cat rundir/c128_6ranks_baroclinic/stderr.out
-        cp $(EXPERIMENT_DIR)/$(EXPERIMENT).yml $(DATA_DIR_HOST)
+	cp $(EXPERIMENT_DIR)/$(EXPERIMENT).yml $(DATA_DIR_HOST)
 
 pack_data: ## pack *.dat files into a *.tar.gz and delete them
 	@echo ""
