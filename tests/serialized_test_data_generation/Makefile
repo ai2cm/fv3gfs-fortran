@@ -81,7 +81,8 @@ run_model: ## run model using Docker image to generate serialized data
 	cd $(DATA_DIR_HOST) && \
 		find . -type f \( -name "*.dat" -o -name "*.nml" -o -name "*.json" \) -exec md5sum {} \; > md5sums.txt
 	#./check_data_dir.sh $(DATA_DIR_HOST)
-	ls -lh
+	ls -lh rundir
+	ls -lh data
 	cp $(EXPERIMENT_DIR)/$(EXPERIMENT).yml $(DATA_DIR_HOST)
 
 pack_data: ## pack *.dat files into a *.tar.gz and delete them
