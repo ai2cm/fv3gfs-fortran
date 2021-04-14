@@ -715,10 +715,10 @@ contains
      !$ser verbatim if (sgs_tke > 0) then
        !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
      !$ser verbatim endif
-     !$ser verbatim if (serialize_only_driver) then
-       !$ser verbatim if (mpp_pe() == 0) write(*,*) "Stopping after serialization of fv_dynamics() input"
-       !$ser verbatim call mp_stop(); call exit(0)
-     !$ser verbatim endif
+     !__$ser verbatim if (serialize_only_driver) then
+       !___$ser verbatim if (mpp_pe() == 0) write(*,*) "Stopping after serialization of fv_dynamics() input"
+       !__$ser verbatim call mp_stop(); call exit(0)
+     !__$ser verbatim endif
      call fv_dynamics(npx, npy, npz, nq, Atm(n)%ng, dt_atmos/real(abs(p_split)),&
                        Atm(n)%flagstruct%consv_te, Atm(n)%flagstruct%fill,       &
                        Atm(n)%flagstruct%reproduce_sum, kappa, cp_air, zvir,     &
