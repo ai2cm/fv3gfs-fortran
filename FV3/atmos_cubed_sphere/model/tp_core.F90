@@ -146,6 +146,7 @@ contains
    integer:: is, ie, js, je, isd, ied, jsd, jed
    !$ser verbatim integer :: k,nz, dir
    !$ser verbatim real, dimension(1,1) :: damp_c_dup, nord_dup
+   !$ser on 
    !$ser verbatim if (present(damp_c)) then
    !$ser verbatim damp_c_dup(1,1)=damp_c
    !$ser verbatim nord_dup(1,1)=nord
@@ -177,7 +178,7 @@ contains
                                 gridstruct%sw_corner, gridstruct%se_corner, gridstruct%nw_corner, gridstruct%ne_corner)
    !$ser savepoint CopyCorners-Out
    !$ser data_kbuff k=k k_size=nz q=q
-   !$ser on 
+   
    !$ser savepoint YPPM-In
    !$ser data_kbuff k=k k_size=nz q=q c=cry
    !$ser verbatim if (k == nz) then 
@@ -186,7 +187,7 @@ contains
    call yppm(fy2, q, cry, ord_in, isd,ied,isd,ied, js,je,jsd,jed, npx,npy, gridstruct%dya, gridstruct%nested, gridstruct%grid_type, lim_fac,regional)
    !$ser savepoint YPPM-Out
    !$ser data_kbuff k=k k_size=nz flux=fy2
-   !$ser off  
+     
    do j=js,je+1
       do i=isd,ied
          fyy(i,j) = yfx(i,j) * fy2(i,j) 
@@ -197,7 +198,7 @@ contains
          q_i(i,j) = (q(i,j)*gridstruct%area(i,j) + fyy(i,j)-fyy(i,j+1))/ra_y(i,j)
       enddo
    enddo
-   !$ser on
+   
    !$ser savepoint XPPM-In
    !$ser data_kbuff k=k k_size=nz qx=q_i cx=crx
    !$ser verbatim if (k == nz) then 
