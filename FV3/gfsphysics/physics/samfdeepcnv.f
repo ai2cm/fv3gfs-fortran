@@ -86,7 +86,8 @@
      &     QLCN, QICN, w_upi, cf_upi, CNV_MFD,
 !    &     QLCN, QICN, w_upi, cf_upi, CNV_MFD, CNV_PRC3,
      &     CNV_DQLDT,CLCN,CNV_FICE,CNV_NDROP,CNV_NICE,mp_phys,
-     &     clam,c0s,c1,betal,betas,evfact,evfactl,pgcon,asolfac)
+     &     clam,c0s,c1,betal,betas,evfact,evfactl,pgcon,asolfac,
+     &     cinpcrmx, cinpcrmn)
 !
       use machine , only : kind_phys
       use funcphys , only : fpvs
@@ -115,7 +116,7 @@
 
       real(kind=kind_phys) clam,    c0s,     c1,
      &                     betal,   betas,   asolfac,
-     &                     evfact,  evfactl, pgcon
+     &                     evfact,  evfactl, pgcon, cinpcrmn, cinpcrmx
 !
 !------local variables
       integer              i, indx, jmn, k, kk, km1, n
@@ -182,8 +183,7 @@
 !
       real(kind=kind_phys) c0(im)
 cj
-      real(kind=kind_phys) cinpcr,  cinpcrmx,  cinpcrmn,
-     &                     cinacr,  cinacrmx,  cinacrmn
+      real(kind=kind_phys) cinpcr, cinacr,  cinacrmx,  cinacrmn
 cj
 !
 !  parameters for updraft velocity calculation
@@ -213,8 +213,6 @@ c  physical parameters
       parameter(dtke=tkemx-tkemn)
       parameter(dbeta=0.1)
       parameter(cthk=200.,dthk=25.)
-      parameter(cinpcrmx=180.,cinpcrmn=120.)
-!     parameter(cinacrmx=-120.,cinacrmn=-120.)
       parameter(cinacrmx=-120.,cinacrmn=-80.)
       parameter(bet1=1.875,cd1=.506,f1=2.0,gam1=.5)
       parameter(betaw=.03,dxcrtas=8.e3,dxcrtuf=15.e3)
