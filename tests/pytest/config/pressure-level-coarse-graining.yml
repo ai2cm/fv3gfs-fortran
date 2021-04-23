@@ -1,5 +1,5 @@
 data_table: default
-diag_table: gs://vcm-fv3config/config/diag_table/test_coarse_graining/v1.1/diag_table_coarse_graining
+diag_table: gs://vcm-fv3config/config/diag_table/test_coarse_graining/v1.2/diag_table_coarse_graining
 experiment_name: pressure-level-coarse-graining
 forcing: "gs://vcm-fv3config/data/base_forcing/v1.1/"
 orographic_forcing: gs://vcm-fv3config/data/orographic_data/v1.0
