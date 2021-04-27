@@ -119,6 +119,8 @@ module fv_arrays_mod
      integer :: id_qr_dt_phys, id_qs_dt_phys, id_qg_dt_phys
      integer :: id_column_moistening_nudge
 
+     integer, allocatable :: id_vertically_integrated_tracers(:)
+
   end type fv_diag_type
 
   type fv_coarse_diag_type
