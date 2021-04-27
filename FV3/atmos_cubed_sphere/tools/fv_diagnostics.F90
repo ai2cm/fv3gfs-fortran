@@ -226,7 +226,7 @@ contains
     integer              :: ntprog
     integer              :: unit
 
-    integer :: ncnst
+    integer :: ncnst, tracer_index
     integer :: axe2(3)
 
 
@@ -566,6 +566,7 @@ contains
 !--------------------------------------------------------------
 
     allocate(idiag%id_tracer(ncnst))
+    allocate(idiag%id_vertically_integrated_tracers(ncnst))
     allocate(idiag%id_tracer_dmmr(ncnst))
     allocate(idiag%id_tracer_dvmr(ncnst))
     allocate(idiag%w_mr(ncnst))
@@ -1230,6 +1231,15 @@ contains
          allocate(Atm(n)%physics_tendency_diag%qg_dt(isc:iec,jsc:jec,npz))
          Atm(n)%physics_tendency_diag%qg_dt = 0.0
     endif
+
+    do tracer_index = 1, ncnst
+      call get_tracer_names (MODEL_ATMOS, tracer_index, tname, tlongname, tunits)
+      idiag%id_vertically_integrated_tracers(tracer_index) = register_diag_field (field, &
+           'vertically_integrated_' // trim(tname),  &
+           axes(1:2), Time, &
+           'vertical mass-weighted integral of ' // trim(tlongname), &
+           trim(tunits) // ' kg/m**2', missing_value=missing_value)
+    enddo
  end subroutine fv_diag_init
 
 
@@ -1326,7 +1336,7 @@ contains
     logical :: do_cs_intp
     logical :: used
     logical :: bad_range
-    integer i,j,k, yr, mon, dd, hr, mn, days, seconds, nq, theta_d
+    integer i,j,k, yr, mon, dd, hr, mn, days, seconds, nq, theta_d, tracer_index
     character(len=128)   :: tname
     real, parameter:: ws_0 = 16.   ! minimum max_wind_speed within the 7x7 search box
     real, parameter:: ws_1 = 20.
@@ -2468,6 +2478,13 @@ contains
           endif
           used = send_data(idiag%id_lw, a2*ginv, Time)
        endif
+
+       do tracer_index = 1, Atm(n)%ncnst
+         if (idiag%id_vertically_integrated_tracers(tracer_index) > 0) then
+            a2(:,:) = ginv * sum(Atm(n)%q(isc:iec,jsc:jec,1:npz,tracer_index) * Atm(n)%delp(isc:iec,jsc:jec,1:npz), dim=3)
+            used = send_data(idiag%id_vertically_integrated_tracers(tracer_index), a2, Time)
+         endif
+       enddo
 
 ! Cloud top temperature & cloud top press:
        if ( (idiag%id_ctt>0 .or. idiag%id_ctp>0 .or. idiag%id_ctz>0).and. Atm(n)%flagstruct%nwat==6) then
