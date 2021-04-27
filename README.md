@@ -131,6 +131,7 @@ To compile the model and generate an executable you can use the commands
 
 ```bash
 cd /FV3
+./configure gnu_docker
 make clean
 make -j8
 ```
