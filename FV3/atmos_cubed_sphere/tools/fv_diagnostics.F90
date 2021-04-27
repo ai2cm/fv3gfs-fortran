@@ -2454,7 +2454,7 @@ contains
 
        do tracer_index = 1, Atm(n)%ncnst
          if (idiag%id_vertically_integrated_tracers(tracer_index) > 0) then
-            a2 = ginv * sum(Atm(n)%q(isc:iec,jsc:jec,1:npz,tracer_index) * Atm(n)%delp(isc:iec,jsc:jec,1:npz), dim=3)
+            a2(:,:) = ginv * sum(Atm(n)%q(isc:iec,jsc:jec,1:npz,tracer_index) * Atm(n)%delp(isc:iec,jsc:jec,1:npz), dim=3)
             used = send_data(idiag%id_vertically_integrated_tracers(tracer_index), a2, Time)
          endif
        enddo
