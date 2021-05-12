@@ -1390,7 +1390,8 @@ subroutine revap_racc (ktop, kbot, dt, tz, qv, ql, qr, qi, qs, qg, den, denfac, 
                 t2 = tin * tin
                 evap = crevp (1) * t2 * dq * (crevp (2) * sqrt (qden) + crevp (3) * &
                     exp (0.725 * log (qden))) / (crevp (4) * t2 + crevp (5) * qsat * den (k))
-                evap = min (qr (k), dt * evap, dqv / (1. + lcpk (k) * dqsdt))
+                factor = min (1., re_factor * dqv / qsat)
+                evap = min (qr (k), dt * evap, factor * dqv / (1. + lcpk (k) * dqsdt))
                 ! -----------------------------------------------------------------------
                 ! alternative minimum evap in dry environmental air
                 ! sink = min (qr (k), dim (rh_rain * qsat, qv (k)) / (1. + lcpk (k) * dqsdt))
