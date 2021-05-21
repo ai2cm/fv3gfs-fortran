@@ -952,11 +952,7 @@ subroutine update_atmos_model_state (Atmos)
                             Atm(mytile)%coarse_graining%write_coarse_diagnostics, &
                             IPD_Diag_coarse, &
                             Atm(mytile)%delp(is:ie,js:je,:), Atmos%coarsening_strategy, Atm(mytile)%ptop)
-      if (nint(IPD_Control%fhzero) > 0) then 
-        if (mod(isec,3600*nint(IPD_Control%fhzero)) == 0) diag_time = Atmos%Time
-      else
-        if (mod(isec,nint(3600*IPD_Control%fhzero)) == 0) diag_time = Atmos%Time
-      endif
+      if (mod(isec,nint(3600*IPD_Control%fhzero)) == 0) diag_time = Atmos%Time
       call diag_send_complete_instant (Atmos%Time)
     endif
     call mpp_clock_end(diagClock)
