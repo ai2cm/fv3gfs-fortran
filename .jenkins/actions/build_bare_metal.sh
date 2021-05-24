@@ -127,10 +127,8 @@ cd -
 # build venv for fv3config
 python3 -m venv ${rootdir}/venv
 source venv/bin/activate
-pip install --upgrade pip
-pip install --upgrade wheel
-pip install six appdirs ordered_set
-pip install fv3config
+pip install -r ${rootdir}/requirements.txt
+pip list
 deactivate
 
 # install and run example
