@@ -57,9 +57,7 @@ def stdout_to_json(stdout_file_regex, run_directory):
     # extract timer string from stdout
     with open(stdout_file, "r+") as f:
         stdout = f.read()
-    match = re.search(
-        r"^Total runtime.*^ *MPP_STACK", stdout, re.MULTILINE | re.DOTALL
-    )
+    match = re.search(r"^Total runtime.*^ *MPP_STACK", stdout, re.MULTILINE | re.DOTALL)
     assert match, "Issue extracting timings from stdout of SLURM job"
 
     # parse raw timers
@@ -84,7 +82,7 @@ def stdout_to_json(stdout_file_regex, run_directory):
     # convert into format for plotting
     times = {}
     for json_name, fv3_names in TIMER_MAPPING.items():
-        times[json_name] = {"hits": None, "minimum": 0.0, "maximum": 0.0, "mean": 0.0}
+        times[json_name] = {"hits": None, "mean": 0.0}
         for fv3_name in fv3_names:
             if times[json_name]["hits"] is None:
                 times[json_name]["hits"] = raw_timers[fv3_name]["hits"]
@@ -92,12 +90,17 @@ def stdout_to_json(stdout_file_regex, run_directory):
                 assert (
                     times[json_name]["hits"] == raw_timers[fv3_name]["hits"]
                 ), "Can only accumulate timers with equal hit count"
-            times[json_name]["minimum"] += raw_timers[fv3_name]["tmin"]
-            times[json_name]["maximum"] += raw_timers[fv3_name]["tmax"]
             times[json_name]["mean"] += raw_timers[fv3_name]["tavg"]
-
+    for json_name in TIMER_MAPPING.keys():
+        times[json_name]["times"] = []
+        for rank in range(6):
+            times[json_name]["times"].append([])
+            for time_per_step in range(raw_timers["3.1-atmosphere_dynamics"]["hits"]):
+                times[json_name]["times"][rank].append(times[json_name]["mean"])
+        del times[json_name]["mean"]
     # assemble meta-data
     setup = {}
+    setup["comment"] = "Values generated from means - no detailed info available"
     setup["timestamp"] = datetime.datetime.fromtimestamp(
         os.path.getmtime(stdout_file)
     ).strftime("%d/%m/%Y %H:%M:%S")
