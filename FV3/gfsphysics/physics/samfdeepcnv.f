@@ -87,7 +87,7 @@
 !    &     QLCN, QICN, w_upi, cf_upi, CNV_MFD, CNV_PRC3,
      &     CNV_DQLDT,CLCN,CNV_FICE,CNV_NDROP,CNV_NICE,mp_phys,
      &     clam,c0s,c1,betal,betas,evfact,evfactl,pgcon,asolfac,
-     &     cinpcrmx, cinpcrmn)
+     &     cinpcrmx, cinpcrmn, cinacrmn)
 !
       use machine , only : kind_phys
       use funcphys , only : fpvs
@@ -213,7 +213,7 @@ c  physical parameters
       parameter(dtke=tkemx-tkemn)
       parameter(dbeta=0.1)
       parameter(cthk=200.,dthk=25.)
-      parameter(cinacrmx=-120.,cinacrmn=-80.)
+      parameter(cinacrmx=-120.)
       parameter(bet1=1.875,cd1=.506,f1=2.0,gam1=.5)
       parameter(betaw=.03,dxcrtas=8.e3,dxcrtuf=15.e3)
 !

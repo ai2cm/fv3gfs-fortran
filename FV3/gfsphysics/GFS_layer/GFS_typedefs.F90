@@ -894,6 +894,7 @@ module GFS_typedefs
 !--- mass flux deep convection
     real(kind=kind_phys) :: cinpcrmx
     real(kind=kind_phys) :: cinpcrmn
+    real(kind=kind_phys) :: cinacrmn
     real(kind=kind_phys) :: clam_deep       !< c_e for deep convection (Han and Pan, 2011, eq(6))
     real(kind=kind_phys) :: c0s_deep        !< convective rain conversion parameter
     real(kind=kind_phys) :: c1_deep         !< conversion parameter of detrainment from liquid water into grid-scale cloud water
@@ -3129,6 +3130,7 @@ module GFS_typedefs
 ! convection parameterization
     real(kind=kind_phys) :: cinpcrmx = 180.0
     real(kind=kind_phys) :: cinpcrmn = 120.0
+    real(kind=kind_phys) :: cinacrmn = -120.0
 
 !--- aerosol scavenging factors
     character(len=20) :: fscav_aero(20) = 'default'
@@ -3228,7 +3230,7 @@ module GFS_typedefs
                                fscav_aero, &
                                sst_perturbation,                                            & 
                                override_surface_radiative_fluxes, use_climatological_sst, &
-                               cinpcrmx, cinpcrmn
+                               cinpcrmx, cinpcrmn, cinacrmn
 
 
 !--- other parameters 
@@ -3611,6 +3613,7 @@ module GFS_typedefs
 !--- mass flux deep convection
     Model%cinpcrmn = cinpcrmn
     Model%cinpcrmx = cinpcrmx
+    Model%cinacrmn = cinacrmn
     Model%clam_deep        = clam_deep
     Model%c0s_deep         = c0s_deep
     Model%c1_deep          = c1_deep
