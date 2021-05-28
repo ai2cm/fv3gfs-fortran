@@ -895,6 +895,7 @@ module GFS_typedefs
     real(kind=kind_phys) :: cinpcrmx
     real(kind=kind_phys) :: cinpcrmn
     real(kind=kind_phys) :: cinacrmn
+    real(kind=kind_phys) :: timescale_grid_factor
     real(kind=kind_phys) :: clam_deep       !< c_e for deep convection (Han and Pan, 2011, eq(6))
     real(kind=kind_phys) :: c0s_deep        !< convective rain conversion parameter
     real(kind=kind_phys) :: c1_deep         !< conversion parameter of detrainment from liquid water into grid-scale cloud water
@@ -3131,6 +3132,7 @@ module GFS_typedefs
     real(kind=kind_phys) :: cinpcrmx = 180.0
     real(kind=kind_phys) :: cinpcrmn = 120.0
     real(kind=kind_phys) :: cinacrmn = -120.0
+    real(kind=kind_phys) :: timescale_grid_factor = 1.33333e-05
 
 !--- aerosol scavenging factors
     character(len=20) :: fscav_aero(20) = 'default'
@@ -3230,7 +3232,7 @@ module GFS_typedefs
                                fscav_aero, &
                                sst_perturbation,                                            & 
                                override_surface_radiative_fluxes, use_climatological_sst, &
-                               cinpcrmx, cinpcrmn, cinacrmn
+                               cinpcrmx, cinpcrmn, cinacrmn, timescale_grid_factor
 
 
 !--- other parameters 
@@ -3614,6 +3616,7 @@ module GFS_typedefs
     Model%cinpcrmn = cinpcrmn
     Model%cinpcrmx = cinpcrmx
     Model%cinacrmn = cinacrmn
+    Model%timescale_grid_factor = timescale_grid_factor
     Model%clam_deep        = clam_deep
     Model%c0s_deep         = c0s_deep
     Model%c1_deep          = c1_deep

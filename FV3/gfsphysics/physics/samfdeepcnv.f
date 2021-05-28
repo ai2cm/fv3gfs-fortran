@@ -87,7 +87,7 @@
 !    &     QLCN, QICN, w_upi, cf_upi, CNV_MFD, CNV_PRC3,
      &     CNV_DQLDT,CLCN,CNV_FICE,CNV_NDROP,CNV_NICE,mp_phys,
      &     clam,c0s,c1,betal,betas,evfact,evfactl,pgcon,asolfac,
-     &     cinpcrmx, cinpcrmn, cinacrmn)
+     &     cinpcrmx, cinpcrmn, cinacrmn, timescale_grid_factor)
 !
       use machine , only : kind_phys
       use funcphys , only : fpvs
@@ -114,6 +114,8 @@
      &   rn(im),      cnvw(ix,km),  cnvc(ix,km),
      &   ud_mf(im,km),dd_mf(im,km), dt_mf(im,km)
 
+
+      real(kind=kind_phys) timescale_grid_factor
       real(kind=kind_phys) clam,    c0s,     c1,
      &                     betal,   betas,   asolfac,
      &                     evfact,  evfactl, pgcon, cinpcrmn, cinpcrmx
@@ -2273,7 +2275,7 @@ c
         if(cnvflg(i)) then
           tem = zi(i,ktcon1(i)) - zi(i,kbcon1(i))
           dtconv(i) = tem / wc(i)
-          tfac = 1. + gdx(i) / 75000.
+          tfac = 1. + timescale_grid_factor * gdx(i)
           dtconv(i) = tfac * dtconv(i)
           dtconv(i) = max(dtconv(i),dtmin)
           dtconv(i) = min(dtconv(i),dtmax)
