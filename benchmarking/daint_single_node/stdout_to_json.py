@@ -46,7 +46,7 @@ def extract_times_from_file(file_name: str) -> re.Match:
 
 
 def parse_match_for_times(match: re.Match) -> Dict[str, Dict[str, float]]:
-    """conversts the raw strings containing the times into a contrainer of data"""
+    """converts the raw strings containing the times into a dictionary"""
     raw_timers = {}
     labels = [
         "hits",
@@ -72,6 +72,7 @@ def generate_output_from_times(
 ) -> Dict[str, Any]:
     """converts the raw data from fortran to the format used in fv3core's data collection"""
     times = {}
+    # extract mean timers over all timesteps
     for json_name, fv3_names in TIMER_MAPPING.items():
         times[json_name] = {"hits": None, "mean": 0.0}
         for fv3_name in fv3_names:
@@ -82,6 +83,7 @@ def generate_output_from_times(
                     times[json_name]["hits"] == raw_timers[fv3_name]["hits"]
                 ), "Can only accumulate timers with equal hit count"
             times[json_name]["mean"] += raw_timers[fv3_name]["tavg"]
+    # mock data as if collected for every timestep
     for json_name in TIMER_MAPPING.keys():
         times[json_name]["times"] = []
         for rank in range(6):
@@ -152,15 +154,10 @@ def stdout_to_json(stdout_file_regex, run_directory):
 
     """
     output_file = find_output_file(run_directory, stdout_file_regex)
-
     match = extract_times_from_file(output_file)
-
     raw_timers = parse_match_for_times(match)
-
     times = generate_output_from_times(raw_timers)
-
     setup = assemble_meta_data(output_file, run_directory, raw_timers)
-
     print_to_output(setup, times)
 
 
