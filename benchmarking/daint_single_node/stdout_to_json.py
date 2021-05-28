@@ -5,9 +5,12 @@
 # monitoring script.
 
 # 2021/01/22 Oliver Fuhrer, Vulcan Inc, oliverf@vulcan.com
+# 2021/05/28 Tobias Wicky, Vulcan Inc, tobiasw@vulcan.com
 
-import os, re, click, glob, time, datetime, json, sys
+import os, re, click, glob, datetime, json, sys
 import yaml
+from typing import Dict, Any
+
 
 # this dict maps the names of the timer in the JSON file to the actual
 # timers reported in stdout of FV3GFS, multiple entries are accumulated
@@ -23,7 +26,148 @@ TIMER_MAPPING = {
 }
 
 
-def num(s):
+def find_output_file(directory: str, file_regex: str) -> str:
+    """Finds the file with the given regex string in a directory"""
+    files = glob.glob(os.path.join(directory, file_regex))
+    assert (
+        len(files) == 1
+    ), "Either no or too many matches for given stdout file name regex pattern"
+    return files[0]
+
+
+def extract_times_from_file(file_name: str) -> re.Match:
+    """extracts the timing strings from a fortran output file"""
+    with open(file_name, "r+") as f:
+        content = f.read()
+    match = re.search(
+        r"^Total runtime.*^ *MPP_STACK", content, re.MULTILINE | re.DOTALL
+    )
+    assert match, "Issue extracting timings from stdout of SLURM job"
+    return match
+
+
+def parse_match_for_times(match: re.Match) -> Dict[str, Dict[str, float]]:
+    """converts the raw strings containing the times into a dictionary"""
+    raw_timers = {}
+    labels = [
+        "hits",
+        "tmin",
+        "tmax",
+        "tavg",
+        "tstd",
+        "tfrac",
+        "grain",
+        "pemin",
+        "pemax",
+    ]
+    for line in match.group().splitlines():
+        name = line[0:32].strip()
+        values = [string_to_numeric_value(val) for val in line[32:].split()]
+        if values:
+            raw_timers[name] = dict(zip(labels, values))
+    return raw_timers
+
+
+def collect_mean_times(raw_timers: Dict[str, Dict[str, float]]) -> Dict[str, Any]:
+    times = {}
+    for json_name, fv3_names in TIMER_MAPPING.items():
+        times[json_name] = {"hits": None, "mean": 0.0}
+        for fv3_name in fv3_names:
+            if times[json_name]["hits"] is None:
+                times[json_name]["hits"] = raw_timers[fv3_name]["hits"]
+            else:
+                assert (
+                    times[json_name]["hits"] == raw_timers[fv3_name]["hits"]
+                ), "Can only accumulate timers with equal hit count"
+            times[json_name]["mean"] += raw_timers[fv3_name]["tavg"]
+    return times
+
+
+def mock_data_per_timestep(
+    times: Dict[str, Any], total_steps: int, ranks: int
+) -> Dict[str, Any]:
+    for json_name in TIMER_MAPPING.keys():
+        times[json_name]["times"] = []
+        for rank in range(ranks):
+            time_per_step = []
+            for _ in range(total_steps):
+                time_per_step.append(times[json_name]["mean"])
+            times[json_name]["times"].append(time_per_step)
+        del times[json_name]["mean"]
+    return times
+
+
+def generate_output_from_times(
+    raw_timers: Dict[str, Dict[str, float]], setup: Dict[str, Any]
+) -> Dict[str, Any]:
+    """converts the raw data from fortran to the format used in fv3core's data collection"""
+    times = collect_mean_times(raw_timers)
+    total_steps = setup["timesteps"] - 1
+    ranks = setup["MPI ranks"]
+    times = mock_data_per_timestep(times, total_steps, ranks)
+    return times
+
+
+def meta_data_from_git_env(setup: Dict[str, Any], run_directory: str) -> Dict[str, Any]:
+    with open(os.path.join(run_directory, "git.env"), "r+") as f:
+        git_env = f.read()
+    match = re.search(r"^GIT_BRANCH = (.*)$", git_env, re.MULTILINE)
+    if match:
+        setup["git branch"] = match.group(1)
+    match = re.search(r"^GIT_COMMIT = ([a-z0-9]+)$", git_env, re.MULTILINE)
+    if match:
+        setup["git hash"] = match.group(1)
+    return setup
+
+
+def meta_data_from_output(
+    stdout_file: str, raw_timers: Dict[str, Dict[str, float]]
+) -> Dict[str, Any]:
+    setup = {}
+    setup["comment"] = "Values generated from means - no detailed info available"
+    setup["timestamp"] = datetime.datetime.fromtimestamp(
+        os.path.getmtime(stdout_file)
+    ).strftime("%d/%m/%Y %H:%M:%S")
+    setup["version"] = "fortran"
+    dynamics_timer = TIMER_MAPPING["FVDynamics"][0]
+    setup["timesteps"] = raw_timers[dynamics_timer]["hits"] + 1
+    return setup
+
+
+def meta_data_from_config(setup: Dict[str, Any], run_directory: str) -> Dict[str, Any]:
+    with open(os.path.join(run_directory, "config.yml"), "r+") as f:
+        config = yaml.safe_load(f)
+        setup["dataset"] = config["experiment_name"]
+        ranks_string = config["experiment_name"].split("_")[1]
+        ranks = ""
+        for character in ranks_string:
+            if character.isdigit():
+                ranks = ranks + character
+        setup["MPI ranks"] = int(ranks)
+    return setup
+
+
+def assemble_meta_data(
+    stdout_file: str, run_directory: str, raw_timers: Dict[str, Dict[str, float]]
+):
+    """assmebles meta-data about the run"""
+    setup = meta_data_from_output(stdout_file, raw_timers)
+    setup = meta_data_from_config(setup, run_directory)
+    setup = meta_data_from_git_env(setup, run_directory)
+    return setup
+
+
+def print_to_output(setup: Dict[str, Any], times: Dict[str, Any], output=sys.stdout):
+    """Prints the collected data into the specified output"""
+    experiment = {}
+    experiment["setup"] = setup
+    experiment["times"] = times
+    json.dump(experiment, output, indent=4)
+    print("")
+
+
+def string_to_numeric_value(s):
+    """Conversion of a number into int if possible, float otherwise"""
     try:
         return int(s)
     except ValueError:
@@ -46,82 +190,12 @@ def stdout_to_json(stdout_file_regex, run_directory):
           run_directory     (string): String containing path to run directory
 
     """
-
-    # find stdout file
-    files = glob.glob(os.path.join(run_directory, stdout_file_regex))
-    assert (
-        len(files) == 1
-    ), "Either no or too many matches for given stdout file name regex pattern"
-    stdout_file = files[0]
-
-    # extract timer string from stdout
-    with open(stdout_file, "r+") as f:
-        stdout = f.read()
-    match = re.search(
-        r"^Total runtime.*^ *MPP_STACK", stdout, re.MULTILINE | re.DOTALL
-    )
-    assert match, "Issue extracting timings from stdout of SLURM job"
-
-    # parse raw timers
-    raw_timers = {}
-    labels = [
-        "hits",
-        "tmin",
-        "tmax",
-        "tavg",
-        "tstd",
-        "tfrac",
-        "grain",
-        "pemin",
-        "pemax",
-    ]
-    for line in match.group().splitlines():
-        name = line[0:32].strip()
-        values = [num(val) for val in line[32:].split()]
-        if values:
-            raw_timers[name] = dict(zip(labels, values))
-
-    # convert into format for plotting
-    times = {}
-    for json_name, fv3_names in TIMER_MAPPING.items():
-        times[json_name] = {"hits": None, "minimum": 0.0, "maximum": 0.0, "mean": 0.0}
-        for fv3_name in fv3_names:
-            if times[json_name]["hits"] is None:
-                times[json_name]["hits"] = raw_timers[fv3_name]["hits"]
-            else:
-                assert (
-                    times[json_name]["hits"] == raw_timers[fv3_name]["hits"]
-                ), "Can only accumulate timers with equal hit count"
-            times[json_name]["minimum"] += raw_timers[fv3_name]["tmin"]
-            times[json_name]["maximum"] += raw_timers[fv3_name]["tmax"]
-            times[json_name]["mean"] += raw_timers[fv3_name]["tavg"]
-
-    # assemble meta-data
-    setup = {}
-    setup["timestamp"] = datetime.datetime.fromtimestamp(
-        os.path.getmtime(stdout_file)
-    ).strftime("%d/%m/%Y %H:%M:%S")
-    with open(os.path.join(run_directory, "config.yml"), "r+") as f:
-        config = yaml.safe_load(f)
-        setup["dataset"] = config["experiment_name"]
-    dynamics_timer = TIMER_MAPPING["FVDynamics"][0]
-    setup["timesteps"] = raw_timers[dynamics_timer]["hits"] + 1
-    setup["version"] = "fortran"
-    with open(os.path.join(run_directory, "git.env"), "r+") as f:
-        git_env = f.read()
-    match = re.search(r"^GIT_BRANCH = (.*)$", git_env, re.MULTILINE)
-    if match:
-        setup["git branch"] = match.group(1)
-    match = re.search(r"^GIT_COMMIT = ([a-z0-9]+)$", git_env, re.MULTILINE)
-    if match:
-        setup["git hash"] = match.group(1)
-
-    # print as JSON
-    experiment = {}
-    experiment["setup"] = setup
-    experiment["times"] = times
-    json.dump(experiment, sys.stdout, indent=4)
-    print("")
+    output_file = find_output_file(run_directory, stdout_file_regex)
+    match = extract_times_from_file(output_file)
+    raw_timers = parse_match_for_times(match)
+    setup = assemble_meta_data(output_file, run_directory, raw_timers)
+    times = generate_output_from_times(raw_timers, setup)
+    print_to_output(setup, times)
 
 
 if __name__ == "__main__":
