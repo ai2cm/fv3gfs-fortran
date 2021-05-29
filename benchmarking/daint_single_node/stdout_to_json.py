@@ -35,7 +35,7 @@ def find_output_file(directory: str, file_regex: str) -> str:
     return files[0]
 
 
-def extract_times_from_file(file_name: str) -> re.Match:
+def extract_times_from_file(file_name: str):
     """extracts the timing strings from a fortran output file"""
     with open(file_name, "r+") as f:
         content = f.read()
@@ -46,7 +46,7 @@ def extract_times_from_file(file_name: str) -> re.Match:
     return match
 
 
-def parse_match_for_times(match: re.Match) -> Dict[str, Dict[str, float]]:
+def parse_match_for_times(match) -> Dict[str, Dict[str, float]]:
     """converts the raw strings containing the times into a dictionary"""
     raw_timers = {}
     labels = [
