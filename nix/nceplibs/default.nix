@@ -16,7 +16,7 @@ stdenvNoCC.mkDerivation rec {
   src = fetchgit {
     url = "https://github.com/NCAR/NCEPlibs.git";
     rev = "3da51e139d5cd731c9fc27f39d88cb4e1328212b";
-    sha256 = "03yjjz34452gbq292x24lvgxj4ybasm8z2aqlps0l6hg04blkhji";
+    sha256 = "sha256:0sdf9jicashmqbzabr4r43079b573lv7pb71y2jxx9h33kw4w4mj";
     fetchSubmodules = false;
     leaveDotGit = true;
   };

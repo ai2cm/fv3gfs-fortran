@@ -9,6 +9,7 @@ jobs:
     environment:
       FV3CONFIG_CACHE_DIR: /tmp/.fv3config
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      MPIR_CVAR_OFI_SKIP_IPV6: "1"
     steps:
       - run: |
           curl -L -O https://nixos.org/nix/install
