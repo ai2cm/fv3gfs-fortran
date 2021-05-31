@@ -91,7 +91,7 @@ def mock_data_per_timestep(
         for rank in range(ranks):
             time_per_step = []
             for _ in range(total_steps):
-                time_per_step.append(times[json_name]["mean"])
+                time_per_step.append(times[json_name]["mean"] / total_steps)
             times[json_name]["times"].append(time_per_step)
         del times[json_name]["mean"]
     return times
