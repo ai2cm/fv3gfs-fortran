@@ -62,6 +62,7 @@ build_debug: ## build container image for debugging
 build_serialize: ## build container image for serialization
 	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
 	COMPILED_IMAGE=$(SERIALIZE_IMAGE) \
+	COMPILE_OPTION="GT4PY_DEV=Y" \
 	$(MAKE) build_compiled
 
 build_deps: ## build container images of dependnecies (FMS, ESMF, SerialBox)
