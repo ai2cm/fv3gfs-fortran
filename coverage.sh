@@ -42,8 +42,10 @@ cp "${submit_job}" "${rundir}"
 cp "${count_ranks}" "${rundir}"
 
 # run the model
-mkdir -p ${coverage_dir}
-docker run -it --rm --network host -v ${coverage_dir}:/coverage -v `pwd`/rundir:/rundir ${gcr_url}:gcov bash -c "set -ex; cd /rundir; ./submit_job.sh; pip3 install gcovr; cd /coverage; mkdir physics; cd physics; gcovr -d -r /FV3/gfsphysics --html --html-details -o index.html; cd ../; mkdir dycore; cd dycore; gcovr -d -r /FV3/atmos_cubed_sphere --html --html-details -o index.html"
+mkdir -p ${coverage_dir}; \rm -rf ${coverage_dir}/*
+mkdir -p ./data; \rm -rf ./data/*
+docker run -it --rm --network host -v ${coverage_dir}:/coverage -v `pwd`/rundir:/rundir -v `pwd`/data:/data ${gcr_url}:gcov bash -c "set -ex; cd /rundir; ./submit_job.sh; pip3 install gcovr; cd /coverage; gcovr -d -r /FV3/ --html --html-details -o index.html"
+\rm -rf data
 
 # cleanup run directory
 set +e
@@ -56,6 +58,6 @@ fi
 set -e
 
 # tell user we're done
-echo "Open coverage_${config_name}/*/index.html to view coverage data"
+echo "Open coverage_${config_name}/index.html to view coverage data"
 exit 0
 
