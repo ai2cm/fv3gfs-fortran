@@ -1010,7 +1010,6 @@ module module_physics_driver
                     qg_dt(im,1,levs), p123(im,1,levs),  refl(im,1,levs),  den(im,levs))
         endif
       endif
-
 #ifdef GFS_HYDRO
       call get_prs(im, ix, levs, ntrac, Statein%tgrs, Statein%qgrs,     &
                    Model%thermodyn_id, Model%sfcpress_id,               &
@@ -1018,8 +1017,25 @@ module module_physics_driver
                    Statein%prsl, Statein%prslk, Statein%phii, Statein%phil, del)
 #else
 !GFDL   Adjust the geopotential height hydrostatically in a way consistent with FV3 discretization
+      !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+      !$ser verbatim do_ser = (index(ser_env, "PRSFV3") /= 0)
+      !$ser verbatim print *,'Before calling get_prs_fv3()'
+      !$ser verbatim if (do_ser) then
+        !$ser verbatim print *,'>> serializing get_prs_fv3()', ser_count, iter
+        !$ser savepoint "prsfv3-in-"//trim(ser_count_str)
+        ! in
+        !$ser data ix=ix levs=levs ntrac=ntrac phii=Statein%phii prsi=Statein%prsi
+        !$ser data tgrs=Statein%tgrs qgrs=Statein%qgrs 
+        ! in/out
+        !$ser data del=del del_gz=del_gz
+      !$ser verbatim end if
       call get_prs_fv3 (ix, levs, ntrac, Statein%phii, Statein%prsi,    &
                         Statein%tgrs, Statein%qgrs, del, del_gz)
+      !$ser verbatim if (do_ser) then
+        !$ser savepoint "prsfv3-out-"//trim(ser_count_str)
+        ! in/out
+        !$ser data del=del del_gz=del_gz
+      !$ser verbatim end if
 #endif
 
       do i = 1, IM
@@ -3309,8 +3325,31 @@ module module_physics_driver
                    Statein%prsl, Statein%prslk, Statein%phii, Statein%phil)
 #else
 !GFDL   Adjust the height hydrostatically in a way consistent with FV3 discretization
+      !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+      !$ser verbatim do_ser = (index(ser_env, "PHIFV3") /= 0)
+      !$ser verbatim if (do_ser) then
+        !$ser verbatim print *,'>> serializing get_phi_fv3()', ser_count, iter
+        !$ser verbatim if (iter == 1) then
+        !$ser savepoint "phifv3-in-iter1-"//trim(ser_count_str)
+        !$ser verbatim else
+        !$ser savepoint "phifv3-in-iter2-"//trim(ser_count_str)
+        !$ser verbatim end if
+        ! in
+        !$ser data ix=ix levs=levs ntrac=ntrac gt0=Stateout%gt0 gq0=Stateout%gq0
+        ! in/out
+        !$ser data del_gz=del_gz phii=Statein%phii phil=Statein%phil
+      !$ser verbatim end if
       call get_phi_fv3 (ix, levs, ntrac, Stateout%gt0, Stateout%gq0, &
                         del_gz, Statein%phii, Statein%phil)
+      !$ser verbatim if (do_ser) then
+        !$ser verbatim if (iter == 1) then
+        !$ser savepoint "phifv3-out-iter1-"//trim(ser_count_str)
+        !$ser verbatim else
+        !$ser savepoint "phifv3-out-iter2-"//trim(ser_count_str)
+        !$ser verbatim end if
+        ! in/out
+        !$ser data del_gz=del_gz phii=Statein%phii phil=Statein%phil
+      !$ser verbatim end if
 #endif
 
       do k=1,levs
