@@ -1249,6 +1249,17 @@
       !--- TYPED VARIABLES
       type (cmpfsw_type),    dimension(size(Grid%xlon,1)) :: scmpsw
 
+      character(len=10) :: ser_count_str
+
+!$ser verbatim character(len=256) :: ser_env
+!$ser verbatim logical :: do_ser
+!$ser verbatim integer, save :: ser_count = 0
+!$ser verbatim write(ser_count_str, '(i6.6)') ser_count
+
+!$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+!$ser verbatim print *, 'INFO: inside GFS_radiation_driver: SER_ENV=', TRIM(ser_env)
+
+
 !     logical effr_in
 !     data effr_in/.false./
 !
@@ -1990,6 +2001,23 @@
 !!    fluxes.
 !     print *,' in grrad : calling lwrad'
 
+!$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+!$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+!$ser verbatim if (do_ser) then
+        !$ser verbatim print *, '>> serializing lwrad()', ser_count
+        !$ser savepoint "lwrad-in-"//trim(ser_count_str)
+        ! in
+        !$ser data plyr=plyr plvl=plvl tlyr=tlyr tlvl=tlvl qlyr=qlyr
+        !$ser data olyr=olyr gasvmr=gasvmr clouds=clouds icsdlw=Tbd%icsdlw
+        !$ser data faerlw=faerlw semis=Radtend%semis tsfg=tsfg dz=dz delp=delp
+        !$ser data de_lgth=de_lgth im=im lmk=lmk lmp=lmp lprnt=Model%lprnt
+        ! out
+        !$ser data htlwc=htlwc upfxc_t=Diag%topflw%upfxc upfx0_t=Diag%topflw%upfx0
+        !$ser data upfxc_s=Radtend%sfcflw%upfxc upfx0_s=Radtend%sfcflw%upfx0
+        !$ser data dnfxc_s=Radtend%sfcflw%dnfxc dnfx0_s=Radtend%sfcflw%dnfx0
+        !$ser data cldtaulw=cldtaulw
+!$ser verbatim end if
+
         if (Model%lwhtr) then
           call lwrad (plyr, plvl, tlyr, tlvl, qlyr, olyr, gasvmr,  &        !  ---  inputs
                       clouds, Tbd%icsdlw, faerlw, Radtend%semis,   &
@@ -2142,6 +2170,7 @@
 
       endif                                ! end_if_lssav
 !
+!$ser verbatim ser_count = ser_count + 1
       return
 !........................................
       end subroutine GFS_radiation_driver

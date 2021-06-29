@@ -1,0 +1,5 @@
+#!/Users/AndrewP/Documents/work/fv3gfs-fortran-orig/venv/bin/python3.9
+
+from f90nml import cli
+
+cli.parse()

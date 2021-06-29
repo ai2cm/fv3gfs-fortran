@@ -1,0 +1,36 @@
+Metadata-Version: 2.1
+Name: gcsfs
+Version: 0.6.2
+Summary: Convenient Filesystem interface over GCS
+Home-page: https://github.com/dask/gcsfs
+Maintainer: Martin Durant
+Maintainer-email: mdurant@anaconda.com
+License: BSD
+Keywords: google-cloud-storage,gcloud,file-system
+Platform: UNKNOWN
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: BSD License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3.5
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Programming Language :: Python :: 3.7
+Requires-Python: >=3.5
+Requires-Dist: google-auth (>=1.2)
+Requires-Dist: google-auth-oauthlib
+Requires-Dist: requests
+Requires-Dist: decorator
+Requires-Dist: fsspec (>=0.6.0)
+Provides-Extra: gcsfuse
+Requires-Dist: fusepy ; extra == 'gcsfuse'
+
+gcsfs
+=====
+
+Pythonic file-system for Google Cloud Storage
+
+
+For documentation, go to readthedocs_.
+
+.. _readthedocs: http://gcsfs.readthedocs.io/en/latest/
+

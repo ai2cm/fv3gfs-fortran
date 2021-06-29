@@ -2,5 +2,5 @@
 
 import fv3config
 import yaml
-config = yaml.safe_load(open('example/config.yml', 'r'))
+config = yaml.safe_load(open('tests/pytest/config/default.yml', 'r'))
 fv3config.write_run_directory(config, 'rundir')

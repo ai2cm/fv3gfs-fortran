@@ -1,0 +1,6 @@
+[console_scripts]
+enable_restart = fv3config.cli:enable_restart
+fv3run = fv3config.fv3run.__main__:main
+update_config_for_nudging = fv3config.cli:update_config_for_nudging
+write_run_directory = fv3config.cli:write_run_directory
+
