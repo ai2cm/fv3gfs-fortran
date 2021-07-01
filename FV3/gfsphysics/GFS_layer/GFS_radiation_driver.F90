@@ -2006,6 +2006,8 @@
 !$ser verbatim if (do_ser) then
         !$ser verbatim print *, '>> serializing lwrad()', ser_count
         !$ser savepoint "lwrad-in-"//trim(ser_count_str)
+        ! param
+        !$ser data xlon=Grid%xlon levr=Model%levr
         ! in
         !$ser data plyr=plyr plvl=plvl tlyr=tlyr tlvl=tlvl qlyr=qlyr
         !$ser data olyr=olyr gasvmr=gasvmr clouds=clouds icsdlw=Tbd%icsdlw
@@ -2032,6 +2034,15 @@
                             IM, LMK, LMP, Model%lprnt,             &
                       htlwc, Diag%topflw, Radtend%sfcflw, cldtaulw)         !  ---  outputs
         endif
+
+!$ser verbatim if (do_ser) then
+        !$ser savepoint "lwrad-out-"//trim(ser_count_str)
+        ! out
+        !$ser data htlwc=htlwc upfxc_t=Diag%topflw%upfxc upfx0_t=Diag%topflw%upfx0
+        !$ser data upfxc_s=Radtend%sfcflw%upfxc upfx0_s=Radtend%sfcflw%upfx0
+        !$ser data dnfxc_s=Radtend%sfcflw%dnfxc dnfx0_s=Radtend%sfcflw%dnfx0
+        !$ser data cldtaulw=cldtaulw
+!$ser verbatim end if
 
 !> -# Save calculation results
 !>  - Save surface air temp for diurnal adjustment at model t-steps
