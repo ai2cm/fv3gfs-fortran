@@ -192,6 +192,7 @@ serialize_preprocess: serialize_outdir_check
 	@echo "preprocessing for serialization"
 	@mkdir -p $(SERIALBOX_OUTDIR)/atmos_cubed_sphere/model
 	@mkdir -p $(SERIALBOX_OUTDIR)/atmos_cubed_sphere/driver/fvGFS
+	@mkdir -p $(SERIALBOX_OUTDIR)/gfsphysics/GFS_layer
 	@make pp_ser_calls
 	@cp -r -u  $(CWD)/* $(SERIALBOX_OUTDIR)
 
@@ -201,6 +202,7 @@ pp_ser_calls: serialize_outdir_check
 	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/ $(CWD)/*.F90
 	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/atmos_cubed_sphere/model $(CWD)/atmos_cubed_sphere/model/*.F90
 	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/atmos_cubed_sphere/driver/fvGFS $(CWD)/atmos_cubed_sphere/driver/fvGFS/*.F90
+	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/gfsphysics/GFS_layer $(CWD)/gfsphysics/GFS_layer/*.F90
 
 .PHONY: clean cleanall serialize serialize_preprocess fms_check serialize_outdir_check
 clean:

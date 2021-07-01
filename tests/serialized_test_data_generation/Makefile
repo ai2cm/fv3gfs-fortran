@@ -13,7 +13,7 @@ SER_ENV ?= ALL
 FORTRAN_VERSION ?= 7.2.5
 # docker container image setup (used for running model, see ../../README.md)
 GCR_URL = us.gcr.io/vcm-ml
-COMPILED_IMAGE = $(GCR_URL)/fv3gfs-compiled:$(FORTRAN_VERSION)-serialize-gt4pydev
+COMPILED_IMAGE = $(GCR_URL)/fv3gfs-compiled:gnu7-mpich314-nocuda-serialize
 RUN_DIR_CONTAINER = /rundir
 DATA_DIR_CONTAINER = /data
 

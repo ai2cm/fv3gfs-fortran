@@ -287,7 +287,23 @@ subroutine update_atmos_radiation_physics (Atmos)
     call mpp_clock_end(otherClock)
 
     call mpp_clock_begin(getClock)
+    
+    !$ser on
+    !$ser savepoint AtmosPhysDriverStatein-IN
+    !$ser data IPD_prsik=IPD_Data(1)%Statein%prsik IPD_phii=IPD_Data(1)%Statein%phii IPD_atm_ts=IPD_Data(1)%Statein%atm_ts
+    !$ser data IPD_tgrs=IPD_Data(1)%Statein%tgrs IPD_ugrs=IPD_Data(1)%Statein%ugrs IPD_vgrs=IPD_Data(1)%Statein%vgrs
+    !$ser data IPD_vvl=IPD_Data(1)%Statein%vvl IPD_prsl=IPD_Data(1)%Statein%prsl IPD_diss_est=IPD_Data(1)%Statein%diss_est
+    !$ser data IPD_qgrs=IPD_Data(1)%Statein%qgrs IPD_prsi=IPD_Data(1)%Statein%prsi IPD_pgr=IPD_Data(1)%Statein%pgr
+    !$ser data IPD_prslk=IPD_Data(1)%Statein%prslk IPD_phil=IPD_Data(1)%Statein%phil IPD_dycore_hydrostatic=IPD_Data(1)%Statein%dycore_hydrostatic
+    !$ser data IPD_nwat=IPD_Data(1)%Statein%nwat
     call atmos_phys_driver_statein (IPD_data, Atm_block, flip_vc)
+    !$ser savepoint AtmosPhysDriverStatein-OUT
+    !$ser data IPD_prsik=IPD_Data(1)%Statein%prsik IPD_phii=IPD_Data(1)%Statein%phii IPD_atm_ts=IPD_Data(1)%Statein%atm_ts
+    !$ser data IPD_tgrs=IPD_Data(1)%Statein%tgrs IPD_ugrs=IPD_Data(1)%Statein%ugrs IPD_vgrs=IPD_Data(1)%Statein%vgrs
+    !$ser data IPD_vvl=IPD_Data(1)%Statein%vvl IPD_prsl=IPD_Data(1)%Statein%prsl IPD_diss_est=IPD_Data(1)%Statein%diss_est
+    !$ser data IPD_qgrs=IPD_Data(1)%Statein%qgrs IPD_prsi=IPD_Data(1)%Statein%prsi IPD_pgr=IPD_Data(1)%Statein%pgr
+    !$ser data IPD_prslk=IPD_Data(1)%Statein%prslk IPD_phil=IPD_Data(1)%Statein%phil IPD_dycore_hydrostatic=IPD_Data(1)%Statein%dycore_hydrostatic
+    !$ser data IPD_nwat=IPD_Data(1)%Statein%nwat
     call mpp_clock_end(getClock)
 
 !--- if dycore only run, set up the dummy physics output state as the input state
@@ -349,28 +365,28 @@ subroutine update_atmos_radiation_physics (Atmos)
 
       call mpp_clock_end(setupClock)
 
-      if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "radiation driver"
+!       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "radiation driver"
 
-!--- execute the IPD atmospheric radiation subcomponent (RRTM)
+! !--- execute the IPD atmospheric radiation subcomponent (RRTM)
 
-      call mpp_clock_begin(radClock)
-#ifdef CCPP
-      ! Performance improvement. Only enter if it is time to call the radiation physics.
-      if (IPD_Control%lsswr .or. IPD_Control%lslwr) then
-        call CCPP_step (step="radiation", nblks=Atm_block%nblks, ierr=ierr)
-        if (ierr/=0)  call mpp_error(FATAL, 'Call to CCPP radiation step failed')
-      endif
-#else
-      Func0d => radiation_step1
-!$OMP parallel do default (none)       &
-!$OMP            schedule (dynamic,1), &
-!$OMP            shared   (Atm_block, IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Func0d) &
-!$OMP            private  (nb)
-      do nb = 1,Atm_block%nblks
-        call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d)
-      enddo
-#endif
-      call mpp_clock_end(radClock)
+!       call mpp_clock_begin(radClock)
+! #ifdef CCPP
+!       ! Performance improvement. Only enter if it is time to call the radiation physics.
+!       if (IPD_Control%lsswr .or. IPD_Control%lslwr) then
+!         call CCPP_step (step="radiation", nblks=Atm_block%nblks, ierr=ierr)
+!         if (ierr/=0)  call mpp_error(FATAL, 'Call to CCPP radiation step failed')
+!       endif
+! #else
+!       Func0d => radiation_step1
+! !$OMP parallel do default (none)       &
+! !$OMP            schedule (dynamic,1), &
+! !$OMP            shared   (Atm_block, IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Func0d) &
+! !$OMP            private  (nb)
+!       do nb = 1,Atm_block%nblks
+!         call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d)
+!       enddo
+! #endif
+!       call mpp_clock_end(radClock)
 
       call mpp_clock_begin(otherClock)
       if (chksum_debug) then

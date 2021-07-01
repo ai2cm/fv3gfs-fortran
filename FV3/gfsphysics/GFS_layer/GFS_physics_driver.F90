@@ -1,5 +1,6 @@
 module module_physics_driver
-
+  !$ser verbatim use mpi
+  !$ser verbatim USE m_serialize, ONLY: fs_is_serialization_on
   use machine,               only: kind_phys
   use physcons,              only: con_cp, con_fvirt, con_g, con_rd,    &
                                    con_rv, con_hvap, con_hfus,          &
@@ -676,6 +677,10 @@ module module_physics_driver
       real(kind=kind_phys), pointer :: adjsfcdlw_for_lsm(:), adjsfcdsw_for_lsm(:), adjsfcnsw_for_lsm(:)
       real(kind=kind_phys), pointer :: sea_surface_temperature(:)
       integer :: nwat
+      !$ser verbatim integer :: mpi_rank,ier
+      !$ser verbatim logical :: ser_on
+      !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, mpi_rank,ier)
+      !$ser verbatim print *, 'INFO: inside GFS_physics_driver'
 
       !! Initialize local variables (mainly for debugging purposes, because the
       !! corresponding variables Interstitial(nt)%... are reset to zero every time);
@@ -1388,51 +1393,51 @@ module module_physics_driver
 !      sw:  using cos of zenith angle as scaling factor
 !      lw:  using surface air skin temperature as scaling factor
 
-      if (Model%pre_rad) then
-        call dcyc2t3_pre_rad                                                &
-!  ---  inputs:
-           ( Model%solhr, Model%slag, Model%sdec, Model%cdec, Grid%sinlat,  &
-             Grid%coslat, Grid%xlon, Radtend%coszen, Sfcprop%tsfc,          &
-             Statein%tgrs(1,1), Statein%tgrs(1,1), Coupling%sfcdsw,         &
-             Coupling%sfcnsw, Coupling%sfcdlw, Radtend%htrsw, Radtend%htrlw,&
-             Coupling%nirbmui, Coupling%nirdfui, Coupling%visbmui,          &
-             Coupling%visdfui, Coupling%nirbmdi, Coupling%nirdfdi,          &
-             Coupling%visbmdi, Coupling%visdfdi, ix, im, levs,              &
-!  ---  input/output:
-             dtdt,                                                          &
-!  ---  outputs:
-             adjsfcdsw, adjsfcnsw, adjsfcdlw, adjsfculw, xmu, xcosz,        &
-             adjnirbmu, adjnirdfu, adjvisbmu, adjvisdfu,                    &
-             adjnirbmd, adjnirdfd, adjvisbmd, adjvisdfd                     &
-           )
+!       if (Model%pre_rad) then
+!         call dcyc2t3_pre_rad                                                &
+! !  ---  inputs:
+!            ( Model%solhr, Model%slag, Model%sdec, Model%cdec, Grid%sinlat,  &
+!              Grid%coslat, Grid%xlon, Radtend%coszen, Sfcprop%tsfc,          &
+!              Statein%tgrs(1,1), Statein%tgrs(1,1), Coupling%sfcdsw,         &
+!              Coupling%sfcnsw, Coupling%sfcdlw, Radtend%htrsw, Radtend%htrlw,&
+!              Coupling%nirbmui, Coupling%nirdfui, Coupling%visbmui,          &
+!              Coupling%visdfui, Coupling%nirbmdi, Coupling%nirdfdi,          &
+!              Coupling%visbmdi, Coupling%visdfdi, ix, im, levs,              &
+! !  ---  input/output:
+!              dtdt,                                                          &
+! !  ---  outputs:
+!              adjsfcdsw, adjsfcnsw, adjsfcdlw, adjsfculw, xmu, xcosz,        &
+!              adjnirbmu, adjnirdfu, adjvisbmu, adjvisdfu,                    &
+!              adjnirbmd, adjnirdfd, adjvisbmd, adjvisdfd                     &
+!            )
 
-      else
+!       else
 
-        call dcyc2t3                                                        &
-!  ---  inputs:
-           ( Model%solhr, Model%slag, Model%sdec, Model%cdec, Grid%sinlat,  &
-             Grid%coslat, Grid%xlon, Radtend%coszen, tsfc3,                 &
-!            Statein%tgrs(1,1), Radtend%tsflw,  Radtend%semis,              &
-             Statein%tgrs(1,1), Radtend%tsflw,  semis3,                     &
-             Coupling%sfcdsw,  Coupling%sfcnsw, Coupling%sfcdlw,            &
-             Radtend%htrsw,    Radtend%swhc,    Radtend%htrlw, Radtend%lwhc,&
-             Coupling%nirbmui, Coupling%nirdfui, Coupling%visbmui,          &
-             Coupling%visdfui, Coupling%nirbmdi, Coupling%nirdfdi,          &
-             Coupling%visbmdi, Coupling%visdfdi, ix, im, levs, dtf,         &
-             Model%fhswr, dry, icy, wet,                                    &
-!            lprnt, ipr,                                                    &
-!  ---  input/output:
-             dtdt, dtdtc,                                                   &
-!  ---  outputs:
-             adjsfcdsw, adjsfcnsw, adjsfcdlw, adjsfculw3, xmu, xcosz,       &
-             adjnirbmu, adjnirdfu, adjvisbmu, adjvisdfu,                    &
-             adjnirbmd, adjnirdfd, adjvisbmd, adjvisdfd                     &
-           )
+!         call dcyc2t3                                                        &
+! !  ---  inputs:
+!            ( Model%solhr, Model%slag, Model%sdec, Model%cdec, Grid%sinlat,  &
+!              Grid%coslat, Grid%xlon, Radtend%coszen, tsfc3,                 &
+! !            Statein%tgrs(1,1), Radtend%tsflw,  Radtend%semis,              &
+!              Statein%tgrs(1,1), Radtend%tsflw,  semis3,                     &
+!              Coupling%sfcdsw,  Coupling%sfcnsw, Coupling%sfcdlw,            &
+!              Radtend%htrsw,    Radtend%swhc,    Radtend%htrlw, Radtend%lwhc,&
+!              Coupling%nirbmui, Coupling%nirdfui, Coupling%visbmui,          &
+!              Coupling%visdfui, Coupling%nirbmdi, Coupling%nirdfdi,          &
+!              Coupling%visbmdi, Coupling%visdfdi, ix, im, levs, dtf,         &
+!              Model%fhswr, dry, icy, wet,                                    &
+! !            lprnt, ipr,                                                    &
+! !  ---  input/output:
+!              dtdt, dtdtc,                                                   &
+! !  ---  outputs:
+!              adjsfcdsw, adjsfcnsw, adjsfcdlw, adjsfculw3, xmu, xcosz,       &
+!              adjnirbmu, adjnirdfu, adjvisbmu, adjvisdfu,                    &
+!              adjnirbmd, adjnirdfd, adjvisbmd, adjvisdfd                     &
+!            )
 
-!
-! save temp change due to radiation - need for sttp stochastic physics
-!---------------------------------------------------------------------
-      endif
+! !
+! ! save temp change due to radiation - need for sttp stochastic physics
+! !---------------------------------------------------------------------
+!       endif
 !
       if (Model%lsidea) then                       !idea jw
         dtdt(:,:) = zero
@@ -1647,7 +1652,7 @@ module module_physics_driver
 !
 !     if (lprnt) write(0,*)' tsfc=',Sfcprop%tsfc(ipr),' tsurf=',tsurf(ipr),'iter=', &
 !           iter ,'wet=',wet(ipr),'dry=',dry(ipr),' icy=',icy(ipr)
-
+! #ifndef GT4PY_DEV
         call sfc_diff                                                   &
 !  ---  inputs:
           (im, Statein%pgr,                                             &
@@ -1665,7 +1670,7 @@ module module_physics_driver
 !          cd3, cdq3, rb3, stress3, ffmm3, ffhh3, fm103, fh23, wind, lprnt, ipr)
 !
 !  --- ...  lu: update flag_guess
-
+! #endif
         do i=1,im
           if (iter == 1 .and. wind(i) < 2.0) then
             flag_guess(i) = .true.
@@ -1702,7 +1707,7 @@ module module_physics_driver
           endif
 !     if (lprnt) write(0,*)' bef nst tseal=',tseal(ipr) &
 !     ,' tsfc3=',tsfc3(ipr,3),' tsurf3=',tsurf3(ipr,3),' tem=',tem
-
+! #ifndef GT4PY_DEV
           call sfc_nst                                                  &
 !  ---  inputs:
             (im, Statein%pgr, Statein%ugrs(:,1), Statein%vgrs(:,1),     &
@@ -1723,7 +1728,7 @@ module module_physics_driver
 !  ---  outputs:
              qss3(:,3),  gflx3(:,3), cmm3(:,3), chh3(:,3), evap3(:,3),  &
              hflx3(:,3), ep1d3(:,3))
-
+! #endif
 !         do i=1,im
 !!          if (wet(i) .and. .not.icy(i)) then
 !!          if (wet(i) .and. (Model%frac_grid .or. .not. icy(i))) then
@@ -1758,7 +1763,7 @@ module module_physics_driver
         else
 
 !  --- ...  surface energy balance over ocean
-
+! #ifndef GT4PY_DEV
           call sfc_ocean                                                &
 !  ---  inputs:
            (im, Statein%pgr,                                            &
@@ -1768,7 +1773,7 @@ module module_physics_driver
 !  ---  outputs:
             qss3(:,3), cmm3(:,3), chh3(:,3), gflx3(:,3), evap3(:,3),    &
             hflx3(:,3), ep1d3(:,3))
-
+! #endif
         endif       ! if nstf_name(1) > 0
 
 !       if (lprnt) write(0,*)' sfalb=',Radtend%sfalb(ipr),' ipr=',ipr   &
@@ -1783,7 +1788,7 @@ module module_physics_driver
 !     if (lprnt) write(0,*)' tseal=',tseal(ipr),' tsurf=',tsurf(ipr),iter &
 !     ,' stsoil0=',stsoil(ipr,:)
 !    &,' pgr=',pgr(ipr),' sfcemis=',sfcemis(ipr)
-
+! #ifndef GT4PY_DEV
           call sfc_drv                                                   &
 !  ---  inputs:
            (im, lsoil, Statein%pgr,                                      &
@@ -1805,7 +1810,7 @@ module module_physics_driver
             hflx3(:,1), ep1d3(:,1), runof,                               &
             cmm3(:,1),  chh3(:,1), evbs, evcw, sbsno, snowc, Diag%soilm, &
             snohf, Diag%smcwlt2, Diag%smcref2, Diag%wet1)
-
+! #endif
 !     if (lprnt) write(0,*)' tseae=',tseal(ipr),' tsurf=',tsurf(ipr),iter&
 !                         ,' phy_f2d=',phy_f2d(ipr,num_p2d)
 
@@ -1878,6 +1883,7 @@ module module_physics_driver
 
 ! call sfc_cice for sea ice points in the coupled model (i.e. islmsk=4)
 !
+! #ifndef GT4PY_DEV
           call sfc_cice                                                  &
 !  ---  inputs:
            (im, Statein%tgrs(:,1),                                       &
@@ -1888,11 +1894,13 @@ module module_physics_driver
 !  ---  outputs:
             qss3(:,2), cmm3(:,2), chh3(:,2), evap3(:,2), hflx3(:,2),     &
             stress3(:,2))
+! #endif
         endif
 
 !
 ! call sfc_sice for lake ice and for the uncoupled case, sea ice (i.e. islmsk=2)
 !
+! #ifndef GT4PY_DEV
         call sfc_sice                                                            &
 !  ---  inputs:
            (im, lsoil, Statein%pgr,                                             &
@@ -1908,7 +1916,7 @@ module module_physics_driver
 !  ---  outputs:
             snowd3(:,2), qss3(:,2), snowmt, gflx3(:,2), cmm3(:,2), chh3(:,2),    &
             evap3(:,2),  hflx3(:,2))
-
+! #endif
         if (Model%cplflx) then
           do i = 1, im
             if (flag_cice(i)) then
@@ -2122,12 +2130,12 @@ module module_physics_driver
       endif
 
 !  --- ...  update near surface fields
-
+! #ifndef GT4PY_DEV
       call sfc_diag (im, Statein%pgr, Statein%ugrs(:,1), Statein%vgrs(:,1),       &
                      Statein%tgrs(:,1), Statein%qgrs(:,1,1), work3, evap,         &
                      Sfcprop%ffmm, Sfcprop%ffhh, fm10, fh2, Sfcprop%tsfc, qss,    &
                      Sfcprop%f10m, Diag%u10m, Diag%v10m, Sfcprop%t2m, Sfcprop%q2m)
-
+! #endif
       Tbd%phy_f2d(:,Model%num_p2d) = zero
 
       if (Model%lsm == Model%lsm_noahmp) then
@@ -2364,6 +2372,7 @@ module module_physics_driver
           !      stop
           !  end if
           elseif (.not. Model%old_monin) then
+#ifndef GT4PY_DEV
             call moninq(ix, im, levs, nvdiff, ntcw, dvdt, dudt, dtdt, dqdt,         &
                         Statein%ugrs, Statein%vgrs, Statein%tgrs, Statein%qgrs,     &
                         Radtend%htrsw, Radtend%htrlw, xmu, Statein%prsik(1,1), rb,  &
@@ -2374,6 +2383,7 @@ module module_physics_driver
                         gamt, gamq, dkt, kinver, Model%xkzm_m, Model%xkzm_h,        &
                         Model%xkzm_s, lprnt, ipr,                                   &
                         Model%xkzminv, Model%moninq_fac, Model%rbcr)
+#endif
           else
             if (Model%mstrat) then
               call moninp1(ix, im, levs, nvdiff, dvdt, dudt, dtdt, dqdt,            &
@@ -3143,12 +3153,14 @@ module module_physics_driver
 !            enddo
 !          endif
         else
+#ifndef GT4PY_DEV
           call ozphys (ix, im, levs, levozp, dtp,                 &
                        Stateout%gq0(1,1,ntoz),                    &
                        Stateout%gq0(1,1,ntoz),                    &
                        Stateout%gt0, oz_pres, Statein%prsl,       &
                        Tbd%ozpl, oz_coeff, del, Model%ldiag3d,    &
                        dq3dt_loc(1,1,6), me)
+#endif
 !          if (Model%ldiag3d) then
 !            do k=1,levs
 !              do i=1,im
@@ -4843,6 +4855,14 @@ module module_physics_driver
           enddo
 
           if ( Model%do_gfdl_mp_in_physics ) then
+            !$ser on
+            !$ser savepoint Microph-In
+            !$ser data mph_qv=qv1 mph_ql=ql1 mph_qr=qr1 mph_qi=qi1 mph_qs=qs1 mph_qg=qg1 mph_qa=qa1 mph_qn=qn1 mph_qv_dt=qv_dt
+            !$ser data mph_ql_dt=ql_dt mph_qr_dt=qr_dt mph_qi_dt=qi_dt mph_qs_dt=qs_dt mph_qg_dt=qg_dt mph_qa_dt=qa_dt
+            !$ser data mph_pt_dt=pt_dt mph_pt=pt mph_w=w mph_uin=uin mph_vin=vin mph_udt=udt mph_vdt=vdt mph_dz=dz mph_delp=delp
+            !$ser data mph_area=area mph_dt_in=dtp mph_land=land mph_rain=rain0 mph_snow=snow0 mph_ice=ice0 mph_graupel=graupel0
+            !$ser data mph_iie=im mph_kke=levs mph_kbot=levs mph_seconds=seconds mph_p=p123 mph_lradar=Model%lradar
+            !$ser data mph_refl_10cm=refl mph_reset=reset
             call gfdl_cloud_microphys_driver(qv1, ql1, qr1, qi1, qs1, qg1, qa1, &
                                              qn1, qv_dt, ql_dt, qr_dt, qi_dt,   &
                                              qs_dt, qg_dt, qa_dt, pt_dt, pt, w, &
@@ -4852,6 +4872,12 @@ module module_physics_driver
                                              1, im, 1, 1, 1, levs, 1, levs,     &
                                              seconds,p123,Model%lradar,refl,    &
                                              reset)
+            !$ser savepoint Microph-Out
+            !$ser data mph_qi=qi1 mph_qs=qs1 mph_qv_dt=qv_dt
+            !$ser data mph_ql_dt=ql_dt mph_qr_dt=qr_dt mph_qi_dt=qi_dt mph_qs_dt=qs_dt mph_qg_dt=qg_dt mph_qa_dt=qa_dt
+            !$ser data mph_pt_dt=pt_dt mph_w=w mph_udt=udt mph_vdt=vdt
+            !$ser data mph_rain=rain0 mph_snow=snow0 mph_ice=ice0 mph_graupel=graupel0
+            !$ser data mph_refl_10cm=refl
           endif
 
           tem = dtp * con_p001 / con_day
