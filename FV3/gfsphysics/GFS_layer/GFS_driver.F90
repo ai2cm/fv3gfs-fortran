@@ -164,6 +164,11 @@ module GFS_driver
     real(kind=kind_phys), allocatable :: si(:)
     real(kind=kind_phys), parameter   :: p_ref = 101325.0d0
 #endif
+    !$ser verbatim character(len=256) :: ser_env
+    !$ser verbatim logical :: do_ser
+
+    !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+    !$ser verbatim print *, 'INFO: inside GFS_driver: SER_ENV=', TRIM(ser_env)
 
     nblks = size(Init_parm%blksz)
     ntrac = size(Init_parm%tracer_names)
@@ -312,7 +317,20 @@ module GFS_driver
     !--- ak/bk have been flipped from their original FV3 orientation and are defined sfc -> toa
     allocate(si(Model%levr+1))
     si = (Init_parm%ak + Init_parm%bk * p_ref - Init_parm%ak(Model%levr+1)) &
-             / (p_ref - Init_parm%ak(Model%levr+1))
+         / (p_ref - Init_parm%ak(Model%levr+1))
+
+    !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+    !$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+    !$ser verbatim if (do_ser) then
+        !$ser verbatim print *, '>> serializing rad_initialize()'
+        !$ser savepoint "rad-initialize"
+        !$ser data si=si ictm=Model%ictm isol=Model%isol imp_physics=Model%imp_physics
+        !$ser data ico2=Model%ico2 iaer=Model%iaer ialb=Model%ialb iems=Model%iems
+        !$ser data ntcw=Model%ntcw num_p2d=Model%num_p2d num_p3d=Model%num_p3d npdf3d=Model%npdf3d
+        !$ser data ntoz=Model%ntoz iovr_sw=Model%iovr_sw iovr_lw=Model%iovr_lw isubc_sw=Model%isubc_sw
+        !$ser data isubc_lw=Model%isubc_lw icliq_sw=Model%icliq_sw crick_proof=Model%crick_proof
+        !$ser data ccnorm=Model%ccnorm norad_precip=Model%norad_precip idate=Model%idate iflip=Model%iflip
+    !$ser verbatim end if
 
     call rad_initialize (si,  Model%levr,         Model%ictm,    Model%isol,      &
            Model%ico2,        Model%iaer,         Model%ialb,    Model%iems,      &
@@ -828,7 +846,24 @@ module GFS_driver
     integer :: ix, nb, j, i, nblks, ipseed
     integer :: numrdm(Model%cnx*Model%cny*2)
 
+    !$ser verbatim character(len=256) :: ser_env
+    !$ser verbatim logical :: do_ser
+
+    !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+    !$ser verbatim print *, 'INFO: inside GFS_driver: SER_ENV=', TRIM(ser_env)
+
     nblks = size(blksz,1)
+
+    !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+    !$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+    !$ser verbatim if (do_ser) then
+        !$ser verbatim print *, '>> serializing rad_update()'
+        !$ser savepoint "rad-update"
+        !$ser data idat=Model%idat jdat=Model%jdat fhswr=Model%fhswr dtf=Model%dtf
+        !$ser data lsswr=Model%lsswr slag=Model%slag sdec=Model%sdec cdec=Model%cdec
+        !$ser data solcon=Model%solcon
+    !$ser verbatim end if
+
 
     call radupdate (Model%idat, Model%jdat, Model%fhswr, Model%dtf,  Model%lsswr, &
                     Model%me,   Model%slag, Model%sdec,  Model%cdec, Model%solcon)
