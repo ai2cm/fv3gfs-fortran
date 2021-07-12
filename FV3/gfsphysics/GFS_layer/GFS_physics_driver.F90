@@ -1031,8 +1031,15 @@ module module_physics_driver
                    Statein%prsl, Statein%prslk, Statein%phii, Statein%phil, del)
 #else
 !GFDL   Adjust the geopotential height hydrostatically in a way consistent with FV3 discretization
+      !$ser on
+      !$ser savepoint PrsFV3-In
+      !$ser data prs_ix=ix prs_levs=levs prs_ntrac=ntrac prs_phii=Statein%phii prs_prsi=Statein%prsi
+      !$ser data prs_tgrs=Statein%tgrs prs_qgrs=Statein%qgrs 
+      !$ser data prs_del=del prs_del_gz=del_gz
       call get_prs_fv3 (ix, levs, ntrac, Statein%phii, Statein%prsi,    &
                         Statein%tgrs, Statein%qgrs, del, del_gz)
+      !$ser savepoint PrsFV3-Out
+      !$ser data prs_del=del prs_del_gz=del_gz
 #endif
 
       do i = 1, IM
@@ -2639,7 +2646,7 @@ module module_physics_driver
         if (ntke > 0) then
           do k=1,levs
             do i=1,im
-              dqdt(i,k,ntke)  = dvdftra(i,k,ntkev)
+              dqdt(i,k,ntke)  = 0. ! dvdftra(i,k,ntkev) !TODO[EW]: changed to 0
             enddo
           enddo
         endif
@@ -3103,12 +3110,12 @@ module module_physics_driver
 
       do k=1,levs
         do i=1,im
-          Stateout%gt0(i,k)  = Statein%tgrs(i,k) + dtdt(i,k) * dtp
-          Stateout%gu0(i,k)  = Statein%ugrs(i,k) + dudt(i,k) * dtp
-          Stateout%gv0(i,k)  = Statein%vgrs(i,k) + dvdt(i,k) * dtp
+          Stateout%gt0(i,k)  = Statein%tgrs(i,k) ! + dtdt(i,k) * dtp [EW]: override this since we can't turn off moninq
+          Stateout%gu0(i,k)  = Statein%ugrs(i,k) ! + dudt(i,k) * dtp
+          Stateout%gv0(i,k)  = Statein%vgrs(i,k) ! + dvdt(i,k) * dtp
         enddo
       enddo
-      Stateout%gq0(1:im,:,:) = Statein%qgrs(1:im,:,:) + dqdt(1:im,:,:) * dtp
+      Stateout%gq0(1:im,:,:) = Statein%qgrs(1:im,:,:) ! + dqdt(1:im,:,:) * dtp
 
 !================================================================================
 !     above: updates of the state by UGWP oro-GWS and RF-damp
@@ -3236,8 +3243,14 @@ module module_physics_driver
                    Statein%prsl, Statein%prslk, Statein%phii, Statein%phil)
 #else
 !GFDL   Adjust the height hydrostatically in a way consistent with FV3 discretization
+      !$ser on
+      !$ser savepoint PhiFV3-In
+      !$ser data phi_ix=ix phi_levs=levs phi_ntrac=ntrac phi_gt0=Stateout%gt0 phi_gq0=Stateout%gq0
+      !$ser data phi_del_gz=del_gz phi_phii=Statein%phii phi_phil=Statein%phil
       call get_phi_fv3 (ix, levs, ntrac, Stateout%gt0, Stateout%gq0, &
                         del_gz, Statein%phii, Statein%phil)
+      !$ser savepoint PhiFV3-Out
+      !$ser data phi_del_gz=del_gz phi_phii=Statein%phii phi_phil=Statein%phil
 #endif
 
       do k=1,levs
@@ -4857,12 +4870,12 @@ module module_physics_driver
           if ( Model%do_gfdl_mp_in_physics ) then
             !$ser on
             !$ser savepoint Microph-In
-            !$ser data mph_qv=qv1 mph_ql=ql1 mph_qr=qr1 mph_qi=qi1 mph_qs=qs1 mph_qg=qg1 mph_qa=qa1 mph_qn=qn1 mph_qv_dt=qv_dt
+            !$ser data mph_qv1=qv1 mph_ql1=ql1 mph_qr1=qr1 mph_qi1=qi1 mph_qs1=qs1 mph_qg1=qg1 mph_qa1=qa1 mph_qn1=qn1 mph_qv_dt=qv_dt
             !$ser data mph_ql_dt=ql_dt mph_qr_dt=qr_dt mph_qi_dt=qi_dt mph_qs_dt=qs_dt mph_qg_dt=qg_dt mph_qa_dt=qa_dt
             !$ser data mph_pt_dt=pt_dt mph_pt=pt mph_w=w mph_uin=uin mph_vin=vin mph_udt=udt mph_vdt=vdt mph_dz=dz mph_delp=delp
-            !$ser data mph_area=area mph_dt_in=dtp mph_land=land mph_rain=rain0 mph_snow=snow0 mph_ice=ice0 mph_graupel=graupel0
-            !$ser data mph_iie=im mph_kke=levs mph_kbot=levs mph_seconds=seconds mph_p=p123 mph_lradar=Model%lradar
-            !$ser data mph_refl_10cm=refl mph_reset=reset
+            !$ser data mph_area=area mph_dtp_in=dtp mph_land=land mph_rain0=rain0 mph_snow0=snow0 mph_ice0=ice0 mph_graupel0=graupel0
+            !$ser data mph_im=im mph_levs=levs mph_seconds=seconds mph_p123=p123 mph_lradar=Model%lradar
+            !$ser data mph_refl=refl mph_reset=reset mph_ntcw=ntcw mph_ntrw=ntrw mph_ntiw=ntiw mph_ntgl=ntgl mph_ntclamt=ntclamt
             call gfdl_cloud_microphys_driver(qv1, ql1, qr1, qi1, qs1, qg1, qa1, &
                                              qn1, qv_dt, ql_dt, qr_dt, qi_dt,   &
                                              qs_dt, qg_dt, qa_dt, pt_dt, pt, w, &
@@ -4873,11 +4886,11 @@ module module_physics_driver
                                              seconds,p123,Model%lradar,refl,    &
                                              reset)
             !$ser savepoint Microph-Out
-            !$ser data mph_qi=qi1 mph_qs=qs1 mph_qv_dt=qv_dt
+            !$ser data mph_qi1=qi1 mph_qs1=qs1 mph_qv_dt=qv_dt
             !$ser data mph_ql_dt=ql_dt mph_qr_dt=qr_dt mph_qi_dt=qi_dt mph_qs_dt=qs_dt mph_qg_dt=qg_dt mph_qa_dt=qa_dt
             !$ser data mph_pt_dt=pt_dt mph_w=w mph_udt=udt mph_vdt=vdt
-            !$ser data mph_rain=rain0 mph_snow=snow0 mph_ice=ice0 mph_graupel=graupel0
-            !$ser data mph_refl_10cm=refl
+            !$ser data mph_rain0=rain0 mph_snow0=snow0 mph_ice0=ice0 mph_graupel0=graupel0
+            !$ser data mph_refl=refl
           endif
 
           tem = dtp * con_p001 / con_day
