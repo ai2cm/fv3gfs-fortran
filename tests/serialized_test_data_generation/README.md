@@ -9,7 +9,7 @@ Generating serialize data requires the `fv3config` tool to create run directorie
 python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
-pip install -r ../../requirements.txt
+pip install -r ../../requirements.txt -c ../../constraints.txt
 ```
 
 ## Quickstart

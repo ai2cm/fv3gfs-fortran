@@ -102,6 +102,10 @@ clean: ## cleanup source tree and test output
 	$(RM) -f inputdata
 	$(RM) -rf tests/pytest/output/*
 
+constraints.txt: requirements.txt
+	pip-compile $^ --output-file constraints.txt
+	sed -i '' '/^git+https/d' constraints.txt
+
 # TODO 32bit options don't currently build, fix these when issue #4 is fixed.
 #test_32bit:
 #	COMPILED_TAG_NAME=32bit $(MAKE) test

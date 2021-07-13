@@ -127,7 +127,7 @@ cd -
 # build venv for fv3config
 python3 -m venv ${rootdir}/venv
 source venv/bin/activate
-pip install -r ${rootdir}/requirements.txt
+pip install -r ${rootdir}/requirements.txt -c ${rootdir}/constraints.txt
 pip list
 deactivate
 

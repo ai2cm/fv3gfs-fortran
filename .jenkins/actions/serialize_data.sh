@@ -87,7 +87,7 @@ echo "> Running pip install -r requirements.txt in venv"
 python3 -m venv venv
 . ./venv/bin/activate
 pip install --upgrade pip setuptools wheel
-pip install -r requirements.txt
+pip install -r requirements.txt -c constraints.txt
 
 # configure Docker builds and pull dependencies
 echo ""
