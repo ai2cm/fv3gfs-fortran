@@ -677,7 +677,18 @@ contains
            if(trim(grid_file) == 'INPUT/grid_spec.nc') then  
              call read_grid(Atm, grid_file, ndims, nregions, ng)
            else
-            if (Atm%flagstruct%grid_type>=0) call gnomonic_grids(Atm%flagstruct%grid_type, npx-1, xs, ys)
+            if (Atm%flagstruct%grid_type>=0) then
+
+               !$ser savepoint GridGrid-In
+               !$ser data grid=Atm%gridstruct%grid_64
+
+               !$ser verbatim im=npx-1
+               !$ser savepoint GnomonicGrids-In
+               !$ser data lon=xs lat=ys
+               call gnomonic_grids(Atm%flagstruct%grid_type, npx-1, xs, ys)
+               !$ser savepoint GnomonicGrids-Out
+               !$ser data lon=xs lat=ys
+            endif ! (Atm%flagstruct%grid_type>=0)
             if (is_master()) then
              if (Atm%flagstruct%grid_type>=0) then
                 do j=1,npy
@@ -687,7 +698,11 @@ contains
                    enddo
                 enddo
 ! mirror_grid assumes that the tile=1 is centered on equator and greenwich meridian Lon[-pi,pi] 
+                !$ser savepoint MirrorGrid-In
+                !$ser data grid_global=grid_global ng=ng npx=npx npy=npy
                 call mirror_grid(grid_global, ng, npx, npy, 2, 6)
+                !$ser savepoint MirrorGrid-Out
+                !$ser data grid_global=grid_global
                 do n=1,nregions
                    do j=1,npy
                       do i=1,npx
@@ -727,6 +742,8 @@ contains
 
                 grid_global(  1,1:npy,:,6)=grid_global(npx,1:npy,:,5)
 
+                !$ser savepoint GridGrid-Out
+                !$ser data grid=grid_global
 !------------------------
 ! Schmidt transformation:
 !------------------------
@@ -758,9 +775,10 @@ contains
          call fill_corners(grid(:,:,2), npx, npy, FILL=XDir, BGRID=.true.)
        endif
 
-
           !--- dx and dy         
 
+          !$ser savepoint DxDy-In
+          !$ser data grid=grid
           if( .not. Atm%flagstruct%regional) then
             istart=is
             iend=ie
@@ -814,6 +832,8 @@ contains
             call fill_corners(dx, dy, npx, npy, DGRID=.true.)
           endif
 
+          !$ser savepoint DxDy-Out
+          !$ser data dx=dx dy=dy
        if( .not. stretched_grid )         &
            call sorted_inta(isd, ied, jsd, jed, cubed_sphere, grid, iinta, jinta)
 
@@ -821,6 +841,8 @@ contains
  
           !--- compute agrid (use same indices as for dx/dy above)
 
+       !$ser savepoint AGrid-In
+       !$ser data agrid=agrid grid=grid dxc=dxc dyc=dyc
        do j=jstart,jend
           do i=istart,iend
              if ( stretched_grid ) then
@@ -888,12 +910,18 @@ contains
           dyc(i,jed+1) = dyc(i,jed)
        end do
 
+       !$ser savepoint AGrid-Out
+       !$ser data agrid=agrid grid=grid dxa=dxa dya=dya dxc=dxc dyc=dyc
 
        if( .not. stretched_grid )      &
            call sorted_intb(isd, ied, jsd, jed, is, ie, js, je, npx, npy, &
                             cubed_sphere, agrid, iintb, jintb)
 
+       !$ser savepoint GridAreas-In
+       !$ser data grid=Atm%gridstruct%grid_64 agrid=Atm%gridstruct%agrid_64 area=Atm%ridstruct%area_64 area_c=Atm%ridstruct%area_c_64
        call grid_area( npx, npy, ndims, nregions, Atm%neststruct%nested, Atm%gridstruct, Atm%domain, Atm%bd, Atm%flagstruct%regional )
+       !$ser savepoint GridAreas-Out
+       !$ser data area=Atm%ridstruct%area_64 area_c=Atm%ridstruct%area_c_64
 !      stretched_grid = .false.
 
 !----------------------------------
@@ -902,6 +930,8 @@ contains
 
   if ( .not. stretched_grid .and. (.not. (Atm%neststruct%nested .or. Atm%flagstruct%regional))) then
 ! For symmetrical grids:
+       !$ser savepoint MoreAreas-In
+       !$ser data gridvar=grid agrid=agrid area=area area_c=area_c rarea_c=rarea_c dx=dx dy=dy dxc=dxc dyc=dyc
        if ( is==1 ) then
           i = 1
           do j=js,je+1
@@ -1075,6 +1105,9 @@ contains
              rarea_c(i,j) = 1.0/area_c(i,j)
           enddo
        enddo
+
+       !$ser savepoint MoreAreas-Out
+       !$ser data area_cgrid=area_c dxc=dxc dyc=dyc
 
 200    format(A,f9.2,A,f9.2,A,f9.2)
 201    format(A,f9.2,A,f9.2,A,f9.2,A,f9.2)
