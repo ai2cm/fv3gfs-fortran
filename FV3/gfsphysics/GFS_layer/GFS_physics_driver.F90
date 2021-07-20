@@ -39,6 +39,7 @@ module module_physics_driver
   use cires_ugwp_module,     only:  cires_ugwp_driver, knob_ugwp_version
 !
 
+  use callpy_mod
   implicit none
 
 
@@ -4486,16 +4487,48 @@ module module_physics_driver
                               psautco_l, prautco_l, Model%evpco, Model%wminco, &
                               Tbd%phy_f3d(1,1,ntot3d-2), lprnt, ipr)
           else
+
+!           For creating training data & emulation
+            call call_function("debug", "ping")
+            call set_state("prsl", Statein%prsl)
+            call set_state("ps", Statein%pgr)
+            call set_state("t_input", Stateout%gt0)
+            call set_state("q_input", State%gq0(1,1,1))
+            call set_state("cwm_input", State%gq0(1,1,ntcw))
+!           previous timestep             
+            call set_state("tp_input", Tbd%phy_f3d(1,1,1))
+            call set_state("qp_input", Tbd%phy_f3d(1,1,2))
+            call set_state("psp_input", Tbd%phy_f2d(1,1))
+!           tp1,qp1,psp1 only used if physics dt > dynamics dt + 1e-3            
+            call set_state("tp1_input", Tbd%phy_f3d(1,1,3))
+            call set_state("qp1_input", Tbd%phy_f3d(1,1,4))
+            call set_state("psp1_input", Tbd%phy_f2d(1,1))
+
             call gscond (im, ix, levs, dtp, dtf, Statein%prsl, Statein%pgr,    &
                          Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),          &
                          Stateout%gt0, Tbd%phy_f3d(1,1,1), Tbd%phy_f3d(1,1,2), &
                          Tbd%phy_f2d(1,1), Tbd%phy_f3d(1,1,3),                 &
                          Tbd%phy_f3d(1,1,4), Tbd%phy_f2d(1,2), rhc,lprnt, ipr)
 
+            call set_state("t_after_gscond", Stateout%gt0)
+            call set_state("q_after_gscond", State%gq0(1,1,1))
+            call set_state("cwm_after_gscond", State%gq0(1,1,ntcw))
+
             call precpd (im, ix, levs, dtp, del, Statein%prsl,                 &
                         Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),           &
                         Stateout%gt0, rain1, Diag%sr, rainp, rhc, psautco_l,   &
                         prautco_l, Model%evpco, Model%wminco, lprnt, ipr)
+
+            call set_state("t_after_precpd", Stateout%gt0)
+            call set_state("q_after_precpd", State%gq0(1,1,1))
+            call set_state("cwm_after_precpd", State%gq0(1,1,ntcw))
+            call set_state("nn", rain1)
+            call set_state("sr", Diag%sr)
+            call set_state("rainp", rainp)
+            call set_state("xlat", Grid%xlat)
+            call set_state("xlon", Grid%xlon)
+            call call_function("monitor", "store")
+            
           endif
 !         if (lprnt) then
 !           write(0,*)' prsl=',prsl(ipr,:)
