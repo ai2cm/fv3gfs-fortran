@@ -340,7 +340,9 @@ contains
    !NOTE do we still need the second file_exist call?
    cold_start = (.not.file_exist('INPUT/fv_core.res.nc') .and. .not.file_exist('INPUT/fv_core.res.tile1.nc'))
 
+   !$ser on
    call fv_init( Atm, dt_atmos, grids_on_this_pe, p_split )  ! allocates Atm components
+   !$ser off
 
    do n=1,ngrids
       if (grids_on_this_pe(n)) mytile = n
