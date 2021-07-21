@@ -918,7 +918,7 @@ contains
                             cubed_sphere, agrid, iintb, jintb)
 
        !$ser savepoint GridAreas-In
-       !$ser data grid=Atm%gridstruct%grid_64 agrid=Atm%gridstruct%agrid_64 area=Atm%ridstruct%area_64 area_c=Atm%ridstruct%area_c_64
+       !$ser data grid=Atm%gridstruct%grid_64 agrid=Atm%gridstruct%agrid_64 area=Atm%gridstruct%area_64 area_c=Atm%gridstruct%area_c_64
        call grid_area( npx, npy, ndims, nregions, Atm%neststruct%nested, Atm%gridstruct, Atm%domain, Atm%bd, Atm%flagstruct%regional )
        !$ser savepoint GridAreas-Out
        !$ser data area=Atm%gridstruct%area_64 area_c=Atm%gridstruct%area_c_64
