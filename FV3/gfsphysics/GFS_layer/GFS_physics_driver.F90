@@ -4496,8 +4496,8 @@ module module_physics_driver
             ! copy tracer fields for state saving
             do k=1,levs
               do i=1,im
-                qv_cpf(i,k) = State%gq0(i,k,1)
-                qc_cpf(i,k) = State%gq0(i,k,ntcw)
+                qv_cpf(i,k) = Stateout%gq0(i,k,1)
+                qc_cpf(i,k) = Stateout%gq0(i,k,ntcw)
                 tp_cpf(i,k) = Tbd%phy_f3d(i,k,1)
                 qvp_cpf(i,k) = Tbd%phy_f3d(i,k,2)
                 tp1_cpf(i,k) = Tbd%phy_f3d(i,k,3)
@@ -4537,8 +4537,8 @@ module module_physics_driver
        
             do k=1,levs
               do i=1,im
-                qv_post_gscond(i,k) = State%gq0(i,j,1)
-                qc_post_gscond(i,k) = State%gq0(i,j,ntcw)
+                qv_post_gscond(i,k) = Stateout%gq0(i,k,1)
+                qc_post_gscond(i,k) = Stateout%gq0(i,k,ntcw)
               enddo
             enddo
 
@@ -4553,8 +4553,8 @@ module module_physics_driver
             
             do k=1,levs
               do i=1,im
-                qv_post_precpd(i,k) = State%gq0(i,j,1)
-                qc_post_precpd(i,k) = State%gq0(i,j,ntcw)
+                qv_post_precpd(i,k) = Stateout%gq0(i,k,1)
+                qc_post_precpd(i,k) = Stateout%gq0(i,k,ntcw)
               enddo
             enddo
 
