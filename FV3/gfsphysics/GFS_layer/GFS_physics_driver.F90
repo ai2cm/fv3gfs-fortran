@@ -4564,7 +4564,7 @@ module module_physics_driver
             call set_state("nn", rain1)
             call set_state("sr", Diag%sr)
             call set_state("rainp", rainp)
-            call call_function("monitor", "store")
+            call call_function("emulation_training.monitor", "store")
             
           endif
 !         if (lprnt) then
