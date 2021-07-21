@@ -659,6 +659,9 @@ contains
     latlon = .false.
     cubed_sphere = .false.
 
+    !$ser verbatim integer:: nxm1
+    !$ser verbatim nxm1=npx-1
+
     if ( Atm%flagstruct%do_schmidt .and. abs(atm%flagstruct%stretch_fac-1.) > 1.E-5 ) stretched_grid = .true.
 
     if (Atm%flagstruct%grid_type>3) then
@@ -682,10 +685,8 @@ contains
                !$ser savepoint GridGrid-In
                !$ser data grid=Atm%gridstruct%grid_64
 
-               !$ser verbatim integer:: im
-               !$ser verbatim im=npx-1
                !$ser savepoint GnomonicGrids-In
-               !$ser data grid_type=Atm%flagstruct%grid_type, nx=im lon=xs lat=ys
+               !$ser data grid_type=Atm%flagstruct%grid_type, nx=nxm1 lon=xs lat=ys
                call gnomonic_grids(Atm%flagstruct%grid_type, npx-1, xs, ys)
                !$ser savepoint GnomonicGrids-Out
                !$ser data lon=xs lat=ys
