@@ -132,3 +132,6 @@ endif
 LIBS += -lFMS -L/usr/local/esmf/lib -lesmf -lnetcdff -lnetcdf -llapack -lblas -lc -lrt
 
 LDFLAGS += $(LIBS)
+
+FFLAGS += -I/usr/local/include
+LDFLAGS += -L/usr/local/lib -lcallpy 
