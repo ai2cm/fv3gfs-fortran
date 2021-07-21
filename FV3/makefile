@@ -192,6 +192,7 @@ serialize_preprocess: serialize_outdir_check
 	@echo "preprocessing for serialization"
 	@mkdir -p $(SERIALBOX_OUTDIR)/atmos_cubed_sphere/model
 	@mkdir -p $(SERIALBOX_OUTDIR)/atmos_cubed_sphere/driver/fvGFS
+	@mkdir -p $(SERIALBOX_OUTDIR)/atmos_cubed_sphere/tools
 	@make pp_ser_calls
 	@cp -r -u  $(CWD)/* $(SERIALBOX_OUTDIR)
 
