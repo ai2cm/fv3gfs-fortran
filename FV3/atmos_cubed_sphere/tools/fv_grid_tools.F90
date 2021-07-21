@@ -682,7 +682,7 @@ contains
                !$ser savepoint GridGrid-In
                !$ser data grid=Atm%gridstruct%grid_64
 
-               !$ser verbatim integer im
+               !$ser verbatim integer:: im
                !$ser verbatim im=npx-1
                !$ser savepoint GnomonicGrids-In
                !$ser data grid_type=Atm%flagstruct%grid_type, nx=im lon=xs lat=ys
