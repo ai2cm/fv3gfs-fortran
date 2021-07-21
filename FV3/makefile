@@ -201,6 +201,7 @@ pp_ser_calls: serialize_outdir_check
 	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/ $(CWD)/*.F90
 	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/atmos_cubed_sphere/model $(CWD)/atmos_cubed_sphere/model/*.F90
 	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/atmos_cubed_sphere/driver/fvGFS $(CWD)/atmos_cubed_sphere/driver/fvGFS/*.F90
+	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/atmos_cubed_sphere/tools $(CWD)/atmos_cubed_sphere/tools/*.F90
 
 .PHONY: clean cleanall serialize serialize_preprocess fms_check serialize_outdir_check
 clean:
