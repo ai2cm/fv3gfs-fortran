@@ -542,7 +542,9 @@ module module_physics_driver
            dtsfc_cice, dqsfc_cice, dusfc_cice, dvsfc_cice,              &
 !          dtsfc_cice, dqsfc_cice, dusfc_cice, dvsfc_cice, ulwsfc_cice, &
 !--- for CS-convection
-           wcbmax
+           wcbmax,                                                      &
+!--- for call_py_fort set_state
+           psp_cpf, psp1_cpf
       real(kind=kind_phys), target, dimension(size(Grid%xlon,1)) :: adjsfcdlw, adjsfcdsw, adjsfcnsw
 
 !  1 - land, 2 - ice, 3 - ocean
@@ -563,8 +565,11 @@ module module_physics_driver
 
       real(kind=kind_phys), dimension(size(Grid%xlon,1),Model%levs) ::  &
           del, rhc, dtdt, dudt, dvdt, dtdtc,                            &
-          ud_mf, dd_mf, dt_mf, prnum, dkt, specific_heat, final_dynamics_delp
+          ud_mf, dd_mf, dt_mf, prnum, dkt, specific_heat, final_dynamics_delp, &
 !         ud_mf, dd_mf, dt_mf, prnum, dkt, sigmatot, sigmafrac, txa
+!--- for callpyfort set_state
+          qv_cpf, qc_cpf, qvp_cpf, tp_cpf, qvp1_cpf, tp1_cpf,           &
+          qv_post_gscond, qc_post_gscond, qv_post_precpd, qc_post_precpd
       real(kind=kind_phys), allocatable, dimension(:,:) :: sigmatot,    &
           gwdcu, gwdcv, rainp, sigmafrac, tke
 
@@ -4488,45 +4493,77 @@ module module_physics_driver
                               Tbd%phy_f3d(1,1,ntot3d-2), lprnt, ipr)
           else
 
+            ! copy tracer fields for state saving
+            do k=1,levs
+              do i=1,im
+                qv_cpf(i,k) = State%gq0(i,k,1)
+                qc_cpf(i,k) = State%gq0(i,k,ntcw)
+                tp_cpf(i,k) = Tbd%phy_f3d(i,k,1)
+                qvp_cpf(i,k) = Tbd%phy_f3d(i,k,2)
+                tp1_cpf(i,k) = Tbd%phy_f3d(i,k,3)
+                qvp1_cpf(i,k) = Tbd%phy_f3d(i,k,4)
+              enddo
+            enddo
+
+            do i=1,im
+              psp_cpf(i) = Tbd%phy_f2d(i,1)
+              psp1_cpf(i) = Tbd%phy_f2d(i,2)
+            enddo
+
 !           For creating training data & emulation
             call call_function("debug", "ping")
+            call set_state("model_time", Model%jdat)
+            call set_state("xlat", Grid%xlat)
+            call set_state("xlon", Grid%xlon)
             call set_state("prsl", Statein%prsl)
             call set_state("ps", Statein%pgr)
             call set_state("t_input", Stateout%gt0)
-            call set_state("q_input", State%gq0(1,1,1))
-            call set_state("cwm_input", State%gq0(1,1,ntcw))
+            call set_state("q_input", qv_cpf)
+            call set_state("cwm_input", qc_cpf)
 !           previous timestep             
-            call set_state("tp_input", Tbd%phy_f3d(1,1,1))
-            call set_state("qp_input", Tbd%phy_f3d(1,1,2))
-            call set_state("psp_input", Tbd%phy_f2d(1,1))
+            call set_state("tp_input", tp_cpf)
+            call set_state("qp_input", qvp_cpf)
+            call set_state("psp_input", psp_cpf)
 !           tp1,qp1,psp1 only used if physics dt > dynamics dt + 1e-3            
-            call set_state("tp1_input", Tbd%phy_f3d(1,1,3))
-            call set_state("qp1_input", Tbd%phy_f3d(1,1,4))
-            call set_state("psp1_input", Tbd%phy_f2d(1,1))
+            call set_state("tp1_input", tp1_cpf)
+            call set_state("qp1_input", qvp1_cpf)
+            call set_state("psp1_input", psp1_cpf)
 
             call gscond (im, ix, levs, dtp, dtf, Statein%prsl, Statein%pgr,    &
                          Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),          &
                          Stateout%gt0, Tbd%phy_f3d(1,1,1), Tbd%phy_f3d(1,1,2), &
                          Tbd%phy_f2d(1,1), Tbd%phy_f3d(1,1,3),                 &
                          Tbd%phy_f3d(1,1,4), Tbd%phy_f2d(1,2), rhc,lprnt, ipr)
+       
+            do k=1,levs
+              do i=1,im
+                qv_post_gscond(i,k) = State%gq0(i,j,1)
+                qc_post_gscond(i,k) = State%gq0(i,j,ntcw)
+              enddo
+            enddo
 
             call set_state("t_after_gscond", Stateout%gt0)
-            call set_state("q_after_gscond", State%gq0(1,1,1))
-            call set_state("cwm_after_gscond", State%gq0(1,1,ntcw))
+            call set_state("q_after_gscond", qv_post_gscond)
+            call set_state("cwm_after_gscond", qc_post_gscond)
 
             call precpd (im, ix, levs, dtp, del, Statein%prsl,                 &
                         Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),           &
                         Stateout%gt0, rain1, Diag%sr, rainp, rhc, psautco_l,   &
                         prautco_l, Model%evpco, Model%wminco, lprnt, ipr)
+            
+            do k=1,levs
+              do i=1,im
+                qv_post_precpd(i,k) = State%gq0(i,j,1)
+                qc_post_precpd(i,k) = State%gq0(i,j,ntcw)
+              enddo
+            enddo
 
             call set_state("t_after_precpd", Stateout%gt0)
-            call set_state("q_after_precpd", State%gq0(1,1,1))
-            call set_state("cwm_after_precpd", State%gq0(1,1,ntcw))
+            call set_state("q_after_precpd", qv_post_precpd)
+            call set_state("cwm_after_precpd", qc_post_precpd)
             call set_state("nn", rain1)
             call set_state("sr", Diag%sr)
             call set_state("rainp", rainp)
-            call set_state("xlat", Grid%xlat)
-            call set_state("xlon", Grid%xlon)
             call call_function("monitor", "store")
             
           endif
