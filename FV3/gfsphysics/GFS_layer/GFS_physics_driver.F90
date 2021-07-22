@@ -4560,7 +4560,7 @@ module module_physics_driver
             call set_state("t_after_precpd", Stateout%gt0)
             call set_state("q_after_precpd", qv_post_precpd)
             call set_state("cwm_after_precpd", qc_post_precpd)
-            call set_state("nn", rain1)
+            call set_state("rn", rain1)
             call set_state("sr", Diag%sr)
             call set_state("rainp", rainp)
             call call_function("emulation_training.monitor", "store")
