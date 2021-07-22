@@ -87,7 +87,7 @@ done
 #                   | extract counts | sort counts | count occurrences of different counts | make sure thre is only exactly 1
 # Note there are too many files when testing 54 ranks, so we do not run this test in that case
 if [ ${num_ranks} -lt 54 ] ; then 
-    if [ `find ${dir} -name '*.dat' -print | sed 's/.*rank[0-9]*_//g' | sort | uniq -c | awk '{print $1}' | sort -n | uniq -c | wc -l` -ne 1 ] ; then
+    if [ `find ${dir} -name '*.dat' -print | grep -v "_master_"| sed 's/.*rank[0-9]*_//g' | sort | uniq -c | awk '{print $1}' | sort -n | uniq -c | wc -l` -ne 1 ] ; then
 	echo "Error: there seem to be different number of *.dat files for different data fields"
 	exit 1
     fi

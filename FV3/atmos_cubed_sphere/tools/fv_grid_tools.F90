@@ -700,10 +700,10 @@ contains
                 enddo
 ! mirror_grid assumes that the tile=1 is centered on equator and greenwich meridian Lon[-pi,pi] 
                 !$ser savepoint MirrorGrid-In
-                !$ser data grid_global=grid_global ng=ng npx=npx npy=npy
+                !$ser data grid_global=master_grid_global master_ng=ng master_npx=npx master_npy=npy
                 call mirror_grid(grid_global, ng, npx, npy, 2, 6)
                 !$ser savepoint MirrorGrid-Out
-                !$ser data grid_global=grid_global
+                !$ser data master_grid_global=grid_global
                 do n=1,nregions
                    do j=1,npy
                       do i=1,npx
