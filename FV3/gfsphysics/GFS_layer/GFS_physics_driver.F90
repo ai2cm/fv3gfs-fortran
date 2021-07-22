@@ -4511,7 +4511,6 @@ module module_physics_driver
             enddo
 
 !           For creating training data & emulation
-            call call_function("debug", "ping")
             call set_state("model_time", Model%jdat)
             call set_state("xlat", Grid%xlat)
             call set_state("xlon", Grid%xlon)
