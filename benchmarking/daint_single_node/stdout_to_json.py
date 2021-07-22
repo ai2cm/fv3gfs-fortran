@@ -124,6 +124,7 @@ def meta_data_from_output(
     stdout_file: str, raw_timers: Dict[str, Dict[str, float]]
 ) -> Dict[str, Any]:
     setup = {}
+    setup["dirname"] = os.path.basename(run_directory)
     setup["comment"] = "Values generated from means - no detailed info available"
     setup["timestamp"] = datetime.datetime.fromtimestamp(
         os.path.getmtime(stdout_file)
@@ -163,7 +164,6 @@ def print_to_output(setup: Dict[str, Any], times: Dict[str, Any], output=sys.std
     experiment["setup"] = setup
     experiment["times"] = times
     json.dump(experiment, output, indent=4)
-    print("")
 
 
 def string_to_numeric_value(s):
