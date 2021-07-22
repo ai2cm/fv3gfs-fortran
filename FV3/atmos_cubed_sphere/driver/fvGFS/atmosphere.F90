@@ -846,7 +846,7 @@ contains
       call fv_diag(Atm(mytile:mytile), zvir, fv_time, Atm(mytile)%flagstruct%print_freq)
       call fv_nggps_diag(Atm(mytile:mytile), zvir, fv_time)
       if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
-         call fv_coarse_diag(Atm(mytile:mytile), fv_time)
+         call fv_coarse_diag(Atm(mytile:mytile), fv_time, zvir)
       endif
       first_diag = .false.
       call timing_off('FV_DIAG')
@@ -1727,7 +1727,7 @@ contains
      call timing_on('FV_DIAG')
      call fv_diag(Atm(mytile:mytile), zvir, fv_time, Atm(mytile)%flagstruct%print_freq)
      if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
-        call fv_coarse_diag(Atm(mytile:mytile), fv_time)
+        call fv_coarse_diag(Atm(mytile:mytile), fv_time, zvir)
      endif
      first_diag = .false.
      call timing_off('FV_DIAG')
