@@ -496,10 +496,12 @@ contains
        if (id_area > 0) used = send_data(id_area, Atm(n)%gridstruct%area(isc:iec,jsc:jec), Time)
        if (id_dx > 0) used = send_data(id_dx, Atm(n)%gridstruct%dx(isc:iec,jsc:jec+1), Time)
        if (id_dy > 0) used = send_data(id_dy, Atm(n)%gridstruct%dy(isc:iec+1,jsc:jec), Time)
-       if (id_a11 > 0) used = send_data(id_a11, Atm(n)%gridstruct%a11(isc:iec,jsc:jec), Time)
-       if (id_a12 > 0) used = send_data(id_a12, Atm(n)%gridstruct%a12(isc:iec,jsc:jec), Time)
-       if (id_a21 > 0) used = send_data(id_a21, Atm(n)%gridstruct%a21(isc:iec,jsc:jec), Time)
-       if (id_a22 > 0) used = send_data(id_a22, Atm(n)%gridstruct%a22(isc:iec,jsc:jec), Time)
+
+       ! Scale the wind rotation coefficients by a factor of two so that they vary from -1.0 to 1.0.
+       if (id_a11 > 0) used = send_data(id_a11, 2.0 * Atm(n)%gridstruct%a11(isc:iec,jsc:jec), Time)
+       if (id_a12 > 0) used = send_data(id_a12, 2.0 * Atm(n)%gridstruct%a12(isc:iec,jsc:jec), Time)
+       if (id_a21 > 0) used = send_data(id_a21, 2.0 * Atm(n)%gridstruct%a21(isc:iec,jsc:jec), Time)
+       if (id_a22 > 0) used = send_data(id_a22, 2.0 * Atm(n)%gridstruct%a22(isc:iec,jsc:jec), Time)
 
        ! Horizontal dimensions need to come first when writing out diagnostics, therefore we need to transpose
        ! the x and y unit vectors before sending them to the diagnostics manager.

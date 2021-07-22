@@ -19,7 +19,7 @@ set -o pipefail
 #   TIMESTEPS          - Number of timesteps to run benchmark for.
 
 FV3_EXE_DIR=${PROJECT}/../install/fv3gfs-fortran/
-PERFORMANCE_DIR=${PROJECT}/../performance/fv3core_monitor/fortran
+PERFORMANCE_DIR=${PROJECT}/../performance/fv3core_performance/fortran
 
 ##################################################
 # functions

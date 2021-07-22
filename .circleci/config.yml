@@ -9,6 +9,7 @@ jobs:
     environment:
       FV3CONFIG_CACHE_DIR: /tmp/.fv3config
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      MPIR_CVAR_OFI_SKIP_IPV6: "1"
     steps:
       - run: |
           curl -L -O https://nixos.org/nix/install
@@ -27,6 +28,10 @@ jobs:
             git submodule update
       - run: |
           nix-build -j 4 -A fv3 | cachix push vulcanclimatemodeling
+          # additional changes to the DNS settings are needed for mac
+          # https://stackoverflow.com/questions/23112515/mpich2-gethostbyname-failed
+          echo "127.0.0.1 $HOSTNAME" | sudo tee -a /etc/hosts
+
       - run:
           name: Test
           command: nix-shell tests.nix --run tox

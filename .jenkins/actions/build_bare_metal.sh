@@ -19,7 +19,6 @@ set -o pipefail
 
 INSTALL_DIR=${PROJECT}/../install
 FV3GFSEXE_DIR=${INSTALL_DIR}/fv3gfs-fortran/
-FV3CONFIG_VENV=${INSTALL_DIR}/venv/vcm_1.0/
 
 ##################################################
 # functions
@@ -107,8 +106,8 @@ echo "### compile model"
 
 compiler_number=0
 case $compiler in
-  gnu) compiler_number=1 ;;
-  intel) compiler_number=2 ;;
+    gnu) compiler_number=1 ;;
+    intel) compiler_number=2 ;;
 esac
 cd ${rootdir}/FV3
 echo "${compiler_number}" | ./configure
@@ -125,6 +124,13 @@ if [ "$num_exe" -lt 1 ] ; then
 fi
 cd -
 
+# build venv for fv3config
+python3 -m venv ${rootdir}/venv
+source venv/bin/activate
+pip install -r ${rootdir}/requirements.txt
+pip list
+deactivate
+
 # install and run example
 # note: we setup the rundir using fv3config in a separate script in order to keep
 #       the environment of this script clean (no modules loaded etc.)
@@ -132,21 +138,13 @@ for config in ${CONFIGURATION_LIST} ; do
   for exe_name in ${EXECUTABLE_NAMES} ; do
     echo "### run check (${config} with ${exe_name} compiled by ${compiler})"
 
-    script=/tmp/create_rundir_$$.sh
     configdir=${rootdir}/tests/serialized_test_data_generation/configs
     rundir=${rootdir}/rundir/${config}
     mkdir -p ${rundir}
 
-    cat > ${script} <<EOF1
-#!/bin/bash
-set -e
-source ${FV3CONFIG_VENV}/bin/activate
-module load gcloud
-write_run_directory ${configdir}/${config}.yml ${rundir}
-deactivate
-EOF1
-    chmod 755 ${script}
-    ${script}
+    source ${rootdir}/venv/bin/activate
+    write_run_directory ${configdir}/${config}.yml ${rundir}
+    deactivate
 
     cd ${rundir}
 
@@ -157,11 +155,11 @@ EOF1
     sed -i 's|^ *minutes *= *[0-9][0-9]* *$|minutes = 0|g' input.nml
     sed -i 's|^ *seconds *= *[0-9][0-9]* *$|seconds = 0|g' input.nml
     if [[ "${exe_name}" == *"debug"* ]] ; then
-      sed -i 's|^ *days *= *[0-9][0-9]* *$|days = 0|g' input.nml
-      sed -i 's|^ *hours *= *[0-9][0-9]* *$|hours = 1|g' input.nml
+        sed -i 's|^ *days *= *[0-9][0-9]* *$|days = 0|g' input.nml
+        sed -i 's|^ *hours *= *[0-9][0-9]* *$|hours = 1|g' input.nml
     else
-      sed -i 's|^ *days *= *[0-9][0-9]* *$|days = 0|g' input.nml
-      sed -i 's|^ *hours *= *[0-9][0-9]* *$|hours = 12|g' input.nml
+        sed -i 's|^ *days *= *[0-9][0-9]* *$|days = 0|g' input.nml
+        sed -i 's|^ *hours *= *[0-9][0-9]* *$|hours = 12|g' input.nml
     fi
 
     jobfile=job
