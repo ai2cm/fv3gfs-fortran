@@ -680,10 +680,9 @@ contains
            if(trim(grid_file) == 'INPUT/grid_spec.nc') then  
              call read_grid(Atm, grid_file, ndims, nregions, ng)
            else
+            !$ser savepoint GridGrid-In
+            !$ser data grid_global=grid_global
             if (Atm%flagstruct%grid_type>=0) then
-
-               !$ser savepoint GridGrid-In
-               !$ser data grid_global=grid_global
 
                !$ser savepoint GnomonicGrids-In
                !$ser data grid_type=Atm%flagstruct%grid_type nx=nxm1 lon=xs lat=ys
@@ -744,8 +743,6 @@ contains
 
                 grid_global(  1,1:npy,:,6)=grid_global(npx,1:npy,:,5)
 
-                !$ser savepoint GridGrid-Out
-                !$ser data grid_global=grid_global
 !------------------------
 ! Schmidt transformation:
 !------------------------
@@ -757,6 +754,8 @@ contains
              enddo
              endif
         endif !is master
+        !$ser savepoint GridGrid-Out
+        !$ser data grid_global=grid_global
              call mpp_broadcast(grid_global, size(grid_global), mpp_root_pe())
 !--- copy grid to compute domain
        do n=1,ndims
