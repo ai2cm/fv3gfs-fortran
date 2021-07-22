@@ -683,7 +683,7 @@ contains
             if (Atm%flagstruct%grid_type>=0) then
 
                !$ser savepoint GridGrid-In
-               !$ser data grid=Atm%gridstruct%grid_64
+               !$ser data grid_global=grid_global
 
                !$ser savepoint GnomonicGrids-In
                !$ser data grid_type=Atm%flagstruct%grid_type nx=nxm1 lon=xs lat=ys
@@ -745,7 +745,7 @@ contains
                 grid_global(  1,1:npy,:,6)=grid_global(npx,1:npy,:,5)
 
                 !$ser savepoint GridGrid-Out
-                !$ser data grid=grid_global
+                !$ser data grid_global=grid_global
 !------------------------
 ! Schmidt transformation:
 !------------------------
