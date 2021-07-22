@@ -591,6 +591,9 @@ contains
     integer :: isd, ied, jsd, jed
     integer :: istart, iend, jstart, jend
 
+    !$ser verbatim integer:: nxm1
+    !$ser verbatim nxm1=npx-1
+    
     is  = Atm%bd%is
     ie  = Atm%bd%ie
     js  = Atm%bd%js
@@ -658,9 +661,6 @@ contains
     ntiles_g = nregions
     latlon = .false.
     cubed_sphere = .false.
-
-    !$ser verbatim integer:: nxm1
-    !$ser verbatim nxm1=npx-1
 
     if ( Atm%flagstruct%do_schmidt .and. abs(atm%flagstruct%stretch_fac-1.) > 1.E-5 ) stretched_grid = .true.
 
