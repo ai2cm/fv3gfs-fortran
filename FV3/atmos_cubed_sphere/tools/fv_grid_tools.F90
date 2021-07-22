@@ -591,7 +591,8 @@ contains
     integer :: isd, ied, jsd, jed
     integer :: istart, iend, jstart, jend
 
-    !$ser verbatim integer:: nxm1
+    !$ser verbatim integer:: nxm1 master_ng master_npx master_npy
+    !$ser verbatim real:: master_grid_global
     !$ser verbatim nxm1=npx-1
     
     is  = Atm%bd%is
