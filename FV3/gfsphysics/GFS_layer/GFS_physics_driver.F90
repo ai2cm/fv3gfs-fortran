@@ -4512,21 +4512,22 @@ module module_physics_driver
 
 !           For creating training data & emulation
             call set_state("model_time", Model%jdat)
-            call set_state("xlat", Grid%xlat)
-            call set_state("xlon", Grid%xlon)
-            call set_state("prsl", Statein%prsl)
-            call set_state("ps", Statein%pgr)
-            call set_state("t_input", Stateout%gt0)
-            call set_state("q_input", qv_cpf)
-            call set_state("cwm_input", qc_cpf)
+            call set_state("latitude", Grid%xlat)
+            call set_state("longitude", Grid%xlon)
+            call set_state("pressure_thickness_of_atmospheric_layer", del)
+            call set_state("air_pressure", Statein%prsl)
+            call set_state("surface_air_pressure", Statein%pgr)
+            call set_state("air_temperature_input", Stateout%gt0)
+            call set_state("specific_humidity_input", qv_cpf)
+            call set_state("cloud_water_mixing_ratio_input", qc_cpf)
 !           previous timestep             
-            call set_state("tp_input", tp_cpf)
-            call set_state("qp_input", qvp_cpf)
-            call set_state("psp_input", psp_cpf)
+            call set_state("air_temperature_two_time_steps_back", tp_cpf)
+            call set_state("specific_humidity_two_time_steps_back", qvp_cpf)
+            call set_state("surface_air_pressure_two_time_steps_back", psp_cpf)
 !           tp1,qp1,psp1 only used if physics dt > dynamics dt + 1e-3            
-            call set_state("tp1_input", tp1_cpf)
-            call set_state("qp1_input", qvp1_cpf)
-            call set_state("psp1_input", psp1_cpf)
+            call set_state("air_temperature_at_previous_time_step", tp1_cpf)
+            call set_state("specific_humidity_at_previous_time_step", qvp1_cpf)
+            call set_state("surface_air_pressure_at_previous_time_step", psp1_cpf)
 
             call gscond (im, ix, levs, dtp, dtf, Statein%prsl, Statein%pgr,    &
                          Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),          &
@@ -4541,9 +4542,9 @@ module module_physics_driver
               enddo
             enddo
 
-            call set_state("t_after_gscond", Stateout%gt0)
-            call set_state("q_after_gscond", qv_post_gscond)
-            call set_state("cwm_after_gscond", qc_post_gscond)
+            ! call set_state("t_after_gscond", Stateout%gt0)
+            ! call set_state("q_after_gscond", qv_post_gscond)
+            ! call set_state("cwm_after_gscond", qc_post_gscond)
 
             call precpd (im, ix, levs, dtp, del, Statein%prsl,                 &
                         Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),           &
@@ -4557,12 +4558,13 @@ module module_physics_driver
               enddo
             enddo
 
-            call set_state("t_after_precpd", Stateout%gt0)
-            call set_state("q_after_precpd", qv_post_precpd)
-            call set_state("cwm_after_precpd", qc_post_precpd)
-            call set_state("rn", rain1)
-            call set_state("sr", Diag%sr)
-            call set_state("rainp", rainp)
+            call set_state("air_temperature_output", Stateout%gt0)
+            call set_state("specific_humidity_output", qv_post_precpd)
+            call set_state("cloud_water_mixing_ratio_output", qc_post_precpd)
+
+            call set_state("total_precipitation", rain1)
+            call set_state("ratio_of_snowfall_to_rainfall", Diag%sr)
+            call set_state("tendency_of_rain_water_mixing_ratio_due_to_microphysics", rainp)
             call call_function("emulation_training.monitor", "store")
             
           endif
