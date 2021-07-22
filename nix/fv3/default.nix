@@ -13,6 +13,11 @@
   , gfortran
   , getopt
 } :
+let 
+  src = builtins.fetchGit {
+    url = ../..;
+  };
+in
 stdenv.mkDerivation {
   name = "fv3";
   buildInputs = [
@@ -34,8 +39,8 @@ stdenv.mkDerivation {
   ];
 
   srcs = [
-    ../../FV3/.
-    ../../stochastic_physics/.
+    "${src}/FV3"
+    "${src}/stochastic_physics"
   ];
 
 # need some fancy logic to unpack the two source directories

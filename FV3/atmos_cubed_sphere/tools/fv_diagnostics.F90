@@ -226,7 +226,7 @@ contains
     integer              :: ntprog
     integer              :: unit
 
-    integer :: ncnst
+    integer :: ncnst, tracer_index
     integer :: axe2(3)
 
 
@@ -496,10 +496,12 @@ contains
        if (id_area > 0) used = send_data(id_area, Atm(n)%gridstruct%area(isc:iec,jsc:jec), Time)
        if (id_dx > 0) used = send_data(id_dx, Atm(n)%gridstruct%dx(isc:iec,jsc:jec+1), Time)
        if (id_dy > 0) used = send_data(id_dy, Atm(n)%gridstruct%dy(isc:iec+1,jsc:jec), Time)
-       if (id_a11 > 0) used = send_data(id_a11, Atm(n)%gridstruct%a11(isc:iec,jsc:jec), Time)
-       if (id_a12 > 0) used = send_data(id_a12, Atm(n)%gridstruct%a12(isc:iec,jsc:jec), Time)
-       if (id_a21 > 0) used = send_data(id_a21, Atm(n)%gridstruct%a21(isc:iec,jsc:jec), Time)
-       if (id_a22 > 0) used = send_data(id_a22, Atm(n)%gridstruct%a22(isc:iec,jsc:jec), Time)
+
+       ! Scale the wind rotation coefficients by a factor of two so that they vary from -1.0 to 1.0.
+       if (id_a11 > 0) used = send_data(id_a11, 2.0 * Atm(n)%gridstruct%a11(isc:iec,jsc:jec), Time)
+       if (id_a12 > 0) used = send_data(id_a12, 2.0 * Atm(n)%gridstruct%a12(isc:iec,jsc:jec), Time)
+       if (id_a21 > 0) used = send_data(id_a21, 2.0 * Atm(n)%gridstruct%a21(isc:iec,jsc:jec), Time)
+       if (id_a22 > 0) used = send_data(id_a22, 2.0 * Atm(n)%gridstruct%a22(isc:iec,jsc:jec), Time)
 
        ! Horizontal dimensions need to come first when writing out diagnostics, therefore we need to transpose
        ! the x and y unit vectors before sending them to the diagnostics manager.
@@ -566,6 +568,7 @@ contains
 !--------------------------------------------------------------
 
     allocate(idiag%id_tracer(ncnst))
+    allocate(idiag%id_vertically_integrated_tracers(ncnst))
     allocate(idiag%id_tracer_dmmr(ncnst))
     allocate(idiag%id_tracer_dvmr(ncnst))
     allocate(idiag%w_mr(ncnst))
@@ -1087,6 +1090,15 @@ contains
         Atm(n)%nudge_diag%nudge_t_dt(isc:iec,jsc:jec,npz) = 0.0
     endif
 
+    idiag%id_column_heating_nudge = register_diag_field('dynamics', &
+          'column_heating_nudge', axes(1:2), Time, &
+          'column integrated heating from nudging', &
+          'W/m**2', missing_value=missing_value)
+    if (idiag%id_column_heating_nudge > 0) then
+        allocate(Atm(n)%nudge_diag%column_heating(isc:iec,jsc:jec))
+        Atm(n)%nudge_diag%column_heating(isc:iec,jsc:jec) = 0.0
+    endif
+
     idiag%id_ps_dt_nudge = register_diag_field('dynamics', &
           'ps_dt_nudge', axes(1:2), Time, &
           'surface pressure tendency from nudging', &
@@ -1132,6 +1144,15 @@ contains
         Atm(n)%nudge_diag%nudge_u_dt(isc:iec,jsc:jec,npz) = 0.0
     endif
 
+    idiag%id_column_eastward_acceleration_nudge = register_diag_field('dynamics', &
+          'column_eastward_acceleration_nudge', axes(1:2), Time, &
+          'column integrated eastward wind tendency from nudging', &
+          'Pa', missing_value=missing_value)
+    if (idiag%id_column_eastward_acceleration_nudge > 0) then
+        allocate(Atm(n)%nudge_diag%column_eastward_acceleration(isc:iec,jsc:jec))
+        Atm(n)%nudge_diag%column_eastward_acceleration(isc:iec,jsc:jec) = 0.0
+    endif
+
     idiag%id_v_dt_nudge = register_diag_field('dynamics', &
           'v_dt_nudge', axes(1:3), Time, &
           'meridional wind tendency from nudging', &
@@ -1139,6 +1160,15 @@ contains
     if (idiag%id_v_dt_nudge > 0) then
         allocate(Atm(n)%nudge_diag%nudge_v_dt(isc:iec,jsc:jec,npz))
         Atm(n)%nudge_diag%nudge_v_dt(isc:iec,jsc:jec,npz) = 0.0
+    endif
+
+    idiag%id_column_northward_acceleration_nudge = register_diag_field('dynamics', &
+          'column_northward_acceleration_nudge', axes(1:2), Time, &
+          'column integrated northward wind tendency from nudging', &
+          'Pa', missing_value=missing_value)
+    if (idiag%id_column_northward_acceleration_nudge > 0) then
+        allocate(Atm(n)%nudge_diag%column_northward_acceleration(isc:iec,jsc:jec))
+        Atm(n)%nudge_diag%column_northward_acceleration(isc:iec,jsc:jec) = 0.0
     endif
 
     idiag%id_t_dt_phys = register_diag_field('dynamics', &
@@ -1203,6 +1233,15 @@ contains
          allocate(Atm(n)%physics_tendency_diag%qg_dt(isc:iec,jsc:jec,npz))
          Atm(n)%physics_tendency_diag%qg_dt = 0.0
     endif
+
+    do tracer_index = 1, ncnst
+      call get_tracer_names (MODEL_ATMOS, tracer_index, tname, tlongname, tunits)
+      idiag%id_vertically_integrated_tracers(tracer_index) = register_diag_field (field, &
+           'vertically_integrated_' // trim(tname),  &
+           axes(1:2), Time, &
+           'vertical mass-weighted integral of ' // trim(tlongname), &
+           trim(tunits) // ' kg/m**2', missing_value=missing_value)
+    enddo
  end subroutine fv_diag_init
 
 
@@ -1299,7 +1338,7 @@ contains
     logical :: do_cs_intp
     logical :: used
     logical :: bad_range
-    integer i,j,k, yr, mon, dd, hr, mn, days, seconds, nq, theta_d
+    integer i,j,k, yr, mon, dd, hr, mn, days, seconds, nq, theta_d, tracer_index
     character(len=128)   :: tname
     real, parameter:: ws_0 = 16.   ! minimum max_wind_speed within the 7x7 search box
     real, parameter:: ws_1 = 20.
@@ -2442,6 +2481,13 @@ contains
           used = send_data(idiag%id_lw, a2*ginv, Time)
        endif
 
+       do tracer_index = 1, Atm(n)%ncnst
+         if (idiag%id_vertically_integrated_tracers(tracer_index) > 0) then
+            a2(:,:) = ginv * sum(Atm(n)%q(isc:iec,jsc:jec,1:npz,tracer_index) * Atm(n)%delp(isc:iec,jsc:jec,1:npz), dim=3)
+            used = send_data(idiag%id_vertically_integrated_tracers(tracer_index), a2, Time)
+         endif
+       enddo
+
 ! Cloud top temperature & cloud top press:
        if ( (idiag%id_ctt>0 .or. idiag%id_ctp>0 .or. idiag%id_ctz>0).and. Atm(n)%flagstruct%nwat==6) then
             allocate ( var1(isc:iec,jsc:jec) )
@@ -3212,6 +3258,9 @@ contains
      if (idiag%id_t_dt_nudge > 0) then
         used = send_data(idiag%id_t_dt_nudge, Atm(n)%nudge_diag%nudge_t_dt(isc:iec,jsc:jec,1:npz), Time)
      endif
+     if (idiag%id_column_heating_nudge > 0) then
+        used = send_data(idiag%id_column_heating_nudge, Atm(n)%nudge_diag%column_heating(isc:iec,jsc:jec), Time)
+     endif
      if (idiag%id_ps_dt_nudge > 0) then
         used = send_data(idiag%id_ps_dt_nudge, Atm(n)%nudge_diag%nudge_ps_dt(isc:iec,jsc:jec), Time)
      endif
@@ -3227,8 +3276,14 @@ contains
      if (idiag%id_u_dt_nudge > 0) then
         used = send_data(idiag%id_u_dt_nudge, Atm(n)%nudge_diag%nudge_u_dt(isc:iec,jsc:jec,1:npz), Time)
      endif
+     if (idiag%id_column_eastward_acceleration_nudge > 0) then
+        used = send_data(idiag%id_column_eastward_acceleration_nudge, Atm(n)%nudge_diag%column_eastward_acceleration(isc:iec,jsc:jec), Time)
+     endif
      if (idiag%id_v_dt_nudge > 0) then
         used = send_data(idiag%id_v_dt_nudge, Atm(n)%nudge_diag%nudge_v_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+     if (idiag%id_column_northward_acceleration_nudge > 0) then
+        used = send_data(idiag%id_column_northward_acceleration_nudge, Atm(n)%nudge_diag%column_northward_acceleration(isc:iec,jsc:jec), Time)
      endif
 
      if (idiag%id_t_dt_phys > 0) then

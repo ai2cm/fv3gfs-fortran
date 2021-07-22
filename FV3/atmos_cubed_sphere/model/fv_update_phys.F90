@@ -569,22 +569,49 @@ if (allocated(physics_tendency_diag%t_dt)) physics_tendency_diag%t_dt = (pt(is:i
                             zvir, ptop, ak, bk, ts, ps, delp, ua, va, pt,    &
                             nwat, q,  phis, gridstruct, bd, domain )
 
-         if (allocated(nudge_diag%nudge_t_dt)) nudge_diag%nudge_t_dt = (pt(is:ie,js:je,:) - nudge_diag%nudge_t_dt) / dt
-         if (allocated(nudge_diag%nudge_ps_dt)) nudge_diag%nudge_ps_dt = (ps(is:ie,js:je) - nudge_diag%nudge_ps_dt) / dt
-         if (allocated(nudge_diag%nudge_delp_dt)) nudge_diag%nudge_delp_dt = (delp(is:ie,js:je,:) - nudge_diag%nudge_delp_dt) / dt
-         qv_dt_nudge = (q(is:ie,js:je,:,sphum) - qv_dt_nudge) / dt
-         if (allocated(nudge_diag%nudge_q_dt)) nudge_diag%nudge_q_dt = qv_dt_nudge
+        if (allocated(nudge_diag%nudge_t_dt)) then
+          nudge_diag%nudge_t_dt = (pt(is:ie,js:je,:) - nudge_diag%nudge_t_dt) / dt
+          if (allocated(nudge_diag%column_heating)) then
+            call compute_column_integral(nudge_diag%nudge_t_dt, &
+              delp(is:ie,js:je,1:npz), &
+              is, ie, js, je, npz, &
+              nudge_diag%column_heating(is:ie,js:je))
+            nudge_diag%column_heating(is:ie,js:je) = con_cp * nudge_diag%column_heating(is:ie,js:je)
+          endif
+        endif
 
-          ! Note that u_dt and v_dt are already tendencies, so we do not need to divide by dt.
-         if (allocated(nudge_diag%nudge_u_dt)) nudge_diag%nudge_u_dt = (u_dt(is:ie,js:je,:) - nudge_diag%nudge_u_dt)
-         if (allocated(nudge_diag%nudge_v_dt)) nudge_diag%nudge_v_dt = (v_dt(is:ie,js:je,:) - nudge_diag%nudge_v_dt)
+        if (allocated(nudge_diag%nudge_ps_dt)) nudge_diag%nudge_ps_dt = (ps(is:ie,js:je) - nudge_diag%nudge_ps_dt) / dt
+        if (allocated(nudge_diag%nudge_delp_dt)) nudge_diag%nudge_delp_dt = (delp(is:ie,js:je,:) - nudge_diag%nudge_delp_dt) / dt
+        qv_dt_nudge = (q(is:ie,js:je,:,sphum) - qv_dt_nudge) / dt
+        if (allocated(nudge_diag%nudge_q_dt)) nudge_diag%nudge_q_dt = qv_dt_nudge
 
-         call compute_column_moistening_implied_by_nudging(qv_dt_nudge(is:ie,js:je,1:npz), &
-           delp(is:ie,js:je,1:npz), &
-           is, ie, js, je, npz, &
-           column_moistening_implied_by_nudging(is:ie,js:je))
+        ! Note that u_dt and v_dt are already tendencies, so we do not need to divide by dt.
+        if (allocated(nudge_diag%nudge_u_dt)) then
+          nudge_diag%nudge_u_dt = (u_dt(is:ie,js:je,:) - nudge_diag%nudge_u_dt)
+          if (allocated(nudge_diag%column_eastward_acceleration)) then
+            call compute_column_integral(nudge_diag%nudge_u_dt, &
+              delp(is:ie,js:je,1:npz), &
+              is, ie, js, je, npz, &
+              nudge_diag%column_eastward_acceleration(is:ie,js:je))
+          endif
+        endif
+        if (allocated(nudge_diag%nudge_v_dt)) then
+          nudge_diag%nudge_v_dt = (v_dt(is:ie,js:je,:) - nudge_diag%nudge_v_dt)
+          if (allocated(nudge_diag%column_northward_acceleration)) then
+            call compute_column_integral(nudge_diag%nudge_v_dt, &
+              delp(is:ie,js:je,1:npz), &
+              is, ie, js, je, npz, &
+              nudge_diag%column_northward_acceleration(is:ie,js:je))
+          endif
+        endif
 
-         if (allocated(nudge_diag%column_moistening)) nudge_diag%column_moistening = column_moistening_implied_by_nudging(is:ie,js:je)
+        call compute_column_integral(qv_dt_nudge(is:ie,js:je,1:npz), &
+          delp(is:ie,js:je,1:npz), &
+          is, ie, js, je, npz, &
+          column_moistening_implied_by_nudging(is:ie,js:je))
+
+        if (allocated(nudge_diag%column_moistening)) nudge_diag%column_moistening = column_moistening_implied_by_nudging(is:ie,js:je)
+        
 #endif
   endif         ! end nudging       
 
@@ -1179,13 +1206,12 @@ if (allocated(physics_tendency_diag%t_dt)) physics_tendency_diag%t_dt = (pt(is:i
 
   end subroutine update2d_dwinds_phys
 
-  subroutine compute_column_moistening_implied_by_nudging(specific_humidity_nudging_tendency, delp, &
-    is, ie, js, je, npz, column_moistening)
+  subroutine compute_column_integral(integrand, delp, is, ie, js, je, npz, column_integral)
     integer, intent(in) :: is, ie, js, je, npz
-    real, intent(in), dimension(is:ie,js:je,1:npz) :: specific_humidity_nudging_tendency, delp
-    real, intent(out) :: column_moistening(is:ie,js:je)
+    real, intent(in), dimension(is:ie,js:je,1:npz) :: integrand, delp
+    real, intent(out) :: column_integral(is:ie,js:je)
 
-    column_moistening = sum(specific_humidity_nudging_tendency * delp, 3) / grav
-  end subroutine compute_column_moistening_implied_by_nudging
+    column_integral = sum(integrand * delp, 3) / grav
+  end subroutine compute_column_integral
 
 end module fv_update_phys_mod
