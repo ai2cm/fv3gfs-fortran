@@ -686,7 +686,7 @@ contains
                !$ser data grid=Atm%gridstruct%grid_64
 
                !$ser savepoint GnomonicGrids-In
-               !$ser data grid_type=Atm%flagstruct%grid_type, nx=nxm1 lon=xs lat=ys
+               !$ser data grid_type=Atm%flagstruct%grid_type nx=nxm1 lon=xs lat=ys
                call gnomonic_grids(Atm%flagstruct%grid_type, npx-1, xs, ys)
                !$ser savepoint GnomonicGrids-Out
                !$ser data lon=xs lat=ys
