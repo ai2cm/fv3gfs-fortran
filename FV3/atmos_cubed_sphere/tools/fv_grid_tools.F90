@@ -592,7 +592,7 @@ contains
     integer :: istart, iend, jstart, jend
 
     !$ser verbatim integer:: nxm1, master_ng, master_npx, master_npy
-    !$ser verbatim real, dimension(:,:,:,:) :: master_grid_global
+    !$ser verbatim real :: master_grid_global(1-ng:npx  +ng,1-ng:npy  +ng,ndims,1:nregions)
     !$ser verbatim nxm1=npx-1
     
     is  = Atm%bd%is
