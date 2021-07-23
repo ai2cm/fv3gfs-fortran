@@ -591,8 +591,7 @@ contains
     integer :: isd, ied, jsd, jed
     integer :: istart, iend, jstart, jend
 
-    !$ser verbatim integer:: nxm1, master_ng, master_npx, master_npy
-    !$ser verbatim real :: master_grid_global(1-ng:npx  +ng,1-ng:npy  +ng,ndims,1:nregions)
+    !$ser verbatim integer:: nxm1
     !$ser verbatim nxm1=npx-1
     
     is  = Atm%bd%is
@@ -701,7 +700,7 @@ contains
                 enddo
 ! mirror_grid assumes that the tile=1 is centered on equator and greenwich meridian Lon[-pi,pi] 
                 !$ser savepoint MirrorGrid-In
-                !$ser data grid_global=master_grid_global master_ng=ng master_npx=npx master_npy=npy
+                !$ser data master_grid_global=grid_global master_ng=ng master_npx=npx master_npy=npy
                 call mirror_grid(grid_global, ng, npx, npy, 2, 6)
                 !$ser savepoint MirrorGrid-Out
                 !$ser data master_grid_global=grid_global
