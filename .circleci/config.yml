@@ -20,6 +20,9 @@ jobs:
           nix-env -iA cachix -f https://cachix.org/api/v1/install
           cachix use vulcanclimatemodeling
           echo $ENCODED_GCR_KEY | base64 -d > $GOOGLE_APPLICATION_CREDENTIALS
+      - add_ssh_keys:
+        fingerprints:
+          - "b4:dc:1c:be:13:6b:e6:32:33:4f:d9:0c:a6:d9:57:40"  # pull packages
       - checkout
       - run:
           name: "Pull Submodules"
@@ -43,6 +46,9 @@ jobs:
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
     steps:
       - run: nix-env -i git openssh google-cloud-sdk
+      - add_ssh_keys:
+        fingerprints:
+          - "b4:dc:1c:be:13:6b:e6:32:33:4f:d9:0c:a6:d9:57:40"  # pull packages
       - checkout
       - run:
           name: "gcloud auth"
