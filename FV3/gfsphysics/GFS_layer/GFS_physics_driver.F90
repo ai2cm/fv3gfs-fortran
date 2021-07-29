@@ -39,7 +39,10 @@ module module_physics_driver
   use cires_ugwp_module,     only:  cires_ugwp_driver, knob_ugwp_version
 !
 
+  #ifdef ENABLE_CALL_PY_FORT
   use callpy_mod
+  #endif
+
   implicit none
 
 
@@ -542,9 +545,7 @@ module module_physics_driver
            dtsfc_cice, dqsfc_cice, dusfc_cice, dvsfc_cice,              &
 !          dtsfc_cice, dqsfc_cice, dusfc_cice, dvsfc_cice, ulwsfc_cice, &
 !--- for CS-convection
-           wcbmax,                                                      &
-!--- for call_py_fort set_state
-           psp_cpf, psp1_cpf
+           wcbmax                                                     
       real(kind=kind_phys), target, dimension(size(Grid%xlon,1)) :: adjsfcdlw, adjsfcdsw, adjsfcnsw
 
 !  1 - land, 2 - ice, 3 - ocean
@@ -565,11 +566,9 @@ module module_physics_driver
 
       real(kind=kind_phys), dimension(size(Grid%xlon,1),Model%levs) ::  &
           del, rhc, dtdt, dudt, dvdt, dtdtc,                            &
-          ud_mf, dd_mf, dt_mf, prnum, dkt, specific_heat, final_dynamics_delp, &
+          ud_mf, dd_mf, dt_mf, prnum, dkt, specific_heat, final_dynamics_delp
 !         ud_mf, dd_mf, dt_mf, prnum, dkt, sigmatot, sigmafrac, txa
-!--- for callpyfort set_state
-          qv_cpf, qc_cpf, qvp_cpf, tp_cpf, qvp1_cpf, tp1_cpf,           &
-          qv_post_gscond, qc_post_gscond, qv_post_precpd, qc_post_precpd
+
       real(kind=kind_phys), allocatable, dimension(:,:) :: sigmatot,    &
           gwdcu, gwdcv, rainp, sigmafrac, tke
 
@@ -596,6 +595,18 @@ module module_physics_driver
       real (kind=kind_phys), dimension(size(Grid%xlon,1)) :: &
          z01d, zt1d, bexp1d, xlai1d, alb1d, vegf1d
       real(kind=kind_phys) :: cdfz
+
+
+      #ifdef ENABLE_CALL_PY_FORT
+      !--- intermediate for callpyfort set_state
+      real(kind=kind_phys), dimension(size(Grid%xlon,1),Model%levs) ::  &
+          qv_cpf, qc_cpf, qvp_cpf, tp_cpf, qvp1_cpf, tp1_cpf,           &
+          qv_post_gscond, qc_post_gscond, qv_post_precpd, qc_post_precpd
+
+      real(kind=kind_phys), dimension(size(Grid%xlon,1))  ::            &
+          psp_cpf, psp1_cpf
+      #endif
+
 !--- ALLOCATABLE ELEMENTS
       !--- in clw, the first two varaibles are cloud water and ice.
       !--- from third to ntrac are convective transportable tracers,
@@ -4492,7 +4503,7 @@ module module_physics_driver
                               psautco_l, prautco_l, Model%evpco, Model%wminco, &
                               Tbd%phy_f3d(1,1,ntot3d-2), lprnt, ipr)
           else
-
+            #ifdef ENABLE_CALL_PY_FORT
             ! copy tracer fields for state saving
             do k=1,levs
               do i=1,im
@@ -4528,29 +4539,20 @@ module module_physics_driver
             call set_state("air_temperature_at_previous_time_step", tp1_cpf)
             call set_state("specific_humidity_at_previous_time_step", qvp1_cpf)
             call set_state("surface_air_pressure_at_previous_time_step", psp1_cpf)
-
+            #endif
+            
             call gscond (im, ix, levs, dtp, dtf, Statein%prsl, Statein%pgr,    &
                          Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),          &
                          Stateout%gt0, Tbd%phy_f3d(1,1,1), Tbd%phy_f3d(1,1,2), &
                          Tbd%phy_f2d(1,1), Tbd%phy_f3d(1,1,3),                 &
                          Tbd%phy_f3d(1,1,4), Tbd%phy_f2d(1,2), rhc,lprnt, ipr)
-       
-            do k=1,levs
-              do i=1,im
-                qv_post_gscond(i,k) = Stateout%gq0(i,k,1)
-                qc_post_gscond(i,k) = Stateout%gq0(i,k,ntcw)
-              enddo
-            enddo
-
-            ! call set_state("t_after_gscond", Stateout%gt0)
-            ! call set_state("q_after_gscond", qv_post_gscond)
-            ! call set_state("cwm_after_gscond", qc_post_gscond)
 
             call precpd (im, ix, levs, dtp, del, Statein%prsl,                 &
                         Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),           &
                         Stateout%gt0, rain1, Diag%sr, rainp, rhc, psautco_l,   &
                         prautco_l, Model%evpco, Model%wminco, lprnt, ipr)
             
+            #ifdef ENABLE_CALL_PY_FORT
             do k=1,levs
               do i=1,im
                 qv_post_precpd(i,k) = Stateout%gq0(i,k,1)
@@ -4567,6 +4569,7 @@ module module_physics_driver
             call set_state("tendency_of_rain_water_mixing_ratio_due_to_microphysics", rainp)
             call call_function("emulation_training.monitor", "store")
             call call_function("emulation_training.monitor", "store_netcdf")
+            #endif
             
           endif
 !         if (lprnt) then
