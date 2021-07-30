@@ -1,4 +1,5 @@
 ARG serialize=false
+ARG call_py_fort=false
 ARG BASE_IMAGE
 ARG MPI_IMAGE=fv3gfs-mpi
 ARG FMS_IMAGE=fv3gfs-fms
@@ -101,6 +102,45 @@ RUN cd serialbox && \
 
 # setup link for backwards comatibility
 RUN ln -s /serialbox /serialbox2
+
+##
+## Call_py_fort environment
+##-----------------------------------------------------
+
+FROM fv3gfs-environment as fv3gfs-environment-callpyfort
+
+# Python stuff for callpyfort
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata && \
+    apt-get install -y  --no-install-recommends \
+    cmake \
+    python3 \
+    libpython3-dev \
+    python3-dev \
+    python3-setuptools \
+    python3-pip \
+    cython3
+
+RUN pip3 install cffi
+
+# install pfunit
+RUN cd /tmp && curl -L https://github.com/Goddard-Fortran-Ecosystem/pFUnit/archive/3.2.9.tar.gz | tar xz
+ENV F90=gfortran
+ENV F90_VENDOR=GNU
+ENV PFUNIT=/usr/local
+RUN ls /tmp/pFUnit-3.2.9
+RUN cd /tmp/pFUnit-3.2.9 && \
+    cmake . && \
+    make &&\
+    make install INSTALL_DIR=${PFUNIT}
+
+# install call-py-fort
+RUN ln -s /usr/bin/python3 /usr/bin/python
+COPY FV3/call_py_fort /opt/call_py_fort
+ENV PYTHONPATH=/opt/call_py_fort/src/:/opt/call_py_fort/test:$PYTHONPATH
+ENV CALLPY=/opt/call_py_fort
+RUN cd /opt/call_py_fort/ && make && make install
 
 ## Build FMS
 ##---------------------------------------------------------------------------------
