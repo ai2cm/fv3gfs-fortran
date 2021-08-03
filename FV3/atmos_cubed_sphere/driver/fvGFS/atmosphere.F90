@@ -257,7 +257,7 @@ character(len=20)   :: mod_name = 'fvGFS/atmosphere_mod'
 #endif
   !$ser verbatim integer :: o3mr, sgs_tke
   !$ser verbatim character(len=256) :: ser_env
-  !$ser verbatim logical :: serialize_only_driver
+  !$ser verbatim logical :: serialize_only_driver, serialize_only_acoustics
   integer :: mytile  = 1
   integer :: p_split = 1
   integer, allocatable :: pelist(:)
@@ -395,7 +395,9 @@ contains
   !$ser verbatim sgs_tke = get_tracer_index (MODEL_ATMOS, 'sgs_tke')
   !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
   !$ser verbatim serialize_only_driver = (index(ser_env, "ONLY_DRIVER") /= 0)
-
+  !$ser verbatim call get_environment_variable("SER_ENV", ser_env)                                                                                                                                                          
+  !$ser verbatim serialize_only_acoustics = (index(ser_env, "ONLY_ACOUSTICS") /= 0)                                                                                                                                        \
+   
 #ifdef CCPP
    cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
 #else
@@ -704,7 +706,10 @@ contains
        !$ser verbatim call set_nz(npz)
      !$ser verbatim else
        !$ser off
-     !$ser verbatim endif
+      !$ser verbatim endif
+      !$ser verbatim if (serialize_only_acoustics) then
+       !$ser off                                                                                                                                                                                                               
+      !$ser verbatim endif  
      p_step = psc
                     call timing_on('fv_dynamics')
 !uc/vc only need be same on coarse grid? However BCs do need to be the same

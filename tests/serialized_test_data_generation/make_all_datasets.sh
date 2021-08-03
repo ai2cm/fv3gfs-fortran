@@ -54,7 +54,7 @@ for exp_file in ${EXPERIMENTS} ; do
   echo "> Generating data for ${exp_name} ..."
   npx=`cat ${exp_file} | grep npx | sed s/npx://g | sed 's/^ *//g'`
   if [ ${npx} -gt 49 ] ; then
-      export SER_ENV="ONLY_DRIVER"
+      export SER_ENV="ONLY_ACOUSTICS"
   else
       export SER_ENV="ALL"
   fi
