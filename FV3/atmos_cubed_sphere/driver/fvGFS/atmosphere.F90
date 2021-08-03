@@ -395,7 +395,6 @@ contains
   !$ser verbatim sgs_tke = get_tracer_index (MODEL_ATMOS, 'sgs_tke')
   !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
   !$ser verbatim serialize_only_driver = (index(ser_env, "ONLY_DRIVER") /= 0)
-  !$ser verbatim call get_environment_variable("SER_ENV", ser_env)                                                                                                                                                          
   !$ser verbatim serialize_only_acoustics = (index(ser_env, "ONLY_ACOUSTICS") /= 0)                                                                                                                                        \
    
 #ifdef CCPP
