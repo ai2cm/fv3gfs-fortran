@@ -295,6 +295,7 @@ contains
 #endif
       !$ser verbatim integer:: mode, n_map_step
       !$ser verbatim real :: ph1v(npz), ph2v(npz)
+      !$ser verbatim character(len=256) :: ser_env  
       !$ser verbatim logical :: serialize_only_acoustics
 
 #ifdef CCPP
