@@ -395,8 +395,7 @@ contains
   !$ser verbatim sgs_tke = get_tracer_index (MODEL_ATMOS, 'sgs_tke')
   !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
   !$ser verbatim serialize_only_driver = (index(ser_env, "ONLY_DRIVER") /= 0)
-  !$ser verbatim serialize_only_acoustics = (index(ser_env, "ONLY_ACOUSTICS") /= 0)                                                                                                                                        \
-   
+  !$ser verbatim serialize_only_acoustics = (index(ser_env, "ONLY_ACOUSTICS") /= 0)
 #ifdef CCPP
    cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
 #else
@@ -707,7 +706,7 @@ contains
        !$ser off
       !$ser verbatim endif
       !$ser verbatim if (serialize_only_acoustics) then
-       !$ser off                                                                                                                                                                                                               
+      !$ser off
       !$ser verbatim endif  
      p_step = psc
                     call timing_on('fv_dynamics')

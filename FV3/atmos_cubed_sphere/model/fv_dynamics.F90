@@ -327,9 +327,8 @@ contains
       jsd = bd%jsd
       jed = bd%jed
 
-      !$ser verbatim call get_environment_variable("SER_ENV", ser_env)                                                                                                                                                         
-      !$ser verbatim serialize_only_acoustics = (index(ser_env, "ONLY_ACOUSTICS") /= 0)                                                                                                                                                   
-
+      !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+      !$ser verbatim serialize_only_acoustics = (index(ser_env, "ONLY_ACOUSTICS") /= 0)
 !     cv_air =  cp_air - rdgas
       agrav   = 1. / grav
         dt2   = 0.5*bdt
@@ -687,10 +686,10 @@ contains
     
       !$ser savepoint DynCore-In
      !$ser data nq=nq mdt=mdt n_split=n_split zvir=zvir  akap=akap cappa=cappa u=u v=v w=w delz=delz pt=pt  delp=delp pe=pe pk=pk phis=phis wsd=ws omga=omga ptop=ptop pfull=pfull ua=ua va=va uc=uc vc=vc mfxd=mfx mfyd=mfy cxd=cx cyd=cy pkz=pkz peln=peln q_con=q_con ak=ak bk=bk ks=ks diss_estd=diss_est n_map=n_map_step
-     !$ser verbatim if (serialize_only_acoustics) then                                                                                                                                                                          
-     !$ser off                                                                                                                                                                                                                 
-     !$ser verbatim endif  
-                                           call timing_on('COMM_TOTAL')
+     !$ser verbatim if (serialize_only_acoustics) then
+     !$ser off
+     !$ser verbatim endif
+     call timing_on('COMM_TOTAL')
 #ifdef USE_COND
       call start_group_halo_update(i_pack(11), q_con, domain)
 #ifdef MOIST_CAPPA
@@ -745,17 +744,17 @@ contains
                     gridstruct, flagstruct, neststruct, idiag, bd, &
                     domain, n_map==1, i_pack, last_step, diss_est, lagrangian_tendency_of_hydrostatic_pressure, time_total)
       call timing_off('DYN_CORE')
-       !$ser verbatim if (serialize_only_acoustics) then                                                                                                                                                                       
-     !$ser verbatim if (n_map == 1) then                                                                                                                                                                               
-     !$ser on                                                                                                                                                                                                                  
-     !$ser verbatim endif                                                                                                                                                                                                      
-     !$ser verbatim endif     
+      !$ser verbatim if (serialize_only_acoustics) then
+      !$ser verbatim if (n_map == 1) then
+      !$ser on
+      !$ser verbatim endif
+      !$ser verbatim endif
       !$ser savepoint DynCore-Out
       !$ser data cappa=cappa u=u v=v w=w delz=delz pt=pt delp=delp pe=pe pk=pk phis=phis wsd=ws omga=omga ptop=ptop pfull=pfull ua=ua va=va uc=uc vc=vc mfxd=mfx mfyd=mfy cxd=cx cyd=cy pkz=pkz peln=peln q_con=q_con diss_estd=diss_est
-     !$ser verbatim if (serialize_only_acoustics) then                                                                                                                                                                    
-     !$ser off                                                                                                                                                                                                                 
-     !$ser verbatim endif 
-
+      !$ser verbatim if (serialize_only_acoustics) then
+      !$ser off
+      !$ser verbatim endif
+      
      call mpp_clock_end(id_dyn_core)
      call mpp_clock_begin(id_tracer_adv)
 
