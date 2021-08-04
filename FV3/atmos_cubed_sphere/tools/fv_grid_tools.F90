@@ -754,8 +754,6 @@ contains
              enddo
              endif
         endif !is master
-        !$ser savepoint GridGrid-Out
-        !$ser data grid_global=grid_global
              call mpp_broadcast(grid_global, size(grid_global), mpp_root_pe())
 !--- copy grid to compute domain
        do n=1,ndims
@@ -765,6 +763,8 @@ contains
              enddo
           enddo
        enddo
+       !$ser savepoint GridGrid-Out
+       !$ser data grid=grid
           endif !(trim(grid_file) == 'INPUT/grid_spec.nc')
 
 !
