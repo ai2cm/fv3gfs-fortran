@@ -552,6 +552,7 @@
 !  --- ...  calculate forecast julian day and fraction of julian day
 
       jd1 = iw3jdn(iyear,imon,iday)
+      write(*,*) 'jd1 = ',jd1
 
 !  --- ...  unlike in normal applications, where day starts from 0 hr,
 !           in astronomy applications, day stats from noon.
@@ -577,6 +578,13 @@
 !  ---  outputs:
      &       r1, dlt, alp                                               &
      &     )
+
+      write(*,*) 'r1 = ',r1
+      write(*,*) 'dlt = ',dlt
+      write(*,*) 'alp = ',alp
+      write(*,*) 'sollag = ',sollag
+      write(*,*) 'sindec = ',sindec
+      write(*,*) 'cosdec = ',cosdec
 
 !  --- ...  calculate sun-earth distance adjustment factor appropriate to date
       solcon = solc0 / (r1*r1)

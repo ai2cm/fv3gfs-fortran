@@ -1890,6 +1890,29 @@
 !!   fluxes.
 !     print *,' in grrad : calling swrad'
 
+!$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+!$ser verbatim do_ser = (index(ser_env, "RAD_SW") /= 0)
+!$ser verbatim if (do_ser) then
+        !$ser verbatim print *, '>> serializing swrad()', ser_count
+        !$ser savepoint "swrad-in-"//trim(ser_count_str)
+        ! param
+        !$ser data xlon=Grid%xlon levr=Model%levr
+        ! in
+        !$ser data plyr=plyr plvl=plvl tlyr=tlyr tlvl=tlvl qlyr=qlyr
+        !$ser data olyr=olyr gasvmr=gasvmr clouds=clouds icsdsw=Tbd%icsdsw
+        !$ser data faersw=faersw sfcalb=sfcalb dz=dz delp=delp
+        !$ser data de_lgth=de_lgth coszen=Radtend%coszen solcon=Model%solcon
+        !$ser data nday=nday idxday=idxday im=im lmk=lmk lmp=lmp lprnt=Model%lprnt
+        ! out
+        !$ser data htswc=htswc upfxc_t=Diag%topfsw%upfxc dnfxc_t=Diag%topfsw%dnfxc
+        !$ser data upfx0_t=Diag%topfsw%upfx0
+        !$ser data upfxc_s=Radtend%sfcfsw%upfxc upfx0_s=Radtend%sfcfsw%upfx0
+        !$ser data dnfxc_s=Radtend%sfcfsw%dnfxc dnfx0_s=Radtend%sfcfsw%dnfx0
+        !$ser data cldtausw=cldtausw uvbfc=scmpsw%uvbfc uvbf0=scmpsw%uvbf0
+        !$ser data nirbm=scmpsw%nirbm nirdf=scmpsw%nirdf visbm=scmpsw%visbm
+        !$ser data visdf=scmpsw%visdf hsw0=htsw0
+!$ser verbatim end if
+
           if (Model%swhtr) then
             call swrad (plyr, plvl, tlyr, tlvl, qlyr, olyr,     &      !  ---  inputs
                         gasvmr, clouds, Tbd%icsdsw, faersw,     &
@@ -1909,6 +1932,19 @@
                         cldtausw,                               &
                         FDNCMP=scmpsw)                                 ! ---  optional 
           endif
+
+!$ser verbatim if (do_ser) then
+        !$ser savepoint "swrad-out-"//trim(ser_count_str)
+        ! out
+        !$ser data htswc=htswc upfxc_t=Diag%topfsw%upfxc upfx0_t=Diag%topfsw%upfx0
+        !$ser data dnfxc_t=Diag%topfsw%dnfxc 
+        !$ser data upfxc_s=Radtend%sfcfsw%upfxc upfx0_s=Radtend%sfcfsw%upfx0
+        !$ser data dnfxc_s=Radtend%sfcfsw%dnfxc dnfx0_s=Radtend%sfcfsw%dnfx0
+        !$ser data cldtausw=cldtausw htsw0=htsw0
+        !$ser data uvbfc=scmpsw%uvbfc uvbf0=scmpsw%uvbf0
+        !$ser data nirbm=scmpsw%nirbm nirdf=scmpsw%nirdf visbm=scmpsw%visbm
+        !$ser data visdf=scmpsw%visdf
+!$ser verbatim end if
 
           do k = 1, LM
             k1 = k + kd
@@ -2041,7 +2077,7 @@
         !$ser data htlwc=htlwc upfxc_t=Diag%topflw%upfxc upfx0_t=Diag%topflw%upfx0
         !$ser data upfxc_s=Radtend%sfcflw%upfxc upfx0_s=Radtend%sfcflw%upfx0
         !$ser data dnfxc_s=Radtend%sfcflw%dnfxc dnfx0_s=Radtend%sfcflw%dnfx0
-        !$ser data cldtaulw=cldtaulw
+        !$ser data cldtaulw=cldtaulw htlw0=htlw0
 !$ser verbatim end if
 
 !> -# Save calculation results
