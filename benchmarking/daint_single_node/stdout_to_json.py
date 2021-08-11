@@ -121,7 +121,7 @@ def meta_data_from_git_env(setup: Dict[str, Any], run_directory: str) -> Dict[st
 
 
 def meta_data_from_output(
-    stdout_file: str, raw_timers: Dict[str, Dict[str, float]]
+    stdout_file: str, raw_timers: Dict[str, Dict[str, float]], run_directory: str
 ) -> Dict[str, Any]:
     setup = {}
     setup["dirname"] = os.path.basename(run_directory)
@@ -152,7 +152,7 @@ def assemble_meta_data(
     stdout_file: str, run_directory: str, raw_timers: Dict[str, Dict[str, float]]
 ):
     """assmebles meta-data about the run"""
-    setup = meta_data_from_output(stdout_file, raw_timers)
+    setup = meta_data_from_output(stdout_file, raw_timers, run_directory)
     setup = meta_data_from_config(setup, run_directory)
     setup = meta_data_from_git_env(setup, run_directory)
     return setup
