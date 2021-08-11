@@ -145,7 +145,7 @@ namelist:
     make_nh: true
     mountain: false
     n_split: 8
-    n_sponge: 48
+    n_sponge: 20
     na_init: 1
     ncep_ic: false
     nggps_ic: true
