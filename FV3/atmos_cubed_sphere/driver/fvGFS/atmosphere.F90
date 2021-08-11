@@ -1509,7 +1509,9 @@ contains
    integer :: i, j, ix, k, k1, n, w_diff, nt_dyn, iq
    integer :: nb, blen, nwat, dnats, nq_adv
    real(kind=kind_phys):: rcp, q0, qwat(nq), qt, rdt
-
+   real, allocatable, dimension(:,:,:,:) :: debug_qwat
+   real, allocatable, dimension(:,:,:)   :: debug_qt, debug_sumq
+   allocate( debug_qwat(isd:ied,jsd:jed,npz,nq), debug_qt(isd:ied,jsd:jed,npz), debug_sumq(isd:ied,jsd:jed,npz))
    call mpp_clock_begin(id_update_other)
 
    Time_prev = Time
@@ -1586,8 +1588,11 @@ contains
 !SJL: perform vertical filling to fix the negative humidity if the SAS convection scheme is used
 !     This call may be commented out if RAS or other positivity-preserving CPS is used.
      blen = Atm_block%blksz(nb)
+     !$ser savepoint FillGFS-IN
+     !$ser data IPD_gq0=IPD_Data(1)%Stateout%gq0 nb=nb
      call fill_gfs(blen, npz, IPD_Data(nb)%Statein%prsi, IPD_Data(nb)%Stateout%gq0, 1.e-9_kind_phys)
-
+     !$ser savepoint FillGFS-OUT
+     !$ser data IPD_gq0=IPD_Data(1)%Stateout%gq0 IPD_delp=Atm(n)%delp
      do k = 1, npz
            if(flip_vc) then
              k1 = npz+1-k !reverse the k direction 
@@ -1613,6 +1618,7 @@ contains
            q0 = IPD_Data(nb)%Statein%prsi(ix,k+1) - IPD_Data(nb)%Statein%prsi(ix,k)
          endif
          qwat(1:nq_adv) = q0*IPD_Data(nb)%Stateout%gq0(ix,k,1:nq_adv)
+        !  debug_qwat(i,j,k1,1:nq_adv) = qwat(1:nq_adv)
 ! **********************************************************************************************************
 ! Dry mass: the following way of updating delp is key to mass conservation with hybrid 32-64 bit computation
 ! **********************************************************************************************************
@@ -1622,13 +1628,17 @@ contains
          q0 = Atm(n)%delp(i,j,k1)*(1.-sum(Atm(n)%q(i,j,k1,1:max(nwat,num_gas)))) + sum(qwat(1:max(nwat,num_gas)))
 #else
          qt = sum(qwat(1:nwat))
+        !  debug_qt(i,j,k1) = qt
          q0 = Atm(n)%delp(i,j,k1)*(1.-sum(Atm(n)%q(i,j,k1,1:nwat))) + qt 
+        !  debug_sumq(i,j,k1) = sum(Atm(n)%q(i,j,k1,1:nwat))
 #endif
          Atm(n)%delp(i,j,k1) = q0
          Atm(n)%q(i,j,k1,1:nq_adv) = qwat(1:nq_adv) / q0
 !        if (dnats .gt. 0) Atm(n)%q(i,j,k1,nq_adv+1:nq) = IPD_Data(nb)%Stateout%gq0(ix,k,nq_adv+1:nq)
        enddo
      enddo
+     !$ser savepoint AfterFillGFS
+     !$ser data debug_qwat=debug_qwat debug_qt=debug_qt debug_sumq=debug_sumq
 
      !--- diagnostic tracers are assumed to be updated in-place
      !--- SHOULD THESE DIAGNOSTIC TRACERS BE MASS ADJUSTED???
@@ -1684,6 +1694,12 @@ contains
 
    call mpp_clock_begin(id_update)
        call timing_on('FV_UPDATE_PHYS')
+    !$ser savepoint FVUpdatePhys-In
+    !$ser data u_dt=u_dt v_dt=v_dt t_dt=t_dt
+    !$ser data u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va
+    !$ser data u_srf=Atm(n)%u_srf v_srf=Atm(n)%v_srf
+    !$ser data pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr)  
+    !$ser data ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con 
     call fv_update_phys( dt_atmos, isc, iec, jsc, jec, isd, ied, jsd, jed, Atm(n)%ng, nt_dyn, &
                          Atm(n)%u,  Atm(n)%v,   Atm(n)%w,  Atm(n)%delp, Atm(n)%pt,         &
                          Atm(n)%q,  Atm(n)%qdiag,                                          &
@@ -1697,7 +1713,10 @@ contains
                          Atm(n)%neststruct, Atm(n)%bd, Atm(n)%domain, Atm(n)%ptop,         &
                          Atm(n)%nudge_diag, Atm(n)%physics_tendency_diag,                  &
                          Atm(n)%column_moistening_implied_by_nudging)
-
+    !$ser savepoint FVUpdatePhys-Out
+    !$ser data u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va
+    !$ser data pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr)  
+    !$ser data ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con 
        call timing_off('FV_UPDATE_PHYS')
    call mpp_clock_end(id_update)
 

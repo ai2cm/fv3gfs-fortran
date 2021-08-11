@@ -295,7 +295,7 @@ subroutine update_atmos_radiation_physics (Atmos)
     !$ser data IPD_vvl=IPD_Data(1)%Statein%vvl IPD_prsl=IPD_Data(1)%Statein%prsl IPD_diss_est=IPD_Data(1)%Statein%diss_est
     !$ser data IPD_qgrs=IPD_Data(1)%Statein%qgrs IPD_prsi=IPD_Data(1)%Statein%prsi IPD_pgr=IPD_Data(1)%Statein%pgr
     !$ser data IPD_prslk=IPD_Data(1)%Statein%prslk IPD_phil=IPD_Data(1)%Statein%phil IPD_dycore_hydrostatic=IPD_Data(1)%Statein%dycore_hydrostatic
-    !$ser data IPD_nwat=IPD_Data(1)%Statein%nwat
+    !$ser data IPD_nwat=IPD_Data(1)%Statein%nwat ATM_delp=Atm(mytile)%delp
     call atmos_phys_driver_statein (IPD_data, Atm_block, flip_vc)
     !$ser savepoint AtmosPhysDriverStatein-OUT
     !$ser data IPD_prsik=IPD_Data(1)%Statein%prsik IPD_phii=IPD_Data(1)%Statein%phii IPD_atm_ts=IPD_Data(1)%Statein%atm_ts
