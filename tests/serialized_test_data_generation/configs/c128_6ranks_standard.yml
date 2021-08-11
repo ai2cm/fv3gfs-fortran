@@ -20,7 +20,7 @@ namelist:
   atmos_model_nml:
     blocksize: -1
     chksum_debug: false
-    dycore_only: false
+    dycore_only: true
     fdiag: 0.25
   cires_ugwp_nml:
     knob_ugwp_azdir:
