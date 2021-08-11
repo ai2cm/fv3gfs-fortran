@@ -4,8 +4,8 @@ workdir=/scratch/snx3000/olifu/benchmarking
 #\rm -rf "${workdir}"
 partition="normal"
 
-for nodes_per_tile_side in 1 2 4 6 8 10 12 14 16 18 20 ; do
-  for config in c128 c192 c256 c384 ; do
+for nodes_per_tile_side in 1 ; do
+  for config in c128 ; do
     for compiler in intel ; do
    
       srcdir=/project/s1053/install/fv3gfs-fortran/${compiler}

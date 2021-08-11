@@ -110,14 +110,14 @@ module dyn_core_mod
   use mpp_domains_mod,    only: CGRID_NE, DGRID_NE, mpp_get_boundary, mpp_update_domains,  &
                                 domain2d
   use mpp_parameter_mod,  only: CORNER
-  use fv_mp_mod,          only: is_master
+  use fv_mp_mod,          only: is_master, mp_barrier
   use fv_mp_mod,          only: start_group_halo_update, complete_group_halo_update
   use fv_mp_mod,          only: group_halo_update_type
   use sw_core_mod,        only: c_sw, d_sw
   use a2b_edge_mod,       only: a2b_ord2, a2b_ord4
   use nh_core_mod,        only: Riem_Solver3, Riem_Solver_C, update_dz_c, update_dz_d, nest_halo_nh
   use tp_core_mod,        only: copy_corners
-  use fv_timing_mod,      only: timing_on, timing_off
+  use fv_timing_mod,      only: timing_on, timing_off, timing_clear, timing_prt
   use fv_diagnostics_mod, only: prt_maxmin, fv_time, prt_mxm
 #ifdef ROT3
   use fv_update_phys_mod, only: update_dwinds_phys
@@ -414,6 +414,10 @@ contains
               endif
          endif
     endif
+
+    call mp_barrier()
+    call timing_clear()
+    call timing_on('TOTAL')
 
 !-----------------------------------------------------
   do it=1,n_split
@@ -1468,6 +1472,11 @@ contains
 
 !-----------------------------------------------------
   enddo   ! time split loop
+
+  call mp_barrier()
+  call timing_off('TOTAL')
+  call timing_prt(0)
+
   !$ser verbatim if (ser_on) then
   !$ser on
   !$ser verbatim endif
