@@ -133,7 +133,7 @@ namelist:
     io_layout:
     - 1
     - 1
-    k_split: 1
+    k_split: 7
     ke_bg: 0.0
     kord_mt: 9
     kord_tm: -9
@@ -144,7 +144,7 @@ namelist:
     - 1
     make_nh: true
     mountain: false
-    n_split: 1
+    n_split: 8
     n_sponge: 48
     na_init: 1
     ncep_ic: false
