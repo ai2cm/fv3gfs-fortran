@@ -4,7 +4,7 @@ ARG BASE_IMAGE
 ARG MPI_IMAGE=fv3gfs-mpi
 ARG FMS_IMAGE=fv3gfs-fms
 ARG ESMF_IMAGE=fv3gfs-esmf
-ARG SERIALBOX_IMAGE=fv3gfs-environment-Serialbox
+ARG SERIALBOX_IMAGE=fv3gfs-environment-serialbox
 
 FROM $BASE_IMAGE AS fv3gfs-mpi
 
