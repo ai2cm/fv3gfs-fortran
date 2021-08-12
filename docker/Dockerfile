@@ -4,8 +4,7 @@ ARG BASE_IMAGE
 ARG MPI_IMAGE=fv3gfs-mpi
 ARG FMS_IMAGE=fv3gfs-fms
 ARG ESMF_IMAGE=fv3gfs-esmf
-ARG SERIALBOX_IMAGE=fv3gfs-environment-serialbox
-ARG CALLPYFORT_IMAGE=fv3gfs-environment-callpyfort
+ARG SERIALBOX_IMAGE=fv3gfs-environment-Serialbox
 
 FROM $BASE_IMAGE AS fv3gfs-mpi
 
@@ -122,7 +121,7 @@ RUN apt-get update && \
     python3-pip \
     cython3
 
-RUN pip3 install cffi && pip3 install setuptools
+RUN pip3 install cffi setuptools
 
 # install pfunit
 RUN cd /tmp && curl -L https://github.com/Goddard-Fortran-Ecosystem/pFUnit/archive/3.2.9.tar.gz | tar xz
