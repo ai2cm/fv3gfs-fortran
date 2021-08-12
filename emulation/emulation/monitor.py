@@ -206,7 +206,7 @@ def store_netcdf(state):
 
 
 @print_errors
-def store(state):
+def store_zarr(state):
     state = dict(**state)
     time = _translate_time(state.pop("model_time"))
 
