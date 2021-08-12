@@ -545,7 +545,7 @@ module module_physics_driver
            dtsfc_cice, dqsfc_cice, dusfc_cice, dvsfc_cice,              &
 !          dtsfc_cice, dqsfc_cice, dusfc_cice, dvsfc_cice, ulwsfc_cice, &
 !--- for CS-convection
-           wcbmax                                                     
+           wcbmax
       real(kind=kind_phys), target, dimension(size(Grid%xlon,1)) :: adjsfcdlw, adjsfcdsw, adjsfcnsw
 
 !  1 - land, 2 - ice, 3 - ocean
@@ -568,7 +568,6 @@ module module_physics_driver
           del, rhc, dtdt, dudt, dvdt, dtdtc,                            &
           ud_mf, dd_mf, dt_mf, prnum, dkt, specific_heat, final_dynamics_delp
 !         ud_mf, dd_mf, dt_mf, prnum, dkt, sigmatot, sigmafrac, txa
-
       real(kind=kind_phys), allocatable, dimension(:,:) :: sigmatot,    &
           gwdcu, gwdcv, rainp, sigmafrac, tke
 
