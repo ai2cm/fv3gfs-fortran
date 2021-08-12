@@ -133,5 +133,5 @@ LIBS += -lFMS -L/usr/local/esmf/lib -lesmf -lnetcdff -lnetcdf -llapack -lblas -l
 
 LDFLAGS += $(LIBS)
 
-FFLAGS += -I/usr/local/include -DENABLE_CALL_PY_FORT
-LDFLAGS += -L/usr/local/lib -lcallpy 
+FFLAGS += -I/usr/local/callpyfort_include -DENABLE_CALLPYFORT
+LDFLAGS += -L/usr/local/callpyfort_lib -lcallpy 
