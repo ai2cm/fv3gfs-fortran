@@ -25,6 +25,7 @@ BUILD_ARGS += --build-arg BASE_IMAGE=$(BASE_IMAGE)
 COMPILED_TAG_NAME ?=$(DEP_TAG_NAME)
 COMPILED_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)
 SERIALIZE_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)-serialize
+EMULATION_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)-emulation
 ENVIRONMENT_IMAGE ?= $(GCR_URL)/$(ENVIRONMENT_TARGET):$(ENVIRONMENT_TAG_NAME)
 MPI_IMAGE ?= $(GCR_URL)/mpi-build:$(DEP_TAG_NAME)
 FMS_IMAGE ?= $(GCR_URL)/fms-build:$(DEP_TAG_NAME)
@@ -62,6 +63,11 @@ build_debug: ## build container image for debugging
 build_serialize: ## build container image for serialization
 	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
 	COMPILED_IMAGE=$(SERIALIZE_IMAGE) \
+	$(MAKE) build_compiled
+
+build_emulation: ## build container image for emulation
+	BUILD_ARGS="$(BUILD_ARGS) --build-arg source_tag=emulation" \
+	COMPILED_IMAGE=$(EMULATION_IMAGE) \
 	$(MAKE) build_compiled
 
 build_deps: ## build container images of dependnecies (FMS, ESMF, SerialBox)
