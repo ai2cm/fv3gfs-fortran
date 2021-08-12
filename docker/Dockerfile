@@ -262,7 +262,7 @@ FROM fv3gfs-environment-${fv3_build_env_tag} AS fv3gfs-build
 ENV SERIALBOX_DIR=/serialbox \
     SERIALBOX_OUTDIR=/FV3 \
     FMS_DIR=/FMS \
-    ESMF_DIR=/usr/local/esmf 
+    ESMF_DIR=/usr/local/esmf
 
 ENV ESMF_INC="-I/usr/local/esmf/include" \
     LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ESMF_DIR}/lib:${FMS_DIR}/libFMS/.libs/:${SERIALBOX_DIR}/lib \
