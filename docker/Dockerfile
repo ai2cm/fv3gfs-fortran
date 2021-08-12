@@ -1,13 +1,11 @@
 ARG serialize=false
-ARG call_py_fort=false
-ARG source_tag=serialize
-ARG output_freq
+ARG fv3_build_env_tag=standard
 ARG BASE_IMAGE
 ARG MPI_IMAGE=fv3gfs-mpi
 ARG FMS_IMAGE=fv3gfs-fms
 ARG ESMF_IMAGE=fv3gfs-esmf
 ARG SERIALBOX_IMAGE=fv3gfs-environment-serialbox
-ARG CALLPYFORT_IMAGE = fv3gfs-environment-callpyfort
+ARG CALLPYFORT_IMAGE=fv3gfs-environment-callpyfort
 
 FROM $BASE_IMAGE AS fv3gfs-mpi
 
@@ -110,7 +108,7 @@ RUN ln -s /serialbox /serialbox2
 ## Call_py_fort environment
 ##-----------------------------------------------------
 
-FROM fv3gfs-environment as fv3gfs-environment-callpyfort
+FROM fv3gfs-environment as fv3gfs-environment-emulation
 
 # Python stuff for callpyfort
 
@@ -121,11 +119,10 @@ RUN apt-get update && \
     python3 \
     libpython3-dev \
     python3-dev \
-    python3-setuptools \
     python3-pip \
     cython3
 
-RUN pip3 install cffi
+RUN pip3 install cffi && pip3 install setuptools
 
 # install pfunit
 RUN cd /tmp && curl -L https://github.com/Goddard-Fortran-Ecosystem/pFUnit/archive/3.2.9.tar.gz | tar xz
@@ -141,12 +138,19 @@ RUN cd /tmp/pFUnit-3.2.9 && \
 # install call-py-fort
 RUN ln -s /usr/bin/python3 /usr/bin/python
 COPY FV3/call_py_fort /opt/call_py_fort
-ENV PYTHONPATH=/opt/call_py_fort/src/:/opt/call_py_fort/test:$PYTHONPATH
-ENV CALLPY=/opt/call_py_fort
-RUN cd /opt/call_py_fort/ && make && make install
+ENV CALLPY=/opt/call_py_fort \
+    PYTHONPATH=${CALLPY}/src/:${CALLPY}/test:$PYTHONPATH
+RUN cd ${CALLPY} && make && make install
+
+# install fv3gfs-util for monitoring-related code
+RUN python3 -m pip install git+https://github.com/VulcanClimateModeling/fv3gfs-util.git@1d7c302b836befe905d776b0a972f464bfd3a255
 
 # copy emulation target
 COPY emulation/ /emulation
+RUN cd /emulation && python setup.py install
+
+ENV VAR_META_PATH=/emulation/microphysics_parameter_metadata.yaml \
+    OUTPUT_FREQ_SEC=18000
 
 ## Build FMS
 ##---------------------------------------------------------------------------------
@@ -249,40 +253,30 @@ RUN cp /FV3/conf/$configure_file \
     if [ ! -z $compile_option ]; then sed -i "33i $compile_option" \
         /FV3/conf/configure.fv3; fi
 
-FROM fv3gfs-src-serialize-$serialize AS fv3gfs-sources-serialize
-FROM fv3gfs-src-emulation as fv3gfs-sources-emulation
-
-FROM fv3gfs-sources-$source_tag AS fv3gfs-sources
+FROM fv3gfs-src-serialize-$serialize AS fv3gfs-sources
 
 FROM $FMS_IMAGE AS fms_image
 FROM $ESMF_IMAGE AS esmf_image
 FROM $SERIALBOX_IMAGE AS serialbox_image
-FROM $CALLPYFORT_IMAGE AS callpyfort_image
+
+FROM fv3gfs-environment AS fv3gfs-environment-standard
 
 ## Build FV3 executable in its own image
 ##---------------------------------------------------------------------------------
-FROM fv3gfs-environment AS fv3gfs-build
+FROM fv3gfs-environment-${fv3_build_env_tag} AS fv3gfs-build
 
 ENV SERIALBOX_DIR=/serialbox \
     SERIALBOX_OUTDIR=/FV3 \
     FMS_DIR=/FMS \
-    ESMF_DIR=/usr/local/esmf \
-    CALLPYFORT_DIR=/opt/call_py_fort 
+    ESMF_DIR=/usr/local/esmf 
 
 ENV ESMF_INC="-I/usr/local/esmf/include" \
     LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ESMF_DIR}/lib:${FMS_DIR}/libFMS/.libs/:${SERIALBOX_DIR}/lib \
-    PPSER_PY=$(SERIALBOX_DIR)/python/pp_ser/pp_ser.py \
-    PYTHONPATH=${CALLPYFORT_DIR}/src/:${CALLPYFORT_DIR}/test:$PYTHONPATH \
-    CALLPY=${CALLPYFORT_DIR}} \
-    VAR_META_PATH=/emulation/microphysics_parameter_metadata.yaml \
-    OUTPUT_FREQ_SEC=18000
-
+    PPSER_PY=$(SERIALBOX_DIR)/python/pp_ser/pp_ser.py
 
 COPY --from=serialbox_image /serialbox/install $SERIALBOX_DIR
 COPY --from=fms_image /FMS $FMS_DIR
 COPY --from=esmf_image /usr/local/esmf $ESMF_DIR
-COPY --from=callpyfort_image /opt/call_py_fort $CALLPYFORT_DIR
-COPY --from=callpyfort_image /emulation /emulation
 
 COPY --from=fv3gfs-sources /FV3 /FV3
 COPY --from=fv3gfs-sources /stochastic_physics /stochastic_physics
