@@ -151,6 +151,15 @@ RUN cd /emulation && python setup.py install
 ENV VAR_META_PATH=/emulation/microphysics_parameter_metadata.yaml \
     OUTPUT_FREQ_SEC=18000
 
+# copy appropriate configuration file to configure.fv3
+ARG compile_option
+ARG configure_file=configure.fv3.gnu_docker_call_py_fort
+
+RUN cp /FV3/conf/$configure_file \
+        /FV3/conf/configure.fv3 && \
+    if [ ! -z $compile_option ]; then sed -i "33i $compile_option" \
+        /FV3/conf/configure.fv3; fi
+
 ## Build FMS
 ##---------------------------------------------------------------------------------
 FROM fv3gfs-environment AS fv3gfs-fms
@@ -237,20 +246,6 @@ RUN cp $FV3_BASE/conf/$configure_file \
         $FV3_BASE/conf/configure.fv3; fi && \
     cd $FV3_BASE && \
     make serialize_preprocess
-
-
-## Convert FV3GFS sources for emulation image
-##---------------------------------------------------------------------------------
-FROM fv3gfs-src-serialize-false AS fv3gfs-src-emulation
-
-ARG compile_option
-ARG configure_file=configure.fv3.gnu_docker_call_py_fort
-
-# copy appropriate configuration file to configure.fv3
-RUN cp /FV3/conf/$configure_file \
-        /FV3/conf/configure.fv3 && \
-    if [ ! -z $compile_option ]; then sed -i "33i $compile_option" \
-        /FV3/conf/configure.fv3; fi
 
 FROM fv3gfs-src-serialize-$serialize AS fv3gfs-sources
 
