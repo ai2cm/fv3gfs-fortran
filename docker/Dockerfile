@@ -1,10 +1,13 @@
 ARG serialize=false
 ARG call_py_fort=false
+ARG source_tag=serialize
+ARG output_freq
 ARG BASE_IMAGE
 ARG MPI_IMAGE=fv3gfs-mpi
 ARG FMS_IMAGE=fv3gfs-fms
 ARG ESMF_IMAGE=fv3gfs-esmf
 ARG SERIALBOX_IMAGE=fv3gfs-environment-serialbox
+ARG CALLPYFORT_IMAGE = fv3gfs-environment-callpyfort
 
 FROM $BASE_IMAGE AS fv3gfs-mpi
 
@@ -142,6 +145,9 @@ ENV PYTHONPATH=/opt/call_py_fort/src/:/opt/call_py_fort/test:$PYTHONPATH
 ENV CALLPY=/opt/call_py_fort
 RUN cd /opt/call_py_fort/ && make && make install
 
+# copy emulation target
+COPY emulation/ /emulation
+
 ## Build FMS
 ##---------------------------------------------------------------------------------
 FROM fv3gfs-environment AS fv3gfs-fms
@@ -229,11 +235,29 @@ RUN cp $FV3_BASE/conf/$configure_file \
     cd $FV3_BASE && \
     make serialize_preprocess
 
-FROM fv3gfs-src-serialize-$serialize AS fv3gfs-sources
+
+## Convert FV3GFS sources for emulation image
+##---------------------------------------------------------------------------------
+FROM fv3gfs-src-serialize-false AS fv3gfs-src-emulation
+
+ARG compile_option
+ARG configure_file=configure.fv3.gnu_docker_call_py_fort
+
+# copy appropriate configuration file to configure.fv3
+RUN cp /FV3/conf/$configure_file \
+        /FV3/conf/configure.fv3 && \
+    if [ ! -z $compile_option ]; then sed -i "33i $compile_option" \
+        /FV3/conf/configure.fv3; fi
+
+FROM fv3gfs-src-serialize-$serialize AS fv3gfs-sources-serialize
+FROM fv3gfs-src-emulation as fv3gfs-sources-emulation
+
+FROM fv3gfs-sources-$source_tag AS fv3gfs-sources
 
 FROM $FMS_IMAGE AS fms_image
 FROM $ESMF_IMAGE AS esmf_image
 FROM $SERIALBOX_IMAGE AS serialbox_image
+FROM $CALLPYFORT_IMAGE AS callpyfort_image
 
 ## Build FV3 executable in its own image
 ##---------------------------------------------------------------------------------
@@ -242,15 +266,23 @@ FROM fv3gfs-environment AS fv3gfs-build
 ENV SERIALBOX_DIR=/serialbox \
     SERIALBOX_OUTDIR=/FV3 \
     FMS_DIR=/FMS \
-    ESMF_DIR=/usr/local/esmf
+    ESMF_DIR=/usr/local/esmf \
+    CALLPYFORT_DIR=/opt/call_py_fort 
 
 ENV ESMF_INC="-I/usr/local/esmf/include" \
     LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ESMF_DIR}/lib:${FMS_DIR}/libFMS/.libs/:${SERIALBOX_DIR}/lib \
-    PPSER_PY=$(SERIALBOX_DIR)/python/pp_ser/pp_ser.py
+    PPSER_PY=$(SERIALBOX_DIR)/python/pp_ser/pp_ser.py \
+    PYTHONPATH=${CALLPYFORT_DIR}/src/:${CALLPYFORT_DIR}/test:$PYTHONPATH \
+    CALLPY=${CALLPYFORT_DIR}} \
+    VAR_META_PATH=/emulation/microphysics_parameter_metadata.yaml \
+    OUTPUT_FREQ_SEC=18000
+
 
 COPY --from=serialbox_image /serialbox/install $SERIALBOX_DIR
 COPY --from=fms_image /FMS $FMS_DIR
 COPY --from=esmf_image /usr/local/esmf $ESMF_DIR
+COPY --from=callpyfort_image /opt/call_py_fort $CALLPYFORT_DIR
+COPY --from=callpyfort_image /emulation /emulation
 
 COPY --from=fv3gfs-sources /FV3 /FV3
 COPY --from=fv3gfs-sources /stochastic_physics /stochastic_physics
