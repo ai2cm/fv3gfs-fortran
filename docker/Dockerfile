@@ -115,13 +115,15 @@ RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata && \
     apt-get install -y  --no-install-recommends \
     cmake \
-    python3 \
-    libpython3-dev \
-    python3-dev \
+    python3.8 \
+    libpython3.8-dev \
+    python3.8-dev \
     python3-pip \
-    cython3
+    python3-pandas
 
-RUN pip3 install cffi setuptools
+RUN rm /usr/bin/python3 && ln -s /usr/bin/python3.8 /usr/bin/python3
+RUN ln -s /usr/bin/python3 /usr/bin/python
+RUN pip3 install cffi setuptools cython
 
 # install pfunit
 RUN cd /tmp && curl -L https://github.com/Goddard-Fortran-Ecosystem/pFUnit/archive/3.2.9.tar.gz | tar xz
@@ -135,7 +137,6 @@ RUN cd /tmp/pFUnit-3.2.9 && \
     make install INSTALL_DIR=${PFUNIT}
 
 # install call-py-fort
-RUN ln -s /usr/bin/python3 /usr/bin/python
 COPY FV3/call_py_fort /opt/call_py_fort
 ENV CALLPY=/opt/call_py_fort \
     PYTHONPATH=${CALLPY}/src/:${CALLPY}/test:$PYTHONPATH

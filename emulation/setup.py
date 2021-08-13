@@ -6,13 +6,15 @@
 from setuptools import setup, find_packages
 
 requirements = [
-    "numpy>=1.15",
+    "numpy<1.20,>=1.15",
     "fsspec>=0.6.2",
     "pyyaml>=5.1.2",
     "tensorflow==2.5.0",
     "mpi4py>=3.0.3",
     "cftime",
     "f90nml",
+    "xarray",
+    "zarr"
 ]
 
 setup_requirements = []
@@ -32,13 +34,13 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
     ],
-    description="create training datasets for emulation",
+    description="emulation hooks for call_py_fort from fv3gfs",
     install_requires=requirements,
     extras_require={},
     license="BSD license",
     include_package_data=True,
-    name="emulation_training",
-    packages=find_packages(include=["emulation_training", "emulation_training.*"]),
+    name="emulation",
+    packages=find_packages(include=["emulation", "emulation.*"]),
     setup_requires=setup_requirements,
     test_suite="tests",
     tests_require=test_requirements,
