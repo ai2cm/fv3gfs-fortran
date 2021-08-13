@@ -31,7 +31,7 @@ MPI_IMAGE ?= $(GCR_URL)/mpi-build:$(DEP_TAG_NAME)
 FMS_IMAGE ?= $(GCR_URL)/fms-build:$(DEP_TAG_NAME)
 ESMF_IMAGE ?= $(GCR_URL)/esmf-build:$(DEP_TAG_NAME)
 SERIALBOX_IMAGE ?= $(GCR_URL)/serialbox-build:$(DEP_TAG_NAME)
-EMULATION_IMAGE ?= $(GCR_URL)/emulation-build:$(DEP_TAG_NAME)
+CALLPYFORT_IMAGE ?= $(GCR_URL)/emulation-build:$(DEP_TAG_NAME)
 
 # used to shorten build times in CircleCI
 ifeq ($(BUILD_FROM_INTERMEDIATE),y)
@@ -76,7 +76,7 @@ build_deps: ## build container images of dependnecies (FMS, ESMF, SerialBox)
 	docker build -f $(DOCKERFILE) -t $(FMS_IMAGE) $(BUILD_ARGS) --target fv3gfs-fms .
 	docker build -f $(DOCKERFILE) -t $(ESMF_IMAGE) $(BUILD_ARGS) --target fv3gfs-esmf .
 	docker build -f $(DOCKERFILE) -t $(SERIALBOX_IMAGE) $(BUILD_ARGS) --target fv3gfs-environment-serialbox .
-	docker build -f $(DOCKERFILE) -t $(EMULATION_IMAGE) $(BUILD_ARGS) --target fv3gfs-environment-emulation .
+	docker build -f $(DOCKERFILE) -t $(CALLPYFORT_IMAGE) $(BUILD_ARGS) --target fv3gfs-environment-emulation .
 
 push_image_%:
 	docker tag $(GCR_URL)/$*:$(DEP_TAG_NAME) $(GCR_URL)/$*:$(DEP_TAG_NAME)-$(COMMIT_SHA)
@@ -91,7 +91,7 @@ pull_deps: ## pull container images of dependencies from GCP (for faster builds)
 	docker pull $(FMS_IMAGE)
 	docker pull $(ESMF_IMAGE)
 	docker pull $(SERIALBOX_IMAGE)
-	docker pull $(EMULATION_IMAGE)
+	docker pull $(CALLPYFORT_IMAGE)
 
 enter: ## run and enter production container for development
 	docker run --rm \
