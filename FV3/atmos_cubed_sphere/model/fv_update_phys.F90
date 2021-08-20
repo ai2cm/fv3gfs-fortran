@@ -757,7 +757,7 @@ if (allocated(physics_tendency_diag%t_dt)) physics_tendency_diag%t_dt = (pt(is:i
     endif !regional
 !
     !$ser savepoint UpdateDWindsPhys-IN
-    !$ser data is=is js=js je=je isd=isd ied=ied jsd=jsd jed=jed
+    !$ser data is=is js=js ie=ie je=je isd=isd ied=ied jsd=jsd jed=jed
     !$ser data u_dt=u_dt v_dt=v_dt u=u v=v
     !$ser data es=gridstruct%es ew=gridstruct%ew vlon=gridstruct%vlon vlat=gridstruct%vlat
     !$ser data edge_vect_w=gridstruct%edge_vect_w edge_vect_e=gridstruct%edge_vect_e edge_vect_s=gridstruct%edge_vect_s edge_vect_n=gridstruct%edge_vect_n
