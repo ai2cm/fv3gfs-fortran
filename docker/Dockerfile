@@ -126,15 +126,6 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN pip3 install cffi setuptools cython
 
 # install pfunit
-RUN cd /tmp && curl -L https://github.com/Goddard-Fortran-Ecosystem/pFUnit/archive/3.2.9.tar.gz | tar xz
-ENV F90=gfortran
-ENV F90_VENDOR=GNU
-ENV PFUNIT=/usr/local
-RUN ls /tmp/pFUnit-3.2.9
-RUN cd /tmp/pFUnit-3.2.9 && \
-    cmake . && \
-    make &&\
-    make install INSTALL_DIR=${PFUNIT}
 
 # install call-py-fort
 COPY FV3/call_py_fort /opt/call_py_fort
