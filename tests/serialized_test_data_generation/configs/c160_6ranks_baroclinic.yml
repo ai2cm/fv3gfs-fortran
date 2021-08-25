@@ -1,7 +1,7 @@
 data_table: default
 diag_table: gs://vcm-fv3config/config/diag_table/no_output/v1.0/diag_table
 field_table: gs://vcm-fv3config/config/field_table/baroclinic_test/v1.0/field_table
-experiment_name: c96_6ranks_baroclinic
+experiment_name: c160_6ranks_baroclinic
 forcing: gs://vcm-fv3config/data/base_forcing/v1.1/
 orographic_forcing: []
 initial_conditions: []
@@ -152,8 +152,8 @@ namelist:
     ncep_ic: false
     nggps_ic: false
     nord: 3
-    npx: 97
-    npy: 97
+    npx: 161
+    npy: 161
     npz: 79
     ntiles: 6
     nudge: false

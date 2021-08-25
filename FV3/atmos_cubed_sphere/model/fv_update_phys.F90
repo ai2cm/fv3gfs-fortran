@@ -576,7 +576,11 @@ if (allocated(physics_tendency_diag%t_dt)) physics_tendency_diag%t_dt = (pt(is:i
               delp(is:ie,js:je,1:npz), &
               is, ie, js, je, npz, &
               nudge_diag%column_heating(is:ie,js:je))
-            nudge_diag%column_heating(is:ie,js:je) = con_cp * nudge_diag%column_heating(is:ie,js:je)
+            if (hydrostatic .or. flagstruct%phys_hydrostatic) then
+              nudge_diag%column_heating(is:ie,js:je) = con_cp * nudge_diag%column_heating(is:ie,js:je)
+            else
+              nudge_diag%column_heating(is:ie,js:je) = cv_air * nudge_diag%column_heating(is:ie,js:je)
+            endif
           endif
         endif
 
