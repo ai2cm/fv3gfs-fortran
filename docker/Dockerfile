@@ -126,7 +126,8 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN pip3 install cffi setuptools cython
 
 # install call-py-fort
-COPY FV3/call_py_fort /opt/call_py_fort
+
+RUN cd /opt && git clone https://github.com/nbren12/call_py_fort.git --branch=v0.2.0
 ENV CALLPY=/opt/call_py_fort \
     PYTHONPATH=${CALLPY}/src/:${CALLPY}/test:$PYTHONPATH
 RUN cd ${CALLPY} && make && make install
