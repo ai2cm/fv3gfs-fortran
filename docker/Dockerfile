@@ -125,6 +125,11 @@ RUN rm /usr/bin/python3 && ln -s /usr/bin/python3.8 /usr/bin/python3
 RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN pip3 install cffi setuptools cython
 
+<<<<<<< HEAD
+=======
+# install pfunit
+
+>>>>>>> ebdab5b467df7c62c226d211eb3d92c3e060bf1e
 # install call-py-fort
 
 RUN cd /opt && git clone https://github.com/nbren12/call_py_fort.git --branch=v0.2.0
