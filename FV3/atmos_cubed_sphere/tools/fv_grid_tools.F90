@@ -677,11 +677,11 @@ contains
           if (Atm%neststruct%nested) then
              call setup_aligned_nest(Atm)
           else
+          !$ser savepoint GridGrid-In
+          !$ser data grid_global=grid_global
            if(trim(grid_file) == 'INPUT/grid_spec.nc') then  
              call read_grid(Atm, grid_file, ndims, nregions, ng)
            else
-            !$ser savepoint GridGrid-In
-            !$ser data grid_global=grid_global
             if (Atm%flagstruct%grid_type>=0) then
 
                !$ser savepoint GnomonicGrids-In
@@ -763,8 +763,6 @@ contains
              enddo
           enddo
        enddo
-       !$ser savepoint GridGrid-Out
-       !$ser data grid=grid
           endif !(trim(grid_file) == 'INPUT/grid_spec.nc')
 
 !
@@ -775,6 +773,8 @@ contains
          call fill_corners(grid(:,:,1), npx, npy, FILL=XDir, BGRID=.true.)
          call fill_corners(grid(:,:,2), npx, npy, FILL=XDir, BGRID=.true.)
        endif
+       !$ser savepoint GridGrid-Out
+       !$ser data grid=grid
 
           !--- dx and dy         
 
