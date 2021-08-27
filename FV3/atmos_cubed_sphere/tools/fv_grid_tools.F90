@@ -1001,6 +1001,7 @@ contains
              p3(1:2) = agrid(i,j,1:2)
              call mid_pt_sphere(grid(i,j,1:2), grid(i,j+1,1:2), p4)
              area_c(i,j) = 3.*get_area(p1, p4, p2, p3, radius)
+             print *, p1, p2, p3, p4, area_c(i,j)
        endif
        if ( se_corner ) then
              i=npx; j=1
@@ -1066,13 +1067,13 @@ contains
           end if
        end if
 
-       call mpp_update_domains( area_c, Atm%domain, position=CORNER, complete=.true.)
+      !  call mpp_update_domains( area_c, Atm%domain, position=CORNER, complete=.true.)
 
-       ! Handle corner Area ghosting
-       if (cubed_sphere .and. (.not. (Atm%neststruct%nested .or. Atm%flagstruct%regional))) then
-          call fill_ghost(area, npx, npy, -big_number, Atm%bd)  ! fill in garbage values
-          call fill_corners(area_c, npx, npy, FILL=XDir, BGRID=.true.)
-       endif
+      !  ! Handle corner Area ghosting
+      !  if (cubed_sphere .and. (.not. (Atm%neststruct%nested .or. Atm%flagstruct%regional))) then
+      !     call fill_ghost(area, npx, npy, -big_number, Atm%bd)  ! fill in garbage values
+      !     call fill_corners(area_c, npx, npy, FILL=XDir, BGRID=.true.)
+      !  endif
 
        do j=jsd,jed+1
           do i=isd,ied
