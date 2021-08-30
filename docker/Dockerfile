@@ -232,19 +232,8 @@ RUN cp $FV3_BASE/conf/$configure_file \
 
 ## Convert FV3GFS sources for emulation image
 ##---------------------------------------------------------------------------------
-FROM fv3gfs-src-serialize-false as fv3gfs-sources-emulation
 
-# copy appropriate configuration file to configure.fv3
-ARG compile_option
-ARG configure_file=configure.fv3.gnu_docker_call_py_fort
-
-RUN cp /FV3/conf/$configure_file \
-        /FV3/conf/configure.fv3 && \
-    if [ ! -z $compile_option ]; then sed -i "33i $compile_option" \
-        /FV3/conf/configure.fv3; fi
-
-FROM fv3gfs-src-serialize-$serialize AS fv3gfs-sources-standard
-FROM fv3gfs-sources-$fv3_build_env_tag AS fv3gfs-sources
+FROM fv3gfs-src-serialize-$serialize AS fv3gfs-sources
 
 FROM $FMS_IMAGE AS fms_image
 FROM $ESMF_IMAGE AS esmf_image

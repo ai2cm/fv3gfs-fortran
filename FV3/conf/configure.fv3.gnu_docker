@@ -129,6 +129,11 @@ FFLAGS += $(FFLAGS_VERBOSE)
 LDFLAGS += $(LDFLAGS_VERBOSE)
 endif
 
+ifneq ($(CALLPYFORT),)
+FFLAGS += -I/usr/local/include -DENABLE_CALLPYFORT
+LDFLAGS += -L/usr/local/lib -lcallpy 
+endif
+
 LIBS += -lFMS -L/usr/local/esmf/lib -lesmf -lnetcdff -lnetcdf -llapack -lblas -lc -lrt
 
 LDFLAGS += $(LIBS)
