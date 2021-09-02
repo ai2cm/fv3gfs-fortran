@@ -667,7 +667,7 @@ contains
     ne_corner = .false.
     nw_corner = .false.
 
-    if (grid_type < 3 .and. .not. (Atm%neststruct%nested .or. Atm%flagstruct%regional)) then
+    if (Atm%flagstruct%grid_type < 3 .and. .not. (Atm%neststruct%nested .or. Atm%flagstruct%regional)) then
        if (       is==1 .and.  js==1 )      sw_corner = .true.
        if ( (ie+1)==npx .and.  js==1 )      se_corner = .true.
        if ( (ie+1)==npx .and. (je+1)==npy ) ne_corner = .true.
