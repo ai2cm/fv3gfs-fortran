@@ -659,6 +659,11 @@ contains
     latlon = .false.
     cubed_sphere = .false.
 
+    sw_corner = .false.
+    se_corner = .false.
+    ne_corner = .false.
+    nw_corner = .false.
+
     if ( Atm%flagstruct%do_schmidt .and. abs(atm%flagstruct%stretch_fac-1.) > 1.E-5 ) stretched_grid = .true.
 
     if (Atm%flagstruct%grid_type>3) then
