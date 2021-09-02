@@ -662,6 +662,18 @@ contains
     latlon = .false.
     cubed_sphere = .false.
 
+    sw_corner = .false.
+    se_corner = .false.
+    ne_corner = .false.
+    nw_corner = .false.
+
+    if (grid_type < 3 .and. .not. (Atm%neststruct%nested .or. Atm%flagstruct%regional)) then
+       if (       is==1 .and.  js==1 )      sw_corner = .true.
+       if ( (ie+1)==npx .and.  js==1 )      se_corner = .true.
+       if ( (ie+1)==npx .and. (je+1)==npy ) ne_corner = .true.
+       if (       is==1 .and. (je+1)==npy ) nw_corner = .true.
+    endif
+
     if ( Atm%flagstruct%do_schmidt .and. abs(atm%flagstruct%stretch_fac-1.) > 1.E-5 ) stretched_grid = .true.
 
     if (Atm%flagstruct%grid_type>3) then
