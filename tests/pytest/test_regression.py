@@ -5,7 +5,6 @@ import shutil
 import subprocess
 import pytest
 import fv3config
-from glob import glob
 
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
