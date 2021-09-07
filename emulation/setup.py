@@ -12,7 +12,7 @@ requirements = [
     "mpi4py==3.0.3",
     "numpy==1.19.4",
     "pyyaml==5.3",
-    "tensorflow==2.4.0",
+    "tensorflow==2.5.1",
     "xarray==0.16.2",
     "zarr==2.7.0",
     "scipy",
