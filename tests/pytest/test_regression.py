@@ -43,10 +43,6 @@ def reference_dir(request):
 def image_runner(request):
     return request.config.getoption("--image_runner")
 
-@pytest.fixture
-def code_root(request):
-    return request.config.getoption("--code_root")
-
 
 def get_config(filename):
     config_filename = os.path.join(CONFIG_DIR, filename)
@@ -101,7 +97,7 @@ def test_regression(
     shutil.rmtree(run_dir)
 
 
-def test_run_emulation(code_root, image, image_version, monkeypatch):
+def test_run_emulation(image, image_version, monkeypatch):
 
     config = get_config("emulation.yml")
     model_image_tag = "{version}-emulation".format(version=image_version)
