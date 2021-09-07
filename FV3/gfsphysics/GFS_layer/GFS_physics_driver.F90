@@ -39,6 +39,10 @@ module module_physics_driver
   use cires_ugwp_module,     only:  cires_ugwp_driver, knob_ugwp_version
 !
 
+#ifdef ENABLE_CALLPYFORT
+  use callpy_mod
+#endif
+
   implicit none
 
 
@@ -590,6 +594,18 @@ module module_physics_driver
       real (kind=kind_phys), dimension(size(Grid%xlon,1)) :: &
          z01d, zt1d, bexp1d, xlai1d, alb1d, vegf1d
       real(kind=kind_phys) :: cdfz
+
+
+#ifdef ENABLE_CALLPYFORT
+      !--- intermediate for callpyfort set_state
+      real(kind=kind_phys), dimension(size(Grid%xlon,1),Model%levs) ::  &
+          qv_cpf, qc_cpf, qvp_cpf, tp_cpf, qvp1_cpf, tp1_cpf,           &
+          qv_post_gscond, qc_post_gscond, qv_post_precpd, qc_post_precpd
+
+      real(kind=kind_phys), dimension(size(Grid%xlon,1))  ::            &
+          psp_cpf, psp1_cpf
+#endif
+
 !--- ALLOCATABLE ELEMENTS
       !--- in clw, the first two varaibles are cloud water and ice.
       !--- from third to ntrac are convective transportable tracers,
@@ -4486,6 +4502,44 @@ module module_physics_driver
                               psautco_l, prautco_l, Model%evpco, Model%wminco, &
                               Tbd%phy_f3d(1,1,ntot3d-2), lprnt, ipr)
           else
+#ifdef ENABLE_CALLPYFORT
+            ! copy tracer fields for state saving
+            do k=1,levs
+              do i=1,im
+                qv_cpf(i,k) = Stateout%gq0(i,k,1)
+                qc_cpf(i,k) = Stateout%gq0(i,k,ntcw)
+                tp_cpf(i,k) = Tbd%phy_f3d(i,k,1)
+                qvp_cpf(i,k) = Tbd%phy_f3d(i,k,2)
+                tp1_cpf(i,k) = Tbd%phy_f3d(i,k,3)
+                qvp1_cpf(i,k) = Tbd%phy_f3d(i,k,4)
+              enddo
+            enddo
+
+              do i=1,im
+                psp_cpf(i) = Tbd%phy_f2d(i,1)
+                psp1_cpf(i) = Tbd%phy_f2d(i,2)
+              enddo
+
+  !           For creating training data & emulation
+              call set_state("model_time", Model%jdat)
+              call set_state("latitude", Grid%xlat)
+              call set_state("longitude", Grid%xlon)
+              call set_state("pressure_thickness_of_atmospheric_layer", del)
+              call set_state("air_pressure", Statein%prsl)
+              call set_state("surface_air_pressure", Statein%pgr)
+              call set_state("air_temperature_input", Stateout%gt0)
+              call set_state("specific_humidity_input", qv_cpf)
+              call set_state("cloud_water_mixing_ratio_input", qc_cpf)
+  !           previous timestep             
+              call set_state("air_temperature_two_time_steps_back", tp_cpf)
+              call set_state("specific_humidity_two_time_steps_back", qvp_cpf)
+              call set_state("surface_air_pressure_two_time_steps_back", psp_cpf)
+  !           tp1,qp1,psp1 only used if physics dt > dynamics dt + 1e-3            
+              call set_state("air_temperature_at_previous_time_step", tp1_cpf)
+              call set_state("specific_humidity_at_previous_time_step", qvp1_cpf)
+              call set_state("surface_air_pressure_at_previous_time_step", psp1_cpf)
+#endif
+            
             call gscond (im, ix, levs, dtp, dtf, Statein%prsl, Statein%pgr,    &
                          Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),          &
                          Stateout%gt0, Tbd%phy_f3d(1,1,1), Tbd%phy_f3d(1,1,2), &
@@ -4496,6 +4550,26 @@ module module_physics_driver
                         Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),           &
                         Stateout%gt0, rain1, Diag%sr, rainp, rhc, psautco_l,   &
                         prautco_l, Model%evpco, Model%wminco, lprnt, ipr)
+            
+#ifdef ENABLE_CALLPYFORT
+            do k=1,levs
+              do i=1,im
+                qv_post_precpd(i,k) = Stateout%gq0(i,k,1)
+                qc_post_precpd(i,k) = Stateout%gq0(i,k,ntcw)
+              enddo
+            enddo
+
+            call set_state("air_temperature_output", Stateout%gt0)
+            call set_state("specific_humidity_output", qv_post_precpd)
+            call set_state("cloud_water_mixing_ratio_output", qc_post_precpd)
+
+            call set_state("total_precipitation", rain1)
+            call set_state("ratio_of_snowfall_to_rainfall", Diag%sr)
+            call set_state("tendency_of_rain_water_mixing_ratio_due_to_microphysics", rainp)
+            call call_function("emulation.monitor", "store_zarr")
+            call call_function("emulation.monitor", "store_netcdf")
+#endif
+            
           endif
 !         if (lprnt) then
 !           write(0,*)' prsl=',prsl(ipr,:)
