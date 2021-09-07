@@ -68,7 +68,7 @@ build_serialize: ## build container image for serialization
 
 build_emulation: ## build container image for emulation
 	BUILD_ARGS="$(BUILD_ARGS) --build-arg fv3_build_env_tag=emulation" \
-	COMPILE_OPTION="CALLPYFORT=\\\nY" \
+	COMPILE_OPTION="CALLPYFORT=Y" \
 	COMPILED_IMAGE=$(EMULATION_IMAGE) \
 	$(MAKE) build_compiled
 
