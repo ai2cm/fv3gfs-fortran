@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 import cftime
 import f90nml
 import yaml
@@ -122,6 +123,7 @@ def _get_attrs(key: str):
     key = _remove_io_suffix(key)
     if key in _variable_metadata:
         meta = dict(**_variable_metadata[key])
+        meta = {k: json.dumps(v) for k,v in meta.items()}
     else:
         logger.debug(f"No metadata found for {key}... skipping")
         meta = {}
