@@ -96,7 +96,7 @@ enter_serialize: ## run and enter serialization container for development
 		-w /FV3 -it $(SERIALIZE_IMAGE) bash
 
 test: ## run tests (set COMPILED_TAG_NAME to override default)
-	python -m pytest tests/pytest --capture=no --verbose --refdir $(shell pwd)/tests/pytest/reference/circleci --image_version $(COMPILED_TAG_NAME)
+	pytest tests/pytest --capture=no --verbose --refdir $(shell pwd)/tests/pytest/reference/circleci --image_version $(COMPILED_TAG_NAME)
 
 clean: ## cleanup source tree and test output
 	(cd FV3 && make clean)
