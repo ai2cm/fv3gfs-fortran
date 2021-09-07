@@ -115,29 +115,29 @@ RUN apt-get update && \
     DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata && \
     apt-get install -y  --no-install-recommends \
     cmake \
-    python3.8 \
-    libpython3.8-dev \
-    python3.8-dev \
-    python3-pip \
-    python3-pandas
+    python3 \
+    libpython3-dev \
+    python3-dev \
+    python3-pip
 
-RUN rm /usr/bin/python3 && ln -s /usr/bin/python3.8 /usr/bin/python3
 RUN ln -s /usr/bin/python3 /usr/bin/python
-RUN pip3 install cffi setuptools cython
+RUN python3 -m pip install -U pip setuptools && \
+    python3 -m pip install cffi cython
+
 
 # install call-py-fort
 
 RUN cd /opt && git clone https://github.com/nbren12/call_py_fort.git --branch=v0.2.0
 ENV CALLPY=/opt/call_py_fort \
     PYTHONPATH=${CALLPY}/src/:${CALLPY}/test:$PYTHONPATH
-RUN cd ${CALLPY} && make && make install
+RUN cd ${CALLPY} && make && make install && ldconfig
 
 # install fv3gfs-util for monitoring-related code
 RUN python3 -m pip install git+https://github.com/VulcanClimateModeling/fv3gfs-util.git@1d7c302b836befe905d776b0a972f464bfd3a255
 
 # copy emulation target
 COPY emulation/ /emulation
-RUN cd /emulation && python setup.py install
+RUN cd /emulation && python3 -m pip install .
 
 ENV VAR_META_PATH=/emulation/microphysics_parameter_metadata.yaml \
     OUTPUT_FREQ_SEC=18000
