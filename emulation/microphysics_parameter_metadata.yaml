@@ -3,7 +3,7 @@ air_pressure:
   standard_name: air_pressure
   long_name: layer mean air pressure
   units: Pa
-  dimensions: [horizontal_dimension, vertical_dimension]
+  field_dims: [horizontal_dimension, vertical_dimension]
   type: real
   kind: kind_phys
   intent: in
@@ -13,7 +13,7 @@ pressure_thickness_of_atmospheric_layer:
   fortran_name: del
   long_name: pressure level thickness
   units: Pa
-  dimensions: [horizontal_dimension, vertical_dimension]
+  field_dims: [horizontal_dimension, vertical_dimension]
   type: real
   kind: kind_phys
   intent: in
@@ -23,7 +23,7 @@ specific_humidity:
   standard_name: specific_humidity
   long_name: water vapor specific humidity
   units: kg kg-1
-  dimensions: [horizontal_dimension, vertical_dimension]
+  field_dims: [horizontal_dimension, vertical_dimension]
   type: real
   kind: kind_phys
   intent: inout
@@ -33,7 +33,7 @@ cloud_water_mixing_ratio:
   standard_name: cloud_water_mixing_ratio
   long_name: moist cloud condensed water mixing ratio
   units: kg kg-1
-  dimensions: [horizontal_dimension, vertical_dimension]
+  field_dims: [horizontal_dimension, vertical_dimension]
   type: real
   kind: kind_phys
   intent: out
@@ -43,7 +43,7 @@ air_temperature:
   standard_name: air_temperature
   long_name: layer mean air temperature
   units: K
-  dimensions: [horizontal_dimension, vertical_dimension]
+  field_dims: [horizontal_dimension, vertical_dimension]
   type: real
   kind: kind_phys
   intent: inout
@@ -53,7 +53,7 @@ latitude:
   standard_name: latitude
   long_name: grid latitude in radians
   units: radians
-  dimensions: (horizontal_dimension)
+  field_dims: (horizontal_dimension)
   type: real
   kind: kind_phys
   intent: in
@@ -63,7 +63,7 @@ longitude:
   standard_name: longitude
   long_name: grid longitude in radians
   units: radians
-  dimensions: (horizontal_dimension)
+  field_dims: (horizontal_dimension)
   type: real
   kind: kind_phys
   intent: in
@@ -77,7 +77,7 @@ time_step_for_dynamics:
   standard_name: time_step_for_dynamics
   long_name: dynamics time step
   units: s
-  dimensions: []
+  field_dims: []
   type: real
   kind: kind_phys
   intent: in
@@ -89,7 +89,7 @@ surface_air_pressure:
   standard_name: surface_air_pressure
   long_name: surface pressure
   units: Pa
-  dimensions: [horizontal_dimension]
+  field_dims: [horizontal_dimension]
   type: real
   kind: kind_phys
   intent: in
@@ -99,7 +99,7 @@ ice_water_mixing_ratio_convective_transport_tracer:
   standard_name: ice_water_mixing_ratio_convective_transport_tracer
   long_name: moist [dry+vapor,  no]] mixing ratio of ice water in the convectively transported tracer array
   units: kg kg-1
-  dimensions: [horizontal_dimension, vertical_dimension]
+  field_dims: [horizontal_dimension, vertical_dimension]
   type: real
   kind: kind_phys
   intent: in
@@ -109,7 +109,7 @@ cloud_condensed_water_mixing_ratio_convective_transport_tracer:
   standard_name: cloud_condensed_water_mixing_ratio_convective_transport_tracer
   long_name: moist [dry+vapor,  no]] mixing ratio of cloud water [condensate] in the convectively transported tracer array
   units: kg kg-1
-  dimensions: [horizontal_dimension, vertical_dimension]
+  field_dims: [horizontal_dimension, vertical_dimension]
   type: real
   kind: kind_phys
   intent: in
@@ -119,7 +119,7 @@ air_temperature_two_time_steps_back:
   standard_name: air_temperature_two_time_steps_back
   long_name: air temperature two time steps back
   units: K
-  dimensions: [horizontal_dimension, vertical_dimension]
+  field_dims: [horizontal_dimension, vertical_dimension]
   type: real
   kind: kind_phys
   intent: inout
@@ -129,7 +129,7 @@ specific_humidity_two_time_steps_back:
   standard_name: specific_humidity_two_time_steps_back
   long_name: water vapor specific humidity two time steps back
   units: kg kg-1
-  dimensions: [horizontal_dimension, vertical_dimension]
+  field_dims: [horizontal_dimension, vertical_dimension]
   type: real
   kind: kind_phys
   intent: inout
@@ -139,7 +139,7 @@ surface_air_pressure_two_time_steps_back:
   standard_name: surface_air_pressure_two_time_steps_back
   long_name: surface air pressure two time steps back
   units: Pa
-  dimensions: [horizontal_dimension]
+  field_dims: [horizontal_dimension]
   type: real
   kind: kind_phys
   intent: inout
@@ -149,7 +149,7 @@ air_temperature_at_previous_time_step:
   standard_name: air_temperature_at_previous_time_step
   long_name: air temperature at previous time step
   units: K
-  dimensions: [horizontal_dimension, vertical_dimension]
+  field_dims: [horizontal_dimension, vertical_dimension]
   type: real
   kind: kind_phys
   intent: inout
@@ -159,7 +159,7 @@ specific_humidity_at_previous_time_step:
   standard_name: specific_humidity_at_previous_time_step
   long_name: water vapor specific humidity at previous time step
   units: kg kg-1
-  dimensions: [horizontal_dimension, vertical_dimension]
+  field_dims: [horizontal_dimension, vertical_dimension]
   type: real
   kind: kind_phys
   intent: inout
@@ -169,7 +169,7 @@ surface_air_pressure_at_previous_time_step:
   standard_name: surface_air_pressure_at_previous_time_step
   long_name: surface air surface pressure at previous time step
   units: Pa
-  dimensions: [horizontal_dimension]
+  field_dims: [horizontal_dimension]
   type: real
   kind: kind_phys
   intent: inout
@@ -179,7 +179,7 @@ critical_relative_humidity:
   standard_name: critical_relative_humidity
   long_name: critical relative humidity
   units: frac
-  dimensions: [horizontal_dimension, vertical_dimension]
+  field_dims: [horizontal_dimension, vertical_dimension]
   type: real
   kind: kind_phys
   intent: in
@@ -188,7 +188,7 @@ lprnt:
   standard_name: flag_print
   long_name: flag for printing diagnostics to output
   units: flag
-  dimensions: []
+  field_dims: []
   type: logical
   intent: in
   optional: F
@@ -196,7 +196,7 @@ ipr:
   standard_name: horizontal_index_of_printed_column
   long_name: horizontal index of printed column
   units: index
-  dimensions: []
+  field_dims: []
   type: integer
   intent: in
   optional: F
@@ -204,7 +204,7 @@ errmsg:
   standard_name: ccpp_error_message
   long_name: error message for error handling in CCPP
   units: none
-  dimensions: []
+  field_dims: []
   type: character
   kind:   le:*
   intent: out
@@ -213,7 +213,7 @@ errflg:
   standard_name: ccpp_error_flag
   long_name: error flag for error handling in CCPP
   units: flag
-  dimensions: []
+  field_dims: []
   type: integer
   intent: out
   optional: F
@@ -224,7 +224,7 @@ total_precipitation:
   standard_name: total_precipitation
   long_name: explicit precipitation amount on physics timestep
   units: m
-  dimensions: [horizontal_dimension]
+  field_dims: [horizontal_dimension]
   type: real
   kind: kind_phys
   intent: out
@@ -234,7 +234,7 @@ ratio_of_snowfall_to_rainfall:
   standard_name: ratio_of_snowfall_to_rainfall
   long_name: ratio of snowfall to large-scale rainfall
   units: frac
-  dimensions: [horizontal_dimension]
+  field_dims: [horizontal_dimension]
   type: real
   kind: kind_phys
   intent: out
@@ -244,7 +244,7 @@ tendency_of_rain_water_mixing_ratio_due_to_microphysics:
   standard_name: tendency_of_rain_water_mixing_ratio_due_to_microphysics
   long_name: tendency of rain water mixing ratio due to microphysics
   units: kg kg-1 s-1
-  dimensions: [horizontal_dimension, vertical_dimension]
+  field_dims: [horizontal_dimension, vertical_dimension]
   type: real
   kind: kind_phys
   intent: out
@@ -254,7 +254,7 @@ critical_relative_humidity:
   standard_name: critical_relative_humidity
   long_name: critical relative humidity
   units: frac
-  dimensions: [horizontal_dimension, vertical_dimension]
+  field_dims: [horizontal_dimension, vertical_dimension]
   type: real
   kind: kind_phys
   intent: in
@@ -264,7 +264,7 @@ coefficient_from_cloud_ice_to_snow:
   standard_name: coefficient_from_cloud_ice_to_snow
   long_name: conversion coefficient from cloud ice to snow
   units: none
-  dimensions: [2]
+  field_dims: [2]
   type: real
   kind: kind_phys
   intent: in
@@ -274,7 +274,7 @@ coefficient_from_cloud_water_to_rain:
   standard_name: coefficient_from_cloud_water_to_rain
   long_name: conversion coefficient from cloud water to rain
   units: none
-  dimensions: [2]
+  field_dims: [2]
   type: real
   kind: kind_phys
   intent: in
@@ -284,7 +284,7 @@ coefficient_for_evaporation_of_rainfall:
   standard_name: coefficient_for_evaporation_of_rainfall
   long_name: coefficient for evaporation of rainfall
   units: none
-  dimensions: []
+  field_dims: []
   type: real
   kind: kind_phys
   intent: in
@@ -294,7 +294,7 @@ cloud_condensed_water_conversion_threshold:
   standard_name: cloud_condensed_water_conversion_threshold
   long_name: conversion coefficient from cloud liquid and ice to precipitation
   units: none
-  dimensions: [2]
+  field_dims: [2]
   type: real
   kind: kind_phys
   intent: in
@@ -304,7 +304,7 @@ grid_size_related_coefficient_used_in_scale_sensitive_schemes:
   standard_name: grid_size_related_coefficient_used_in_scale_sensitive_schemes
   long_name: grid size related coefficient used in scale-sensitive schemes
   units: none
-  dimensions: [horizontal_dimension]
+  field_dims: [horizontal_dimension]
   type: real
   kind: kind_phys
   intent: in
@@ -313,7 +313,7 @@ jpr:
   standard_name: horizontal_index_of_printed_column
   long_name: horizontal index of printed column
   units: index
-  dimensions: []
+  field_dims: []
   type: integer
   intent: in
   optional: F
