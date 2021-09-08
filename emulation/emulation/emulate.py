@@ -56,7 +56,6 @@ MODEL = _load_tf_model()
 
 @print_errors
 def microphysics(state):
-    global USE_PHYS_COUNTER
 
     inputs = [state[name].T for name in MODEL.input_names]
     predictions = MODEL.predict(inputs)
