@@ -632,6 +632,7 @@ contains
                                             call timing_off('UPDATE_DZ_C')
 
                                             call timing_on('Riem_Solver')
+           !$ser on
            !$ser savepoint Riem_Solver_C-In
            !$ser data ms=ms dt2=dt2 akap=akap cappa=cappa cp=cp ptop=ptop hs=phis w3=omga ptc=ptc q_con=q_con  delpc=delpc gz=gz  pef=pkc ws=ws3     
            call Riem_Solver_C( ms, dt2,   is,  ie,   js,   je,   npz,   ng,   &
@@ -644,7 +645,8 @@ contains
                                 flagstruct%a_imp, flagstruct%scale_z )
                                                call timing_off('Riem_Solver')
 
-           !$ser savepoint Riem_Solver_C-Out
+            !$ser savepoint Riem_Solver_C-Out
+            !$ser off                                   
            !$ser data gz=gz pef=pkc
            if (gridstruct%nested) then
                  call nested_grid_BC_apply_intT(delz, &
@@ -682,7 +684,7 @@ contains
 #endif SW_DYNAMICS
 
       endif   ! end hydro check
-
+      
       !$ser savepoint PGradC-In
       !$ser data dt2=dt2 delpc=delpc pkc=pkc gz=gz uc=uc vc=vc
       call p_grad_c(dt2, npz, delpc, pkc, gz, uc, vc, bd, gridstruct%rdxc, gridstruct%rdyc, hydrostatic)
@@ -690,7 +692,7 @@ contains
       !$ser data uc=uc vc=vc
 
                                                                   call timing_on('COMM_TOTAL')
-                                                   
+      !$ser on                                             
       !$ser savepoint HaloVectorUpdate-In 
       !$ser data complete=boolean_true array_u=uc array_v=vc rank=mpi_rank
       call start_group_halo_update(i_pack(9), uc, vc, domain, gridtype=CGRID_NE)
@@ -708,7 +710,8 @@ contains
                              call complete_group_halo_update(i_pack(9), domain)
       !$ser savepoint HaloVectorUpdate-Out
       !$ser data array_u=uc array_v=vc 
-                                                                   call timing_off('COMM_TOTAL')
+      !$ser off
+                             call timing_off('COMM_TOTAL')
       if (gridstruct%nested) then
          !On a nested grid we have to do SOMETHING with uc and vc in
          ! the boundary halo, particularly at the corners of the
@@ -967,7 +970,7 @@ contains
                                                      call timing_off('d_sw')
 
     if( flagstruct%fill_dp ) call mix_dp(hydrostatic, w, delp, pt, npz, ak, bk, .false., flagstruct%fv_debug, bd)
-  
+   !$ser on
     !$ser savepoint HaloUpdate-In
     !$ser data complete=boolean_true array=pt rank=mpi_rank 
 
@@ -1012,7 +1015,7 @@ contains
         
     !$ser savepoint HaloUpdate-Out
     !$ser data array=pt
-    
+    !$ser off
    
                                        call timing_off('COMM_TOTAL')
     if ( flagstruct%fv_debug ) then
