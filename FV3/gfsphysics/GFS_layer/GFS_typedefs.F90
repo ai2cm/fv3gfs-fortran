@@ -1085,6 +1085,8 @@ module GFS_typedefs
     real(kind=kind_phys) :: sst_perturbation  ! Sea surface temperature perturbation to climatology or nudging SST (default 0.0 K)
     logical :: override_surface_radiative_fluxes  ! Whether to use Statein to override the surface radiative fluxes
     logical :: use_climatological_sst  ! Whether to allow the Python wrapper to override the sea surface temperature
+    logical :: emulate_zc_microphysics ! Use an emulator in place of ZC microphysics
+    logical :: save_zc_microphysics_training ! Save ZC microphysics state I/O for training
 #ifdef CCPP
     ! From physcons.F90, updated/set in control_initialize
     real(kind=kind_phys) :: dxinv           ! inverse scaling factor for critical relative humidity, replaces dxinv in physcons.F90
