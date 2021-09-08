@@ -756,7 +756,7 @@ if (allocated(physics_tendency_diag%t_dt)) physics_tendency_diag%t_dt = (pt(is:i
      enddo
     endif !regional
 !
-    !$ser savepoint UpdateDWindsPhys-IN
+    !$ser savepoint UpdateDWindsPhys-In
     !$ser data is=is js=js ie=ie je=je isd=isd ied=ied jsd=jsd jed=jed
     !$ser data u_dt=u_dt v_dt=v_dt u=u v=v
     !$ser data es=gridstruct%es ew=gridstruct%ew vlon=gridstruct%vlon vlat=gridstruct%vlat
@@ -764,7 +764,7 @@ if (allocated(physics_tendency_diag%t_dt)) physics_tendency_diag%t_dt = (pt(is:i
     !$ser data nested=gridstruct%nested regional=gridstruct%regional
     !$ser data npx=npx npy=npy npz=npz
     call update_dwinds_phys(is, ie, js, je, isd, ied, jsd, jed, dt, u_dt, v_dt, u, v, gridstruct, npx, npy, npz, domain)
-    !$ser savepoint UpdateDWindsPhys-OUT
+    !$ser savepoint UpdateDWindsPhys-Out
     !$ser data u_dt=u_dt v_dt=v_dt u=u v=v
  endif
                                                     call timing_off(' Update_dwinds')

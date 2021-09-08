@@ -289,7 +289,7 @@ subroutine update_atmos_radiation_physics (Atmos)
     call mpp_clock_begin(getClock)
     
     !$ser on
-    !$ser savepoint AtmosPhysDriverStatein-IN
+    !$ser savepoint AtmosPhysDriverStatein-In
     !$ser data IPD_prsik=IPD_Data(1)%Statein%prsik IPD_phii=IPD_Data(1)%Statein%phii IPD_atm_ts=IPD_Data(1)%Statein%atm_ts
     !$ser data IPD_tgrs=IPD_Data(1)%Statein%tgrs IPD_ugrs=IPD_Data(1)%Statein%ugrs IPD_vgrs=IPD_Data(1)%Statein%vgrs
     !$ser data IPD_vvl=IPD_Data(1)%Statein%vvl IPD_prsl=IPD_Data(1)%Statein%prsl IPD_diss_est=IPD_Data(1)%Statein%diss_est
@@ -297,7 +297,7 @@ subroutine update_atmos_radiation_physics (Atmos)
     !$ser data IPD_prslk=IPD_Data(1)%Statein%prslk IPD_phil=IPD_Data(1)%Statein%phil IPD_dycore_hydrostatic=IPD_Data(1)%Statein%dycore_hydrostatic
     !$ser data IPD_nwat=IPD_Data(1)%Statein%nwat ATM_delp=Atm(mytile)%delp
     call atmos_phys_driver_statein (IPD_data, Atm_block, flip_vc)
-    !$ser savepoint AtmosPhysDriverStatein-OUT
+    !$ser savepoint AtmosPhysDriverStatein-Out
     !$ser data IPD_prsik=IPD_Data(1)%Statein%prsik IPD_phii=IPD_Data(1)%Statein%phii IPD_atm_ts=IPD_Data(1)%Statein%atm_ts
     !$ser data IPD_tgrs=IPD_Data(1)%Statein%tgrs IPD_ugrs=IPD_Data(1)%Statein%ugrs IPD_vgrs=IPD_Data(1)%Statein%vgrs
     !$ser data IPD_vvl=IPD_Data(1)%Statein%vvl IPD_prsl=IPD_Data(1)%Statein%prsl IPD_diss_est=IPD_Data(1)%Statein%diss_est
@@ -409,7 +409,7 @@ subroutine update_atmos_radiation_physics (Atmos)
 !$OMP            schedule (dynamic,1), &
 !$OMP            shared   (Atm_block, IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Func0d) &
 !$OMP            private  (nb)
-      !$ser savepoint GFSPhysicsDriver-IN
+      !$ser savepoint GFSPhysicsDriver-In
       !$ser data IPD_gt0=IPD_Data(1)%Stateout%gt0 IPD_gu0=IPD_Data(1)%Stateout%gu0 IPD_gv0=IPD_Data(1)%Stateout%gv0 IPD_gq0=IPD_Data(1)%Stateout%gq0
       !$ser data IPD_refl_10cm=IPD_Data(1)%Intdiag%refl_10cm IPD_area=IPD_Data(1)%Grid%area
       !$ser data IPD_phii=IPD_Data(1)%Statein%phii IPD_prsi=IPD_Data(1)%Statein%prsi IPD_tgrs=IPD_Data(1)%Statein%tgrs IPD_qgrs=IPD_Data(1)%Statein%qgrs
@@ -419,7 +419,7 @@ subroutine update_atmos_radiation_physics (Atmos)
       do nb = 1,Atm_block%nblks
         call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d)
       enddo
-      !$ser savepoint GFSPhysicsDriver-OUT
+      !$ser savepoint GFSPhysicsDriver-Out
       !$ser data IPD_gt0=IPD_Data(1)%Stateout%gt0 IPD_gu0=IPD_Data(1)%Stateout%gu0 IPD_gv0=IPD_Data(1)%Stateout%gv0 IPD_gq0=IPD_Data(1)%Stateout%gq0
 #endif
       call mpp_clock_end(physClock)

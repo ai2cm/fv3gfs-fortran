@@ -1588,10 +1588,10 @@ contains
 !SJL: perform vertical filling to fix the negative humidity if the SAS convection scheme is used
 !     This call may be commented out if RAS or other positivity-preserving CPS is used.
      blen = Atm_block%blksz(nb)
-     !$ser savepoint FillGFS-IN
+     !$ser savepoint FillGFS-In
      !$ser data IPD_gq0=IPD_Data(1)%Stateout%gq0 nb=nb
      call fill_gfs(blen, npz, IPD_Data(nb)%Statein%prsi, IPD_Data(nb)%Stateout%gq0, 1.e-9_kind_phys)
-     !$ser savepoint FillGFS-OUT
+     !$ser savepoint FillGFS-Out
      !$ser data IPD_gq0=IPD_Data(1)%Stateout%gq0 IPD_delp=Atm(n)%delp
      do k = 1, npz
            if(flip_vc) then
