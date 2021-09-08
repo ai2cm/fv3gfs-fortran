@@ -3130,6 +3130,8 @@ module GFS_typedefs
     real(kind=kind_phys) :: sst_perturbation = 0.0  ! Sea surface temperature perturbation [K]
     logical :: override_surface_radiative_fluxes = .false.
     logical :: use_climatological_sst = .true.
+    logical :: emulate_zc_microphysics = .false.
+    logical :: save_zc_microphysics_training = .false.
 !--- END NAMELIST VARIABLES
 
     NAMELIST /gfs_physics_nml/                                                              &
@@ -3221,7 +3223,8 @@ module GFS_typedefs
                           !--- aerosol scavenging factors ('name:value' string array)
                                fscav_aero, &
                                sst_perturbation,                                            & 
-                               override_surface_radiative_fluxes, use_climatological_sst
+                               override_surface_radiative_fluxes, use_climatological_sst,   &
+                               emulate_zc_microphysics, save_zc_microphysics_training
 
 !--- other parameters 
     integer :: nctp    =  0                !< number of cloud types in CS scheme
@@ -3691,6 +3694,11 @@ module GFS_typedefs
     Model%sst_perturbation = sst_perturbation
     Model%override_surface_radiative_fluxes = override_surface_radiative_fluxes
     Model%use_climatological_sst = use_climatological_sst
+
+    !--- emulation parameters
+    Model%emulate_zc_microphysics = emulate_zc_microphysics
+    Model%save_zc_microphysics_training = save_zc_microphysics_training
+
 !--- tracer handling
     Model%ntrac            = size(tracer_names)
 #ifdef CCPP
@@ -4461,6 +4469,10 @@ module GFS_typedefs
         print *, ' prautco           : ', Model%prautco
         print *, ' evpco             : ', Model%evpco
         print *, ' wminco            : ', Model%wminco
+        print *, ' '
+        print *, ' Z-C Emulation parameters'
+        print *, ' use ZC emulator   : ', Model%emulate_zc_microphysics
+        print *, ' save ZC training  : ', Model%save_zc_microphysics_training
         print *, ' '
       endif
       if (Model%imp_physics == Model%imp_physics_wsm6 .or. Model%imp_physics == Model%imp_physics_thompson) then
