@@ -4566,11 +4566,15 @@ module module_physics_driver
             call set_state("total_precipitation", rain1)
             call set_state("ratio_of_snowfall_to_rainfall", Diag%sr)
             call set_state("tendency_of_rain_water_mixing_ratio_due_to_microphysics", rainp)
-            call call_function("emulation.monitor", "store_zarr")
-            call call_function("emulation.monitor", "store_netcdf")
+
+            if (Model%save_zc_microphysics_training) then
+              call call_function("emulation.monitor", "store_zarr")
+              call call_function("emulation.monitor", "store_netcdf")
+            elseif (Model%emulate_zc_microphysics) then
+              ! apply microphysics emulator
+              call call_function("emulation.emulate", "microphysics")
+            endif
             
-            ! apply microphysics emulator
-            call call_function("emulation.emulate", "microphysics")
 
             call get_state("air_temperature_output", Stateout%gt0)
             call get_state("specific_humidity_output", qv_post_precpd)
