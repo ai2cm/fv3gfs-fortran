@@ -247,6 +247,8 @@ namelist:
     swhtr: true
     trans_trac: true
     use_ufo: true
+    emulate_zc_microphysics: true
+    save_zc_microphysics: false
   interpolator_nml:
     interp_method: conserve_great_circle
   nam_stochy:
