@@ -1,13 +1,13 @@
 import f90nml
 import logging
 import os
-import tensorflow as tf
+# import tensorflow as tf
 
 from .debug import print_errors
 from ._filesystem import get_dir
-from .monitor import store_zarr
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 TF_MODEL_PATH = None  # local or remote path to tensorflow model
 STORE_EMU_DATA = None
@@ -23,7 +23,7 @@ def _load_environment_vars_into_global():
 
     cwd = os.getcwd()
     TF_MODEL_PATH = os.environ["TF_MODEL_PATH"]
-    STORE_EMU_DATA = bool(os.environ.get("STORE_EMU_DATA", False))
+    STORE_EMU_DATA = os.environ.get("STORE_EMU_DATA", "False") == "True"
     NML_PATH = os.path.join(cwd, "input.nml")
 
 
@@ -48,10 +48,16 @@ def _load_tf_model() -> tf.keras.Model:
     return model
 
 
-_load_environment_vars_into_global()
-NML = _load_nml()
-DT_SEC = _get_timestep(NML)
-MODEL = _load_tf_model()
+# _load_environment_vars_into_global()
+# NML = _load_nml()
+# DT_SEC = _get_timestep(NML)
+# MODEL = _load_tf_model()
+# logger.info("FINISHED LOADING!!")
+
+
+@print_errors
+def ping(state):
+    logger.info("Ping has been reached!!")
 
 
 @print_errors
@@ -72,6 +78,3 @@ def microphysics(state):
     }
     state.update(model_outputs)
     state.update(microphysics_diag)
-
-    if STORE_EMU_DATA:
-        store_zarr(state)
