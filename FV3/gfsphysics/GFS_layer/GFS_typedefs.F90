@@ -1086,7 +1086,7 @@ module GFS_typedefs
     logical :: override_surface_radiative_fluxes  ! Whether to use Statein to override the surface radiative fluxes
     logical :: use_climatological_sst  ! Whether to allow the Python wrapper to override the sea surface temperature
     logical :: emulate_zc_microphysics ! Use an emulator in place of ZC microphysics
-    logical :: save_zc_microphysics_training ! Save ZC microphysics state I/O for training
+    logical :: save_zc_microphysics ! Save ZC microphysics state
 #ifdef CCPP
     ! From physcons.F90, updated/set in control_initialize
     real(kind=kind_phys) :: dxinv           ! inverse scaling factor for critical relative humidity, replaces dxinv in physcons.F90
@@ -3133,7 +3133,7 @@ module GFS_typedefs
     logical :: override_surface_radiative_fluxes = .false.
     logical :: use_climatological_sst = .true.
     logical :: emulate_zc_microphysics = .false.
-    logical :: save_zc_microphysics_training = .false.
+    logical :: save_zc_microphysics = .false.
 !--- END NAMELIST VARIABLES
 
     NAMELIST /gfs_physics_nml/                                                              &
@@ -3226,7 +3226,7 @@ module GFS_typedefs
                                fscav_aero, &
                                sst_perturbation,                                            & 
                                override_surface_radiative_fluxes, use_climatological_sst,   &
-                               emulate_zc_microphysics, save_zc_microphysics_training
+                               emulate_zc_microphysics, save_zc_microphysics
 
 !--- other parameters 
     integer :: nctp    =  0                !< number of cloud types in CS scheme
@@ -3699,7 +3699,7 @@ module GFS_typedefs
 
     !--- emulation parameters
     Model%emulate_zc_microphysics = emulate_zc_microphysics
-    Model%save_zc_microphysics_training = save_zc_microphysics_training
+    Model%save_zc_microphysics = save_zc_microphysics
 
 !--- tracer handling
     Model%ntrac            = size(tracer_names)
@@ -4474,7 +4474,7 @@ module GFS_typedefs
         print *, ' '
         print *, ' Z-C Emulation parameters'
         print *, ' use ZC emulator   : ', Model%emulate_zc_microphysics
-        print *, ' save ZC training  : ', Model%save_zc_microphysics_training
+        print *, ' save ZC state     : ', Model%save_zc_microphysics
         print *, ' '
       endif
       if (Model%imp_physics == Model%imp_physics_wsm6 .or. Model%imp_physics == Model%imp_physics_thompson) then
