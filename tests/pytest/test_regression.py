@@ -127,11 +127,9 @@ def test_run_emulate_zc_micro(image, image_version, monkeypatch, code_root):
     monkeypatch.setenv("OUTPUT_FREQ_SEC", str(900*2))
     model_path = join(code_root, "emulation/test_model/dummy_model.tf")
     monkeypatch.setenv("TF_MODEL_PATH", model_path)
-    monkeypatch.setenv("STORE_EMU_DATA", str(True))
     env_vars = [
         "--env", "OUTPUT_FREQ_SEC",
         "--env", "TF_MODEL_PATH",
-        "--env", "STORE_EMU_DATA",
     ]
     run_model(config, run_dir, model_image, "docker", additional_env_vars=env_vars)
     assert os.path.exists(os.path.join(run_dir, "state_output.zarr"))

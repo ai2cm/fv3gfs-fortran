@@ -9,26 +9,23 @@ import tensorflow as tf
 
 from .debug import print_errors
 from ._filesystem import get_dir
-from .monitor import store_zarr
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 TF_MODEL_PATH = None  # local or remote path to tensorflow model
-STORE_EMU_DATA = None
 NML_PATH = None
 DT_SEC = None
+ORIG_OUTPUTS = None
 
 @print_errors
 def _load_environment_vars_into_global():
 
     global TF_MODEL_PATH
-    global STORE_EMU_DATA
     global NML_PATH
 
     cwd = os.getcwd()
     TF_MODEL_PATH = os.environ["TF_MODEL_PATH"]
-    STORE_EMU_DATA = os.environ.get("STORE_EMU_DATA", "False") == "True"
     NML_PATH = os.path.join(cwd, "input.nml")
 
 
@@ -59,24 +56,38 @@ DT_SEC = _get_timestep(NML)
 MODEL = _load_tf_model()
 
 
+def _unpack_predictions(predictions):
+
+    if len(MODEL.output_names) == 1:
+        # single output model doesn't return a list
+        # zip would start unpacking array rows
+        model_outputs = {MODEL.output_names[0]: predictions.T}
+    else:
+        model_outputs = {
+            name: output.T # transposed adjust
+            for name, output in zip(MODEL.output_names, predictions)
+        }
+
+    return model_outputs
+
+
 @print_errors
 def microphysics(state):
 
+    global ORIG_OUTPUTS
+
     inputs = [state[name].T for name in MODEL.input_names]
     predictions = MODEL.predict(inputs)
-    model_outputs = {
-        name: output.T # transposed adjust
-        for name, output in zip(MODEL.output_names, predictions)
-    }
+    model_outputs = _unpack_predictions(predictions)
 
-    overwrites = set(state).intersection(model_outputs)
-    logger.info(f"Overwritting existing state fields: {overwrites}")
+    # fields stay in global state so check overwrites on first step
+    if ORIG_OUTPUTS is None:
+        ORIG_OUTPUTS = set(state).intersection(model_outputs)
+
+    logger.info(f"Overwritting existing state fields: {ORIG_OUTPUTS}")
     microphysics_diag = {
-        f"{orig_updated}_physics_diag": state[orig_updated]
-        for orig_updated in overwrites
+        f"{name}_physics_diag": state[name]
+        for name in ORIG_OUTPUTS
     }
     state.update(model_outputs)
     state.update(microphysics_diag)
-
-    if STORE_EMU_DATA:
-        store_zarr(state)
