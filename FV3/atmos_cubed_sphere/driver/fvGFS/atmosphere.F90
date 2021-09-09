@@ -2061,6 +2061,16 @@ contains
    real(kind=kind_phys) :: rTv, dm, qgrs_rad
    integer :: nb, blen, npz, i, j, k, ix, k1, kz, dnats, nq_adv
 
+  !$ser on
+  !$ser savepoint AtmosPhysDriverStatein-In
+  !$ser data IPD_prsik=IPD_Data(1)%Statein%prsik IPD_phii=IPD_Data(1)%Statein%phii IPD_atm_ts=IPD_Data(1)%Statein%atm_ts
+  !$ser data IPD_tgrs=IPD_Data(1)%Statein%tgrs IPD_ugrs=IPD_Data(1)%Statein%ugrs IPD_vgrs=IPD_Data(1)%Statein%vgrs
+  !$ser data IPD_vvl=IPD_Data(1)%Statein%vvl IPD_prsl=IPD_Data(1)%Statein%prsl IPD_diss_est=IPD_Data(1)%Statein%diss_est
+  !$ser data IPD_qgrs=IPD_Data(1)%Statein%qgrs IPD_prsi=IPD_Data(1)%Statein%prsi IPD_pgr=IPD_Data(1)%Statein%pgr
+  !$ser data IPD_prslk=IPD_Data(1)%Statein%prslk IPD_phil=IPD_Data(1)%Statein%phil IPD_dycore_hydrostatic=IPD_Data(1)%Statein%dycore_hydrostatic
+  !$ser data IPD_nwat=IPD_Data(1)%Statein%nwat
+  !$ser data delz=Atm(mytile)%delz pt=Atm(mytile)%pt delp=Atm(mytile)%delp qvapor=Atm(mytile)%q(:,:,:,sphum) qliquid=Atm(mytile)%q(:,:,:,liq_wat) qice=Atm(mytile)%q(:,:,:,ice_wat) qrain=Atm(mytile)%q(:,:,:,rainwat) qsnow=Atm(mytile)%q(:,:,:,snowwat) qgraupel=Atm(mytile)%q(:,:,:,graupel) qcld=Atm(mytile)%q(:,:,:,cld_amt) qo3mr=Atm(mytile)%q(:,:,:,o3mr)
+
 !!! NOTES: lmh 6nov15
 !!! - "Layer" means "layer mean", ie. the average value in a layer
 !!! - "Level" means "level interface", ie the point values at the top or bottom of a layer
@@ -2245,6 +2255,12 @@ contains
     IPD_Data(nb)%Statein%dycore_hydrostatic = Atm(mytile)%flagstruct%hydrostatic
     IPD_Data(nb)%Statein%nwat = Atm(mytile)%flagstruct%nwat
   enddo
+  !$ser savepoint AtmosPhysDriverStatein-Out
+  !$ser data IPD_prsik=IPD_Data(1)%Statein%prsik IPD_phii=IPD_Data(1)%Statein%phii IPD_atm_ts=IPD_Data(1)%Statein%atm_ts
+  !$ser data IPD_tgrs=IPD_Data(1)%Statein%tgrs IPD_ugrs=IPD_Data(1)%Statein%ugrs IPD_vgrs=IPD_Data(1)%Statein%vgrs
+  !$ser data IPD_vvl=IPD_Data(1)%Statein%vvl IPD_prsl=IPD_Data(1)%Statein%prsl IPD_diss_est=IPD_Data(1)%Statein%diss_est
+  !$ser data IPD_qgrs=IPD_Data(1)%Statein%qgrs IPD_prsi=IPD_Data(1)%Statein%prsi IPD_pgr=IPD_Data(1)%Statein%pgr
+  !$ser data IPD_prslk=IPD_Data(1)%Statein%prslk IPD_phil=IPD_Data(1)%Statein%phil IPD_dycore_hydrostatic=IPD_Data(1)%Statein%dycore_hydrostatic
 
  end subroutine atmos_phys_driver_statein
 
