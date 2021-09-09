@@ -1872,6 +1872,22 @@
 !>  - Call module_radiation_surface::setalb() to setup surface albedo.
 !!  for SW radiation.
 
+!$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+!$ser verbatim do_ser = (index(ser_env, "RAD_SW") /= 0)
+!$ser verbatim if (do_ser) then
+        !$ser verbatim print *, '>> serializing swrad()', ser_count
+        !$ser savepoint "setalb-in-"//trim(ser_count_str)
+        ! in
+        !$ser data slmsk=Sfcprop%slmsk snowd=Sfcprop%snowd sncovr=Sfcprop%sncovr
+        !$ser data snoalb=Sfcprop%snoalb zorl=Sfcprop%zorl coszen=Radtend%coszen
+        !$ser data tsfg=tsfg tsfa=tsfa hprime=Sfcprop%hprime(:,1) alvsf=Sfcprop%alvsf
+        !$ser data alnsf=Sfcprop%alnsf alvwf=Sfcprop%alvwf alnwf=Sfcprop%alnwf
+        !$ser data facsf=Sfcprop%facsf facwf=Sfcprop%facwf fice=Sfcprop%fice
+        !$ser data tisfc=Sfcprop%tisfc IM=IM alb1d=alb1d pertalb=Model%pertalb
+        ! out
+        !%ser data sfcalb
+!$ser verbatim end if
+
         call setalb (Sfcprop%slmsk, Sfcprop%snowd, Sfcprop%sncovr,   & !  ---  inputs:
                      Sfcprop%snoalb, Sfcprop%zorl, Radtend%coszen,   &
                      tsfg, tsfa, Sfcprop%hprime(:,1), Sfcprop%alvsf, &
@@ -1880,6 +1896,14 @@
                      Sfcprop%tisfc, IM,                              &
                      alb1d, Model%pertalb,                           & !  mg, sfc-perts
                      sfcalb)                                           !  ---  outputs
+
+!$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+!$ser verbatim do_ser = (index(ser_env, "RAD_SW") /= 0)
+!$ser verbatim if (do_ser) then
+        !$ser verbatim print *, '>> serializing swrad()', ser_count
+        !$ser savepoint "setalb-out-"//trim(ser_count_str)
+        !%ser data sfcalb
+!$ser verbatim end if
 
 !> -# Approximate mean surface albedo from vis- and nir-  diffuse values.
         Radtend%sfalb(:) = max(0.01, 0.5 * (sfcalb(:,2) + sfcalb(:,4)))
