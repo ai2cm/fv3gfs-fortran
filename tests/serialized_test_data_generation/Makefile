@@ -128,10 +128,7 @@ validate_data: ## compare generated data with data stored on cloud storage bucke
 push_data: ## push packed data to cloud storage bucket
 	@echo ""
 	@echo ">> Pushing data in $(DATA_DIR_HOST) to cloud storage $(DATA_DIR_BUCKET)"
-	@if compgen -G "$(DATA_DIR_HOST)/*.dat" &> /dev/null ; then \
-		echo "Error: please run make pack_data before pushing to cloud storage bucket." ; \
-		exit 1 ; \
-	fi
+
 	@if [ "${FORCE_PUSH}" != "true" ] ; then \
 		if gsutil ls $(DATA_DIR_BUCKET) &> /dev/null ; then \
 			echo "Error: version $(FORTRAN_VERSION) of data already exists on cloud storage $(DATA_DIR_BUCKET)." ; \
