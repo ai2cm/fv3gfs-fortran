@@ -2052,10 +2052,31 @@
 !>  - Call module_radiation_surface::setemis(),to setup surface
 !! emissivity for LW radiation.
 
+!$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+!$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+!$ser verbatim if (do_ser) then
+        !$ser verbatim print *, '>> serializing setemisin()', ser_count
+        !$ser savepoint "setemis-in-"//trim(ser_count_str)
+        ! in
+        !$ser data xlon=Grid%xlon xlat=Grid%xlat slmsk=Sfcprop%slmsk
+        !$ser data snowd=Sfcprop%snowd sncovr=Sfcprop%sncovr zorl=Sfcprop%zorl
+        !$ser data tsfg=tsfg tsfa=tsfa hprime=Sfcprop%hprime(:,1) IM=IM
+        ! out
+        !$ser data semis=Radtend%semis
+!$ser verbatim end if
+
         call setemis (Grid%xlon, Grid%xlat, Sfcprop%slmsk,         &        !  ---  inputs
                       Sfcprop%snowd, Sfcprop%sncovr, Sfcprop%zorl, &
                       tsfg, tsfa, Sfcprop%hprime(:,1), IM,         & 
                       Radtend%semis)                                              !  ---  outputs
+
+!$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+!$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+!$ser verbatim if (do_ser) then
+        !$ser verbatim print *, '>> serializing setemisin()', ser_count
+        !$ser savepoint "setemis-out-"//trim(ser_count_str)
+        !$ser data semis=Radtend%semis
+!$ser verbatim end if
 
 !>  - Call module_radlw_main::lwrad(), to compute LW heating rates and
 !!    fluxes.
