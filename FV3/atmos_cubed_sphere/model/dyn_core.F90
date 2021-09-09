@@ -621,7 +621,8 @@ contains
               enddo
            enddo
         endif
-                                            call timing_on('UPDATE_DZ_C')
+        call timing_on('UPDATE_DZ_C')
+        !$ser on
         !$ser savepoint UpdateDzC-In
         !$ser data dp0=dp_ref utc=ut vtc=vt gz=gz zs=zs ws=ws3 dt2=dt2
         call update_dz_c(is, ie, js, je, npz, ng, dt2, dp_ref, zs, gridstruct%area, ut, vt, gz, ws3, &
@@ -629,10 +630,11 @@ contains
              gridstruct%ne_corner, gridstruct%nw_corner, bd, gridstruct%grid_type)
         !$ser savepoint UpdateDzC-Out
         !$ser data ws=ws3 gz=gz
+        !$ser off
                                             call timing_off('UPDATE_DZ_C')
 
                                             call timing_on('Riem_Solver')
-           !$ser on
+        
            !$ser savepoint Riem_Solver_C-In
            !$ser data ms=ms dt2=dt2 akap=akap cappa=cappa cp=cp ptop=ptop hs=phis w3=omga ptc=ptc q_con=q_con  delpc=delpc gz=gz  pef=pkc ws=ws3     
            call Riem_Solver_C( ms, dt2,   is,  ie,   js,   je,   npz,   ng,   &
@@ -645,8 +647,7 @@ contains
                                 flagstruct%a_imp, flagstruct%scale_z )
                                                call timing_off('Riem_Solver')
 
-            !$ser savepoint Riem_Solver_C-Out
-            !$ser off                                   
+            !$ser savepoint Riem_Solver_C-Out                               
            !$ser data gz=gz pef=pkc
            if (gridstruct%nested) then
                  call nested_grid_BC_apply_intT(delz, &
