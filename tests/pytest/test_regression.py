@@ -1,10 +1,10 @@
 import os
+from os.path import join
 import yaml
 import shutil
 import subprocess
 import pytest
 import fv3config
-from os.path import join
 
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
