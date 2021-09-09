@@ -1875,7 +1875,7 @@
 !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
 !$ser verbatim do_ser = (index(ser_env, "RAD_SW") /= 0)
 !$ser verbatim if (do_ser) then
-        !$ser verbatim print *, '>> serializing swrad()', ser_count
+        !$ser verbatim print *, '>> serializing setalbin()', ser_count
         !$ser savepoint "setalb-in-"//trim(ser_count_str)
         ! in
         !$ser data slmsk=Sfcprop%slmsk snowd=Sfcprop%snowd sncovr=Sfcprop%sncovr
@@ -1885,7 +1885,7 @@
         !$ser data facsf=Sfcprop%facsf facwf=Sfcprop%facwf fice=Sfcprop%fice
         !$ser data tisfc=Sfcprop%tisfc IM=IM alb1d=alb1d pertalb=Model%pertalb
         ! out
-        !%ser data sfcalb
+        !%ser data sfcalb=sfcalb
 !$ser verbatim end if
 
         call setalb (Sfcprop%slmsk, Sfcprop%snowd, Sfcprop%sncovr,   & !  ---  inputs:
@@ -1900,9 +1900,9 @@
 !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
 !$ser verbatim do_ser = (index(ser_env, "RAD_SW") /= 0)
 !$ser verbatim if (do_ser) then
-        !$ser verbatim print *, '>> serializing swrad()', ser_count
+        !$ser verbatim print *, '>> serializing setalbout()', ser_count
         !$ser savepoint "setalb-out-"//trim(ser_count_str)
-        !%ser data sfcalb
+        !$ser data sfcalb=sfcalb
 !$ser verbatim end if
 
 !> -# Approximate mean surface albedo from vis- and nir-  diffuse values.
