@@ -111,10 +111,9 @@ def test_callpyfort_integration(image, image_version, monkeypatch):
     nproc = get_n_processes(config)
 
     run_model(config, run_dir, model_image, "docker")
-    emulate_files = glob.glob(join(os.getcwd(), "microphysics_success*.txt"))
-    store_files = glob.glob(join(os.getcwd(), "store_success*.txt"))
-    assert len(emulate_files) == nproc
-    assert len(store_files) == nproc
+
+    assert os.path.exists(join(run_dir, "microphysics_success.txt"))
+    assert os.path.exists(join(run_dir, "store_success.txt"))
     subprocess.check_call(["sudo", "rm", "-r", run_dir])
 
 
