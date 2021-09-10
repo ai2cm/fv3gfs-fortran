@@ -1,5 +1,4 @@
 import os
-import glob
 from os.path import join
 import yaml
 import shutil
@@ -102,13 +101,12 @@ def test_regression(
     shutil.rmtree(run_dir)
 
 
-def test_callpyfort_integration(image, image_version, monkeypatch):
+def test_callpyfort_integration(image, image_version):
 
     config = get_config("emulation.yml")
     model_image_tag = "{version}-emulation".format(version=image_version)
     model_image = f"{image}:{model_image_tag}"
     run_dir = get_run_dir(model_image_tag, config)
-    nproc = get_n_processes(config)
 
     run_model(config, run_dir, model_image, "docker")
 
