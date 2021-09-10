@@ -1793,11 +1793,34 @@
         elseif (Model%imp_physics == 11) then           ! GFDL cloud scheme
 
           if (.not.Model%lgfdlmprad) then
+
+!$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+!$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+!$ser verbatim if (do_ser) then
+        !$ser verbatim print *, '>> serializing progcld4_in()', ser_count
+        !$ser savepoint "progcld4-in-"//trim(ser_count_str)
+        ! in
+        !$ser data plyr=plyr plvl=plvl tlyr=tlyr tvly=tvly qlyr=qlyr qstl=qstl
+        !$ser data rhly=rhly ccnd=ccnd(1:IM,1:LMK,1) cnvw=cnvw cnvc=cnvc
+        !$ser data xlat=Grid%xlat xlon=Grid%xlon slmsk=Sfcprop%slmsk cldcov=cldcov 
+        !$ser data dz=dz delp=delp im=im lmk=lmk lmp=lmp
+!$ser verbatim end if
+
             call progcld4 (plyr, plvl, tlyr, tvly, qlyr, qstl, rhly,     &!  ---  inputs
                            ccnd(1:IM,1:LMK,1), cnvw, cnvc,               &
                            Grid%xlat, Grid%xlon, Sfcprop%slmsk,          &
                            cldcov, dz, delp, im, lmk, lmp,               &
                            clouds, cldsa, mtopa, mbota, de_lgth)          !  ---  outputs
+
+!$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+!$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+!$ser verbatim if (do_ser) then
+        !$ser verbatim print *, '>> serializing progcld4_out()', ser_count
+        !$ser savepoint "progcld4-out-"//trim(ser_count_str)
+        ! out
+        !$ser data clouds=clouds cldsa=cldsa mtopa=mtopa mbota=mbota
+        !$ser data de_lgth=de_lgth
+!$ser verbatim end if
           else
 
             call progclduni (plyr, plvl, tlyr, tvly, ccnd, ncndl,        &!  ---  inputs
@@ -1812,7 +1835,7 @@
 !                           Model%ntsw-1,Model%ntgl-1,Model%ntclamt-1,      &
 !                           im, lmk, lmp,                                   &
 !                           clouds, cldsa, mtopa, mbota, de_lgth)         !  ---  outputs
-          endif 
+          endif
 
         elseif(Model%imp_physics == 8 .or. Model%imp_physics == 6) then   ! Thompson / WSM6 cloud micrphysics scheme 
 
