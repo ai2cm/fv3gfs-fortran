@@ -4569,12 +4569,11 @@ module module_physics_driver
 
             if (Model%emulate_zc_microphysics) then
               ! apply microphysics emulator
-              call call_function("emulation.emulate", "microphysics")
+              call call_function("emulation", "microphysics")
             endif
             
             if (Model%save_zc_microphysics) then
-              call call_function("emulation.monitor", "store_zarr")
-              call call_function("emulation.monitor", "store_netcdf")
+              call call_function("emulation", "store")
             endif
 
             call get_state("air_temperature_output", Stateout%gt0)
