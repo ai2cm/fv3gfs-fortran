@@ -5677,6 +5677,37 @@ module module_physics_driver
 
       end subroutine moist_bud2
 
+      subroutine compute_q_liquid(im, levs, nwat, ntcw, ntrw, new_dynamics_q, q_liquid)
+        integer, intent(in) :: im, levs, nwat, ntcw, ntrw
+        real(kind=kind_phys), dimension(1:im,1:levs,1:nwat), intent(in) :: new_dynamics_q
+        real(kind=kind_phys), dimension(1:im,1:levs), intent(out) :: q_liquid
+
+        q_liquid = 0.0
+        if (ntcw .gt. 0) then
+          q_liquid = q_liquid + new_dynamics_q(:,:,ntcw)
+        endif
+        if (ntrw .gt. 0) then
+          q_liquid = q_liquid + new_dynamics_q(:,:,ntrw)
+        endif
+      end subroutine compute_q_liquid
+
+      subroutine compute_q_ice(im, levs, nwat, ntiw, ntsw, ntgl, new_dynamics_q, q_ice)
+        integer, intent(in) :: im, levs, nwat, ntiw, ntsw, ntgl
+        real(kind=kind_phys), dimension(1:im,1:levs,1:nwat), intent(in) :: new_dynamics_q
+        real(kind=kind_phys), dimension(1:im,1:levs), intent(out) :: q_ice
+
+        q_ice = 0.0
+        if (ntiw .gt. 0) then
+          q_ice = q_ice + new_dynamics_q(:,:,ntiw)
+        endif
+        if (ntsw .gt. 0) then
+          q_ice = q_ice + new_dynamics_q(:,:,ntsw)
+        endif
+        if (ntgl .gt. 0) then
+          q_ice = q_ice + new_dynamics_q(:,:,ntgl)
+        endif
+      end subroutine compute_q_ice
+
       subroutine moist_cv(initial_dynamics_q, physics_q, pressure_on_interfaces, &
             im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, cvm)
         integer, intent(in) :: im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl
@@ -5695,12 +5726,9 @@ module module_physics_driver
         real(kind=kind_phys) :: c_liq = 4.1855e+3  ! Hard-coded in fv_mapz.F90
         real(kind=kind_phys) :: c_ice = 1972.0  ! Hard-coded in fv_mapz.F90
 
-        ! fv_mapz.moist_cv defines branches for using other moist tracer configurations.
-        ! For simplicity we choose not to replicate that behavior here, since we have
-        ! only run in one tracer configuration (nwat = 6) so far.  We also do not implement
-        ! the branch of code that is run if the compiler directive MULTI_GASES is defined.
-        ! In those cases we default to using the specific heat at constant volume for dry
-        ! air, and emit a warning.
+        ! We do not currently implement the branch of code that is run if the compiler 
+        ! directive MULTI_GASES is defined.  In those cases we default to using the 
+        ! specific heat at constant volume for dry air, and emit a warning.
 #ifdef MULTI_GASES
         call mpp_error (NOTE, 'GFS_physics_driver::moist_cv - moist_cv for tracer configuration not implemented; using default cv_air for t_dt diagnostics')
         cvm = cv_air
@@ -5709,26 +5737,8 @@ module module_physics_driver
             pressure_on_interfaces, im, levs, nwat, new_dynamics_q)
 
         q_vapor = new_dynamics_q(:,:,ntqv)
-
-        q_liquid = 0.0
-        if (ntcw .gt. 0) then
-          q_liquid = q_liquid + new_dynamics_q(:,:,ntcw)
-        endif
-        if (ntrw .gt. 0) then
-          q_liquid = q_liquid + new_dynamics_q(:,:,ntrw)
-        endif
-
-        q_ice = 0.0
-        if (ntiw .gt. 0) then
-          q_ice = q_ice + new_dynamics_q(:,:,ntiw)
-        endif
-        if (ntsw .gt. 0) then
-          q_ice = q_ice + new_dynamics_q(:,:,ntsw)
-        endif
-        if (ntgl .gt. 0) then
-          q_ice = q_ice + new_dynamics_q(:,:,ntgl)
-        endif
-
+        call compute_q_liquid(im, levs, nwat, ntcw, ntrw, new_dynamics_q, q_liquid)
+        call compute_q_ice(im, levs, nwat, ntiw, ntsw, ntgl, new_dynamics_q, q_ice)
         q_dry_air = 1.0 - q_vapor - q_liquid - q_ice
 
         ! By definition now, the weights sum to 1.0.
@@ -5754,12 +5764,9 @@ module module_physics_driver
     real(kind=kind_phys) :: c_liq = 4.1855e+3  ! Hard-coded in fv_mapz.F90
     real(kind=kind_phys) :: c_ice = 1972.0  ! Hard-coded in fv_mapz.F90
 
-    ! fv_mapz.moist_cp defines branches for using other moist tracer configurations.
-    ! For simplicity we choose not to replicate that behavior here, since we have
-    ! only run in one tracer configuration (nwat = 6) so far.  We also do not implement
-    ! the branch of code that is run if the compiler directive MULTI_GASES is defined.
-    ! In those cases we default to using the specific heat at constant volume for dry
-    ! air, and emit a warning.
+    ! We do not currently implement the branch of code that is run if the compiler 
+    ! directive MULTI_GASES is defined.  In those cases we default to using the 
+    ! specific heat at constant volume for dry air, and emit a warning.
 #ifdef MULTI_GASES
     call mpp_error (NOTE, 'GFS_physics_driver::moist_cp - moist_cp for tracer configuration not implemented; using default cp_air for t_dt diagnostics')
     cpm = cp_air
@@ -5768,26 +5775,8 @@ module module_physics_driver
         pressure_on_interfaces, im, levs, nwat, new_dynamics_q)
 
     q_vapor = new_dynamics_q(:,:,ntqv)
-
-    q_liquid = 0.0
-    if (ntcw .gt. 0) then
-      q_liquid = q_liquid + new_dynamics_q(:,:,ntcw)
-    endif
-    if (ntrw .gt. 0) then
-      q_liquid = q_liquid + new_dynamics_q(:,:,ntrw)
-    endif
-
-    q_ice = 0.0
-    if (ntiw .gt. 0) then
-      q_ice = q_ice + new_dynamics_q(:,:,ntiw)
-    endif
-    if (ntsw .gt. 0) then
-      q_ice = q_ice + new_dynamics_q(:,:,ntsw)
-    endif
-    if (ntgl .gt. 0) then
-      q_ice = q_ice + new_dynamics_q(:,:,ntgl)
-    endif
-
+    call compute_q_liquid(im, levs, nwat, ntcw, ntrw, new_dynamics_q, q_liquid)
+    call compute_q_ice(im, levs, nwat, ntiw, ntsw, ntgl, new_dynamics_q, q_ice)
     q_dry_air = 1.0 - q_vapor - q_liquid - q_ice
 
     ! By definition now, the weights sum to 1.0.
