@@ -5,7 +5,7 @@ A basic implementation of `emulation` is provided to test the call_py_fort calls
 
 The interaction points with python are located in `GFS_physics_driver.f90` as the `set_state`, `get_state`, and `call_function` commands.   Using `make build_emulation` from the parent directory will provide a compiled image with call_py_fort functionality enabled.  Two namelist flags can be used to turn off storage (`gfs_physics_nml.save_zc_microphysics`) and emulation (`gfs_physics_nml.emulate_zc_microphysics`) while call_py_fort is enabled.
 
-The emulation should overwrite the fields `air_temperature_output`, `specific_humidity_output`, `cloud_water_mixing_ratio_output`, `total_precipitation`, to control the microphysical updates during runtime. 
+The emulation function `microphysics` should overwrite the fields `air_temperature_output`, `specific_humidity_output`, `cloud_water_mixing_ratio_output`, `total_precipitation`, to control the microphysical updates during runtime.  Otherwise, the default parameterization will be in control.
 
 Available input state fields for emulation
 ------------------------------------------
