@@ -5462,11 +5462,11 @@ module module_physics_driver
         nwat = Statein%nwat
 
         if (Statein%dycore_hydrostatic) then
-          call moist_cp_nwat6(Statein%qgrs(1:im,1:levs,1:nwat), Stateout%gq0(1:im,1:levs,1:nwat), &
+          call moist_cp(Statein%qgrs(1:im,1:levs,1:nwat), Stateout%gq0(1:im,1:levs,1:nwat), &
               Statein%prsi(1:im,1:levs+1), im, levs, nwat, 1, Model%ntcw, Model%ntiw, &
               Model%ntrw, Model%ntsw, Model%ntgl, specific_heat)
         else
-          call moist_cv_nwat6(Statein%qgrs(1:im,1:levs,1:nwat), Stateout%gq0(1:im,1:levs,1:nwat), &
+          call moist_cv(Statein%qgrs(1:im,1:levs,1:nwat), Stateout%gq0(1:im,1:levs,1:nwat), &
               Statein%prsi(1:im,1:levs+1), im, levs, nwat, 1, Model%ntcw, Model%ntiw, &
               Model%ntrw, Model%ntsw, Model%ntgl, specific_heat)
         endif
@@ -5677,7 +5677,7 @@ module module_physics_driver
 
       end subroutine moist_bud2
 
-      subroutine moist_cv_nwat6(initial_dynamics_q, physics_q, pressure_on_interfaces, &
+      subroutine moist_cv(initial_dynamics_q, physics_q, pressure_on_interfaces, &
             im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, cvm)
         integer, intent(in) :: im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl
         real(kind=kind_phys), dimension(1:im,1:levs,1:nwat), intent(in) :: initial_dynamics_q, physics_q
@@ -5705,25 +5705,38 @@ module module_physics_driver
         call mpp_error (NOTE, 'GFS_physics_driver::moist_cv - moist_cv for tracer configuration not implemented; using default cv_air for t_dt diagnostics')
         cvm = cv_air
 #else
-        if (nwat /= 6) then
-          call mpp_error (NOTE, 'GFS_physics_driver::moist_cv - moist_cv for tracer configuration not implemented; using default cv_air for t_dt diagnostics')
-          cvm = cv_air
-        else
-          call physics_to_dycore_mass_fraction(initial_dynamics_q, physics_q, &
-              pressure_on_interfaces, im, levs, nwat, new_dynamics_q)
+        call physics_to_dycore_mass_fraction(initial_dynamics_q, physics_q, &
+            pressure_on_interfaces, im, levs, nwat, new_dynamics_q)
 
-          q_vapor = new_dynamics_q(:,:,ntqv)
-          q_liquid = new_dynamics_q(:,:,ntcw) + new_dynamics_q(:,:,ntrw)
-          q_ice = new_dynamics_q(:,:,ntiw) + new_dynamics_q(:,:,ntsw) + new_dynamics_q(:,:,ntgl)
-          q_dry_air = 1.0 - q_vapor - q_liquid - q_ice
+        q_vapor = new_dynamics_q(:,:,ntqv)
 
-          ! By definition now, the weights sum to 1.0.
-          cvm = cv_air * q_dry_air + cv_vap * q_vapor + c_liq * q_liquid + c_ice * q_ice
+        q_liquid = 0.0
+        if (ntcw .gt. 0) then
+          q_liquid = q_liquid + new_dynamics_q(:,:,ntcw)
         endif
-#endif
-      end subroutine moist_cv_nwat6
+        if (ntrw .gt. 0) then
+          q_liquid = q_liquid + new_dynamics_q(:,:,ntrw)
+        endif
 
-      subroutine moist_cp_nwat6(initial_dynamics_q, physics_q, pressure_on_interfaces, &
+        q_ice = 0.0
+        if (ntiw .gt. 0) then
+          q_ice = q_ice + new_dynamics_q(:,:,ntiw)
+        endif
+        if (ntsw .gt. 0) then
+          q_ice = q_ice + new_dynamics_q(:,:,ntsw)
+        endif
+        if (ntgl .gt. 0) then
+          q_ice = q_ice + new_dynamics_q(:,:,ntgl)
+        endif
+
+        q_dry_air = 1.0 - q_vapor - q_liquid - q_ice
+
+        ! By definition now, the weights sum to 1.0.
+        cvm = cv_air * q_dry_air + cv_vap * q_vapor + c_liq * q_liquid + c_ice * q_ice
+#endif
+      end subroutine moist_cv
+
+      subroutine moist_cp(initial_dynamics_q, physics_q, pressure_on_interfaces, &
         im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, cpm)
     integer, intent(in) :: im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl
     real(kind=kind_phys), dimension(1:im,1:levs,1:nwat), intent(in) :: initial_dynamics_q, physics_q
@@ -5751,23 +5764,36 @@ module module_physics_driver
     call mpp_error (NOTE, 'GFS_physics_driver::moist_cp - moist_cp for tracer configuration not implemented; using default cp_air for t_dt diagnostics')
     cpm = cp_air
 #else
-    if (nwat /= 6) then
-      call mpp_error (NOTE, 'GFS_physics_driver::moist_cp - moist_cp for tracer configuration not implemented; using default cp_air for t_dt diagnostics')
-      cpm = cp_air
-    else
-      call physics_to_dycore_mass_fraction(initial_dynamics_q, physics_q, &
-          pressure_on_interfaces, im, levs, nwat, new_dynamics_q)
+    call physics_to_dycore_mass_fraction(initial_dynamics_q, physics_q, &
+        pressure_on_interfaces, im, levs, nwat, new_dynamics_q)
 
-      q_vapor = new_dynamics_q(:,:,ntqv)
-      q_liquid = new_dynamics_q(:,:,ntcw) + new_dynamics_q(:,:,ntrw)
-      q_ice = new_dynamics_q(:,:,ntiw) + new_dynamics_q(:,:,ntsw) + new_dynamics_q(:,:,ntgl)
-      q_dry_air = 1.0 - q_vapor - q_liquid - q_ice
+    q_vapor = new_dynamics_q(:,:,ntqv)
 
-      ! By definition now, the weights sum to 1.0.
-      cpm = cp_air * q_dry_air + cp_vap * q_vapor + c_liq * q_liquid + c_ice * q_ice
+    q_liquid = 0.0
+    if (ntcw .gt. 0) then
+      q_liquid = q_liquid + new_dynamics_q(:,:,ntcw)
     endif
+    if (ntrw .gt. 0) then
+      q_liquid = q_liquid + new_dynamics_q(:,:,ntrw)
+    endif
+
+    q_ice = 0.0
+    if (ntiw .gt. 0) then
+      q_ice = q_ice + new_dynamics_q(:,:,ntiw)
+    endif
+    if (ntsw .gt. 0) then
+      q_ice = q_ice + new_dynamics_q(:,:,ntsw)
+    endif
+    if (ntgl .gt. 0) then
+      q_ice = q_ice + new_dynamics_q(:,:,ntgl)
+    endif
+
+    q_dry_air = 1.0 - q_vapor - q_liquid - q_ice
+
+    ! By definition now, the weights sum to 1.0.
+    cpm = cp_air * q_dry_air + cp_vap * q_vapor + c_liq * q_liquid + c_ice * q_ice
 #endif
-  end subroutine moist_cp_nwat6
+  end subroutine moist_cp
 
       subroutine physics_to_dycore_mass_fraction(initial_dynamics_q, physics_q, &
             pressure_on_interfaces, im, levs, nwat, new_dynamics_q)
