@@ -112,7 +112,7 @@ def test_callpyfort_integration(image, image_version):
 
     assert os.path.exists(join(run_dir, "microphysics_success.txt"))
     assert os.path.exists(join(run_dir, "store_success.txt"))
-    subprocess.check_call(["sudo", "rm", "-r", run_dir])
+    shutil.rmtree(run_dir)
 
 
 def check_rundir_md5sum(run_dir, md5sum_filename):
