@@ -26,3 +26,19 @@ Available input state fields for emulation
 - surface_air_pressure_at_previous_time_step
 - ratio_of_snowfall_to_rainfall
 - tendency_of_rain_water_mixing_ratio_due_to_microphysics
+
+Notes
+-----
+
+The usage of call_py_fort results in some subtle differences with python initialization that can lead to some hard-to-debug issues.
+
+- the current directory is not added to `PYTHONPATH`
+- `sys.argv` is not initialized and will lead to errors for anything that expects to use it (this was an issue for tensorflow).  Remedied by instantiating in the module prior to imports that need it.  E.g.,
+
+```
+import sys
+if not hasattr(sys, "argv"):
+    sys.argv = [""]
+
+import tensorflow
+```
