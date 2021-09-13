@@ -674,9 +674,12 @@ contains
      call mpp_clock_begin(id_dyn_core)
      !$ser verbatim n_map_step=n_map
      k_step = n_map
-    
+      !$ser verbatim  if ( n_map==k_split ) then
+     !$ser on
+      !$ser verbatim endif
       !$ser savepoint DynCore-In
-      !$ser data nq=nq mdt=mdt n_split=n_split zvir=zvir  akap=akap cappa=cappa u=u v=v w=w delz=delz pt=pt  delp=delp pe=pe pk=pk phis=phis wsd=ws omga=omga ptop=ptop pfull=pfull ua=ua va=va uc=uc vc=vc mfxd=mfx mfyd=mfy cxd=cx cyd=cy pkz=pkz peln=peln q_con=q_con ak=ak bk=bk ks=ks diss_estd=diss_est n_map=n_map_step
+     !$ser data nq=nq mdt=mdt n_split=n_split zvir=zvir  akap=akap cappa=cappa u=u v=v w=w delz=delz pt=pt  delp=delp pe=pe pk=pk phis=phis wsd=ws omga=omga ptop=ptop pfull=pfull ua=ua va=va uc=uc vc=vc mfxd=mfx mfyd=mfy cxd=cx cyd=cy pkz=pkz peln=peln q_con=q_con ak=ak bk=bk ks=ks diss_estd=diss_est n_map=n_map_step
+     !$ser off
                                            call timing_on('COMM_TOTAL')
 #ifdef USE_COND
       call start_group_halo_update(i_pack(11), q_con, domain)
@@ -731,10 +734,13 @@ contains
                     uc, vc, mfx, mfy, cx, cy, pkz, peln, q_con, ak, bk, ks, &
                     gridstruct, flagstruct, neststruct, idiag, bd, &
                     domain, n_map==1, i_pack, last_step, diss_est, lagrangian_tendency_of_hydrostatic_pressure, time_total)
-                                         call timing_off('DYN_CORE')
+      call timing_off('DYN_CORE')
+      !$ser verbatim  if ( n_map==k_split ) then
+      !$ser on
       !$ser savepoint DynCore-Out
       !$ser data cappa=cappa u=u v=v w=w delz=delz pt=pt delp=delp pe=pe pk=pk phis=phis wsd=ws omga=omga ptop=ptop pfull=pfull ua=ua va=va uc=uc vc=vc mfxd=mfx mfyd=mfy cxd=cx cyd=cy pkz=pkz peln=peln q_con=q_con diss_estd=diss_est  
-
+      !$ser verbatim endif
+      !$ser off
      call mpp_clock_end(id_dyn_core)
      call mpp_clock_begin(id_tracer_adv)
 

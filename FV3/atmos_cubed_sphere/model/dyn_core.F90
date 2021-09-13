@@ -622,7 +622,9 @@ contains
            enddo
         endif
         call timing_on('UPDATE_DZ_C')
+        !$ser verbatim if ( it==n_split .and. end_step ) then
         !$ser on
+        !$ser verbatim endif
         !$ser savepoint UpdateDzC-In
         !$ser data dp0=dp_ref utc=ut vtc=vt gz=gz zs=zs ws=ws3 dt2=dt2
         call update_dz_c(is, ie, js, je, npz, ng, dt2, dp_ref, zs, gridstruct%area, ut, vt, gz, ws3, &
@@ -630,7 +632,7 @@ contains
              gridstruct%ne_corner, gridstruct%nw_corner, bd, gridstruct%grid_type)
         !$ser savepoint UpdateDzC-Out
         !$ser data ws=ws3 gz=gz
-        !$ser off
+      !$ser off
                                             call timing_off('UPDATE_DZ_C')
 
                                             call timing_on('Riem_Solver')
