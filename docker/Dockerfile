@@ -136,7 +136,7 @@ RUN cd ${CALLPY} && make && make install && ldconfig
 RUN python3 -m pip install git+https://github.com/VulcanClimateModeling/fv3gfs-util.git@1d7c302b836befe905d776b0a972f464bfd3a255
 
 # copy emulation target
-COPY emulation/ /emulation
+COPY tests/emulation/ /emulation
 RUN cd /emulation && python3 -m pip install .
 
 ENV VAR_META_PATH=/emulation/microphysics_parameter_metadata.yaml \
