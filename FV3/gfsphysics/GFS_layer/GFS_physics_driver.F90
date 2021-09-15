@@ -5464,11 +5464,11 @@ module module_physics_driver
         if (Statein%dycore_hydrostatic) then
           call moist_cp(Statein%qgrs(1:im,1:levs,1:nwat), Stateout%gq0(1:im,1:levs,1:nwat), &
               Statein%prsi(1:im,1:levs+1), im, levs, nwat, 1, Model%ntcw, Model%ntiw, &
-              Model%ntrw, Model%ntsw, Model%ntgl, specific_heat)
+              Model%ntrw, Model%ntsw, Model%ntgl, specific_heat, Stateout%gt0(1:im,1:levs))
         else
           call moist_cv(Statein%qgrs(1:im,1:levs,1:nwat), Stateout%gq0(1:im,1:levs,1:nwat), &
               Statein%prsi(1:im,1:levs+1), im, levs, nwat, 1, Model%ntcw, Model%ntiw, &
-              Model%ntrw, Model%ntsw, Model%ntgl, specific_heat)
+              Model%ntrw, Model%ntsw, Model%ntgl, specific_heat, Stateout%gt0(1:im,1:levs))
         endif
         call compute_updated_delp_following_dynamics_definition(Statein%prsi(1:im,1:levs+1), &
             dq3dt_initial, Diag%dq3dt, Stateout%gq0(:,:,1:nwat), im, levs, &
@@ -5677,6 +5677,34 @@ module module_physics_driver
 
       end subroutine moist_bud2
 
+      subroutine compute_q_liquid_and_q_ice_nwat2(im, levs, nwat, ntcw, new_dynamics_q, q_liquid, q_ice, temperature)
+        integer, intent(in) :: im, levs, nwat, ntcw
+        real(kind=kind_phys), dimension(1:im,1:levs,1:nwat), intent(in) :: new_dynamics_q
+        real(kind=kind_phys), dimension(1:im,1:levs), intent(out) :: q_liquid
+        real(kind=kind_phys), dimension(1:im,1:levs), intent(out) :: q_ice
+        real(kind=kind_phys), dimension(1:im,1:levs), intent(in), optional :: temperature
+
+        real(kind=kind_phys), allocatable, dimension(:,:) :: q_condensate
+        real(kind=kind_phys), parameter :: tice = 273.16  ! Name and value taken from fv_mapz.F90
+        real(kind=kind_phys), parameter :: t_i0 = 15.0    ! Name and value taken from fv_mapz.F90
+
+        if (present(temperature)) then
+          allocate(q_condensate(1:im,1:levs))
+          q_condensate = max(0.0, new_dynamics_q(:,:,ntcw))
+          where (temperature .gt. tice)
+            q_ice = 0.0
+          elsewhere (temperature .lt. tice - t_i0)
+            q_ice = q_condensate
+          elsewhere
+            q_ice = q_condensate * (tice - temperature) / t_i0
+          endwhere
+          q_liquid = q_condensate - q_ice
+        else
+          q_liquid = 0.0
+          q_ice = 0.0
+        endif
+      end subroutine compute_q_liquid_and_q_ice_nwat2
+
       subroutine compute_q_liquid(im, levs, nwat, ntcw, ntrw, new_dynamics_q, q_liquid)
         integer, intent(in) :: im, levs, nwat, ntcw, ntrw
         real(kind=kind_phys), dimension(1:im,1:levs,1:nwat), intent(in) :: new_dynamics_q
@@ -5709,11 +5737,12 @@ module module_physics_driver
       end subroutine compute_q_ice
 
       subroutine moist_cv(initial_dynamics_q, physics_q, pressure_on_interfaces, &
-            im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, cvm)
+            im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, cvm, temperature)
         integer, intent(in) :: im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl
         real(kind=kind_phys), dimension(1:im,1:levs,1:nwat), intent(in) :: initial_dynamics_q, physics_q
         real(kind=kind_phys), intent(in) :: pressure_on_interfaces(1:im,1:levs+1)
         real(kind=kind_phys), intent(out) :: cvm(1:im,1:levs)
+        real(kind=kind_phys), intent(in), optional :: temperature(1:im,1:levs)
 
         real(kind=kind_phys) :: new_dynamics_q(1:im,1:levs,1:nwat)
         real(kind=kind_phys) :: q_vapor(1:im,1:levs)
@@ -5736,9 +5765,20 @@ module module_physics_driver
         call physics_to_dycore_mass_fraction(initial_dynamics_q, physics_q, &
             pressure_on_interfaces, im, levs, nwat, new_dynamics_q)
 
-        q_vapor = new_dynamics_q(:,:,ntqv)
-        call compute_q_liquid(im, levs, nwat, ntcw, ntrw, new_dynamics_q, q_liquid)
-        call compute_q_ice(im, levs, nwat, ntiw, ntsw, ntgl, new_dynamics_q, q_ice)
+        ! In the case that nwat = 2, FV3GFS has a special way of partitioning the condensate,
+        ! stored in the cloud liquid water tracer field, into liquid and ice.
+        if (nwat .eq. 2) then
+          q_vapor = max(0.0, new_dynamics_q(:,:,ntqv))
+          if (present(temperature)) then
+            call compute_q_liquid_and_q_ice_nwat2(im, levs, nwat, ntcw, new_dynamics_q, q_liquid, q_ice, temperature)
+          else
+            call compute_q_liquid_and_q_ice_nwat2(im, levs, nwat, ntcw, new_dynamics_q, q_liquid, q_ice)
+          endif
+        else
+          q_vapor = new_dynamics_q(:,:,ntqv)
+          call compute_q_liquid(im, levs, nwat, ntcw, ntrw, new_dynamics_q, q_liquid)
+          call compute_q_ice(im, levs, nwat, ntiw, ntsw, ntgl, new_dynamics_q, q_ice)
+        endif
         q_dry_air = 1.0 - q_vapor - q_liquid - q_ice
 
         ! By definition now, the weights sum to 1.0.
@@ -5747,11 +5787,12 @@ module module_physics_driver
       end subroutine moist_cv
 
       subroutine moist_cp(initial_dynamics_q, physics_q, pressure_on_interfaces, &
-        im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, cpm)
+        im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, cpm, temperature)
     integer, intent(in) :: im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl
     real(kind=kind_phys), dimension(1:im,1:levs,1:nwat), intent(in) :: initial_dynamics_q, physics_q
     real(kind=kind_phys), intent(in) :: pressure_on_interfaces(1:im,1:levs+1)
     real(kind=kind_phys), intent(out) :: cpm(1:im,1:levs)
+    real(kind=kind_phys), intent(in), optional :: temperature(1:im,1:levs)
 
     real(kind=kind_phys) :: new_dynamics_q(1:im,1:levs,1:nwat)
     real(kind=kind_phys) :: q_vapor(1:im,1:levs)
@@ -5774,9 +5815,20 @@ module module_physics_driver
     call physics_to_dycore_mass_fraction(initial_dynamics_q, physics_q, &
         pressure_on_interfaces, im, levs, nwat, new_dynamics_q)
 
-    q_vapor = new_dynamics_q(:,:,ntqv)
-    call compute_q_liquid(im, levs, nwat, ntcw, ntrw, new_dynamics_q, q_liquid)
-    call compute_q_ice(im, levs, nwat, ntiw, ntsw, ntgl, new_dynamics_q, q_ice)
+    ! In the case that nwat = 2, FV3GFS has a special way of partitioning the condensate,
+    ! stored in the cloud liquid water tracer field, into liquid and ice.
+    if (nwat .eq. 2) then
+      q_vapor = max(0.0, new_dynamics_q(:,:,ntqv))
+      if (present(temperature)) then
+        call compute_q_liquid_and_q_ice_nwat2(im, levs, nwat, ntcw, new_dynamics_q, q_liquid, q_ice, temperature)
+      else
+        call compute_q_liquid_and_q_ice_nwat2(im, levs, nwat, ntcw, new_dynamics_q, q_liquid, q_ice)
+      endif
+    else
+      q_vapor = new_dynamics_q(:,:,ntqv)
+      call compute_q_liquid(im, levs, nwat, ntcw, ntrw, new_dynamics_q, q_liquid)
+      call compute_q_ice(im, levs, nwat, ntiw, ntsw, ntgl, new_dynamics_q, q_ice)
+    endif
     q_dry_air = 1.0 - q_vapor - q_liquid - q_ice
 
     ! By definition now, the weights sum to 1.0.
