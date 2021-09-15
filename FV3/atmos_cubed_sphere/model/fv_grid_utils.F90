@@ -235,7 +235,7 @@
            symm_grid = .true.
       endif
       !$ser savepoint SetEta-In
-      !$ser data npz=npz
+      !$ser data npz=npz ks=Atm%ks ptop=Atm%ptop ak=Atm%ak bk=Atm%bk
       if ( npz == 1 ) then
            Atm%ak(1) = 0.
            Atm%ak(2) = 0.
@@ -259,7 +259,7 @@
            endif
       endif
       !$ser savepoint SetEta-Out
-      !$ser data ak=ak bk=bk ptop=ptop
+      !$ser data ks=Atm%ks ptop=Atm%ptop ak=Atm%ak bk=Atm%bk
 
 ! NCEP analysis available from amip-Interp (allocate if needed)
 #ifndef DYCORE_SOLO
