@@ -487,7 +487,7 @@
      !$ser savepoint AAMCorrection-Out
      !$ser data l2c_v=Atm%gridstruct%l2c_v l2c_u=Atm%gridstruct%l2c_u
 
-   else
+   else !if (grid_type < 3)
      cos_sg(:,:,:) = 0.
      sin_sg(:,:,:) = 1.
 
@@ -514,7 +514,7 @@
      es(1,:,:,2)=0.
      es(2,:,:,2)=1.
      es(3,:,:,2)=0.
-  endif
+  endif !if (grid_type < 3)
 
    if ( non_ortho ) then
       !$ser savepoint MoreTrig-In
@@ -709,7 +709,7 @@
       endif     
       !$ser savepoint FixSgCorners-Out
       !$ser data cos_sg=cos_sg sin_sg=sin_sg 
-   else
+   else !if non_ortho
            sina = 1.
            cosa = 0.
            rsina  = 1.
@@ -778,7 +778,7 @@
 !-------------------------------------------------------------
 ! Make unit vectors for the coordinate extension:
 !-------------------------------------------------------------
-  endif
+  endif !if (grid_type < 3)
  
 !xxxx
 !!!  should we insert .not.regional into the following loops alongside .not.nested ????
