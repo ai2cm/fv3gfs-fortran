@@ -1067,7 +1067,7 @@ contains
           end if
        end if
 
-      !  call mpp_update_domains( area_c, Atm%domain, position=CORNER, complete=.true.)
+      call mpp_update_domains( area_c, Atm%domain, position=CORNER, complete=.true.)
 
       !  ! Handle corner Area ghosting
       !  if (cubed_sphere .and. (.not. (Atm%neststruct%nested .or. Atm%flagstruct%regional))) then
