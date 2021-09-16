@@ -5,18 +5,7 @@
 
 from setuptools import setup, find_packages
 
-requirements = [
-    "cftime==1.2.1",
-    "f90nml==1.1.2",
-    "fsspec==2021.6.0",
-    "mpi4py==3.0.3",
-    "numpy==1.19.4",
-    "pyyaml==5.3",
-    "tensorflow==2.4.0",
-    "xarray==0.16.2",
-    "zarr==2.7.0",
-    "scipy",
-]
+requirements = []
 
 setup_requirements = []
 

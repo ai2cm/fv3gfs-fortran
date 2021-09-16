@@ -39,6 +39,11 @@ def reference_dir(request):
 
 
 @pytest.fixture
+def code_root(request):
+    return request.config.getoption("--code_root")
+
+
+@pytest.fixture
 def image_runner(request):
     return request.config.getoption("--image_runner")
 
@@ -96,19 +101,18 @@ def test_regression(
     shutil.rmtree(run_dir)
 
 
-def test_run_emulation(image, image_version, monkeypatch):
+def test_callpyfort_integration(image, image_version):
 
     config = get_config("emulation.yml")
     model_image_tag = "{version}-emulation".format(version=image_version)
     model_image = f"{image}:{model_image_tag}"
     run_dir = get_run_dir(model_image_tag, config)
 
-    monkeypatch.setenv("OUTPUT_FREQ_SEC", str(900*2))
-    env_vars = ["--env", "OUTPUT_FREQ_SEC"]
-    run_model(config, run_dir, model_image, "docker", additional_env_vars=env_vars)
-    nc_files = os.listdir(os.path.join(run_dir, "netcdf_output"))
-    assert os.path.exists(os.path.join(run_dir, "state_output.zarr"))
-    assert len(nc_files) > 0
+    run_model(config, run_dir, model_image, "docker")
+
+    assert os.path.exists(join(run_dir, "microphysics_success.txt"))
+    assert os.path.exists(join(run_dir, "store_success.txt"))
+    shutil.rmtree(run_dir)
 
 
 def check_rundir_md5sum(run_dir, md5sum_filename):
