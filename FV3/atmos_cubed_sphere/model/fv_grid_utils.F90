@@ -375,7 +375,7 @@
      !$ser data ec1=ec1 ec2=ec2 ew1=ew(:,:,:,1) ew2=ew(:,:,:,2) es1=es(:,:,:,1) es2=es(:,:,:,2)
 
      !$ser savepoint TrigSg-In
-     !$ser data grid3=grid3 agrid=agrid cos_sg=cos_sg sin_sg=sin_sg ec1=ec1 ec2=ec2
+     !$ser data grid=grid agrid=agrid cos_sg=cos_sg sin_sg=sin_sg ec1=ec1 ec2=ec2
      
 !     9---4---8
 !     |       |
