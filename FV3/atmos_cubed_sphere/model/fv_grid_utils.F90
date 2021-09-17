@@ -291,7 +291,7 @@
   if (grid_type < 3) then
 !xxx if ( .not. Atm%neststruct%nested ) then
      !$ser savepoint UtilVectors-In
-     !$ser data grid=grid agrid=agrid ec1=ec1 ec2=ec2 ew1=ew(:, :, :, 1) ew2=ew(:, :, :, 2) es2=es(:, :, :, 2)
+     !$ser data grid=grid agrid=agrid ec1=ec1 ec2=ec2 ew1=ew(:,:,:,1) ew2=ew(:,:,:,2) es1=es(:,:,:,1) es2=es(:,:,:,2)
      if ( .not. Atm%neststruct%nested .and. .not.Atm%flagstruct%regional ) then
        call fill_corners(grid(:,:,1), npx, npy, FILL=XDir, BGRID=.true.)
        call fill_corners(grid(:,:,2), npx, npy, FILL=XDir, BGRID=.true.)
@@ -372,7 +372,7 @@
      enddo
 
      !$ser savepoint UtilVectors-Out
-     !$ser data ec1=ec1 ec2=ec2 ew1=ew(:, :, :, 1) ew2=ew(:, :, :, 2) es1=es(:, :, :, 1) es2=es(:, :, :, 2)
+     !$ser data ec1=ec1 ec2=ec2 ew1=ew(:,:,:,1) ew2=ew(:,:,:,2) es1=es(:,:,:,1) es2=es(:,:,:,2)
 
      !$ser savepoint TrigSg-In
      !$ser data grid3=grid3 agrid=agrid cos_sg=cos_sg sin_sg=sin_sg ec1=ec1 ec2=ec2
