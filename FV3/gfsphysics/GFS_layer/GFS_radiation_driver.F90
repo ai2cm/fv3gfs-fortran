@@ -1270,6 +1270,49 @@
 
       if (.not. (Model%lsswr .or. Model%lslwr )) return
 
+!$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+!$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+!$ser verbatim if (do_ser) then
+        !$ser verbatim print *, '>> serializing driver()', ser_count
+        !$ser savepoint "driver-in-"//trim(ser_count_str)
+        ! Model variables
+        !$ser data me=Model%me levr=Model%levr levs=Model%levs nfxr=Model%nfxr
+        !$ser data ntrac=Model%ntrac ntcw=Model%ntcw ntiw=Model%ntiw ncld=Model%ncld
+        !$ser data ntrw=Model%ntrw ntsw=Model%ntsw ntgl=Model%ntgl ncnd=Model%ncnd
+        !$ser data fhswr=Model%fhswr fhlwr=Model%fhlwr ntoz=Model%ntoz lsswr=Model%lsswr
+        !$ser data solhr=Model%solhr lslwr=Model%lslwr imp_physics=Model%imp_physics
+        !$ser data lgfdlmprad=Model%lgfdlmprad uni_cld=Model%uni_cld effr_in=Model%effr_in
+        !$ser data indcld=Model%indcld ntclamt=Model%ntclamt num_p3d=Model%num_p3d 
+        !$ser data npdf3d=Model%npdf3d ncnvcld3d=Model%ncnvcld3d lmfdeep2=Model%lmfdeep2
+        !$ser data sup=Model%sup kdt=Model%kdt lmfshal=Model%lmfshal do_sfcperts=Model%do_sfcperts
+        !$ser data pertalb=Model%pertalb do_only_clearsky_rad=Model%do_only_clearsky_rad
+        !$ser data swhtr=Model%swhtr solcon=Model%solcon lprnt=Model%lprnt lwhtr=Model%lwhtr
+        !$ser data lssav=Model%lssav
+        ! Statein variables
+        !$ser data prsi=Statein%prsi prsl=Statein%prsl tgrs=Statein%tgrs prslk=Statein%prslk
+        !$ser data qgrs=Statein%qgrs
+        ! Sfcprop variables
+        !$ser data tsfc=Sfcprop%tsfc slmsk=Sfcprop%slmsk snowd=Sfcprop%snowd sncovr=Sfcprop%sncovr
+        !$ser data snoalb=Sfcprop%snoalb zorl=Sfcprop%zorl hprime=Sfcprop%hprime(:,1) alvsf=Sfcprop%alvsf
+        !$ser data alnsf=Sfcprop%alnsf alvwf=Sfcprop%alvwf alnwf=Sfcprop%alnwf facsf=Sfcprop%facsf
+        !$ser data facwf=Sfcprop%facwf fice=Sfcprop%fice tisfc=Sfcprop%tisfc
+        ! Coupling variables
+        !$ser data nirbmdi=Coupling%nirbmdi nirdfdi=Coupling%nirdfdi
+        !$ser data visbmdi=Coupling%visbmdi visdfdi=Coupling%visdfdi nirbmui=Coupling%nirbmui
+        !$ser data nirdfui=Coupling%nirdfui visbmui=Coupling%visbmui visdfui=Coupling%visdfui
+        !$ser data sfcnsw=Coupling%sfcnsw sfcdsw=Coupling%sfcdsw sfcdlw=Coupling%sfcdlw
+        ! Grid variables
+        !$ser data xlon=Grid%xlon xlat=Grid%xlat sinlat=Grid%sinlat coslat=Grid%coslat
+        ! Tbd variables
+        !$ser data phy_f3d=Tbd%phy_f3d icsdsw=Tbd%icsdsw icsdlw=Tbd%icsdlw
+        ! Radtend variables
+        !$ser data coszen=Radtend%coszen coszdg=Radtend%coszdg sfalb=Radtend%sfalb
+        !$ser data htrsw=Radtend%htrsw
+        !$ser data swhc=Radtend%swhc lwhc=Radtend%lwhc semis=Radtend%semis tsflw=Radtend%tsflw
+        ! Diag variables
+        !$ser data fluxr=Diag%fluxr
+!$ser verbatim end if
+
 !--- set commonly used integers
       me    = Model%me
       LM    = Model%levr
@@ -1571,10 +1614,30 @@
 
 !check  print *,' in grrad : calling setaer '
 
+!$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+!$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+!$ser verbatim if (do_ser) then
+        !$ser verbatim print *, '>> serializing setaer_in()', ser_count
+        !$ser savepoint "setaer-in-"//trim(ser_count_str)
+        ! in
+        !$ser data plyr=plyr plvl=plvl tvly=tvly rhly=rhly prslk1=prslk1
+        !$ser data tracer1=tracer1 slmsk=Sfcprop%slmsk xlat=Grid%xlat xlon=Grid%xlon
+        !$ser data im=im lmk=lmk lmp=lmp lsswr=Model%lsswr lslwr=Model%lslwr
+!$ser verbatim end if
+
       call setaer (plvl, plyr, prslk1, tvly, rhly, Sfcprop%slmsk,  &  !  ---  inputs
                    tracer1, Grid%xlon, Grid%xlat, IM, LMK, LMP,    &
                    Model%lsswr,Model%lslwr,                        &
                    faersw,faerlw,aerodp)                              !  ---  outputs
+
+!$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+!$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+!$ser verbatim if (do_ser) then
+        !$ser verbatim print *, '>> serializing setaer_out()', ser_count
+        !$ser savepoint "setaer-out-"//trim(ser_count_str)
+        ! in
+        !$ser data faersw=faersw faerlw=faerlw aerodp=aerodp
+!$ser verbatim end if
 
 !>  - Obtain cloud information for radiation calculations
 !!    (clouds,cldsa,mtopa,mbota)
@@ -1931,12 +1994,6 @@
 !> -# Approximate mean surface albedo from vis- and nir-  diffuse values.
         Radtend%sfalb(:) = max(0.01, 0.5 * (sfcalb(:,2) + sfcalb(:,4)))
 
-        if (nday > 0) then
-
-!>  - Call module_radsw_main::swrad(), to compute SW heating rates and
-!!   fluxes.
-!     print *,' in grrad : calling swrad'
-
 !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
 !$ser verbatim do_ser = (index(ser_env, "RAD_SW") /= 0)
 !$ser verbatim if (do_ser) then
@@ -1959,6 +2016,12 @@
         !$ser data nirbm=scmpsw%nirbm nirdf=scmpsw%nirdf visbm=scmpsw%visbm
         !$ser data visdf=scmpsw%visdf hsw0=htsw0
 !$ser verbatim end if
+
+        if (nday > 0) then
+
+!>  - Call module_radsw_main::swrad(), to compute SW heating rates and
+!!   fluxes.
+!     print *,' in grrad : calling swrad'
 
           if (Model%swhtr) then
             call swrad (plyr, plvl, tlyr, tlvl, qlyr, olyr,     &      !  ---  inputs
@@ -2285,6 +2348,24 @@
 
       endif                                ! end_if_lssav
 !
+!$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+!$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+!$ser verbatim if (do_ser) then
+        !$ser verbatim print *, '>> serializing driver()', ser_count
+        !$ser savepoint "driver-out-"//trim(ser_count_str)
+        ! Radtend variables
+        !$ser data sfalb=Radtend%sfalb htrsw=Radtend%htrsw htrlw=Radtend%htrlw
+        !$ser data swhc=Radtend%swhc lwhc=Radtend%lwhc semis=Radtend%semis tsflw=Radtend%tsflw
+        !$ser data upfxc_s_lw=Radtend%sfcflw%upfxc upfx0_s_lw=Radtend%sfcflw%upfx0 dnfxc_s_lw=Radtend%sfcflw%dnfxc
+        !$ser data dnfx0_s_lw=Radtend%sfcflw%dnfx0
+        !$ser data upfxc_s_sw=Radtend%sfcfsw%upfxc upfx0_s_sw=Radtend%sfcfsw%upfx0 dnfxc_s_sw=Radtend%sfcfsw%dnfxc
+        !$ser data dnfx0_s_sw=Radtend%sfcfsw%dnfx0
+        ! Diag variables
+        !$ser data fluxr=Diag%fluxr
+        !$ser data upfxc_t_lw=Diag%topflw%upfxc upfx0_t_lw=Diag%topflw%upfx0
+        !$ser data upfxc_t_sw=Diag%topfsw%upfxc upfx0_t_sw=Diag%topfsw%upfx0 dnfxc_t_sw=Diag%topfsw%dnfxc
+!$ser verbatim end if
+
 !$ser verbatim ser_count = ser_count + 1
       return
 !........................................

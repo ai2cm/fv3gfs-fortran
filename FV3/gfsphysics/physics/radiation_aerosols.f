@@ -2495,6 +2495,8 @@
 !!      subroutine computes sw + lw aerosol optical properties for gocart
 !!      aerosol species (merged from fcst and clim fields).
 
+        write(*,*) "iaermdl = ",iaermdl
+
 !SARAH
 !         if ( iaerflg == 1 ) then      ! use opac aerosol climatology
           if ( iaermdl==0 .or. iaermdl==5 ) then  ! use opac aerosol climatology
@@ -2508,6 +2510,8 @@
 !  ---  outputs:
      &         aerosw,aerolw,aerodp                                       &
      &       )
+
+            write(*,*) "Intermediate aerodp = ", aerodp
 
 !  ---  check print
 !       do m = 1, NBDSW
