@@ -96,19 +96,20 @@ module IPD_driver
 !  IPD step
 !    runs the given routine/function pointed to by IPD_func 
 !----------------------------------------------------------
-  subroutine IPD_step (IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, IPD_func0d, IPD_func1d)
+  subroutine IPD_step (IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, IPD_func0d, IPD_func1d, mphClock)
     type(IPD_control_type),     intent(inout) :: IPD_Control
     type(IPD_data_type),        intent(inout) :: IPD_Data(:)
     type(IPD_diag_type),        intent(inout) :: IPD_Diag(:)
     type(IPD_restart_type),     intent(inout) :: IPD_Restart
     procedure(IPD_func0d_proc), intent(in), optional, pointer :: IPD_func0d
     procedure(IPD_func1d_proc), intent(in), optional, pointer :: IPD_func1d
+    integer, intent(inout) :: mphClock
 
     if (size(IPD_Data,1) == 1 .and. PRESENT(IPD_func0d)) then
       call IPD_func0d (IPD_Control, IPD_Data(1)%Statein, IPD_Data(1)%Stateout,      &
                        IPD_Data(1)%Sfcprop, IPD_Data(1)%Coupling, IPD_Data(1)%Grid, &
                        IPD_Data(1)%Tbd, IPD_Data(1)%Cldprop, IPD_Data(1)%Radtend,   &
-                       IPD_Data(1)%Intdiag)
+                       IPD_Data(1)%Intdiag, mphClock)
     else
       call IPD_func1d (IPD_Control, IPD_Data(:)%Statein, IPD_Data(:)%Stateout,      &
                        IPD_Data(:)%Sfcprop, IPD_Data(:)%Coupling, IPD_Data(:)%Grid, &

@@ -171,7 +171,7 @@ public Atm_block, IPD_Data, IPD_Control
                                                          ! to calculate gradient on cubic sphere grid.
 !</PUBLICTYPE >
 
-integer :: fv3Clock, getClock, updClock, setupClock, radClock, physClock, diagClock, otherClock
+integer :: fv3Clock, getClock, updClock, setupClock, radClock, physClock, mphClock, diagClock, otherClock
 
 !-----------------------------------------------------------------------
 integer :: blocksize    = 1
@@ -320,7 +320,7 @@ subroutine update_atmos_radiation_physics (Atmos)
       if (ierr/=0)  call mpp_error(FATAL, 'Call to CCPP time_vary step failed')
 #else
       Func1d => time_vary_step
-      call IPD_step (IPD_Control, IPD_Data(:), IPD_Diag, IPD_Restart, IPD_func1d=Func1d)
+      call IPD_step (IPD_Control, IPD_Data(:), IPD_Diag, IPD_Restart, IPD_func1d=Func1d, mphClock=mphClock)
 #endif
 
 !--- call stochastic physics pattern generation / cellular automata
@@ -393,9 +393,9 @@ subroutine update_atmos_radiation_physics (Atmos)
       Func0d => physics_step1
 !$OMP parallel do default (none) &
 !$OMP            schedule (dynamic,1), &
-!$OMP            shared   (Atm_block, IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Func0d) &
+!$OMP            shared   (Atm_block, IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Func0d, mphClock) &
 !$OMP            private  (nb)
-      !$ser savepoint GFSPhysicsDriver-In
+      !$ser savepoint GFSPhysicsDriver1-In
       !$ser data IPD_gt0=IPD_Data(1)%Stateout%gt0 IPD_gu0=IPD_Data(1)%Stateout%gu0 IPD_gv0=IPD_Data(1)%Stateout%gv0 IPD_gq0=IPD_Data(1)%Stateout%gq0
       !$ser data IPD_refl_10cm=IPD_Data(1)%Intdiag%refl_10cm IPD_area=IPD_Data(1)%Grid%area
       !$ser data IPD_phii=IPD_Data(1)%Statein%phii IPD_prsi=IPD_Data(1)%Statein%prsi IPD_tgrs=IPD_Data(1)%Statein%tgrs IPD_qgrs=IPD_Data(1)%Statein%qgrs
@@ -403,10 +403,11 @@ subroutine update_atmos_radiation_physics (Atmos)
       !$ser data IPD_kdt=IPD_Control%kdt IPD_prsl=IPD_Data(1)%Statein%prsl IPD_vvl=IPD_Data(1)%Statein%vvl IPD_dtp=IPD_control%dtp
       !$ser data IPD_ugrs=IPD_Data(1)%Statein%ugrs IPD_vgrs=IPD_Data(1)%Statein%vgrs
       do nb = 1,Atm_block%nblks
-        call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d)
+        call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d, mphClock=mphClock)
       enddo
       !$ser savepoint GFSPhysicsDriver-Out
-      !$ser data IPD_gt0=IPD_Data(1)%Stateout%gt0 IPD_gu0=IPD_Data(1)%Stateout%gu0 IPD_gv0=IPD_Data(1)%Stateout%gv0 IPD_gq0=IPD_Data(1)%Stateout%gq0
+      !$ser data IPD_gt0=IPD_Data(1)%Stateout%gt0 IPD_gu0=IPD_Data(1)%Stateout%gu0 IPD_gv0=IPD_Data(1)%Stateout%gv0 IPD_gq0=IPD_Data(1)%Stateout%gq0 
+      !$ser data IPD_qvapor=IPD_Data(1)%Stateout%gq0(:,:,1) IPD_qliquid=IPD_Data(1)%Stateout%gq0(:,:,2) IPD_rain=IPD_Data(1)%Stateout%gq0(:,:,3) IPD_qice=IPD_Data(1)%Stateout%gq0(:,:,4) IPD_snow=IPD_Data(1)%Stateout%gq0(:,:,5) IPD_qgraupel=IPD_Data(1)%Stateout%gq0(:,:,6) IPD_qcld=IPD_Data(1)%Stateout%gq0(:,:,9)  
 #endif
       call mpp_clock_end(physClock)
 
@@ -420,22 +421,23 @@ subroutine update_atmos_radiation_physics (Atmos)
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "stochastic physics driver"
 
 !--- execute the IPD atmospheric physics step2 subcomponent (stochastic physics driver)
+! TODO: this is turned off because we don't currently support stochastic physics
 
-      call mpp_clock_begin(physClock)
-#ifdef CCPP
-      call CCPP_step (step="stochastics", nblks=Atm_block%nblks, ierr=ierr)
-      if (ierr/=0)  call mpp_error(FATAL, 'Call to CCPP stochastics step failed')
-#else
-      Func0d => physics_step2
-!$OMP parallel do default (none) &
-!$OMP            schedule (dynamic,1), &
-!$OMP            shared   (Atm_block, IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Func0d) &
-!$OMP            private  (nb)
-      do nb = 1,Atm_block%nblks
-        call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d)
-      enddo
-#endif
-      call mpp_clock_end(physClock)
+!       call mpp_clock_begin(physClock)
+! #ifdef CCPP
+!       call CCPP_step (step="stochastics", nblks=Atm_block%nblks, ierr=ierr)
+!       if (ierr/=0)  call mpp_error(FATAL, 'Call to CCPP stochastics step failed')
+! #else
+!       Func0d => physics_step2
+! !$OMP parallel do default (none) &
+! !$OMP            schedule (dynamic,1), &
+! !$OMP            shared   (Atm_block, IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Func0d) &
+! !$OMP            private  (nb)
+!       do nb = 1,Atm_block%nblks
+!         call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d, mphClock=mphClock)
+!       enddo
+! #endif
+!       call mpp_clock_end(physClock)
 
       call mpp_clock_begin(otherClock)
       if (chksum_debug) then
@@ -788,6 +790,7 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
    setupClock = mpp_clock_id( ' 3.3-GFS-Step-Setup', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    radClock   = mpp_clock_id( ' 3.4-GFS-Radiation', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    physClock  = mpp_clock_id( ' 3.5-GFS-Physics', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+   mphClock   = mpp_clock_id( ' 3.51-GFS-Microphysics', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    updClock   = mpp_clock_id( ' 3.6-atmosphere_state_update', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    diagClock  = mpp_clock_id( ' 3.7-Diagnostics', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    ! 3.8-Write-restart is timed on the coupler_main.F90 level
