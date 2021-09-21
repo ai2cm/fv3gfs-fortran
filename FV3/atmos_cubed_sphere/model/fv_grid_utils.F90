@@ -375,7 +375,7 @@
      !$ser data ec1=ec1 ec2=ec2 ew1=ew(:,:,:,1) ew2=ew(:,:,:,2) es1=es(:,:,:,1) es2=es(:,:,:,2)
 
      !$ser savepoint TrigSg-In
-     !$ser data grid=grid agrid=agrid cos_sg=cos_sg sin_sg=sin_sg ec1=ec1 ec2=ec2
+     !$ser data grid=grid agrid=agrid cos_sg1=cos_sg(:,:,1) sin_sg1=sin_sg(:,:,1) cos_sg2=cos_sg(:,:,2) sin_sg2=sin_sg(:,:,2) cos_sg3=cos_sg(:,:,3) sin_sg3=sin_sg(:,:,3) cos_sg4=cos_sg(:,:,4) sin_sg4=sin_sg(:,:,4) cos_sg5=cos_sg(:,:,5) sin_sg5=sin_sg(:,:,5) cos_sg6=cos_sg(:,:,6) sin_sg6=sin_sg(:,:,6) cos_sg7=cos_sg(:,:,7) sin_sg7=sin_sg(:,:,7) cos_sg8=cos_sg(:,:,8) sin_sg8=sin_sg(:,:,8) cos_sg9=cos_sg(:,:,9) sin_sg9=sin_sg(:,:,9) ec1=ec1 ec2=ec2
      
 !     9---4---8
 !     |       |
@@ -459,7 +459,7 @@
         endif
      endif
      !$ser savepoint TrigSg-Out
-     !$ser data cos_sg=cos_sg sin_sg=sin_sg
+     !$ser data cos_sg1=cos_sg(:,:,1) sin_sg1=sin_sg(:,:,1) cos_sg2=cos_sg(:,:,2) sin_sg2=sin_sg(:,:,2) cos_sg3=cos_sg(:,:,3) sin_sg3=sin_sg(:,:,3) cos_sg4=cos_sg(:,:,4) sin_sg4=sin_sg(:,:,4) cos_sg5=cos_sg(:,:,5) sin_sg5=sin_sg(:,:,5) cos_sg6=cos_sg(:,:,6) sin_sg6=sin_sg(:,:,6) cos_sg7=cos_sg(:,:,7) sin_sg7=sin_sg(:,:,7) cos_sg8=cos_sg(:,:,8) sin_sg8=sin_sg(:,:,8) cos_sg9=cos_sg(:,:,9) sin_sg9=sin_sg(:,:,9)
 
 ! For AAM correction:
      !$ser savepoint AAMCorrection-In
@@ -518,7 +518,7 @@
 
    if ( non_ortho ) then
       !$ser savepoint MoreTrig-In
-      !$ser data grid=grid cos_sg=cos_sg sin_sg=sin_sg ee1=ee1 ee2=ee2 cosa_u=cosa_u cosa_v=cosa_v cosa_s=cosa_s sina_u=sina_u sina_v=sina_v cosa=cosa sina=sina rsin_u=rsin_u rsin_v=rsin_v rsina=rsina rsin2=rsin2
+      !$ser data grid=grid cos_sg1=cos_sg(:,:,1) sin_sg1=sin_sg(:,:,1) cos_sg2=cos_sg(:,:,2) sin_sg2=sin_sg(:,:,2) cos_sg3=cos_sg(:,:,3) sin_sg3=sin_sg(:,:,3) cos_sg4=cos_sg(:,:,4) sin_sg4=sin_sg(:,:,4) cos_sg5=cos_sg(:,:,5) sin_sg5=sin_sg(:,:,5) cos_sg6=cos_sg(:,:,6) sin_sg6=sin_sg(:,:,6) cos_sg7=cos_sg(:,:,7) sin_sg7=sin_sg(:,:,7) cos_sg8=cos_sg(:,:,8) sin_sg8=sin_sg(:,:,8) cos_sg9=cos_sg(:,:,9) sin_sg9=sin_sg(:,:,9) ee1=ee1 ee2=ee2 cosa_u=cosa_u cosa_v=cosa_v cosa_s=cosa_s sina_u=sina_u sina_v=sina_v cosa=cosa sina=sina rsin_u=rsin_u rsin_v=rsin_v rsina=rsina rsin2=rsin2
            cosa_u = big_number
            cosa_v = big_number
            cosa_s = big_number
@@ -639,7 +639,7 @@
       !values along the outward-facing edge of a tile in the corners, which is incorrect. 
       !What we will do is call fill_ghost and then fill in the appropriate values
       !$ser savepoint FixSgCorners-In
-      !$ser data cos_sg=cos_sg sin_sg=sin_sg
+      !$ser data cos_sg1=cos_sg(:,:,1) sin_sg1=sin_sg(:,:,1) cos_sg2=cos_sg(:,:,2) sin_sg2=sin_sg(:,:,2) cos_sg3=cos_sg(:,:,3) sin_sg3=sin_sg(:,:,3) cos_sg4=cos_sg(:,:,4) sin_sg4=sin_sg(:,:,4) cos_sg5=cos_sg(:,:,5) sin_sg5=sin_sg(:,:,5) cos_sg6=cos_sg(:,:,6) sin_sg6=sin_sg(:,:,6) cos_sg7=cos_sg(:,:,7) sin_sg7=sin_sg(:,:,7) cos_sg8=cos_sg(:,:,8) sin_sg8=sin_sg(:,:,8) cos_sg9=cos_sg(:,:,9) sin_sg9=sin_sg(:,:,9)
       if (.not. (Atm%neststruct%nested .or. Atm%flagstruct%regional)) then
        do k=1,9
         call fill_ghost(sin_sg(:,:,k), npx, npy, tiny_number, Atm%bd)  ! this will cause NAN if used
@@ -708,7 +708,7 @@
 !!!      cos_sg(npx,npy,6) = 0.5*(cos_sg(npx-1,npy,7)+cos_sg(npx,npy-1,9))
       endif     
       !$ser savepoint FixSgCorners-Out
-      !$ser data cos_sg=cos_sg sin_sg=sin_sg 
+      !$ser data cos_sg1=cos_sg(:,:,1) sin_sg1=sin_sg(:,:,1) cos_sg2=cos_sg(:,:,2) sin_sg2=sin_sg(:,:,2) cos_sg3=cos_sg(:,:,3) sin_sg3=sin_sg(:,:,3) cos_sg4=cos_sg(:,:,4) sin_sg4=sin_sg(:,:,4) cos_sg5=cos_sg(:,:,5) sin_sg5=sin_sg(:,:,5) cos_sg6=cos_sg(:,:,6) sin_sg6=sin_sg(:,:,6) cos_sg7=cos_sg(:,:,7) sin_sg7=sin_sg(:,:,7) cos_sg8=cos_sg(:,:,8) sin_sg8=sin_sg(:,:,8) cos_sg9=cos_sg(:,:,9) sin_sg9=sin_sg(:,:,9) 
    else !if non_ortho
            sina = 1.
            cosa = 0.
@@ -784,7 +784,7 @@
 !!!  should we insert .not.regional into the following loops alongside .not.nested ????
 !xxxx
   !$ser savepoint DivgDel6-In
-  !$ser data sin_sg=sin_sg sina_v=sina_v sina_u=sina_u dx=dx dy=dy dxc=dxc dyc=dyc divg_u=divg_u divg_v=divg_v del6_u=del6_u del6_v=del6_v
+  !$ser data sin_sg1=sin_sg(:,:,1) sin_sg2=sin_sg(:,:,2) sin_sg3=sin_sg(:,:,3) sin_sg4=sin_sg(:,:,4) sina_v=sina_v sina_u=sina_u dx=dx dy=dy dxc=dxc dyc=dyc divg_u=divg_u divg_v=divg_v del6_u=del6_u del6_v=del6_v
   do j=jsd,jed+1
      if ((j==1 .OR. j==npy) .and. .not. (Atm%neststruct%nested .or. Atm%flagstruct%regional)) then
         do i=isd,ied
@@ -2347,7 +2347,7 @@
      ec2    => gridstruct%ec2
 
      !$ser savepoint InitCubedtoLatLon-In
-     !$ser data agrid=agrid ec1=gridstruct%ec1 ec2=gridstruct%ec2 sin_sg=gridstruct%sin_sg
+     !$ser data agrid=agrid ec1=gridstruct%ec1 ec2=gridstruct%ec2 sin_sg5=gridstruct%sin_sg(:,:,5)
      do j=js-2,je+2
         do i=is-2,ie+2
            call unit_vect_latlon(agrid(i,j,1:2), vlon(i,j,1:3), vlat(i,j,1:3))
