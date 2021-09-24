@@ -61,6 +61,29 @@
       contains
 !
 ! Initialize TMP NNs
+
+
+        subroutine read_namelist(path)
+            use fms_mod, only: file_exist, open_namelist_file, check_nml_error, close_file
+            character(len=*), intent(out) :: path
+
+            integer status
+            integer :: unit, io, ierr
+
+            namelist /neuralphys/ path
+
+            if ( file_exist('input.nml')) then
+                unit = open_namelist_file( )
+                ierr=1
+                do while (ierr /= 0)
+                    read  (unit, nml=neuralphys, iostat=io, end=10)
+                    ierr = check_nml_error(io,'neuralphys')
+                enddo
+            10 call close_file (unit)           ! Open and read Namelist file.
+            else
+                stop -1
+            endif
+        end subroutine
         
         subroutine init_phys_nn_emulator(me) 
 !
@@ -70,6 +93,10 @@
           integer, intent(in) ::  me
 
           integer iin,ihid,iout,member
+          character(len=128) :: nn_file_name(1), path
+
+          call read_namelist(path)
+          nn_file_name(1) = trim(path)
 
 !
           if (me == 0) print*,'Module NEURALPHYS: Number of NN ensemble members:', &
