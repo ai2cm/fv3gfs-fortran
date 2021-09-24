@@ -63,14 +63,15 @@
 ! Initialize TMP NNs
 
 
-        subroutine read_namelist(path)
+        subroutine read_namelist(path, online)
             use fms_mod, only: file_exist, open_namelist_file, check_nml_error, close_file
             character(len=*), intent(out) :: path
+            logical, intent(inout) :: online
 
             integer status
             integer :: unit, io, ierr
 
-            namelist /neuralphys/ path
+            namelist /neuralphys/ path, online
 
             if ( file_exist('input.nml')) then
                 unit = open_namelist_file( )
@@ -85,17 +86,18 @@
             endif
         end subroutine
         
-        subroutine init_phys_nn_emulator(me) 
+        subroutine init_phys_nn_emulator(me, online) 
 !
 ! --- This subroutine initializes NN ensemble, i.e. reads NNs coefficients
 !
 !   
           integer, intent(in) ::  me
+          logical, intent(inout) :: online
 
           integer iin,ihid,iout,member
           character(len=128) :: nn_file_name(1), path
 
-          call read_namelist(path)
+          call read_namelist(path, online)
           nn_file_name(1) = trim(path)
 
 !

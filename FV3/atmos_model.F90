@@ -181,6 +181,7 @@ public Atm_block, IPD_Data, IPD_Control
 integer :: fv3Clock, getClock, updClock, setupClock, radClock, physClock, diagClock, otherClock
 !<aab
 integer :: nnphysClock, updnnphysClock
+logical :: phys_nn_emulator_online = .false.
 !>aab
 
 !-----------------------------------------------------------------------
@@ -510,7 +511,7 @@ if (.true.) then
 endif
 !<aab
 
-if (.true.) then 
+if (phys_nn_emulator_online) then
    call mpp_clock_begin(updnnphysClock)
     IPD_Data(:)%Stateout = Stateout_tmp
    call mpp_clock_end(updnnphysClock)
@@ -745,7 +746,7 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
 
 !<aab
 !   if ( IPD_Control%do_full_phys_nn) &
-   call  init_phys_nn_emulator(Init_parm%me)
+   call  init_phys_nn_emulator(Init_parm%me, phys_nn_emulator_online)
 
    allocate(Stateout_tmp(Atm_block%nblks))
    allocate(Sfcprop_tmp(Atm_block%nblks))
