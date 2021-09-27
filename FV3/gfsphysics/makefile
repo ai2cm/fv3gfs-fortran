@@ -216,6 +216,7 @@ SRCS_F90 = \
 	   ./physics/physcons.F90                                                    \
 	   ./physics/surface_perturbation.F90                                        \
 	   ./GFS_layer/GFS_abstraction_layer.F90                                     \
+	   ./GFS_layer/gfs_call_py_fort.F90                                          \
 	   ./GFS_layer/GFS_diagnostics.F90                                           \
 	   ./GFS_layer/GFS_driver.F90                                                \
 	   ./GFS_layer/GFS_physics_driver.F90                                        \

@@ -130,6 +130,10 @@ use physics_abstraction_layer, only: statein_type,  stateout_type,         &
 !>aab
 !-----------------------------------------------------------------------
 
+#ifdef ENABLE_CALLPYFORT
+  use callpy_mod, only: call_function
+#endif
+
 implicit none
 private
 
@@ -239,6 +243,7 @@ type (block_control_type), target   :: Atm_block
 type(stateout_type), allocatable :: Stateout_tmp(:) ! number of blocks
 type(sfcprop_type ), allocatable :: Sfcprop_tmp(:) ! number of blocks
 !>aab
+character (len=128) :: call_py_fort_prefix
 
 !-----------------------------------------------------------------------
 
@@ -374,6 +379,10 @@ if (.true.) then
 
        do nb = 1,Atm_block%nblks
           do i = 1, Atm_block%blksz(nb)
+
+             write (call_py_fort_prefix, '(I5.5)')
+             call send_statein(IPD_Data(nb)%Statein, 'statein:' // trim(call_py_fort_prefix) // ':')
+             call python_physics()
              call phys_nn_emulation(IPD_Data(nb)%Statein%pgr(i),      &
                                     IPD_Data(nb)%Statein%phil(i,:),   &
                                     IPD_Data(nb)%Statein%prsl(i,:),   &
@@ -511,9 +520,19 @@ if (.true.) then
 endif
 !<aab
 
+do nb = 1,Atm_block%nblks
+  write (call_py_fort_prefix, '(I5.5)')
+  call send_stateout(IPD_Data(nb)%Stateout, 'stateout_gfs:' // trim(call_py_fort_prefix) // ':' )
+end do
+
+do nb = 1,Atm_block%nblks
+  write (call_py_fort_prefix, '(I5.5)')
+  call send_stateout(Stateout_tmp(nb), 'stateout_emulator:' // trim(call_py_fort_prefix) // ':' )
+end do
+
 if (phys_nn_emulator_online) then
    call mpp_clock_begin(updnnphysClock)
-    IPD_Data(:)%Stateout = Stateout_tmp
+   IPD_Data(:)%Stateout = Stateout_tmp
    call mpp_clock_end(updnnphysClock)
 endif
 !       do nb = 1,Atm_block%nblks
