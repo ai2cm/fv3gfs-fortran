@@ -131,8 +131,15 @@ use physics_abstraction_layer, only: statein_type,  stateout_type,         &
 !-----------------------------------------------------------------------
 
 #ifdef ENABLE_CALLPYFORT
-  use gfs_call_py_fort, only: python_start_physics, send_statein, send_stateout, get_stateout, python_end_physics,&
-    send_grid
+
+  use gfs_call_py_fort, only: &
+    get_stateout,&
+    python_end_physics,&
+    python_start_physics,&
+    send_grid,&
+    send_statein,&
+    send_stateout
+
 #endif
 
 implicit none
@@ -436,6 +443,7 @@ if (.true.) then
        enddo
        call mpp_clock_end(nnphysClock)
 !      if (debug) write(6,*) "Returned from NN"
+
 endif
 call python_start_physics()
 !>aab
@@ -538,7 +546,6 @@ do nb = 1,Atm_block%nblks
 end do
 
 call python_end_physics()
-
 
 if (phys_nn_emulator_online) then
    call mpp_clock_begin(updnnphysClock)

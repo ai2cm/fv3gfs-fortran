@@ -5,7 +5,13 @@ module gfs_call_py_fort
   use GFS_typedefs, only: GFS_statein_type, GFS_stateout_type, GFS_grid_type
   implicit none
   private
-  public :: send_statein, send_stateout, get_stateout, python_start_physics, python_end_physics, send_grid
+  public :: &
+    get_stateout,&
+    python_end_physics,&
+    python_start_physics,&
+    send_grid,&
+    send_statein,&
+    send_stateout
 
   character(len=*), parameter :: T = "air_temperature"
   character(len=*), parameter :: qv = "specific_humidity" 
