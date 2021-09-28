@@ -284,6 +284,13 @@ module fv_arrays_mod
                                      !<  3: the lat-lon grid -- to be implemented
                                      !<  4: double periodic boundary condition on Cartesian grid
                                      !<  5: channel flow on Cartesian grid
+
+   real(kind=R_GRID) :: edge_subdomain_shrink_factor = 1.0 !< Factor by which the subdomains with edges & corners
+                                                           !< are reduced in width as compared to an even partitioning
+                                                           !< Factors between (0.0, 1.0] are legal, where 1.0 corresponds
+                                                           !< to the default (no shrinking). Note that subdomains need to
+                                                           !< have a minimal number of gridpoints (ng).
+
 !  -> moved to grid_tools
 
 ! Momentum (or KE) options:
