@@ -2,10 +2,10 @@ module gfs_call_py_fort
   ! Call py fort hooks for some common FV3 datastructures
   use callpy_mod, only: set_state, call_function, get_state
   use machine, only: kind_phys
-  use GFS_typedefs, only: GFS_statein_type, GFS_stateout_type
+  use GFS_typedefs, only: GFS_statein_type, GFS_stateout_type, GFS_grid_type
   implicit none
   private
-  public :: send_statein, send_stateout, get_stateout, python_start_physics, python_end_physics
+  public :: send_statein, send_stateout, get_stateout, python_start_physics, python_end_physics, send_grid
 
   character(len=*), parameter :: T = "air_temperature"
   character(len=*), parameter :: qv = "specific_humidity" 
@@ -74,6 +74,14 @@ contains
     call set_state(trim(prefix) // qc, tmp)
     call set_state(trim(prefix) // u, Stateout%gu0)
     call set_state(trim(prefix) // v, Stateout%gv0)
+  end subroutine
+
+  subroutine send_grid(grid, prefix)
+    type(GFS_grid_type), intent(in) :: grid
+    character(len=*), intent(in) :: prefix
+    call set_state(trim(prefix) // 'area', grid%area)
+    call set_state(trim(prefix) // 'lon', grid%xlon)
+    call set_state(trim(prefix) // 'lat', grid%xlat)
   end subroutine
 
   subroutine python_start_physics()

@@ -131,7 +131,8 @@ use physics_abstraction_layer, only: statein_type,  stateout_type,         &
 !-----------------------------------------------------------------------
 
 #ifdef ENABLE_CALLPYFORT
-  use gfs_call_py_fort, only: python_start_physics, send_statein, send_stateout, get_stateout, python_end_physics
+  use gfs_call_py_fort, only: python_start_physics, send_statein, send_stateout, get_stateout, python_end_physics,&
+    send_grid
 #endif
 
 implicit none
@@ -387,6 +388,7 @@ if (.true.) then
 
        do nb = 1,Atm_block%nblks
           call send_statein(IPD_Data(nb)%Statein, callpy_name("statein", nb))
+          call send_grid(IPD_Data(nb)%Grid, callpy_name("grid", nb))
           do i = 1, Atm_block%blksz(nb)
 
              call phys_nn_emulation(IPD_Data(nb)%Statein%pgr(i),      &
