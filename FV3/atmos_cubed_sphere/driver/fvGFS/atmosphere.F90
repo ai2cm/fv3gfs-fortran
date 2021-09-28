@@ -1598,6 +1598,18 @@ contains
      call fill_gfs(blen, npz, IPD_Data(nb)%Statein%prsi, IPD_Data(nb)%Stateout%gq0, 1.e-9_kind_phys)
      !$ser savepoint FillGFS-Out
      !$ser data IPD_gq0=IPD_Data(nb)%Stateout%gq0 IPD_delp=Atm(n)%delp IPD_qvapor=IPD_Data(nb)%Stateout%gq0(:,:,1)
+     !$ser savepoint PhysUpdateTracers-In
+     !$ser data u_dt=u_dt v_dt=v_dt t_dt=t_dt
+     !$ser data u_t1=IPD_Data(nb)%Stateout%gu0 u_t0=IPD_Data(nb)%Statein%ugrs
+     !$ser data v_t1=IPD_Data(nb)%Stateout%gv0 v_t0=IPD_Data(nb)%Statein%vgrs
+     !$ser data pt_t1=IPD_Data(nb)%Stateout%gt0 pt_t0=IPD_Data(nb)%Statein%tgrs
+     !$ser data IPD_prsi=IPD_Data(nb)%Statein%prsi rdt=rdt IPD_delp=Atm(n)%delp
+     !$ser data qvapor_t1=IPD_Data(nb)%Stateout%gq0(:,:,1) qvapor_t0=Atm(n)%q(:,:,:,1)
+     !$ser data qliquid_t1=IPD_Data(nb)%Stateout%gq0(:,:,2) qliquid_t0=Atm(n)%q(:,:,:,2)
+     !$ser data qrain_t1=IPD_Data(nb)%Stateout%gq0(:,:,3) qrain_t0=Atm(n)%q(:,:,:,3)
+     !$ser data qsnow_t1=IPD_Data(nb)%Stateout%gq0(:,:,4) qsnow_t0=Atm(n)%q(:,:,:,4)
+     !$ser data qice_t1=IPD_Data(nb)%Stateout%gq0(:,:,5) qice_t0=Atm(n)%q(:,:,:,5)
+     !$ser data qgraupel_t1=IPD_Data(nb)%Stateout%gq0(:,:,6) qgraupel_t0=Atm(n)%q(:,:,:,6)
      do k = 1, npz
            if(flip_vc) then
              k1 = npz+1-k !reverse the k direction 
@@ -1642,8 +1654,15 @@ contains
 !        if (dnats .gt. 0) Atm(n)%q(i,j,k1,nq_adv+1:nq) = IPD_Data(nb)%Stateout%gq0(ix,k,nq_adv+1:nq)
        enddo
      enddo
-     !$ser savepoint AfterFillGFS
-     !$ser data debug_qwat=debug_qwat debug_qt=debug_qt debug_sumq=debug_sumq
+     !$ser savepoint PhysUpdateTracers-Out
+     !$ser data u_dt=u_dt v_dt=v_dt t_dt=t_dt
+     !$ser data delp=Atm(n)%delp 
+     !$ser data qvapor_t0=Atm(n)%q(:,:,:,1)
+     !$ser data qliquid_t0=Atm(n)%q(:,:,:,2)
+     !$ser data qrain_t0=Atm(n)%q(:,:,:,3)
+     !$ser data qsnow_t0=Atm(n)%q(:,:,:,4)
+     !$ser data qice_t0=Atm(n)%q(:,:,:,5)
+     !$ser data qgraupel_t0=Atm(n)%q(:,:,:,6)
 
      !--- diagnostic tracers are assumed to be updated in-place
      !--- SHOULD THESE DIAGNOSTIC TRACERS BE MASS ADJUSTED???
