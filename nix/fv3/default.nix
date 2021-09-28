@@ -1,99 +1,82 @@
-{
-  stdenv
-  , bash
-  , call_py_fort
-  , fms
-  , esmf
-  , nceplibs
-  , netcdf
-  , netcdffortran
-  , lapack
-  , blas
-  , mpich
-  , perl
-  , gfortran
-  , getopt
-} :
-let 
-  src = builtins.fetchGit {
-    url = ../..;
-  };
-in
-stdenv.mkDerivation {
+{ stdenv, bash, call_py_fort, fms, esmf, nceplibs, netcdf, netcdffortran, lapack
+, blas, mpich, perl, gfortran, getopt }:
+let
+  src = builtins.fetchGit { url = ../..; };
+  pythonPackages = call_py_fort.pythonPackages;
+  mpi4py =
+    (pythonPackages.mpi4py.override { mpi = mpich; }).overridePythonAttrs {
+      doCheck = false;
+    };
+in stdenv.mkDerivation {
   name = "fv3";
   buildInputs = [
-      call_py_fort
-      fms
-      esmf
-      nceplibs
-      netcdf
-      netcdffortran
-      lapack
-      blas
-      mpich
-      perl
-      gfortran
-      getopt
-  ];
-
-  propagatedBuildInputs = [
+    call_py_fort
+    fms
+    esmf
+    nceplibs
+    netcdf
+    netcdffortran
+    lapack
+    blas
     mpich
+    perl
+    gfortran
+    getopt
   ];
 
-  srcs = [
-    "${src}/FV3"
-    "${src}/stochastic_physics"
-  ];
+  propagatedBuildInputs = [ mpich mpi4py ]
+    ++ (with pythonPackages; [ netcdf4 ]);
 
-# need some fancy logic to unpack the two source directories
-# https://nixos.org/nixpkgs/manual/#sec-language-texlive-custom-packages
-unpackPhase = ''
-      runHook preUnpack
+  srcs = [ "${src}/FV3" "${src}/stochastic_physics" ];
 
-      for _src in $srcs; do
-        cp -r "$_src" $(stripHash "$_src")
-      done
+  # need some fancy logic to unpack the two source directories
+  # https://nixos.org/nixpkgs/manual/#sec-language-texlive-custom-packages
+  unpackPhase = ''
+    runHook preUnpack
 
-      chmod -R +w .
+    for _src in $srcs; do
+      cp -r "$_src" $(stripHash "$_src")
+    done
 
-      runHook postUnpack
-'';
+    chmod -R +w .
 
-patchPhase = ''
+    runHook postUnpack
+  '';
 
-patchShebangs FV3/configure
-  # need to call this since usr/bin/env isn't 
-  # installed in sandboxed build environment
-  # there goes 1 hr...
-  patchShebangs FV3/mkDepends.pl
-'';
+  patchPhase = ''
 
+    patchShebangs FV3/configure
+      # need to call this since usr/bin/env isn't 
+      # installed in sandboxed build environment
+      # there goes 1 hr...
+      patchShebangs FV3/mkDepends.pl
+  '';
 
-config = ./configure.fv3;
+  config = ./configure.fv3;
 
-configurePhase = ''
-  cd FV3
-  cp $config conf/configure.fv3
-  # ./configure gnu_docker
-  cd ..
-'';
+  configurePhase = ''
+    cd FV3
+    cp $config conf/configure.fv3
+    # ./configure gnu_docker
+    cd ..
+  '';
 
-buildPhase = ''
+  buildPhase = ''
     make -C FV3 -j 4
-'';
+  '';
 
-installPhase = ''
+  installPhase = ''
     PREFIX=$out make -C FV3 install -j 4
-'';
-
+  '';
 
   SHELL = "${bash}/bin/bash";
-  FMS_DIR="${fms}/include";
-  ESMF_DIR="${esmf}";
-  CALLPYFORT="${call_py_fort}";
-  LD_LIBRARY_PATH="${esmf}/lib/:${fms}/libFMS/.libs/:$${SERIALBOX_DIR}/lib";
-  INCLUDE="-I${fms}/include -I${netcdffortran}/include -I${esmf}/include/";
-  NCEPLIBS_DIR="${nceplibs}/lib";
-  OMPI_CC="${gfortran.cc}/bin/gcc";
+  FMS_DIR = "${fms}/include";
+  ESMF_DIR = "${esmf}";
+  CALLPYFORT = "${call_py_fort}";
+  LD_LIBRARY_PATH = "${esmf}/lib/:${fms}/libFMS/.libs/:$${SERIALBOX_DIR}/lib";
+  INCLUDE = "-I${fms}/include -I${netcdffortran}/include -I${esmf}/include/";
+  NCEPLIBS_DIR = "${nceplibs}/lib";
+  OMPI_CC = "${gfortran.cc}/bin/gcc";
+  inherit call_py_fort;
 }
 

@@ -13,6 +13,10 @@ stdenv.mkDerivation {
   buildInputs = [ gfortran gfortran.cc.lib cmake gfortran.cc ];
   propagatedBuildInputs = [ python3Packages.cffi python3Packages.numpy ];
   doCheck = false;
+  
+  passthru = {
+    pythonPackages = python3Packages;
+  };
 
   preCheck = ''
     export PYTHONPATH=$(pwd)/../test:$PYTHONPATH
