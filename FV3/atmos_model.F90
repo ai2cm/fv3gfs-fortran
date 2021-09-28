@@ -421,6 +421,12 @@ if (.true.) then
 !      if (debug) write(6,*) "Returned from NN"
 endif
 !>aab
+
+if (mpp_pe() == 0) print *, "emulator:after call to phys_nn_emulation"
+if (mpp_pe() == 0) print *, "emulator:Stateout_tmp(1)%gu0(1,1)", Stateout_tmp(1)%gu0(1,1)
+if (mpp_pe() == 0) print *, "emulator:IPD_Data(1)%Stateout%gu0(1,1)", IPD_Data(1)%Stateout%gu0(1,1)
+
+
 if (.true.) then 
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "radiation driver"
 
@@ -510,6 +516,10 @@ if (.true.) then
     endif
 endif
 !<aab
+
+if (mpp_pe() == 0) print *, "emulator:after calls to IPD_step"
+if (mpp_pe() == 0) print *, "emulator:Stateout_tmp(1)%gu0(1,1)", Stateout_tmp(1)%gu0(1,1)
+if (mpp_pe() == 0) print *, "emulator:IPD_Data(1)%Stateout%gu0(1,1)", IPD_Data(1)%Stateout%gu0(1,1)
 
 if (phys_nn_emulator_online) then
    call mpp_clock_begin(updnnphysClock)
