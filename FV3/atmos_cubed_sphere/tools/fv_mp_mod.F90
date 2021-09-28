@@ -665,7 +665,7 @@ contains
                   shrink_size = max(ng, shrink_size)
                   call mpp_compute_extent(shrink_size + 1, ny - shrink_size, layout(2)-2, jbegin(2:layout(2)-1), jend(2:layout(2)-1))
                   yextent(1, :) = shrink_size
-                  yextent(layout(1), :) = shrink_size
+                  yextent(layout(2), :) = shrink_size
                   do i = 1, nregions
                      yextent(2:layout(2)-1, i) = jend(2:layout(2)-1) - jbegin(2:layout(2)-1) + 1
                   end do
