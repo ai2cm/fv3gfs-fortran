@@ -5,7 +5,6 @@ import shutil
 import subprocess
 import pytest
 import fv3config
-from glob import glob
 
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -37,6 +36,11 @@ def image(request):
 @pytest.fixture
 def reference_dir(request):
     return request.config.getoption("--refdir")
+
+
+@pytest.fixture
+def code_root(request):
+    return request.config.getoption("--code_root")
 
 
 @pytest.fixture
@@ -97,6 +101,20 @@ def test_regression(
     shutil.rmtree(run_dir)
 
 
+def test_callpyfort_integration(image, image_version):
+
+    config = get_config("emulation.yml")
+    model_image_tag = "{version}-emulation".format(version=image_version)
+    model_image = f"{image}:{model_image_tag}"
+    run_dir = get_run_dir(model_image_tag, config)
+
+    run_model(config, run_dir, model_image, "docker")
+
+    assert os.path.exists(join(run_dir, "microphysics_success.txt"))
+    assert os.path.exists(join(run_dir, "store_success.txt"))
+    shutil.rmtree(run_dir)
+
+
 def check_rundir_md5sum(run_dir, md5sum_filename):
     ensure_reference_exists(md5sum_filename)
     subprocess.check_call(["md5sum", "-c", md5sum_filename], cwd=run_dir)
@@ -110,7 +128,7 @@ def ensure_reference_exists(filename):
         )
 
 
-def run_model_docker(rundir, model_image, n_processes):
+def run_model_docker(rundir, model_image, n_processes, additional_env_vars=None):
     if USE_LOCAL_ARCHIVE:
         archive = fv3config.get_cache_dir()
         archive_mount = ['-v', f'{archive}:{archive}']
@@ -123,6 +141,10 @@ def run_model_docker(rundir, model_image, n_processes):
     else:
         secret_mount = []
         env_vars = []
+
+    if additional_env_vars is not None:
+        env_vars += additional_env_vars
+
     docker_runpath = ""
     docker_run = ['docker', 'run', '--rm']
     rundir_abs = os.path.abspath(rundir)
@@ -169,14 +191,14 @@ def write_run_directory(config, dirname):
     shutil.copy(SUBMIT_JOB_FILENAME, os.path.join(dirname, 'submit_job.sh'))
 
 
-def run_model(config, run_dir, model_image, image_runner):
+def run_model(config, run_dir, model_image, image_runner, additional_env_vars=None):
     if os.path.isdir(run_dir):
         shutil.rmtree(run_dir)
     os.makedirs(run_dir)
     write_run_directory(config, run_dir)
     n_processes = get_n_processes(config)
     if image_runner == "docker":
-        run_model_docker(run_dir, model_image, n_processes)
+        run_model_docker(run_dir, model_image, n_processes, additional_env_vars=additional_env_vars)
     elif image_runner == "sarus":
         run_model_sarus(run_dir, model_image, n_processes)
     else:

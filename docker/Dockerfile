@@ -1,4 +1,5 @@
 ARG serialize=false
+ARG fv3_build_env_tag=standard
 ARG BASE_IMAGE
 ARG MPI_IMAGE=fv3gfs-mpi
 ARG FMS_IMAGE=fv3gfs-fms
@@ -102,6 +103,45 @@ RUN cd serialbox && \
 # setup link for backwards comatibility
 RUN ln -s /serialbox /serialbox2
 
+##
+## Call_py_fort environment
+##-----------------------------------------------------
+
+FROM fv3gfs-environment as fv3gfs-environment-emulation
+
+# Python stuff for callpyfort
+
+RUN apt-get update && \
+    DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata && \
+    apt-get install -y  --no-install-recommends \
+    cmake \
+    python3 \
+    libpython3-dev \
+    python3-dev \
+    python3-pip
+
+RUN ln -s /usr/bin/python3 /usr/bin/python
+RUN python3 -m pip install -U pip setuptools && \
+    python3 -m pip install cffi cython
+
+
+# install call-py-fort
+
+RUN cd /opt && git clone https://github.com/nbren12/call_py_fort.git --branch=v0.2.0
+ENV CALLPY=/opt/call_py_fort \
+    PYTHONPATH=${CALLPY}/src/:${CALLPY}/test:$PYTHONPATH
+RUN cd ${CALLPY} && make && make install && ldconfig
+
+# install fv3gfs-util for monitoring-related code
+RUN python3 -m pip install git+https://github.com/VulcanClimateModeling/fv3gfs-util.git@1d7c302b836befe905d776b0a972f464bfd3a255
+
+# copy emulation target
+COPY tests/emulation/ /emulation
+RUN cd /emulation && python3 -m pip install .
+
+ENV VAR_META_PATH=/emulation/microphysics_parameter_metadata.yaml \
+    OUTPUT_FREQ_SEC=18000
+
 ## Build FMS
 ##---------------------------------------------------------------------------------
 FROM fv3gfs-environment AS fv3gfs-fms
@@ -189,15 +229,21 @@ RUN cp $FV3_BASE/conf/$configure_file \
     cd $FV3_BASE && \
     make serialize_preprocess
 
+
+## Convert FV3GFS sources for emulation image
+##---------------------------------------------------------------------------------
+
 FROM fv3gfs-src-serialize-$serialize AS fv3gfs-sources
 
 FROM $FMS_IMAGE AS fms_image
 FROM $ESMF_IMAGE AS esmf_image
 FROM $SERIALBOX_IMAGE AS serialbox_image
 
+FROM fv3gfs-environment AS fv3gfs-environment-standard
+
 ## Build FV3 executable in its own image
 ##---------------------------------------------------------------------------------
-FROM fv3gfs-environment AS fv3gfs-build
+FROM fv3gfs-environment-${fv3_build_env_tag} AS fv3gfs-build
 
 ENV SERIALBOX_DIR=/serialbox \
     SERIALBOX_OUTDIR=/FV3 \
