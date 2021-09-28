@@ -131,7 +131,7 @@ use physics_abstraction_layer, only: statein_type,  stateout_type,         &
 !-----------------------------------------------------------------------
 
 #ifdef ENABLE_CALLPYFORT
-  use callpy_mod, only: call_function
+  use gfs_call_py_fort, only: python_start_physics, send_statein, send_stateout, get_stateout, python_end_physics
 #endif
 
 implicit none
@@ -278,6 +278,14 @@ contains
 !   variable type are allocated for the global grid (without halo regions).
 ! </INOUT>
 
+function callpy_name(prefix, block)
+  character(len=*), intent(in) :: prefix
+  integer, intent(in) :: block
+  character(len=64) callpy_name
+  write (callpy_name, '(A,A,I5.5,A,I5.5,A)'), prefix, ':', block, ':', mpp_pe() , ':'
+end function
+
+
 subroutine update_atmos_radiation_physics (Atmos)
 #ifdef OPENMP
     use omp_lib
@@ -378,11 +386,9 @@ if (.true.) then
       call mpp_clock_begin(nnphysClock)
 
        do nb = 1,Atm_block%nblks
+          call send_statein(IPD_Data(nb)%Statein, callpy_name("statein", nb))
           do i = 1, Atm_block%blksz(nb)
 
-             write (call_py_fort_prefix, '(I5.5)')
-             call send_statein(IPD_Data(nb)%Statein, 'statein:' // trim(call_py_fort_prefix) // ':')
-             call python_physics()
              call phys_nn_emulation(IPD_Data(nb)%Statein%pgr(i),      &
                                     IPD_Data(nb)%Statein%phil(i,:),   &
                                     IPD_Data(nb)%Statein%prsl(i,:),   &
@@ -429,6 +435,7 @@ if (.true.) then
        call mpp_clock_end(nnphysClock)
 !      if (debug) write(6,*) "Returned from NN"
 endif
+call python_start_physics()
 !>aab
 if (.true.) then 
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "radiation driver"
@@ -521,14 +528,15 @@ endif
 !<aab
 
 do nb = 1,Atm_block%nblks
-  write (call_py_fort_prefix, '(I5.5)')
-  call send_stateout(IPD_Data(nb)%Stateout, 'stateout_gfs:' // trim(call_py_fort_prefix) // ':' )
+  call send_stateout(IPD_Data(nb)%Stateout, callpy_name('stateout_gfs', nb))
 end do
 
 do nb = 1,Atm_block%nblks
-  write (call_py_fort_prefix, '(I5.5)')
-  call send_stateout(Stateout_tmp(nb), 'stateout_emulator:' // trim(call_py_fort_prefix) // ':' )
+  call send_stateout(Stateout_tmp(nb), callpy_name('stateout_emulator', nb))
 end do
+
+call python_end_physics()
+
 
 if (phys_nn_emulator_online) then
    call mpp_clock_begin(updnnphysClock)

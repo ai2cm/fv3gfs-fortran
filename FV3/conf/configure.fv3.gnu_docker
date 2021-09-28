@@ -8,6 +8,7 @@ CXX = g++
 LD = mpif90
 
 NETCDF_DIR = /usr
+CALLPYFORT ?= /usr/local
 
 #########
 # flags #
@@ -130,8 +131,8 @@ LDFLAGS += $(LDFLAGS_VERBOSE)
 endif
 
 ifneq ($(CALLPYFORT),)
-FFLAGS += -I/usr/local/include -DENABLE_CALLPYFORT
-LDFLAGS += -L/usr/local/lib -lcallpy 
+FFLAGS += -I$(CALLPYFORT)/include -DENABLE_CALLPYFORT
+LDFLAGS += -L$(CALLPYFORT)/lib -lcallpy 
 endif
 
 LIBS += -lFMS -L/usr/local/esmf/lib -lesmf -lnetcdff -lnetcdf -llapack -lblas -lc -lrt

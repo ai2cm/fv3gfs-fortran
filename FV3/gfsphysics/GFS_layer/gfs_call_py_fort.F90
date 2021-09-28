@@ -5,7 +5,7 @@ module gfs_call_py_fort
   use GFS_typedefs, only: GFS_statein_type, GFS_stateout_type
   implicit none
   private
-  public :: send_statein, send_stateout, get_stateout, python_physics
+  public :: send_statein, send_stateout, get_stateout, python_start_physics, python_end_physics
 
   character(len=*), parameter :: T = "air_temperature"
   character(len=*), parameter :: qv = "specific_humidity" 
@@ -33,7 +33,7 @@ contains
   subroutine send_statein(statein, prefix)
     type(GFS_statein_type), intent(in) :: statein
     character(len=*), intent(in) :: prefix
-    real(kind=kind_phys), dimension(size(statein%tqrs, 1) ,size(statein%tgrs, 2), size(statein%tgrs, 3)) :: tmp
+    real(kind=kind_phys), dimension(size(statein%tgrs, 1) ,size(statein%tgrs, 2)) :: tmp
     call set_state(trim(prefix) // T, statein%tgrs)
     tmp = statein%qgrs(:, :, n_sphum)
     call set_state(trim(prefix) // qv, tmp)
@@ -53,7 +53,7 @@ contains
   subroutine get_stateout(stateout, prefix)
     type(GFS_stateout_type), intent(in) :: stateout
     character(len=*), intent(in) :: prefix
-    real(kind=kind_phys), dimension(size(statein%tqrs, 1) ,size(statein%tgrs, 2), size(statein%tgrs, 3)) :: tmp
+    real(kind=kind_phys), dimension(1:size(stateout%gu0, 1) ,1:size(stateout%gu0, 2)) :: tmp
     call get_state(trim(prefix) // T, Stateout%gt0)
     call get_state(trim(prefix) // qv, tmp)
     stateout%gq0(:, :, n_sphum) = tmp
@@ -66,7 +66,7 @@ contains
   subroutine send_stateout(stateout, prefix)
     type(GFS_stateout_type), intent(inout) :: stateout
     character(len=*), intent(in) :: prefix
-    real(kind=kind_phys), dimension(size(statein%tqrs, 1) ,size(statein%tgrs, 2), size(statein%tgrs, 3)) :: tmp
+    real(kind=kind_phys), dimension(size(stateout%gu0, 1) ,size(stateout%gu0, 2)) :: tmp
     call set_state(trim(prefix) // T, Stateout%gt0)
     tmp = stateout%gq0(:, :, n_sphum)
     call set_state(trim(prefix) // qv, tmp)
@@ -76,8 +76,12 @@ contains
     call set_state(trim(prefix) // v, Stateout%gv0)
   end subroutine
 
-  subroutine python_physics()
-    call call_function(python_module, "physics")
+  subroutine python_start_physics()
+    call call_function(python_module, "start_physics")
+  end subroutine
+
+  subroutine python_end_physics()
+    call call_function(python_module, "end_physics")
   end subroutine
 
 end module
