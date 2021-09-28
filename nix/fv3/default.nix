@@ -1,6 +1,7 @@
 {
   stdenv
   , bash
+  , call_py_fort
   , fms
   , esmf
   , nceplibs
@@ -21,6 +22,7 @@ in
 stdenv.mkDerivation {
   name = "fv3";
   buildInputs = [
+      call_py_fort
       fms
       esmf
       nceplibs
@@ -88,6 +90,7 @@ installPhase = ''
   SHELL = "${bash}/bin/bash";
   FMS_DIR="${fms}/include";
   ESMF_DIR="${esmf}";
+  CALLPYFORT="${call_py_fort}";
   LD_LIBRARY_PATH="${esmf}/lib/:${fms}/libFMS/.libs/:$${SERIALBOX_DIR}/lib";
   INCLUDE="-I${fms}/include -I${netcdffortran}/include -I${esmf}/include/";
   NCEPLIBS_DIR="${nceplibs}/lib";
