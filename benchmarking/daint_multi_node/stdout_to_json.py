@@ -1,0 +1,1 @@
+../daint_single_node/stdout_to_json.py

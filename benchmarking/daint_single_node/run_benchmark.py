@@ -91,10 +91,19 @@ def run_benchmark(nodes_per_tile_side, threads_per_rank, hyperthreading, executa
 
     # load namelist
     config = yaml.safe_load(yaml_file)
-    npx = config['namelist']['fv_core_nml']['npx']
-    npy = config['namelist']['fv_core_nml']['npx']
+    npx = (config['namelist']['fv_core_nml']['npx']-1)*nodes_per_tile_side + 1
+    config['namelist']['fv_core_nml']['npx'] = npx
+    npy = (config['namelist']['fv_core_nml']['npy']-1)*nodes_per_tile_side + 1
+    config['namelist']['fv_core_nml']['npy'] = npy
     npz = config['namelist']['fv_core_nml']['npz']
     dt = config['namelist']['coupler_nml']['dt_atmos']
+    if npx > 3073:
+        dt = math.floor(3072./(npx-1)*dt)
+        while 3600 % dt:
+            dt -= 1
+        assert dt > 0
+    config['namelist']['coupler_nml']['dt_atmos'] = dt
+    config['namelist']['coupler_nml']['dt_ocean'] = dt
 
     # override benchmark parameters
     config['namelist']['atmos_model_nml']['blocksize'] = blocksize
