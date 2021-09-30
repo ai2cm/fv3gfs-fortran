@@ -55,14 +55,17 @@ Rules are provided for certain compile options. Check the Makefile for a list or
 
 ## Step 2: Install fv3config
 
+FV3 expects to be run within a certain directory structure, which we call a "run directory". These can be prepared using the [fv3config](https://github.com/ai2cm/fv3config).
+
+This tool can be installed using `pip install fv3config`. To use versions that are guaranteed to work, we provide a `requirements.txt`, that you can use as follows:
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-will download required dependencies for running tests and using fv3config. You can
-also manually install the fv3config package.
+This command will download required dependencies for running tests and using fv3config.
 
 In order to use `run_docker.sh` below, you will also need to set the fv3config
 cache directory using
@@ -84,8 +87,12 @@ to find out the default location.
 Create or download an fv3config yaml configuration. Edit the configuration as needed.
 Examples of such configurations are included in the tests under `tests/pytest/config`.
 
-Once you have a configuration file, e.g. `example/config.yml`, you can write a run directory in python using:
+Once you have a configuration file, e.g. `example/config.yml`, you can write a run directory as follows:
 
+    write_run_directory example/config.yml rundirectory
+
+
+The python API equivalent of this is
 ```python3
 import fv3config
 import yaml
@@ -108,6 +115,20 @@ done instead by editing the `config.yml` we used earlier.
 
 
 ## Step 4: Run the model
+
+## Bare metal
+
+Assuming you are in environment with a compiled version of the FV3 model at the path `/absolute/path/to/fv3.exe` and a rundirectory at the path `<rundir>`, you can run the model like this
+
+    cd <rundir>
+    mpirun -n <number of processors> /absolute/path/to/fv3.exe
+
+The number of processors has to be `6 * num_tiles` where num_tiles is the product of the `namelist.fv_core_nml.layout` configurations.
+
+
+## Docker
+
+If you would like to run the model in one of the included docker containers use the command
 
 ```bash
 bash run_docker.sh us.gcr.io/vcm-ml/fv3gfs-compiled:latest <rundir> $FV3CONFIG_CACHE_DIR
