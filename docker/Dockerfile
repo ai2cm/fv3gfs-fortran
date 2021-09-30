@@ -190,7 +190,6 @@ ARG configure_file=configure.fv3.gnu_docker
 COPY stochastic_physics /stochastic_physics
 COPY FV3/coarse_graining /FV3/coarse_graining
 COPY FV3/conf /FV3/conf
-COPY FV3/ccpp /FV3/ccpp
 COPY FV3/cpl /FV3/cpl
 COPY FV3/gfsphysics /FV3/gfsphysics
 COPY FV3/io /FV3/io
