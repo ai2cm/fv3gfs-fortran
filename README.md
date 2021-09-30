@@ -138,6 +138,9 @@ where `<rundir>` is an absolute path to the run directory.
 
 # Developing the model
 
+
+## Docker
+
 The `fv3gfs-environment` docker image is useful for development purposes where the model code will be recompiled repeatedly in an interactive fashion. To start a bash shell in a docker container with the FV3 source tree mounted at `/FV3`, run the command:
 
 ```bash
@@ -146,7 +149,7 @@ make enter
 
 If necessary, this will build the image, but it will overwrite the compiled sources
 with a bind mount to your host filesystem. You will need to compile the model with
-the filesystem bind-mounted in this way. Once in the container, you can compile the model using the commands
+the filesystem bind-mounted in this way. Once in the container, you can compile the model using the commands.
 
 To compile the model and generate an executable you can use the commands
 
@@ -156,6 +159,59 @@ cd /FV3
 make clean
 make -j8
 ```
+
+## Nix
+
+
+
+FV3 can also be installed using the [nix](https://nixos.org/) package
+manager. This package manager is available on Mac and Linux, and provides a
+light weight means to distribute isolated software environments.
+
+### Installation
+
+To begin, install nix following [these instructions](https://nixos.org/download.html).
+
+(optional) We host binaries using a tool called cachix, and this will greatly speed up any builds. To use our binaries, [install cachix](https://github.com/cachix/cachix#installation) and then run
+
+    cachix use vulcanclimatemodeling
+
+Finally, you can build the model like this 
+
+    nix-build -A fv3
+
+Without using the cachix cache, FV3 and all its dependencies will need to build from source (~20 minutes). This only happens once per machine, but it is slow.
+
+### Running simple tests
+
+Now you can enter a shell with fv3 and all its dependencies installed by
+running
+
+    nix-shell tests.nix
+
+This will download all the dependencies from the internet, building any
+uncached packages from scratch.
+
+Then, you can run a simple test by running
+    
+    tox
+
+### Developing
+
+To develop the model, you can use the environment specified in `shell.nix` by running
+
+    nix-shell
+
+Then copy the nix build configuration file to the magic location harcoded in
+the FV3 makefiles:
+
+    cp -f nix/fv3/configure.fv3 FV3/conf/
+
+And build the model
+
+    cd FV3
+    make
+
 
 # Testing the model
 
@@ -214,54 +270,3 @@ directory (it is `/FV3` by default) that you have bind-mounted in to the contain
 If you are using a version of docker that supports it, you can enable buildkit by
 setting `DOCKER_BUILDKIT=1` as an environment variable. This can be useful when building docker targets in this repo, because it will avoid building mulit-stage targets that are not required for the final image.
 
-# Nix
-
-
-
-FV3 can also be installed using the [nix](https://nixos.org/) package
-manager. This package manager is available on Mac and Linux, and provides a
-light weight means to distribute isolated software environments.
-
-## Installation
-
-To begin, install nix following [these instructions](https://nixos.org/download.html).
-
-(optional) We host binaries using a tool called cachix, and this will greatly speed up any builds. To use our binaries, [install cachix](https://github.com/cachix/cachix#installation) and then run
-
-    cachix use vulcanclimatemodeling
-
-Finally, you can build the model like this 
-
-    nix-build -A fv3
-
-Without using the cachix cache, FV3 and all its dependencies will need to build from source (~20 minutes). This only happens once per machine, but it is slow.
-
-## Running simple tests
-
-Now you can enter a shell with fv3 and all its dependencies installed by
-running
-
-    nix-shell tests.nix
-
-This will download all the dependencies from the internet, building any
-uncached packages from scratch.
-
-Then, you can run a simple test by running
-    
-    tox
-
-## Developing
-
-To develop the model, you can use the environment specified in `shell.nix` by running
-
-    nix-shell
-
-Then copy the nix build configuration file to the magic location harcoded in
-the FV3 makefiles:
-
-    cp -f nix/fv3/configure.fv3 FV3/conf/
-
-And build the model
-
-    cd FV3
-    make
