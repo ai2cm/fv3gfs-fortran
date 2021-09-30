@@ -117,7 +117,7 @@ done instead by editing the `config.yml` we used earlier.
 
 ### Authentication
 
-The data referrred to be this example configuration is stored in a GCS bucket, stored in the `us-central1` region. This data is free to use, but we have enabled requestor-pays to avoid paying for network transfer costs incurred by external users. You will need to authenticate with your own google cloud project credentials to access this data. Detailed instructions are out of scope, but usually involves the setting the following environmental variables
+The data referred to by this example configuration are stored in a GCS bucket, stored in the `us-central1` region. This data is free to use, but we have enabled requestor-pays to avoid paying for network transfer costs incurred by external users. You will need to authenticate with your own google cloud project credentials to access this data. Detailed instructions are out of scope, but usually involves the setting the following environmental variables
 ```
 export FSSPEC_GS_REQUESTER_PAYS="on"
 export GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json
