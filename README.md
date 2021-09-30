@@ -149,10 +149,7 @@ make enter
 
 If necessary, this will build the image, but it will overwrite the compiled sources
 with a bind mount to your host filesystem. You will need to compile the model with
-the filesystem bind-mounted in this way. Once in the container, you can compile the model using the commands.
-
-To compile the model and generate an executable you can use the commands
-
+the filesystem bind-mounted in this way. Once in the container, you can compile the model using the commands
 ```bash
 cd /FV3
 ./configure gnu_docker
