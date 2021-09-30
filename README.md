@@ -91,6 +91,7 @@ Once you have a configuration file, e.g. `example/config.yml`, you can write a r
 
     write_run_directory example/config.yml rundirectory
 
+You will need to be authenticated with google cloud storage to run this command. See instructions below.
 
 The python API equivalent of this is
 ```python3
@@ -114,30 +115,38 @@ for your run and the set of diagnostics the model will output. Ideally this shou
 done instead by editing the `config.yml` we used earlier.
 
 
+### Authentication
+
+The data referrred to be this example configuration is stored in a GCS bucket, stored in the `us-central1` region. This data is free to use, but we have enabled requestor-pays to avoid paying for network transfer costs incurred by external users. You will need to authenticate with your own google cloud project credentials to access this data. Detailed instructions are out of scope, but usually involves the setting the following environmental variables
+```
+export FSSPEC_GS_REQUESTER_PAYS="on"
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json
+```
+For more information see [this documentation](https://gcsfs.readthedocs.io/en/latest/api.html#gcsfs.core.GCSFileSystem).
+
 ## Step 4: Run the model
 
-## Bare metal
+## Within container/manual
 
 Assuming you are in environment with a compiled version of the FV3 model at the path `/absolute/path/to/fv3.exe` and a rundirectory at the path `<rundir>`, you can run the model like this
 
     cd <rundir>
     mpirun -n <number of processors> /absolute/path/to/fv3.exe
 
-The number of processors has to be `6 * num_tiles` where num_tiles is the product of the `namelist.fv_core_nml.layout` configurations.
+The number of processors has to be `6 * num_tiles` where `num_tiles` is the product of the `namelist.fv_core_nml.layout` configurations.
 
 
-## Docker
+## From host via docker
 
 If you would like to run the model in one of the included docker containers use the command
 
 ```bash
-bash run_docker.sh us.gcr.io/vcm-ml/fv3gfs-compiled:latest <rundir> $FV3CONFIG_CACHE_DIR
+bash run_docker.sh <image> <rundir> $FV3CONFIG_CACHE_DIR
 ```
 
-where `<rundir>` is an absolute path to the run directory.
+where `<rundir>` is an absolute path to the run directory. `<image>` is the name of the container built by `make build`, typically `us.gcr.io/vcm-ml/fv3gfs-compiled:gnu7-mpich314-nocuda`.
 
 # Developing the model
-
 
 ## Docker
 
