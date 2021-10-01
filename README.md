@@ -1,4 +1,4 @@
-[![VulcanClimateModeling](https://circleci.com/gh/VulcanClimateModeling/fv3gfs-fortran.svg?style=svg)](https://circleci.com/gh/VulcanClimateModeling/fv3gfs-fortran)
+[![CircleCI](https://circleci.com/gh/ai2cm/fv3gfs-fortran/tree/master.svg?style=svg)](https://circleci.com/gh/ai2cm/fv3gfs-fortran/tree/master)
 
 # Repository Structure
 
