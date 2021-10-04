@@ -366,18 +366,13 @@ contains
          real :: shrink_factor
 
          integer :: i, shrink_size
-         integer :: ibegin(layout(1)), iend(layout(1)), jbegin(layout(2)), jend(layout(2))
          integer :: npes_x, npes_y 
-         integer :: xextent(layout(1),nregions), yextent(layout(2),nregions)
+         integer, allocatable :: ibegin(:), iend(:), jbegin(:), jend(:)
+         integer, allocatable :: xextent(:,:), yextent(:,:)
 
          integer, pointer :: pelist(:), grid_number, num_contact, npes_per_tile
          logical, pointer :: square_domain
          type(domain2D), pointer :: domain, domain_for_coupler
-
-         shrink_factor = 1.0
-         if (present(edge_subdomain_shrink_factor)) then
-            shrink_factor = max(0.0, min(1.0, edge_subdomain_shrink_factor))
-         end if
 
          nx = npx-1
          ny = npy-1
@@ -393,6 +388,10 @@ contains
          npes_x = layout(1)
          npes_y = layout(2)
 
+         shrink_factor = 1.0
+         if (present(edge_subdomain_shrink_factor)) then
+            shrink_factor = max(0.0, min(1.0, edge_subdomain_shrink_factor))
+         end if
 
          call mpp_domains_init(MPP_DOMAIN_TIME)
 
@@ -644,31 +643,35 @@ contains
                   tile_id(n) = n
                enddo
             endif
+            allocate(xextent(layout(1),nregions), yextent(layout(2),nregions))
             xextent(:, :) = 0.0
             yextent(:, :) = 0.0
             if (shrink_factor < 1.0) then
                 ! We reduce the width of the subdomains at the edges so that they are edge_subdomain_shrink_factor
                 ! smaller than "inner" subdomains with no edges/corners. We compute the size of the edge subdomains
                 ! in shrink_size and then evenly distribute the remaining gridpoints using mpp_compute_extent().
-                if (layout(1) > 2) then
-                   shrink_size = nint( real(nx) / (2.0 + real(layout(1)-2)/shrink_factor) )
+               if (layout(1) > 2) then
+                  allocate(ibegin(layout(1)-2), iend(layout(1)-2))
                    shrink_size = max(ng, shrink_size)
-                   call mpp_compute_extent(shrink_size + 1, nx - shrink_size, layout(1)-2, ibegin(2:layout(1)-1), iend(2:layout(1)-1))
+                   call mpp_compute_extent(shrink_size + 1, nx - shrink_size, layout(1)-2, ibegin, iend)
                    xextent(1, :) = shrink_size
-                   xextent(layout(1), :) = shrink_size
                    do i = 1, nregions
-                      xextent(2:layout(1)-1, i) = iend(2:layout(1)-1) - ibegin(2:layout(1)-1) + 1
+                      xextent(2:layout(1)-1, i) = iend - ibegin + 1
                    end do
-                end if
+                   xextent(layout(1), :) = shrink_size
+                   deallocate(ibegin, iend)
+                  end if
                 if (layout(2) > 2) then
+                  allocate(jbegin(layout(2)-2), jend(layout(2)-2))
                   shrink_size = nint( real(ny) / (2.0 + real(layout(2)-2)/shrink_factor) )
                   shrink_size = max(ng, shrink_size)
-                  call mpp_compute_extent(shrink_size + 1, ny - shrink_size, layout(2)-2, jbegin(2:layout(2)-1), jend(2:layout(2)-1))
+                  call mpp_compute_extent(shrink_size + 1, ny - shrink_size, layout(2)-2, jbegin, jend)
                   yextent(1, :) = shrink_size
-                  yextent(layout(2), :) = shrink_size
                   do i = 1, nregions
-                     yextent(2:layout(2)-1, i) = jend(2:layout(2)-1) - jbegin(2:layout(2)-1) + 1
+                     yextent(2:layout(2)-1, i) = jend - jbegin + 1
                   end do
+                  yextent(layout(2), :) = shrink_size
+                  deallocate(jbegin, jend)
                end if
             end if
             call mpp_define_mosaic(global_indices, layout2D, domain, nregions, num_contact, tile1, tile2, &
@@ -681,6 +684,7 @@ contains
                  pe_start=pe_start, pe_end=pe_end, symmetry=is_symmetry,                          &
                  shalo = 1, nhalo = 1, whalo = 1, ehalo = 1, tile_id=tile_id, name = type, &
                  xextent=xextent, yextent=yextent)
+            deallocate(xextent, yextent)
             deallocate(tile_id)
             call mpp_define_io_domain(domain, io_layout)
             call mpp_define_io_domain(domain_for_coupler, io_layout)
