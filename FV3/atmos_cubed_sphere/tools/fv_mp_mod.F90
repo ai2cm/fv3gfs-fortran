@@ -644,24 +644,25 @@ contains
                enddo
             endif
             allocate(xextent(layout(1),nregions), yextent(layout(2),nregions))
-            xextent(:, :) = 0.0
-            yextent(:, :) = 0.0
+            xextent(:, :) = 0
+            yextent(:, :) = 0
             if (shrink_factor < 1.0) then
                 ! We reduce the width of the subdomains at the edges so that they are edge_subdomain_shrink_factor
                 ! smaller than "inner" subdomains with no edges/corners. We compute the size of the edge subdomains
                 ! in shrink_size and then evenly distribute the remaining gridpoints using mpp_compute_extent().
                if (layout(1) > 2) then
                   allocate(ibegin(layout(1)-2), iend(layout(1)-2))
-                   shrink_size = max(ng, shrink_size)
-                   call mpp_compute_extent(shrink_size + 1, nx - shrink_size, layout(1)-2, ibegin, iend)
-                   xextent(1, :) = shrink_size
-                   do i = 1, nregions
-                      xextent(2:layout(1)-1, i) = iend - ibegin + 1
-                   end do
-                   xextent(layout(1), :) = shrink_size
-                   deallocate(ibegin, iend)
-                  end if
-                if (layout(2) > 2) then
+                  shrink_size = nint( real(nx) / (2.0 + real(layout(1)-2)/shrink_factor) )
+                  shrink_size = max(ng, shrink_size)
+                  call mpp_compute_extent(shrink_size + 1, nx - shrink_size, layout(1)-2, ibegin, iend)
+                  xextent(1, :) = shrink_size
+                  do i = 1, nregions
+                     xextent(2:layout(1)-1, i) = iend - ibegin + 1
+                  end do
+                  xextent(layout(1), :) = shrink_size
+                  deallocate(ibegin, iend)
+               end if
+               if (layout(2) > 2) then
                   allocate(jbegin(layout(2)-2), jend(layout(2)-2))
                   shrink_size = nint( real(ny) / (2.0 + real(layout(2)-2)/shrink_factor) )
                   shrink_size = max(ng, shrink_size)
