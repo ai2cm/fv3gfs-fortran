@@ -78,7 +78,7 @@ namelist:
     memuse_verbose: false
     minutes: 3
     months: 0
-    ncores_per_node: 8
+    ncores_per_node: 32
     seconds: 45
     use_hyper_thread: true
   diag_manager_nml:
