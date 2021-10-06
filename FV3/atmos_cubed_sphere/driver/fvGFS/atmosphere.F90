@@ -714,10 +714,7 @@ contains
      !$ser verbatim if (sgs_tke > 0) then
        !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
      !$ser verbatim endif
-     !$ser verbatim if (serialize_only_driver) then
-       !$ser verbatim if (mpp_pe() == 0) write(*,*) "Stopping after serialization of fv_dynamics() input"
-       !$ser verbatim call mp_stop(); call exit(0)
-     !$ser verbatim endif
+     !$ser off
      call fv_dynamics(npx, npy, npz, nq, Atm(n)%ng, dt_atmos/real(abs(p_split)),&
                        Atm(n)%flagstruct%consv_te, Atm(n)%flagstruct%fill,       &
                        Atm(n)%flagstruct%reproduce_sum, kappa, cp_air, zvir,     &
@@ -737,16 +734,21 @@ contains
                        Atm(n)%neststruct,  Atm(n)%idiag, Atm(n)%bd,              &
                        Atm(n)%parent_grid, Atm(n)%domain,Atm(n)%diss_est,        &
                        Atm(n)%lagrangian_tendency_of_hydrostatic_pressure)
-     !$ser savepoint FVDynamics-Out
-     !$ser data u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
-     !$ser verbatim if (sgs_tke > 0) then
-       !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
-     !$ser verbatim endif
-     !$ser savepoint GFSPhysicsDriver-In
-     !$ser data u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
-     !$ser verbatim if (sgs_tke > 0) then
-       !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
-     !$ser verbatim endif
+      !$ser verbatim if ((psc == abs(p_split)) .and. (a_step == 1)) then
+        !$ser on
+        !$ser savepoint FVDynamics-Out
+        !$ser data u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
+        !$ser verbatim if (sgs_tke > 0) then
+          !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
+        !$ser verbatim endif
+        !$ser savepoint GFSPhysicsDriver-In
+        !$ser data u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
+        !$ser verbatim if (sgs_tke > 0) then
+          !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
+        !$ser verbatim endif
+     !$ser verbatim else
+            !$ser off
+      !$ser verbatim endif
       call timing_off('fv_dynamics')
 
       if (ngrids > 1 .and. (psc < p_split .or. p_split < 0)) then
@@ -1593,23 +1595,23 @@ contains
 !SJL: perform vertical filling to fix the negative humidity if the SAS convection scheme is used
 !     This call may be commented out if RAS or other positivity-preserving CPS is used.
      blen = Atm_block%blksz(nb)
-     !$ser savepoint FillGFS-In
-     !$ser data IPD_gq0=IPD_Data(nb)%Stateout%gq0 nb=nb IPD_prsi=IPD_Data(nb)%Statein%prsi
+    !$ser savepoint FillGFS-In
+    !$ser data IPD_gq0=IPD_Data(nb)%Stateout%gq0 nb=nb IPD_prsi=IPD_Data(nb)%Statein%prsi
      call fill_gfs(blen, npz, IPD_Data(nb)%Statein%prsi, IPD_Data(nb)%Stateout%gq0, 1.e-9_kind_phys)
-     !$ser savepoint FillGFS-Out
-     !$ser data IPD_gq0=IPD_Data(nb)%Stateout%gq0 IPD_delp=Atm(n)%delp IPD_qvapor=IPD_Data(nb)%Stateout%gq0(:,:,1)
-     !$ser savepoint PhysUpdateTracers-In
-     !$ser data u_dt=u_dt v_dt=v_dt t_dt=t_dt
-     !$ser data u_t1=IPD_Data(nb)%Stateout%gu0 u_t0=IPD_Data(nb)%Statein%ugrs
-     !$ser data v_t1=IPD_Data(nb)%Stateout%gv0 v_t0=IPD_Data(nb)%Statein%vgrs
-     !$ser data pt_t1=IPD_Data(nb)%Stateout%gt0 pt_t0=IPD_Data(nb)%Statein%tgrs
-     !$ser data IPD_prsi=IPD_Data(nb)%Statein%prsi rdt=rdt IPD_delp=Atm(n)%delp
-     !$ser data qvapor_t1=IPD_Data(nb)%Stateout%gq0(:,:,1) qvapor_t0=Atm(n)%q(:,:,:,1)
-     !$ser data qliquid_t1=IPD_Data(nb)%Stateout%gq0(:,:,2) qliquid_t0=Atm(n)%q(:,:,:,2)
-     !$ser data qrain_t1=IPD_Data(nb)%Stateout%gq0(:,:,3) qrain_t0=Atm(n)%q(:,:,:,3)
-     !$ser data qsnow_t1=IPD_Data(nb)%Stateout%gq0(:,:,4) qsnow_t0=Atm(n)%q(:,:,:,4)
-     !$ser data qice_t1=IPD_Data(nb)%Stateout%gq0(:,:,5) qice_t0=Atm(n)%q(:,:,:,5)
-     !$ser data qgraupel_t1=IPD_Data(nb)%Stateout%gq0(:,:,6) qgraupel_t0=Atm(n)%q(:,:,:,6)
+    !$ser savepoint FillGFS-Out
+    !$ser data IPD_gq0=IPD_Data(nb)%Stateout%gq0 IPD_delp=Atm(n)%delp IPD_qvapor=IPD_Data(nb)%Stateout%gq0(:,:,1)
+    !$ser savepoint PhysUpdateTracers-In
+    !$ser data u_dt=u_dt v_dt=v_dt t_dt=t_dt
+    !$ser data u_t1=IPD_Data(nb)%Stateout%gu0 u_t0=IPD_Data(nb)%Statein%ugrs
+    !$ser data v_t1=IPD_Data(nb)%Stateout%gv0 v_t0=IPD_Data(nb)%Statein%vgrs
+    !$ser data pt_t1=IPD_Data(nb)%Stateout%gt0 pt_t0=IPD_Data(nb)%Statein%tgrs
+    !$ser data IPD_prsi=IPD_Data(nb)%Statein%prsi rdt=rdt IPD_delp=Atm(n)%delp
+    !$ser data qvapor_t1=IPD_Data(nb)%Stateout%gq0(:,:,1) qvapor_t0=Atm(n)%q(:,:,:,1)
+    !$ser data qliquid_t1=IPD_Data(nb)%Stateout%gq0(:,:,2) qliquid_t0=Atm(n)%q(:,:,:,2)
+    !$ser data qrain_t1=IPD_Data(nb)%Stateout%gq0(:,:,3) qrain_t0=Atm(n)%q(:,:,:,3)
+    !$ser data qsnow_t1=IPD_Data(nb)%Stateout%gq0(:,:,4) qsnow_t0=Atm(n)%q(:,:,:,4)
+    !$ser data qice_t1=IPD_Data(nb)%Stateout%gq0(:,:,5) qice_t0=Atm(n)%q(:,:,:,5)
+    !$ser data qgraupel_t1=IPD_Data(nb)%Stateout%gq0(:,:,6) qgraupel_t0=Atm(n)%q(:,:,:,6)
      do k = 1, npz
            if(flip_vc) then
              k1 = npz+1-k !reverse the k direction 
@@ -1718,14 +1720,16 @@ contains
 
    call mpp_clock_begin(id_update)
        call timing_on('FV_UPDATE_PHYS')
-    !$ser savepoint FVUpdatePhys-In
-    !$ser data u_dt=u_dt v_dt=v_dt t_dt=t_dt
-    !$ser data u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va
-    !$ser data u_srf=Atm(n)%u_srf v_srf=Atm(n)%v_srf
-    !$ser data pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr)  
-    !$ser data ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con 
-    !$ser data es=Atm(n)%gridstruct%es ew=Atm(n)%gridstruct%ew vlon=Atm(n)%gridstruct%vlon vlat=Atm(n)%gridstruct%vlat
-    !$ser data edge_vect_w=Atm(n)%gridstruct%edge_vect_w edge_vect_e=Atm(n)%gridstruct%edge_vect_e edge_vect_s=Atm(n)%gridstruct%edge_vect_s edge_vect_n=Atm(n)%gridstruct%edge_vect_n
+        !$ser on
+        !$ser savepoint FVUpdatePhys-In
+        !$ser data u_dt=u_dt v_dt=v_dt t_dt=t_dt
+        !$ser data u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va
+        !$ser data u_srf=Atm(n)%u_srf v_srf=Atm(n)%v_srf
+        !$ser data pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr)  
+        !$ser data ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con 
+        !$ser data es=Atm(n)%gridstruct%es ew=Atm(n)%gridstruct%ew vlon=Atm(n)%gridstruct%vlon vlat=Atm(n)%gridstruct%vlat
+        !$ser data edge_vect_w=Atm(n)%gridstruct%edge_vect_w edge_vect_e=Atm(n)%gridstruct%edge_vect_e edge_vect_s=Atm(n)%gridstruct%edge_vect_s edge_vect_n=Atm(n)%gridstruct%edge_vect_n
+      !$ser off
     call fv_update_phys( dt_atmos, isc, iec, jsc, jec, isd, ied, jsd, jed, Atm(n)%ng, nt_dyn, &
                          Atm(n)%u,  Atm(n)%v,   Atm(n)%w,  Atm(n)%delp, Atm(n)%pt,         &
                          Atm(n)%q,  Atm(n)%qdiag,                                          &
@@ -1739,10 +1743,12 @@ contains
                          Atm(n)%neststruct, Atm(n)%bd, Atm(n)%domain, Atm(n)%ptop,         &
                          Atm(n)%nudge_diag, Atm(n)%physics_tendency_diag,                  &
                          Atm(n)%column_moistening_implied_by_nudging)
-    !$ser savepoint FVUpdatePhys-Out
-    !$ser data u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va
-    !$ser data pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr)  
-    !$ser data ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con 
+        !$ser on
+        !$ser savepoint FVUpdatePhys-Out
+        !$ser data u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va
+        !$ser data pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr)  
+        !$ser data ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con 
+      !$ser off
        call timing_off('FV_UPDATE_PHYS')
    call mpp_clock_end(id_update)
 

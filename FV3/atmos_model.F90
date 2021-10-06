@@ -405,9 +405,11 @@ subroutine update_atmos_radiation_physics (Atmos)
       do nb = 1,Atm_block%nblks
         call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d, mphClock=mphClock)
       enddo
-      !$ser savepoint GFSPhysicsDriver-Out
-      !$ser data IPD_gt0=IPD_Data(1)%Stateout%gt0 IPD_gu0=IPD_Data(1)%Stateout%gu0 IPD_gv0=IPD_Data(1)%Stateout%gv0 IPD_gq0=IPD_Data(1)%Stateout%gq0 
-      !$ser data IPD_qvapor=IPD_Data(1)%Stateout%gq0(:,:,1) IPD_qliquid=IPD_Data(1)%Stateout%gq0(:,:,2) IPD_rain=IPD_Data(1)%Stateout%gq0(:,:,3) IPD_qice=IPD_Data(1)%Stateout%gq0(:,:,4) IPD_snow=IPD_Data(1)%Stateout%gq0(:,:,5) IPD_qgraupel=IPD_Data(1)%Stateout%gq0(:,:,6) IPD_qcld=IPD_Data(1)%Stateout%gq0(:,:,9)  
+        !$ser on
+        !$ser savepoint GFSPhysicsDriver-Out
+        !$ser data IPD_gt0=IPD_Data(1)%Stateout%gt0 IPD_gu0=IPD_Data(1)%Stateout%gu0 IPD_gv0=IPD_Data(1)%Stateout%gv0 IPD_gq0=IPD_Data(1)%Stateout%gq0 
+        !$ser data IPD_qvapor=IPD_Data(1)%Stateout%gq0(:,:,1) IPD_qliquid=IPD_Data(1)%Stateout%gq0(:,:,2) IPD_rain=IPD_Data(1)%Stateout%gq0(:,:,3) IPD_qice=IPD_Data(1)%Stateout%gq0(:,:,4) IPD_snow=IPD_Data(1)%Stateout%gq0(:,:,5) IPD_qgraupel=IPD_Data(1)%Stateout%gq0(:,:,6) IPD_qcld=IPD_Data(1)%Stateout%gq0(:,:,9)  
+        !$ser off
 #endif
       call mpp_clock_end(physClock)
 
