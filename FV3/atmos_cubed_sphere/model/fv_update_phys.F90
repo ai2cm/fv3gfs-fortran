@@ -635,6 +635,8 @@ if (allocated(physics_tendency_diag%t_dt)) physics_tendency_diag%t_dt = (pt(is:i
        call prt_maxmin('PS_b_update',     ps, is, ie, js,  je, ng,   1, 0.01)
        call prt_maxmin('delp_a_update', delp, is, ie, js,  je, ng, npz, 0.01)
   endif
+!$ser savepoint PhysUpdatePressureSurfaceWinds-In
+!$ser data pe=pe delp=delp peln=peln pk=pk ps=ps ua=ua va=va u_srf=u_srf v_srf=v_srf
 
 !$OMP parallel do default(none) shared(is,ie,js,je,npz,pe,delp,peln,pk,ps,u_srf,v_srf, &
 #ifdef MULTI_GASES
@@ -667,7 +669,8 @@ if (allocated(physics_tendency_diag%t_dt)) physics_tendency_diag%t_dt = (pt(is:i
          enddo
       endif
    enddo      ! j-loop
-
+!$ser savepoint PhysUpdatePressureSurfaceWinds-Out
+!$ser data pk=pk ps=ps u_srf=u_srf v_srf=v_srf
                                                     call timing_on(' Update_dwinds')
   if ( flagstruct%dwind_2d ) then
     call update2d_dwinds_phys(is, ie, js, je, isd, ied, jsd, jed, dt, u_dt, v_dt, u, v, gridstruct, &

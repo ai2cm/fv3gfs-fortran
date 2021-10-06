@@ -1724,6 +1724,8 @@ contains
     !$ser data u_srf=Atm(n)%u_srf v_srf=Atm(n)%v_srf
     !$ser data pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr)  
     !$ser data ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con 
+    !$ser data es=Atm(n)%gridstruct%es ew=Atm(n)%gridstruct%ew vlon=Atm(n)%gridstruct%vlon vlat=Atm(n)%gridstruct%vlat
+    !$ser data edge_vect_w=Atm(n)%gridstruct%edge_vect_w edge_vect_e=Atm(n)%gridstruct%edge_vect_e edge_vect_s=Atm(n)%gridstruct%edge_vect_s edge_vect_n=Atm(n)%gridstruct%edge_vect_n
     call fv_update_phys( dt_atmos, isc, iec, jsc, jec, isd, ied, jsd, jed, Atm(n)%ng, nt_dyn, &
                          Atm(n)%u,  Atm(n)%v,   Atm(n)%w,  Atm(n)%delp, Atm(n)%pt,         &
                          Atm(n)%q,  Atm(n)%qdiag,                                          &
