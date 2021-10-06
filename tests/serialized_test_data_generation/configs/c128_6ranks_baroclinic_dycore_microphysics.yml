@@ -4,7 +4,7 @@ field_table: gs://vcm-fv3config/config/field_table/baroclinic_test/v1.0/field_ta
 experiment_name: c128_6ranks_baroclinic_dycore_microphysics
 forcing: gs://vcm-fv3config/data/base_forcing/v1.1/
 orographic_forcing: gs://vcm-fv3config/data/orographic_data/v1.0
-initial_conditions: ""
+initial_conditions: gs://vcm-fv3config/data/initial_conditions/c128_baroclinic_restart_day_10/v1.0
 namelist:
   amip_interp_nml:
     data_set: hurrell
@@ -71,15 +71,15 @@ namelist:
     - 0
     - 0
     - 0
-    days: 30
+    days: 0
     dt_atmos: 225
     dt_ocean: 225
     hours: 0
     memuse_verbose: false
-    minutes: 0
+    minutes: 3
     months: 0
-    ncores_per_node: 8
-    seconds: 0
+    ncores_per_node: 32
+    seconds: 45
     use_hyper_thread: true
   diag_manager_nml:
     max_axes: 240
@@ -133,7 +133,7 @@ namelist:
     io_layout:
     - 1
     - 1
-    k_split: 7
+    k_split: 1
     ke_bg: 0.0
     kord_mt: 9
     kord_tm: -9
@@ -144,7 +144,7 @@ namelist:
     - 1
     make_nh: true
     mountain: false
-    n_split: 8
+    n_split: 2
     n_sponge: 20
     na_init: 0
     ncep_ic: false
