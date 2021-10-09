@@ -57,6 +57,7 @@ setup_rundir: ## create run directory on local host using fv3config
 	write_run_directory $(EXPERIMENT_DIR)/$(EXPERIMENT).yml $(RUN_DIR_HOST)
 	cp submit_job.sh $(RUN_DIR_HOST)
 	cp count_ranks.py $(RUN_DIR_HOST)
+	cp -r RESTART $(RUN_DIR_HOST)
 	git rev-parse HEAD > $(RUN_DIR_HOST)/fortran_sha.txt
 
 run_model: ## run model using Docker image to generate serialized data
