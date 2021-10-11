@@ -1607,8 +1607,8 @@ contains
      !$ser data qvapor_t1=IPD_Data(nb)%Stateout%gq0(:,:,1) qvapor_t0=Atm(n)%q(:,:,:,1)
      !$ser data qliquid_t1=IPD_Data(nb)%Stateout%gq0(:,:,2) qliquid_t0=Atm(n)%q(:,:,:,2)
      !$ser data qrain_t1=IPD_Data(nb)%Stateout%gq0(:,:,3) qrain_t0=Atm(n)%q(:,:,:,3)
-     !$ser data qsnow_t1=IPD_Data(nb)%Stateout%gq0(:,:,4) qsnow_t0=Atm(n)%q(:,:,:,4)
-     !$ser data qice_t1=IPD_Data(nb)%Stateout%gq0(:,:,5) qice_t0=Atm(n)%q(:,:,:,5)
+     !$ser data qice_t1=IPD_Data(nb)%Stateout%gq0(:,:,4) qice_t0=Atm(n)%q(:,:,:,4)
+     !$ser data qsnow_t1=IPD_Data(nb)%Stateout%gq0(:,:,5) qsnow_t0=Atm(n)%q(:,:,:,5)
      !$ser data qgraupel_t1=IPD_Data(nb)%Stateout%gq0(:,:,6) qgraupel_t0=Atm(n)%q(:,:,:,6)
      do k = 1, npz
            if(flip_vc) then
@@ -1660,8 +1660,8 @@ contains
      !$ser data qvapor_t0=Atm(n)%q(:,:,:,1)
      !$ser data qliquid_t0=Atm(n)%q(:,:,:,2)
      !$ser data qrain_t0=Atm(n)%q(:,:,:,3)
-     !$ser data qsnow_t0=Atm(n)%q(:,:,:,4)
-     !$ser data qice_t0=Atm(n)%q(:,:,:,5)
+     !$ser data qice_t0=Atm(n)%q(:,:,:,4)
+     !$ser data qsnow_t0=Atm(n)%q(:,:,:,5)
      !$ser data qgraupel_t0=Atm(n)%q(:,:,:,6)
 
      !--- diagnostic tracers are assumed to be updated in-place
