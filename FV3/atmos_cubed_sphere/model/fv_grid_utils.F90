@@ -835,14 +835,14 @@
         call mpp_update_domains(del6_v, del6_u, Atm%domain, flags=SCALAR_PAIR,      &
                                 gridtype=CGRID_NE_PARAM, complete=.true.)
         !$ser savepoint EdgeFactors-In
-        !$ser data grid=grid agrid=agrid edge_s=Atm%gridstruct%edge_s edge_n=Atm%gridstruct%edge_n edge_w=Atm%gridstruct%edge_w edge_e=Atm%gridstruct%edge_e edge_vect_s=Atm%gridstruct%edge_vect_s edge_vect_n=Atm%gridstruct%edge_vect_n edge_vect_w=Atm%gridstruct%edge_vect_w edge_vect_e=Atm%gridstruct%edge_vect_e
+        !$ser data grid=grid agrid=agrid edge_s=Atm%gridstruct%edge_s(is:ie+1) edge_n=Atm%gridstruct%edge_n(is:ie+1) edge_w=Atm%gridstruct%edge_w(js:je+1) edge_e=Atm%gridstruct%edge_e(js:je+1) edge_vect_s=Atm%gridstruct%edge_vect_s edge_vect_n=Atm%gridstruct%edge_vect_n edge_vect_w=Atm%gridstruct%edge_vect_w edge_vect_e=Atm%gridstruct%edge_vect_e
         call edge_factors (Atm%gridstruct%edge_s, Atm%gridstruct%edge_n, Atm%gridstruct%edge_w, &
              Atm%gridstruct%edge_e, non_ortho, grid, agrid, npx, npy, Atm%bd)
         call efactor_a2c_v(Atm%gridstruct%edge_vect_s, Atm%gridstruct%edge_vect_n, &
              Atm%gridstruct%edge_vect_w, Atm%gridstruct%edge_vect_e, &
              non_ortho, grid, agrid, npx, npy, Atm%neststruct%nested, Atm%bd, Atm%flagstruct%regional)
         !$ser savepoint EdgeFactors-Out
-        !$ser data edge_s=Atm%gridstruct%edge_s edge_n=Atm%gridstruct%edge_n edge_w=Atm%gridstruct%edge_w edge_e=Atm%gridstruct%edge_e edge_vect_s=Atm%gridstruct%edge_vect_s edge_vect_n=Atm%gridstruct%edge_vect_n edge_vect_w=Atm%gridstruct%edge_vect_w edge_vect_e=Atm%gridstruct%edge_vect_e
+        !$ser data edge_s=Atm%gridstruct%edge_s(is:ie+1) edge_n=Atm%gridstruct%edge_n(is:ie+1) edge_w=Atm%gridstruct%edge_w(js:je+1) edge_e=Atm%gridstruct%edge_e(js:je+1) edge_vect_s=Atm%gridstruct%edge_vect_s edge_vect_n=Atm%gridstruct%edge_vect_n edge_vect_w=Atm%gridstruct%edge_vect_w edge_vect_e=Atm%gridstruct%edge_vect_e
 !       call extend_cube_s(non_ortho, grid, agrid, npx, npy, .false., Atm%neststruct%nested)
 !       call van2d_init(grid, agrid, npx, npy)
      else
