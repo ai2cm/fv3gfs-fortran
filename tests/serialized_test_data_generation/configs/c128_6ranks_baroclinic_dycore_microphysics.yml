@@ -1,5 +1,5 @@
 data_table: default
-diag_table: gs://vcm-fv3config/config/diag_table/no_output/v1.0/diag_table
+diag_table: gs://vcm-fv3config/config/diag_table/baroclinic_test/v1.0/diag_table_custom
 field_table: gs://vcm-fv3config/config/field_table/baroclinic_test/v1.0/field_table
 experiment_name: c128_6ranks_baroclinic_dycore_microphysics
 forcing: gs://vcm-fv3config/data/base_forcing/v1.1/
@@ -76,10 +76,10 @@ namelist:
     dt_ocean: 225
     hours: 0
     memuse_verbose: false
-    minutes: 3
+    minutes: 0
     months: 0
     ncores_per_node: 32
-    seconds: 45
+    seconds: 90000
     use_hyper_thread: true
   diag_manager_nml:
     max_axes: 240
