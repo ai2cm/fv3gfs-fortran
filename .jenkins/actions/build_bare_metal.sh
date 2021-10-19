@@ -98,8 +98,8 @@ set -e
 
 # make sure environment is sane
 FV3GFS_EXE_DIR=${installdir}/fv3gfs-fortran/
-if [ ! -d "${FV3_EXE_DIR}" ] ; then
-    exitError 400 ${LINENO} "The directory FV3_EXE_DIR=${FV3_EXE_DIR} does not exist."
+if [ ! -d "${FV3GFS_EXE_DIR}" ] ; then
+    exitError 400 ${LINENO} "The directory FV3GFS_EXE_DIR=${FV3GFS_EXE_DIR} does not exist."
 fi
 if [ ! -d "${CONFIGURATION_LIST}" ] ; then
     exitError 410 ${LINENO} "The variable CONFIGURATION_LIST=${CONFIGURATION_LIST} is not set."
@@ -202,13 +202,13 @@ done
 
 # copy executables to install dir (and add meta-information)
 echo "### saving executables"
-mkdir -p ${INSTALL_DIR}/fv3gfs-fortran/${compiler}
+mkdir -p ${FV3GFS_EXE_DIR}/${compiler}
 for f in ${rootdir}/FV3/*.exe ; do
     exe_name=`basename ${f} | sed 's/\.exe$//g'`
-    cp ${f} ${INSTALL_DIR}/fv3gfs-fortran/${compiler}/${exe_name}${EXECUTABLE_SUFFIX}.exe
+    cp ${f} ${FV3GFS_EXE_DIR}/${compiler}/${exe_name}${EXECUTABLE_SUFFIX}.exe
 done
-cp ${rootdir}/FV3/conf/modules.fv3 ${INSTALL_DIR}/fv3gfs-fortran/${compiler}/module.env
-cat > ${INSTALL_DIR}/fv3gfs-fortran/${compiler}/git.env <<EOF2
+cp ${rootdir}/FV3/conf/modules.fv3 ${FV3GFS_EXE_DIR}/${compiler}/module.env
+cat > ${FV3GFS_EXE_DIR}/${compiler}/git.env <<EOF2
 GIT_URL = ${GIT_URL}
 GIT_COMMIT = ${GIT_COMMIT}
 GIT_BRANCH = ${GIT_BRANCH}
