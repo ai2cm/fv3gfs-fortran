@@ -843,7 +843,7 @@ contains
           !--- compute agrid (use same indices as for dx/dy above)
 
        !$ser savepoint AGrid-In
-       !$ser data agrid=agrid grid=grid dxc=dxc dyc=dyc
+       !$ser data agrid=agrid grid=grid
        do j=jstart,jend
           do i=istart,iend
              if ( stretched_grid ) then
@@ -865,6 +865,12 @@ contains
          call fill_corners(agrid(:,:,1), npx, npy, XDir, AGRID=.true.)
          call fill_corners(agrid(:,:,2), npx, npy, YDir, AGRID=.true.)
        endif
+
+       !$ser savepoint AGrid-Out
+       !$ser data agrid=agrid grid=grid
+
+       !$ser savepoint GridAreas-In
+       !$ser data grid=Atm%gridstruct%grid_64 agrid=Atm%gridstruct%agrid_64 area=Atm%gridstruct%area_64 area_c=Atm%gridstruct%area_c_64 dx=dx dy=dy dxc=dxc dyc=dyc
 
        do j=jsd,jed
           do i=isd,ied
@@ -911,15 +917,11 @@ contains
           dyc(i,jed+1) = dyc(i,jed)
        end do
 
-       !$ser savepoint AGrid-Out
-       !$ser data agrid=agrid grid=grid dxa=dxa dya=dya dxc=dxc dyc=dyc
-
        if( .not. stretched_grid )      &
            call sorted_intb(isd, ied, jsd, jed, is, ie, js, je, npx, npy, &
                             cubed_sphere, agrid, iintb, jintb)
 
-       !$ser savepoint GridAreas-In
-       !$ser data grid=Atm%gridstruct%grid_64 agrid=Atm%gridstruct%agrid_64 area=Atm%gridstruct%area_64 area_c=Atm%gridstruct%area_c_64
+       
        call grid_area( npx, npy, ndims, nregions, Atm%neststruct%nested, Atm%gridstruct, Atm%domain, Atm%bd, Atm%flagstruct%regional )
        !$ser savepoint GridAreas-Out
        !$ser data area=Atm%gridstruct%area_64 area_c=Atm%gridstruct%area_c_64
@@ -931,8 +933,6 @@ contains
 
   if ( .not. stretched_grid .and. (.not. (Atm%neststruct%nested .or. Atm%flagstruct%regional))) then
 ! For symmetrical grids:
-       !$ser savepoint MoreAreas-In
-       !$ser data gridvar=grid agrid=agrid area=area area_c=area_c rarea_c=rarea_c dx=dx dy=dy dxc=dxc dyc=dyc
        if ( is==1 ) then
           i = 1
           do j=js,je+1
@@ -1107,9 +1107,6 @@ contains
           enddo
        enddo
 
-       !$ser savepoint MoreAreas-Out
-       !$ser data area_cgrid=area_c dxc=dxc dyc=dyc
-
 200    format(A,f9.2,A,f9.2,A,f9.2)
 201    format(A,f9.2,A,f9.2,A,f9.2,A,f9.2)
 202    format(A,A,i4.4,A,i4.4,A)
@@ -1181,6 +1178,9 @@ contains
           write(*,*  ) ''
        endif
     endif!if gridtype > 3
+
+    !$ser savepoint GridAreas-Out
+    !$ser data grid=Atm%gridstruct%grid_64 agrid=Atm%gridstruct%agrid_64 area=Atm%gridstruct%area_64 area_c=Atm%gridstruct%area_c_64 dx=dx dy=dy dxc=dxc dyc=dyc
 
     if (Atm%neststruct%nested .or. ANY(Atm%neststruct%child_grids)) then
     nullify(grid_global)
