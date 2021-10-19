@@ -870,7 +870,7 @@ contains
        !$ser data agrid=agrid grid=grid
 
        !$ser savepoint GridAreas-In
-       !$ser data grid=Atm%gridstruct%grid_64 agrid=Atm%gridstruct%agrid_64 area=Atm%gridstruct%area_64 area_c=Atm%gridstruct%area_c_64 dx=dx dy=dy dxc=dxc dyc=dyc
+       !$ser data grid=Atm%gridstruct%grid_64 agrid=Atm%gridstruct%agrid_64 area=Atm%gridstruct%area_64 area_c=Atm%gridstruct%area_c_64 dxa=dxa dya=dya dxc=dxc dyc=dyc
 
        do j=jsd,jed
           do i=isd,ied
@@ -923,8 +923,6 @@ contains
 
        
        call grid_area( npx, npy, ndims, nregions, Atm%neststruct%nested, Atm%gridstruct, Atm%domain, Atm%bd, Atm%flagstruct%regional )
-       !$ser savepoint GridAreas-Out
-       !$ser data area=Atm%gridstruct%area_64 area_c=Atm%gridstruct%area_c_64
 !      stretched_grid = .false.
 
 !----------------------------------
@@ -1180,7 +1178,7 @@ contains
     endif!if gridtype > 3
 
     !$ser savepoint GridAreas-Out
-    !$ser data grid=Atm%gridstruct%grid_64 agrid=Atm%gridstruct%agrid_64 area=Atm%gridstruct%area_64 area_c=Atm%gridstruct%area_c_64 dx=dx dy=dy dxc=dxc dyc=dyc
+    !$ser data grid=Atm%gridstruct%grid_64 agrid=Atm%gridstruct%agrid_64 area=Atm%gridstruct%area_64 area_c=Atm%gridstruct%area_c_64 dxa=dxa dya=dya dxc=dxc dyc=dyc
 
     if (Atm%neststruct%nested .or. ANY(Atm%neststruct%child_grids)) then
     nullify(grid_global)
