@@ -367,7 +367,6 @@ contains
 
          integer :: i, shrink_size
          integer :: npes_x, npes_y 
-         integer, allocatable :: ibegin(:), iend(:), jbegin(:), jend(:)
          integer, allocatable :: xextent(:,:), yextent(:,:)
 
          integer, pointer :: pelist(:), grid_number, num_contact, npes_per_tile
@@ -647,33 +646,7 @@ contains
             xextent(:, :) = 0
             yextent(:, :) = 0
             if (shrink_factor < 1.0) then
-                ! We reduce the width of the subdomains at the edges so that they are edge_subdomain_shrink_factor
-                ! smaller than "inner" subdomains with no edges/corners. We compute the size of the edge subdomains
-                ! in shrink_size and then evenly distribute the remaining gridpoints using mpp_compute_extent().
-               if (layout(1) > 2) then
-                  allocate(ibegin(layout(1)-2), iend(layout(1)-2))
-                  shrink_size = nint( real(nx) / (2.0 + real(layout(1)-2)/shrink_factor) )
-                  shrink_size = max(ng, shrink_size)
-                  call mpp_compute_extent(shrink_size + 1, nx - shrink_size, layout(1)-2, ibegin, iend)
-                  xextent(1, :) = shrink_size
-                  do i = 1, nregions
-                     xextent(2:layout(1)-1, i) = iend - ibegin + 1
-                  end do
-                  xextent(layout(1), :) = shrink_size
-                  deallocate(ibegin, iend)
-               end if
-               if (layout(2) > 2) then
-                  allocate(jbegin(layout(2)-2), jend(layout(2)-2))
-                  shrink_size = nint( real(ny) / (2.0 + real(layout(2)-2)/shrink_factor) )
-                  shrink_size = max(ng, shrink_size)
-                  call mpp_compute_extent(shrink_size + 1, ny - shrink_size, layout(2)-2, jbegin, jend)
-                  yextent(1, :) = shrink_size
-                  do i = 1, nregions
-                     yextent(2:layout(2)-1, i) = jend - jbegin + 1
-                  end do
-                  yextent(layout(2), :) = shrink_size
-                  deallocate(jbegin, jend)
-               end if
+               call compute_extents_with_shrinking(xextent, yextent, shrink_factor)
             end if
             call mpp_define_mosaic(global_indices, layout2D, domain, nregions, num_contact, tile1, tile2, &
                  istart1, iend1, jstart1, jend1, istart2, iend2, jstart2, jend2,      &
@@ -746,6 +719,55 @@ contains
           Atm%bd%jec = -1
 
        endif
+
+      contains
+
+       subroutine compute_extents_with_shrinking(xext, yext, factor)
+         implicit none
+         integer, intent(inout) :: xext(:, :), yext(:, :)
+         real, intent(in) :: factor
+
+         integer, allocatable :: ibegin(:), iend(:), jbegin(:), jend(:)
+
+         ! We reduce the width of the subdomains at the edges so that they are edge_subdomain_shrink_factor
+         ! smaller than "inner" subdomains with no edges/corners. We compute the size of the edge subdomains
+         ! in shrink_size and then evenly distribute the remaining gridpoints using mpp_compute_extent().
+
+         ! Note: We want the ratio of the extent of edge sub-domains (shrink_size) to the extent of inner
+         !       sub-domains (ext_inner) to be equal to the shrink factor (factor).
+         !       factor = shrink_size / ext_inner
+         !       The layout array specifies the total number of sub-domains (e.g. layout(1)). So the total
+         !       extent (nx) has to be equal to:
+         !       nx = (layout(1)-2) * ext_inner + 2 * shrink_size
+         !       We can solve for shrink_size given layout, nx and factor using the above relations.
+
+         if (layout(1) > 2) then
+            allocate(ibegin(layout(1)-2), iend(layout(1)-2))
+            shrink_size = nint( real(nx) / (2.0 + real(layout(1)-2)/shrink_factor) )
+            shrink_size = max(ng, shrink_size)
+            call mpp_compute_extent(shrink_size + 1, nx - shrink_size, layout(1)-2, ibegin, iend)
+            xext(1, :) = shrink_size
+            do i = 1, nregions
+               xext(2:layout(1)-1, i) = iend - ibegin + 1
+            end do
+            xext(layout(1), :) = shrink_size
+            deallocate(ibegin, iend)
+         end if
+
+         if (layout(2) > 2) then
+            allocate(jbegin(layout(2)-2), jend(layout(2)-2))
+            shrink_size = nint( real(ny) / (2.0 + real(layout(2)-2)/shrink_factor) )
+            shrink_size = max(ng, shrink_size)
+            call mpp_compute_extent(shrink_size + 1, ny - shrink_size, layout(2)-2, jbegin, jend)
+            yext(1, :) = shrink_size
+            do i = 1, nregions
+               yext(2:layout(2)-1, i) = jend - jbegin + 1
+            end do
+            yext(layout(2), :) = shrink_size
+            deallocate(jbegin, jend)
+         end if
+
+       end subroutine compute_extents_with_shrinking
 
       end subroutine domain_decomp
 !
