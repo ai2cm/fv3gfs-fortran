@@ -101,7 +101,7 @@ FV3GFS_EXE_DIR=${installdir}/fv3gfs-fortran/
 if [ ! -d "${FV3GFS_EXE_DIR}" ] ; then
     exitError 400 ${LINENO} "The directory FV3GFS_EXE_DIR=${FV3GFS_EXE_DIR} does not exist."
 fi
-if [ ! -d "${CONFIGURATION_LIST}" ] ; then
+if [ -z "${CONFIGURATION_LIST}" ] ; then
     exitError 410 ${LINENO} "The variable CONFIGURATION_LIST=${CONFIGURATION_LIST} is not set."
 fi
 if [ -z "${EXECUTABLE_NAMES}" ] ; then
