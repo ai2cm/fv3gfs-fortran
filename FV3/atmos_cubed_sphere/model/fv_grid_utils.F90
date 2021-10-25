@@ -376,7 +376,7 @@
 
      !$ser savepoint TrigTerms-In
      !$ser data grid=grid agrid=agrid cos_sg1=cos_sg(:,:,1) sin_sg1=sin_sg(:,:,1) cos_sg2=cos_sg(:,:,2) sin_sg2=sin_sg(:,:,2) cos_sg3=cos_sg(:,:,3) sin_sg3=sin_sg(:,:,3) cos_sg4=cos_sg(:,:,4) sin_sg4=sin_sg(:,:,4) cos_sg5=cos_sg(:,:,5) sin_sg5=sin_sg(:,:,5) cos_sg6=cos_sg(:,:,6) sin_sg6=sin_sg(:,:,6) cos_sg7=cos_sg(:,:,7) sin_sg7=sin_sg(:,:,7) cos_sg8=cos_sg(:,:,8) sin_sg8=sin_sg(:,:,8) cos_sg9=cos_sg(:,:,9) sin_sg9=sin_sg(:,:,9) ec1=ec1 ec2=ec2 ee1=ee1 ee2=ee2 cosa_u=cosa_u cosa_v=cosa_v cosa_s=cosa_s sina_u=sina_u sina_v=sina_v cosa=cosa sina=sina rsin_u=rsin_u rsin_v=rsin_v rsina=rsina rsin2=rsin2
-          
+     
 !     9---4---8
 !     |       |
 !     1   5   3
@@ -515,6 +515,8 @@
   endif !if (grid_type < 3)
 
    if ( non_ortho ) then
+      !$ser savepoint TrigSubset-In
+      !$ser data grid=grid cos_sg1=cos_sg(:,:,1) sin_sg1=sin_sg(:,:,1) cos_sg2=cos_sg(:,:,2) sin_sg2=sin_sg(:,:,2) cos_sg3=cos_sg(:,:,3) sin_sg3=sin_sg(:,:,3) cos_sg4=cos_sg(:,:,4) sin_sg4=sin_sg(:,:,4) cos_sg5=cos_sg(:,:,5) sin_sg5=sin_sg(:,:,5) cos_sg6=cos_sg(:,:,6) sin_sg6=sin_sg(:,:,6) cos_sg7=cos_sg(:,:,7) sin_sg7=sin_sg(:,:,7) cos_sg8=cos_sg(:,:,8) sin_sg8=sin_sg(:,:,8) cos_sg9=cos_sg(:,:,9) sin_sg9=sin_sg(:,:,9) ee1=ee1 ee2=ee2 cosa_u=cosa_u cosa_v=cosa_v cosa_s=cosa_s sina_u=sina_u sina_v=sina_v cosa=cosa sina=sina rsin_u=rsin_u rsin_v=rsin_v rsina=rsina rsin2=rsin2
            cosa_u = big_number
            cosa_v = big_number
            cosa_s = big_number
@@ -628,6 +630,8 @@
             endif
          enddo
       enddo
+      !$ser savepoint TrigSubset-Out
+      !$ser data ee1=ee1 ee2=ee2 cosa_u=cosa_u cosa_v=cosa_v cosa_s=cosa_s sina_u=sina_u sina_v=sina_v cosa=cosa sina=sina rsin_u=rsin_u rsin_v=rsin_v rsina=rsina rsin2=rsin2
       
       !EXPLANATION HERE: calling fill_ghost overwrites **SOME** of the sin_sg 
       !values along the outward-facing edge of a tile in the corners, which is incorrect. 
