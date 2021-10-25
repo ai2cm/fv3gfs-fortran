@@ -482,6 +482,8 @@ contains
        endif
          if (grid_type < 4) then
             if ( .not. Atm(n)%flagstruct%external_ic ) then
+            !$ser savepoint InitCase-In
+            !$ser data u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w pt=Atm(n)%pt delp=Atm(n)%delp q=Atm(n)%q phis=Atm(n)%phis ps=Atm(n)%ps pe=Atm(n)%pe peln=Atm(n)%peln pk=Atm(n)%pk pkz=Atm(n)%pkz uc=Atm(n)%uc vc=Atm(n)%vc ua=Atm(n)%ua va=Atm(n)%va ak=Atm(n)%ak bk=Atm(n)%bk ptop=Atm(n)%ptop delz= Atm(n)%delz ze0=Atm(n)%ze0 ks=Atm(n)%ks
             call init_case(Atm(n)%u,Atm(n)%v,Atm(n)%w,Atm(n)%pt,Atm(n)%delp,Atm(n)%q, &
                            Atm(n)%phis, Atm(n)%ps,Atm(n)%pe, Atm(n)%peln,Atm(n)%pk,Atm(n)%pkz, &
                            Atm(n)%uc,Atm(n)%vc, Atm(n)%ua,Atm(n)%va,        & 
@@ -496,6 +498,8 @@ contains
                            Atm(n)%flagstruct%adiabatic, Atm(n)%ks, Atm(n)%neststruct%npx_global, &
                            Atm(n)%ptop, Atm(n)%domain, Atm(n)%tile, Atm(n)%bd)
             endif
+            !$ser savepoint InitCase-Out
+            !$ser data u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w pt=Atm(n)%pt delp=Atm(n)%delp q=Atm(n)%q phis=Atm(n)%phis ps=Atm(n)%ps pe=Atm(n)%pe peln=Atm(n)%peln pk=Atm(n)%pk pkz=Atm(n)%pkz uc=Atm(n)%uc vc=Atm(n)%vc ua=Atm(n)%ua va=Atm(n)%va ak=Atm(n)%ak bk=Atm(n)%bk ptop=Atm(n)%ptop delz= Atm(n)%delz ze0=Atm(n)%ze0 ks=Atm(n)%ks fC=Atm(n)%gridstruct%fC f0=Atm(n)%gridstruct%f0
          elseif (grid_type == 4) then
             call init_double_periodic(Atm(n)%u,Atm(n)%v,Atm(n)%w,Atm(n)%pt, &
                                       Atm(n)%delp,Atm(n)%q,Atm(n)%phis, Atm(n)%ps,Atm(n)%pe, &

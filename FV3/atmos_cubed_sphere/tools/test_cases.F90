@@ -770,6 +770,8 @@
 
       pe(:,:,:) = 0.0
       pt(:,:,:) = 1.0
+      !$ser savepoint DefaultfC0-In
+      !$ser data fC=fC f0=f0
       f0(:,:) = huge(dummy)
       fC(:,:) = huge(dummy)
       do j=jsd,jed+1
@@ -786,7 +788,8 @@
       enddo
       call mpp_update_domains( f0, domain )
       if (cubed_sphere) call fill_corners(f0, npx, npy, YDir)
-
+      !$ser savepoint DefaultfC0-Out
+      !$ser data fC=fC f0=f0
       delp(isd:is-1,jsd:js-1,1:npz)=0.
       delp(isd:is-1,je+1:jed,1:npz)=0.
       delp(ie+1:ied,jsd:js-1,1:npz)=0.
@@ -1685,7 +1688,9 @@
 #endif
               
 #else
-
+ !$ser savepoint InitPreJab-In
+ !$ser data ptop=ptop ak=ak bk=bk 
+              
          q(:,:,:,:) = 0.
 
 #ifdef HIWPP
@@ -1766,7 +1771,10 @@
          enddo
          enddo
     endif
-
+   !$ser savepoint InitPreJab-Out
+    !$ser data ps=ps delp=delp pe=pe peln=peln pk=pk pkz=pkz eta=eta eta_v=eta_v qvapor=q(:,:,:,sphum)
+   !$ser savepoint JablonowskiBaroclinic-In
+   !$ser data ps=ps delp=delp pe=pe peln=peln pk=pk pkz=pkz eta=eta eta_v=eta_v qvapor=q(:,:,:,sphum)
     ! Initialize winds 
          Ubar = 35.0
          r0 = 1.0
@@ -2023,7 +2031,8 @@
 
       write(stdout(), *) 'PI:', pi
       write(stdout(), *) 'PHIS:', mpp_chksum(phis(is:ie,js:je))
-
+      !$ser savepoint JablonowskiBaroclinic-Out
+      !$ser data qvapor=q(:,:,:,sphum) pt=pt delz=delz w=w phis=phis u=u v=v utmpi=utmp vtmpi=vtmp eta=eta press=press
       else if ( (test_case==-12) .or. (test_case==-13) ) then
 
          call DCMIP16_BC(delp,pt,u,v,q,w,delz, &
@@ -3744,9 +3753,13 @@
 
 ! The flow is initially hydrostatic
 #ifndef SUPER_K
+     !$ser savepoint PVarAuxiliaryPressureVars-In
+     !$ser data delz=delz delp=delp pt=pt ps=ps pe=pe peln=peln pk=pk pkz=pkz qvapor=q(:,:,:,sphum) 
      call p_var(npz, is, ie, js, je, ptop, ptop_min, delp, delz, pt, ps,   &
                 pe, peln, pk, pkz, kappa, q, ng, ncnst, area, dry_mass, .false., mountain, &
                 moist_phys, hydrostatic, nwat, domain, .not.hydrostatic)
+    !$ser savepoint PVarAuxiliaryPressureVars-Out
+     !$ser data delz=delz delp=delp ps=ps pe=pe peln=peln pk=pk pkz=pkz 
 #endif
 
 #ifdef COLUMN_TRACER
