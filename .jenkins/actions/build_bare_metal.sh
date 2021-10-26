@@ -17,9 +17,6 @@ set -o pipefail
 #   EXECUTABLE_SUFFIX  - Suffix to add to executable name when copied to /project
 #   EXECUTABLE_NAMES   - Names of executable to use for tests (space separated)
 
-INSTALL_DIR=${PROJECT}/../install
-FV3GFSEXE_DIR=${INSTALL_DIR}/fv3gfs-fortran/
-
 ##################################################
 # functions
 ##################################################
@@ -98,6 +95,18 @@ set -e
 
 # load scheduler tools
 . ${envloc}/env/schedulerTools.sh
+
+# make sure environment is sane
+FV3GFS_EXE_DIR=${installdir}/fv3gfs-fortran/
+if [ ! -d "${FV3GFS_EXE_DIR}" ] ; then
+    exitError 400 ${LINENO} "The directory FV3GFS_EXE_DIR=${FV3GFS_EXE_DIR} does not exist."
+fi
+if [ -z "${CONFIGURATION_LIST}" ] ; then
+    exitError 410 ${LINENO} "The variable CONFIGURATION_LIST=${CONFIGURATION_LIST} is not set."
+fi
+if [ -z "${EXECUTABLE_NAMES}" ] ; then
+    exitError 420 ${LINENO} "The variable EXECUTABLE_NAMES=${EXECUTABLE_NAMES} is not set."
+fi
 
 # compile the model
 # note: this relies on the fact that daint_gnu and daint_intel are the first
@@ -193,13 +202,13 @@ done
 
 # copy executables to install dir (and add meta-information)
 echo "### saving executables"
-mkdir -p ${INSTALL_DIR}/fv3gfs-fortran/${compiler}
+mkdir -p ${FV3GFS_EXE_DIR}/${compiler}
 for f in ${rootdir}/FV3/*.exe ; do
     exe_name=`basename ${f} | sed 's/\.exe$//g'`
-    cp ${f} ${INSTALL_DIR}/fv3gfs-fortran/${compiler}/${exe_name}${EXECUTABLE_SUFFIX}.exe
+    cp ${f} ${FV3GFS_EXE_DIR}/${compiler}/${exe_name}${EXECUTABLE_SUFFIX}.exe
 done
-cp ${rootdir}/FV3/conf/modules.fv3 ${INSTALL_DIR}/fv3gfs-fortran/${compiler}/module.env
-cat > ${INSTALL_DIR}/fv3gfs-fortran/${compiler}/git.env <<EOF2
+cp ${rootdir}/FV3/conf/modules.fv3 ${FV3GFS_EXE_DIR}/${compiler}/module.env
+cat > ${FV3GFS_EXE_DIR}/${compiler}/git.env <<EOF2
 GIT_URL = ${GIT_URL}
 GIT_COMMIT = ${GIT_COMMIT}
 GIT_BRANCH = ${GIT_BRANCH}

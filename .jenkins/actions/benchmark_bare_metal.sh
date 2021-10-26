@@ -18,9 +18,6 @@ set -o pipefail
 #   FV3_EXECUTABLE     - Name of executable to use (these executables are stored under /project/s1053/install/fv3gfs-fortran.
 #   TIMESTEPS          - Number of timesteps to run benchmark for.
 
-FV3_EXE_DIR=${PROJECT}/../install/fv3gfs-fortran/
-PERFORMANCE_DIR=${PROJECT}/../performance/fv3core_performance/fortran
-
 ##################################################
 # functions
 ##################################################
@@ -93,6 +90,25 @@ set -e
 
 # load scheduler tools
 . ${envloc}/env/schedulerTools.sh
+
+# make sure environment is sane
+FV3_EXE_DIR=${installdir}/fv3gfs-fortran/
+PERFORMANCE_DIR=${installdir}/../performance/fv3core_performance/fortran
+if [ ! -d "${FV3_EXE_DIR}" ] ; then
+    exitError 400 ${LINENO} "The directory FV3_EXE_DIR=${FV3_EXE_DIR} does not exist."
+fi
+if [ ! -d "${PERFORMANCE_DIR}" ] ; then
+    exitError 410 ${LINENO} "The directory PERFORMANCE_DIR=${PERFORMANCE_DIR} does not exist."
+fi
+if [ -z "${CONFIGURATION_LIST}" ] ; then
+    exitError 420 ${LINENO} "The variable CONFIGURATION_LIST=${CONFIGURATION_LIST} is not set."
+fi
+if [ -z "${FV3_EXECUTABLE}" ] ; then
+    exitError 430 ${LINENO} "The variable FV3_EXECUTABLE=${FV3_EXECUTABLE} is not set."
+fi
+if [ -z "${TIMESTEPS}" ] ; then
+    exitError 440 ${LINENO} "The variable TIMESTEPS=${TIMESTEPS} is not set."
+fi
 
 # run the benchmarks
 # note: this relies on the fact that daint_gnu and daint_intel are the first
