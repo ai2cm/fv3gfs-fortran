@@ -1774,7 +1774,7 @@
    !$ser savepoint InitPreJab-Out
     !$ser data ps=ps delp=delp pe=pe peln=peln pk=pk pkz=pkz eta=eta eta_v=eta_v qvapor=q(:,:,:,sphum)
    !$ser savepoint JablonowskiBaroclinic-In
-   !$ser data ps=ps delp=delp pe=pe peln=peln pk=pk pkz=pkz eta=eta eta_v=eta_v qvapor=q(:,:,:,sphum)
+   !$ser data ps=ps delp=delp pe=pe peln=peln pk=pk pkz=pkz eta=eta eta_v=eta_v qvapor=q(:,:,:,sphum) ptop=ptop
     ! Initialize winds 
          Ubar = 35.0
          r0 = 1.0
