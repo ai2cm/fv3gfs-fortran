@@ -80,7 +80,7 @@
       use mpp_domains_mod, only : GLOBAL_DATA_DOMAIN, BITWISE_EXACT_SUM, BGRID_NE, FOLD_NORTH_EDGE, CGRID_NE
       use mpp_domains_mod, only : MPP_DOMAIN_TIME, CYCLIC_GLOBAL_DOMAIN, NUPDATE,EUPDATE, XUPDATE, YUPDATE, SCALAR_PAIR
       use mpp_domains_mod, only : domain1D, domain2D, DomainCommunicator2D, mpp_get_ntile_count
-      use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain
+      use mpp_domains_mod, only : mpp_get_compute_domain, mpp_get_data_domain, mpp_compute_extent
       use mpp_domains_mod, only : mpp_global_field, mpp_global_sum, mpp_global_max, mpp_global_min
       use mpp_domains_mod, only : mpp_domains_init, mpp_domains_exit, mpp_broadcast_domain
       use mpp_domains_mod, only : mpp_check_field, mpp_define_layout 
@@ -347,13 +347,14 @@ contains
 !-------------------------------------------------------------------------------
 ! vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv !
 !>@brief The subroutine 'domain_decomp' sets up the domain decomposition.
-      subroutine domain_decomp(npx,npy,nregions,grid_type,nested,Atm,layout,io_layout)
+      subroutine domain_decomp(npx,npy,nregions,grid_type,nested,Atm,layout,io_layout,edge_subdomain_shrink_factor)
 
          integer, intent(IN)  :: npx,npy,grid_type
          integer, intent(INOUT) :: nregions
          logical, intent(IN):: nested
          type(fv_atmos_type), intent(INOUT), target :: Atm
          integer, intent(INOUT) :: layout(2), io_layout(2)
+         real, intent(IN), optional :: edge_subdomain_shrink_factor
 
          integer, allocatable :: pe_start(:), pe_end(:)
 
@@ -362,9 +363,11 @@ contains
          logical :: is_symmetry 
          logical :: debug=.false.
          integer, allocatable :: tile_id(:)
+         real :: shrink_factor
 
-         integer i
+         integer :: i, shrink_size
          integer :: npes_x, npes_y 
+         integer, allocatable :: xextent(:,:), yextent(:,:)
 
          integer, pointer :: pelist(:), grid_number, num_contact, npes_per_tile
          logical, pointer :: square_domain
@@ -384,6 +387,10 @@ contains
          npes_x = layout(1)
          npes_y = layout(2)
 
+         shrink_factor = 1.0
+         if (present(edge_subdomain_shrink_factor)) then
+            shrink_factor = max(0.0, min(1.0, edge_subdomain_shrink_factor))
+         end if
 
          call mpp_domains_init(MPP_DOMAIN_TIME)
 
@@ -635,14 +642,23 @@ contains
                   tile_id(n) = n
                enddo
             endif
+            allocate(xextent(layout(1),nregions), yextent(layout(2),nregions))
+            xextent(:, :) = 0
+            yextent(:, :) = 0
+            if (shrink_factor < 1.0) then
+               call compute_extents_with_shrinking(xextent, yextent, shrink_factor)
+            end if
             call mpp_define_mosaic(global_indices, layout2D, domain, nregions, num_contact, tile1, tile2, &
                  istart1, iend1, jstart1, jend1, istart2, iend2, jstart2, jend2,      &
                  pe_start=pe_start, pe_end=pe_end, symmetry=is_symmetry,              &
-                 shalo = ng, nhalo = ng, whalo = ng, ehalo = ng, tile_id=tile_id, name = type)
+                 shalo = ng, nhalo = ng, whalo = ng, ehalo = ng, tile_id=tile_id, name = type, &
+                 xextent=xextent, yextent=yextent)
             call mpp_define_mosaic(global_indices, layout2D, domain_for_coupler, nregions, num_contact, tile1, tile2, &
                  istart1, iend1, jstart1, jend1, istart2, iend2, jstart2, jend2,                  &
                  pe_start=pe_start, pe_end=pe_end, symmetry=is_symmetry,                          &
-                 shalo = 1, nhalo = 1, whalo = 1, ehalo = 1, tile_id=tile_id, name = type)
+                 shalo = 1, nhalo = 1, whalo = 1, ehalo = 1, tile_id=tile_id, name = type, &
+                 xextent=xextent, yextent=yextent)
+            deallocate(xextent, yextent)
             deallocate(tile_id)
             call mpp_define_io_domain(domain, io_layout)
             call mpp_define_io_domain(domain_for_coupler, io_layout)
@@ -703,6 +719,55 @@ contains
           Atm%bd%jec = -1
 
        endif
+
+      contains
+
+       subroutine compute_extents_with_shrinking(xext, yext, factor)
+         implicit none
+         integer, intent(inout) :: xext(:, :), yext(:, :)
+         real, intent(in) :: factor
+
+         integer, allocatable :: ibegin(:), iend(:), jbegin(:), jend(:)
+
+         ! We reduce the width of the subdomains at the edges so that they are edge_subdomain_shrink_factor
+         ! smaller than "inner" subdomains with no edges/corners. We compute the size of the edge subdomains
+         ! in shrink_size and then evenly distribute the remaining gridpoints using mpp_compute_extent().
+
+         ! Note: We want the ratio of the extent of edge sub-domains (shrink_size) to the extent of inner
+         !       sub-domains (ext_inner) to be equal to the shrink factor (factor).
+         !       factor = shrink_size / ext_inner
+         !       The layout array specifies the total number of sub-domains (e.g. layout(1)). So the total
+         !       extent (nx) has to be equal to:
+         !       nx = (layout(1)-2) * ext_inner + 2 * shrink_size
+         !       We can solve for shrink_size given layout, nx and factor using the above relations.
+
+         if (layout(1) > 2) then
+            allocate(ibegin(layout(1)-2), iend(layout(1)-2))
+            shrink_size = nint( real(nx) / (2.0 + real(layout(1)-2)/shrink_factor) )
+            shrink_size = max(ng, shrink_size)
+            call mpp_compute_extent(shrink_size + 1, nx - shrink_size, layout(1)-2, ibegin, iend)
+            xext(1, :) = shrink_size
+            do i = 1, nregions
+               xext(2:layout(1)-1, i) = iend - ibegin + 1
+            end do
+            xext(layout(1), :) = shrink_size
+            deallocate(ibegin, iend)
+         end if
+
+         if (layout(2) > 2) then
+            allocate(jbegin(layout(2)-2), jend(layout(2)-2))
+            shrink_size = nint( real(ny) / (2.0 + real(layout(2)-2)/shrink_factor) )
+            shrink_size = max(ng, shrink_size)
+            call mpp_compute_extent(shrink_size + 1, ny - shrink_size, layout(2)-2, jbegin, jend)
+            yext(1, :) = shrink_size
+            do i = 1, nregions
+               yext(2:layout(2)-1, i) = jend - jbegin + 1
+            end do
+            yext(layout(2), :) = shrink_size
+            deallocate(jbegin, jend)
+         end if
+
+       end subroutine compute_extents_with_shrinking
 
       end subroutine domain_decomp
 !

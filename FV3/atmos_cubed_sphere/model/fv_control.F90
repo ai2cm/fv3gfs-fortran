@@ -174,6 +174,7 @@ module fv_control_mod
    character(len=80) , pointer :: grid_name
    character(len=120), pointer :: grid_file
    integer, pointer :: grid_type
+   real    , pointer :: edge_subdomain_shrink_factor
    integer , pointer :: hord_mt 
    integer , pointer :: kord_mt 
    integer , pointer :: kord_wz 
@@ -455,6 +456,7 @@ module fv_control_mod
             !!CLEANUP: Convenience pointers
             Atm(n)%gridstruct%nested      => Atm(n)%neststruct%nested
             Atm(n)%gridstruct%grid_type   => Atm(n)%flagstruct%grid_type
+
             Atm(n)%flagstruct%grid_number => Atm(n)%grid_number
             Atm(n)%gridstruct%regional  => Atm(n)%flagstruct%regional
 
@@ -679,10 +681,10 @@ module fv_control_mod
                          refinement, nestbctype, nestupdate, nsponge, s_weight, &
                          ioffset, joffset, check_negative, nudge_ic, halo_update_type, gfs_phil, agrid_vel_rst,     &
                          do_uni_zfull, adj_mass_vmr, fac_n_spl, fhouri, &
-                         regional, bc_update_interval,&
-                         write_coarse_restart_files, write_coarse_diagnostics,&
-                         write_only_coarse_intermediate_restarts,&
-                         restart_from_agrid_winds, write_optional_dgrid_vel_rst,&
+                         regional, bc_update_interval, edge_subdomain_shrink_factor, &
+                         write_coarse_restart_files, write_coarse_diagnostics, &
+                         write_only_coarse_intermediate_restarts, &
+                         restart_from_agrid_winds, write_optional_dgrid_vel_rst, &
                          write_coarse_dgrid_vel_rst, write_coarse_agrid_vel_rst
 
    namelist /test_case_nml/test_case, bubble_do, alpha, nsolitons, soliton_Umax, soliton_size
@@ -845,6 +847,14 @@ module fv_control_mod
       endif
       n0split = max ( 1, n0split )
 
+      if (edge_subdomain_shrink_factor <= 0.0 .or. edge_subdomain_shrink_factor > 1.0) then
+         call mpp_error(FATAL, 'edge_subdomain_shrink_factor must be in range (0.0, 1.0]')
+      end if
+      if (grid_type >= 3 .and. edge_subdomain_shrink_factor < 1.0) then
+         if (is_master()) write(*,*) 'Resetting edge_subdomain_shrink_factor=1.0. Other values are only for cubed-sphere grids.'
+         edge_subdomain_shrink_factor = 1.0
+      end if
+
       if ( n_split == 0 ) then
            n_split = nint( real(n0split)/real(k_split*abs(p_split)) * stretch_fac + 0.5 )
            if(is_master()) write(*,*) 'For k_split (remapping)=', k_split
@@ -990,7 +1000,8 @@ module fv_control_mod
       call switch_current_Atm(Atm(n),.false.)
       call setup_pointers(Atm(n))
       !! CLEANUP: WARNING not sure what changes to domain_decomp may cause
-      call domain_decomp(npx,npy,ntiles,grid_type,nested,Atm(n),layout,io_layout)
+      call domain_decomp(npx, npy, ntiles, grid_type, nested, Atm(n), layout, io_layout, &
+                         edge_subdomain_shrink_factor)
    enddo
 
    !!! CLEANUP: This sets the pelist to ALL, which is also
@@ -1193,6 +1204,7 @@ module fv_control_mod
      res_latlon_tracers            => Atm%flagstruct%res_latlon_tracers
 
      grid_type                     => Atm%flagstruct%grid_type
+     edge_subdomain_shrink_factor  => Atm%flagstruct%edge_subdomain_shrink_factor
      grid_name                     => Atm%flagstruct%grid_name
      grid_file                     => Atm%flagstruct%grid_file
      hord_mt                       => Atm%flagstruct%hord_mt
