@@ -3799,6 +3799,8 @@ module GFS_diagnostics
     ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%q_dt_int(:,5)
   enddo
 
+  call populate_emulator_diagnostics(ExtDiag, IntDiag, nblks, idx)
+
 !--------------------------aerosols
 #ifdef CCPP
     if (Model%ntwa>0) then
@@ -4257,5 +4259,12 @@ module GFS_diagnostics
 #endif
 
 !-------------------------------------------------------------------------      
+  subroutine populate_emulator_diagnostics(ExtDiag, IntDiag, nblks, idx)
+    type(GFS_externaldiag_type),  intent(inout) :: ExtDiag(:)
+    type(GFS_diag_type),          intent(in)    :: IntDiag(:)
+    integer, intent(in) :: nblks
+    integer, intent(inout) :: idx
+
+  end subroutine
 
 end module GFS_diagnostics
