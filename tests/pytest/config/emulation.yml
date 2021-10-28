@@ -1,30 +1,5 @@
 data_table: default
-diag_table:
-  name: emulation_diags
-  base_time: 2000-01-01T00:00:00
-  file_configs:
-    - name: physics
-      frequency: 1
-      frequency_units: "hours"
-      field_configs:
-        - field_name: tendency_of_air_temperature_due_to_zhao_carr_emulator
-          module_name: gfs_phys
-          output_name: tendency_of_air_temperature_due_to_zhao_carr_emulator
-        - field_name: tendency_of_cloud_water_due_to_zhao_carr_emulator
-          module_name: gfs_phys
-          output_name: tendency_of_cloud_water_due_to_zhao_carr_emulator
-        - field_name: tendency_of_specific_humidity_due_to_zhao_carr_emulator
-          module_name: gfs_phys
-          output_name: tendency_of_specific_humidity_due_to_zhao_carr_emulator
-        - field_name: tendency_of_air_temperature_due_to_zhao_carr_physics
-          module_name: gfs_phys
-          output_name: tendency_of_air_temperature_due_to_zhao_carr_physics
-        - field_name: tendency_of_cloud_water_due_to_zhao_carr_physics
-          module_name: gfs_phys
-          output_name: tendency_of_cloud_water_due_to_zhao_carr_physics
-        - field_name: tendency_of_specific_humidity_due_to_zhao_carr_physics
-          module_name: gfs_phys
-          output_name: tendency_of_specific_humidity_due_to_zhao_carr_physics
+diag_table: default
 experiment_name: microphysics_emulation
 forcing: "gs://vcm-fv3config/data/base_forcing/v1.1/"
 orographic_forcing: gs://vcm-fv3config/data/orographic_data/v1.0
@@ -259,7 +234,7 @@ namelist:
     isubc_lw: 2
     isubc_sw: 2
     ivegsrc: 1
-    ldiag3d: true
+    ldiag3d: false
     lwhtr: true
     ncld: 1
     nst_anl: true
