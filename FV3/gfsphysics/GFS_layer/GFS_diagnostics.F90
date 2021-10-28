@@ -4270,13 +4270,14 @@ module GFS_diagnostics
     integer, intent(inout) :: idx
     ! locals
     integer nb
+    character(len=128), parameter :: module_name = "zhao_carr_microphysics"
 
     idx = idx + 1
     ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_zhao_carr_' // trim(label)
+    ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_' // trim(label)
     ExtDiag(idx)%desc = 'temperature tendency due to Zhao Carr ' // trim(label)
     ExtDiag(idx)%unit = 'K/s'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%mod_name = module_name
     ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
     ExtDiag(idx)%diag_manager_controlled = .true.
     allocate (ExtDiag(idx)%data(nblks))
@@ -4285,10 +4286,10 @@ module GFS_diagnostics
     end do
     idx = idx + 1
     ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'tendency_of_specific_humidity_due_to_zhao_carr_' // trim(label)
+    ExtDiag(idx)%name = 'tendency_of_specific_humidity_due_to_' // trim(label)
     ExtDiag(idx)%desc = 'specific humidity tendency due to Zhao Carr ' // trim(label)
     ExtDiag(idx)%unit = 'kg/kg/s'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%mod_name = module_name
     ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
     ExtDiag(idx)%diag_manager_controlled = .true.
     allocate (ExtDiag(idx)%data(nblks))
@@ -4298,10 +4299,10 @@ module GFS_diagnostics
 
     idx = idx + 1
     ExtDiag(idx)%axes = 3
-    ExtDiag(idx)%name = 'tendency_of_cloud_water_due_to_zhao_carr_' // trim(label)
+    ExtDiag(idx)%name = 'tendency_of_cloud_water_due_to_' // trim(label)
     ExtDiag(idx)%desc = 'cloud water due to Zhao Carr ' // trim(label)
     ExtDiag(idx)%unit = 'kg/kg/s'
-    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%mod_name = module_name
     ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
     ExtDiag(idx)%diag_manager_controlled = .true.
     allocate (ExtDiag(idx)%data(nblks))
