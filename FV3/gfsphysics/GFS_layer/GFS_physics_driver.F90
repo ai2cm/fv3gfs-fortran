@@ -4587,8 +4587,8 @@ module module_physics_driver
             call get_state("total_precipitation", rain1)
 
             if (Model%ldiag3d) then
-              Diag%zhao_carr_emulator%humidity = (qv_post_precpd(1:im,1:levs, 1) - dqdt(:,:,1)) * frain
-              Diag%zhao_carr_emulator%cloud_water = (qc_post_precpd(1:im,1:levs,ntcw) - dqdt(:,:,ntcw)) * frain
+              Diag%zhao_carr_emulator%humidity = (qv_post_precpd(1:im,1:levs) - dqdt(:,:,1)) * frain
+              Diag%zhao_carr_emulator%cloud_water = (qc_post_precpd(1:im,1:levs) - dqdt(:,:,ntcw)) * frain
               Diag%zhao_carr_emulator%temperature = (t_post_precpd(1:im,1:levs) - dtdt) * frain
             end if
 
