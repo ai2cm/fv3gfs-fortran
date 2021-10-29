@@ -1801,12 +1801,17 @@
                   r = great_circle_dist( pcen, grid(i,j+1,1:2), radius )
                   if (-(r/r0)**2.0 > -40.0) utmp = utmp + u1*EXP(-(r/r0)**2.0) 
                   vv1 = utmp*(ee2(2,i,j+1)*cos(grid(i,j+1,1)) - ee2(1,i,j+1)*sin(grid(i,j+1,1)))
-
+                  if ((i==is) .and. (j==js) .and. (z==1) .and.  (is_master()) ) then 
+                     WRITE(0,*) 'BAROCLINIC SAMPLE vv1',  vv1, r, utmp
+                  endif
                   utmp =  Ubar * COS(eta_v(z))**(3.0/2.0) * SIN(2.0*grid(i,j,2))**2.0
              ! Perturbation if Case==13
                   r = great_circle_dist( pcen, grid(i,j,1:2), radius )
                   if (-(r/r0)**2.0 > -40.0) utmp = utmp + u1*EXP(-(r/r0)**2.0) 
                   vv3 = utmp*(ee2(2,i,j)*cos(grid(i,j,1)) - ee2(1,i,j)*sin(grid(i,j,1)))
+                  if ((i==is) .and. (j==js) .and. (z==1) .and.  (is_master()) ) then 
+                     WRITE(0,*) 'BAROCLINIC SAMPLE vv3',  vv3, r, utmp
+                  endif
 ! Mid-point:
                   p1(:) = grid(i  ,j ,1:2)
                   p2(:) = grid(i,j+1 ,1:2)
@@ -1818,6 +1823,9 @@
                   vv2 = utmp*(ew(2,i,j,2)*cos(pa(1)) - ew(1,i,j,2)*sin(pa(1)))
 ! 3-point average:
                   v(i,j,z) = 0.25*(vv1 + 2.*vv2 + vv3)
+                  if ((i==is) .and. (j==js) .and. (z==1) .and.  (is_master()) ) then 
+                     WRITE(0,*) 'BAROCLINIC SAMPLE vv2', vv2, r, utmp, v(i,j,z) 
+                  endif
                enddo
             enddo
             do j=js,je+1
