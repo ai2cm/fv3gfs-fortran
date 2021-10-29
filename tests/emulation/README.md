@@ -45,17 +45,17 @@ diag_table:
       field_configs:
         - field_name: tendency_of_air_temperature_due_to_emulator
           module_name: zhao_carr_microphysics
-          output_name: tendency_of_air_temperature_due_to_emulator
-        - field_name: tendency_of_cloud_water_due_to_zhao_carr_emulator
+          output_name: tendency_of_air_temperature_due_to_zhao_carr_emulator
+        - field_name: tendency_of_cloud_water_due_to_emulator
           module_name: zhao_carr_microphysics
-          output_name: tendency_of_cloud_water_due_to_emulator
-        - field_name: tendency_of_specific_humidity_due_to_zhao_carr_emulator
+          output_name: tendency_of_cloud_water_due_to_zhao_carr_emulator
+        - field_name: tendency_of_specific_humidity_due_to_emulator
           module_name: zhao_carr_microphysics
-          output_name: tendency_of_specific_humidity_due_to_emulator
-        - field_name: tendency_of_air_temperature_due_to_zhao_carr_physics
+          output_name: tendency_of_specific_humidity_due_to_zhao_carr_emulator
+        - field_name: tendency_of_air_temperature_due_to_physics
           module_name: zhao_carr_microphysics
-          output_name: tendency_of_air_temperature_due_to_physics
-        - field_name: tendency_of_cloud_water_due_to_zhao_carr_physics
+          output_name: tendency_of_air_temperature_due_to_zhao_carr_physics
+        - field_name: tendency_of_cloud_water_due_to_physics
           module_name: zhao_carr_microphysics
           output_name: tendency_of_cloud_water_due_to_zhao_carr_physics
         - field_name: tendency_of_specific_humidity_due_to_physics
