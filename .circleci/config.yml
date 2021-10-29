@@ -131,4 +131,4 @@ workflows:
     jobs:
       - build_default
       - nix
-      - nix-mac
+#      - nix-mac

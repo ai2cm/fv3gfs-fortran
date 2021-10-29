@@ -782,7 +782,7 @@ contains
                 dx(i,j) = great_circle_dist( p2, p1, radius )
              enddo
           enddo
-          if( stretched_grid ) then
+          if( stretched_grid .or. Atm%flagstruct%edge_subdomain_shrink_factor < 1.0 ) then
              do j = jstart, jend
                 do i = istart, iend+1
                    p1(1) = grid(i,j,  1)
@@ -793,6 +793,8 @@ contains
                 enddo
              enddo
           else
+             ! Note: get_symmetry makes some assumptions about subdomain size which will cause
+             !       it to fail if edge_subdomain_shrink_factor < 1.0
              call get_symmetry(dx(is:ie,js:je+1), dy(is:ie+1,js:je), 0, 1, Atm%layout(1), Atm%layout(2), &
                   Atm%domain, Atm%tile, Atm%gridstruct%npx_g, Atm%bd)
           endif

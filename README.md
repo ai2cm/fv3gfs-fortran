@@ -1,4 +1,4 @@
-[![VulcanClimateModeling](https://circleci.com/gh/VulcanClimateModeling/fv3gfs-fortran.svg?style=svg)](https://circleci.com/gh/VulcanClimateModeling/fv3gfs-fortran)
+[![CircleCI](https://circleci.com/gh/ai2cm/fv3gfs-fortran/tree/master.svg?style=svg)](https://circleci.com/gh/ai2cm/fv3gfs-fortran/tree/master)
 
 # Repository Structure
 
@@ -55,14 +55,17 @@ Rules are provided for certain compile options. Check the Makefile for a list or
 
 ## Step 2: Install fv3config
 
+FV3 expects to be run within a certain directory structure, which we call a "run directory". These can be prepared using the [fv3config](https://github.com/ai2cm/fv3config).
+
+This tool can be installed using `pip install fv3config`. To use versions that are guaranteed to work, we provide a `requirements.txt`, that you can use as follows:
+
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-will download required dependencies for running tests and using fv3config. You can
-also manually install the fv3config package.
+This command will download required dependencies for running tests and using fv3config.
 
 In order to use `run_docker.sh` below, you will also need to set the fv3config
 cache directory using
@@ -84,8 +87,13 @@ to find out the default location.
 Create or download an fv3config yaml configuration. Edit the configuration as needed.
 Examples of such configurations are included in the tests under `tests/pytest/config`.
 
-Once you have a configuration file, e.g. `example/config.yml`, you can write a run directory in python using:
+Once you have a configuration file, e.g. `example/config.yml`, you can write a run directory as follows:
 
+    write_run_directory example/config.yml rundirectory
+
+You will need to be authenticated with google cloud storage to run this command. See instructions below.
+
+The python API equivalent of this is
 ```python3
 import fv3config
 import yaml
@@ -107,15 +115,40 @@ for your run and the set of diagnostics the model will output. Ideally this shou
 done instead by editing the `config.yml` we used earlier.
 
 
+### Authentication
+
+The data referred to by this example configuration are stored in a GCS bucket, stored in the `us-central1` region. This data is free to use, but we have enabled requestor-pays to avoid paying for network transfer costs incurred by external users. You will need to authenticate with your own google cloud project credentials to access this data. Detailed instructions are out of scope, but usually involves the setting the following environmental variables
+```
+export FSSPEC_GS_REQUESTER_PAYS="on"
+export GOOGLE_APPLICATION_CREDENTIALS=/path/to/key.json
+```
+For more information see [this documentation](https://gcsfs.readthedocs.io/en/latest/api.html#gcsfs.core.GCSFileSystem).
+
 ## Step 4: Run the model
 
+## Within container/manual
+
+Assuming you are in environment with a compiled version of the FV3 model at the path `/absolute/path/to/fv3.exe` and a rundirectory at the path `<rundir>`, you can run the model like this
+
+    cd <rundir>
+    mpirun -n <number of processors> /absolute/path/to/fv3.exe
+
+The number of processors has to be `6 * num_tiles` where `num_tiles` is the product of the `namelist.fv_core_nml.layout` configurations.
+
+
+## From host via docker
+
+If you would like to run the model in one of the included docker containers use the command
+
 ```bash
-bash run_docker.sh us.gcr.io/vcm-ml/fv3gfs-compiled:latest <rundir> $FV3CONFIG_CACHE_DIR
+bash run_docker.sh <image> <rundir> $FV3CONFIG_CACHE_DIR
 ```
 
-where `<rundir>` is an absolute path to the run directory.
+where `<rundir>` is an absolute path to the run directory. `<image>` is the name of the container built by `make build`, typically `us.gcr.io/vcm-ml/fv3gfs-compiled:gnu7-mpich314-nocuda`.
 
 # Developing the model
+
+## Docker
 
 The `fv3gfs-environment` docker image is useful for development purposes where the model code will be recompiled repeatedly in an interactive fashion. To start a bash shell in a docker container with the FV3 source tree mounted at `/FV3`, run the command:
 
@@ -126,15 +159,65 @@ make enter
 If necessary, this will build the image, but it will overwrite the compiled sources
 with a bind mount to your host filesystem. You will need to compile the model with
 the filesystem bind-mounted in this way. Once in the container, you can compile the model using the commands
-
-To compile the model and generate an executable you can use the commands
-
 ```bash
 cd /FV3
 ./configure gnu_docker
 make clean
 make -j8
 ```
+
+## Nix
+
+
+
+FV3 can also be installed using the [nix](https://nixos.org/) package
+manager. This package manager is available on Mac and Linux, and provides a
+light weight means to distribute isolated software environments.
+
+### Installation
+
+To begin, install nix following [these instructions](https://nixos.org/download.html).
+
+(optional) We host binaries using a tool called cachix, and this will greatly speed up any builds. To use our binaries, [install cachix](https://github.com/cachix/cachix#installation) and then run
+
+    cachix use vulcanclimatemodeling
+
+Finally, you can build the model like this 
+
+    nix-build -A fv3
+
+Without using the cachix cache, FV3 and all its dependencies will need to build from source (~20 minutes). This only happens once per machine, but it is slow.
+
+### Running simple tests
+
+Now you can enter a shell with fv3 and all its dependencies installed by
+running
+
+    nix-shell tests.nix
+
+This will download all the dependencies from the internet, building any
+uncached packages from scratch.
+
+Then, you can run a simple test by running
+    
+    tox
+
+### Developing
+
+To develop the model, you can use the environment specified in `shell.nix` by running
+
+    nix-shell
+
+Then copy the nix build configuration file to the magic location harcoded in
+the FV3 makefiles:
+
+    cp -f nix/fv3/configure.fv3 FV3/conf/
+
+And build the model
+
+    cd FV3
+    make
+
 
 # Testing the model
 
@@ -193,54 +276,3 @@ directory (it is `/FV3` by default) that you have bind-mounted in to the contain
 If you are using a version of docker that supports it, you can enable buildkit by
 setting `DOCKER_BUILDKIT=1` as an environment variable. This can be useful when building docker targets in this repo, because it will avoid building mulit-stage targets that are not required for the final image.
 
-# Nix
-
-
-
-FV3 can also be installed using the [nix](https://nixos.org/) package
-manager. This package manager is available on Mac and Linux, and provides a
-light weight means to distribute isolated software environments.
-
-## Installation
-
-To begin, install nix following [these instructions](https://nixos.org/download.html).
-
-(optional) We host binaries using a tool called cachix, and this will greatly speed up any builds. To use our binaries, [install cachix](https://github.com/cachix/cachix#installation) and then run
-
-    cachix use vulcanclimatemodeling
-
-Finally, you can build the model like this 
-
-    nix-build -A fv3
-
-Without using the cachix cache, FV3 and all its dependencies will need to build from source (~20 minutes). This only happens once per machine, but it is slow.
-
-## Running simple tests
-
-Now you can enter a shell with fv3 and all its dependencies installed by
-running
-
-    nix-shell tests.nix
-
-This will download all the dependencies from the internet, building any
-uncached packages from scratch.
-
-Then, you can run a simple test by running
-    
-    tox
-
-## Developing
-
-To develop the model, you can use the environment specified in `shell.nix` by running
-
-    nix-shell
-
-Then copy the nix build configuration file to the magic location harcoded in
-the FV3 makefiles:
-
-    cp -f nix/fv3/configure.fv3 FV3/conf/
-
-And build the model
-
-    cd FV3
-    make

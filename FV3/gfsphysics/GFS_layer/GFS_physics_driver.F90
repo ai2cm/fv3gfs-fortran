@@ -600,7 +600,8 @@ module module_physics_driver
       !--- intermediate for callpyfort set_state
       real(kind=kind_phys), dimension(size(Grid%xlon,1),Model%levs) ::  &
           qv_cpf, qc_cpf, qvp_cpf, tp_cpf, qvp1_cpf, tp1_cpf,           &
-          qv_post_gscond, qc_post_gscond, qv_post_precpd, qc_post_precpd
+          qv_post_gscond, qc_post_gscond, qv_post_precpd, qc_post_precpd,&
+          t_post_precpd
 
       real(kind=kind_phys), dimension(size(Grid%xlon,1))  ::            &
           psp_cpf, psp1_cpf
@@ -4550,8 +4551,15 @@ module module_physics_driver
                         Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),           &
                         Stateout%gt0, rain1, Diag%sr, rainp, rhc, psautco_l,   &
                         prautco_l, Model%evpco, Model%wminco, lprnt, ipr)
-            
+
+            if (Model%ldiag3d) then
+              Diag%zhao_carr_physics%humidity = (Stateout%gq0(1:im,1:levs, 1) - dqdt(:,:,1)) / dtp
+              Diag%zhao_carr_physics%cloud_water = (Stateout%gq0(1:im,1:levs,ntcw) - dqdt(:,:,ntcw)) / dtp
+              Diag%zhao_carr_physics%temperature = (Stateout%gt0(1:im,1:levs) - dtdt) / dtp
+            end if
+
 #ifdef ENABLE_CALLPYFORT
+
             do k=1,levs
               do i=1,im
                 qv_post_precpd(i,k) = Stateout%gq0(i,k,1)
@@ -4567,26 +4575,34 @@ module module_physics_driver
             call set_state("ratio_of_snowfall_to_rainfall", Diag%sr)
             call set_state("tendency_of_rain_water_mixing_ratio_due_to_microphysics", rainp)
 
-            if (Model%emulate_zc_microphysics) then
-              ! apply microphysics emulator
-              call call_function("emulation", "microphysics")
-            endif
+            call call_function("emulation", "microphysics")
             
             if (Model%save_zc_microphysics) then
               call call_function("emulation", "store")
             endif
 
-            call get_state("air_temperature_output", Stateout%gt0)
+            call get_state("air_temperature_output", t_post_precpd)
             call get_state("specific_humidity_output", qv_post_precpd)
             call get_state("cloud_water_mixing_ratio_output", qc_post_precpd)
             call get_state("total_precipitation", rain1)
 
-            do k=1,levs
-              do i=1,im
-                Stateout%gq0(i,k,1) = qv_post_precpd(i,k)
-                Stateout%gq0(i,k,ntcw) = qc_post_precpd(i,k)
+            if (Model%ldiag3d) then
+              Diag%zhao_carr_emulator%humidity = (qv_post_precpd(1:im,1:levs) - dqdt(:,:,1)) / dtp
+              Diag%zhao_carr_emulator%cloud_water = (qc_post_precpd(1:im,1:levs) - dqdt(:,:,ntcw)) / dtp
+              Diag%zhao_carr_emulator%temperature = (t_post_precpd(1:im,1:levs) - dtdt) / dtp
+            end if
+
+            ! apply emulator
+            if (Model%emulate_zc_microphysics) then
+              do k=1,levs
+                do i=1,im
+                  Stateout%gq0(i,k,1) = qv_post_precpd(i,k)
+                  Stateout%gq0(i,k,ntcw) = qc_post_precpd(i,k)
+                  Stateout%gt0(i,k) = t_post_precpd(i,k)
+                enddo
               enddo
-            enddo
+            endif
+
 #endif
             
           endif
