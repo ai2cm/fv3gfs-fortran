@@ -20,6 +20,7 @@ let
 in
 stdenv.mkDerivation {
   name = "fv3";
+  inherit fms;
   buildInputs = [
       fms
       esmf
