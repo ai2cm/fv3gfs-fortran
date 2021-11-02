@@ -56,10 +56,12 @@ jobs:
       - run: |
           nix-env -iA cachix -f https://cachix.org/api/v1/install
           cachix use vulcanclimatemodeling
-          nix-build -j 4 -A fv3 | cachix push vulcanclimatemodeling
+      - run: |
+          nix-build -j 4 -A fms | cachix push vulcanclimatemodeling
+          nix-shell --run "cp -f nix/fv3/configure.fv3 FV3/conf && make -j 4 -C FV3"
       - run:
           name: Test
-          command: nix-shell tests.nix --run tox
+          command: nix-shell --run "pytest --native tests/pytest"
   build_default:
     machine:
       docker_layer_caching: true
