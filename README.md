@@ -172,7 +172,8 @@ make -j8
 
 FV3 can also be installed using the [nix](https://nixos.org/) package
 manager. This package manager is available on Mac and Linux, and provides a
-light weight means to distribute isolated software environments.
+light weight means to distribute isolated software environments. 
+
 
 ### Installation
 
@@ -182,25 +183,7 @@ To begin, install nix following [these instructions](https://nixos.org/download.
 
     cachix use vulcanclimatemodeling
 
-Finally, you can build the model like this 
-
-    nix-build -A fv3
-
 Without using the cachix cache, FV3 and all its dependencies will need to build from source (~20 minutes). This only happens once per machine, but it is slow.
-
-### Running simple tests
-
-Now you can enter a shell with fv3 and all its dependencies installed by
-running
-
-    nix-shell tests.nix
-
-This will download all the dependencies from the internet, building any
-uncached packages from scratch.
-
-Then, you can run a simple test by running
-    
-    tox
 
 ### Developing
 
@@ -215,8 +198,14 @@ the FV3 makefiles:
 
 And build the model
 
-    cd FV3
-    make
+    make -C FV3
+
+Then, to run some simple tests execute
+
+    pytest --native tests/pytest
+
+The `--native` flag only runs tests intended to be run in a native environment
+(e.g. nix, bare metal, or inside a docker container).
 
 
 # Testing the model

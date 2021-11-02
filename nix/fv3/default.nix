@@ -25,6 +25,8 @@ stdenv.mkDerivation {
   buildInputs = [
       call_py_fort
       call_py_fort.pypkgs.fv3config
+      call_py_fort.pypkgs.pytest
+      call_py_fort.pypkgs.pyyaml
       fms
       esmf
       nceplibs
@@ -97,5 +99,9 @@ installPhase = ''
   NCEPLIBS_DIR="${nceplibs}/lib";
   OMPI_CC="${gfortran.cc}/bin/gcc";
   CALLPYFORT="${call_py_fort}";
+
+  shellHook = ''
+    export PYTHONPATH=$(pwd)/tests/emulation:$PYTHONPATH
+  '';
 }
 
