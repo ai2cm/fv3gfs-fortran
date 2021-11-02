@@ -5,7 +5,7 @@ let
     name = "vcm-packages";
     url = "git@github.com:VulcanClimateModeling/packages.git";
     ref = "master";
-    rev = "f9f66a438833ffc83830fbb0701f4ed656c89bfd";
+    rev = "127f9a5d294103d541c9e1d829bea8e1b4252220";
   });
   # use local version of FMS
   fms = vcmpkgs.callPackage ./nix/fms { };
