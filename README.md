@@ -200,14 +200,7 @@ And build the model
 
     make -C FV3
 
-Then, to run some simple tests execute
-
-    pytest --native tests/pytest
-
-The `--native` flag only runs tests intended to be run in a native environment
-(e.g. nix, bare metal, or inside a docker container).
-
-
+At this point you can run [the native tests](#native-tests).
 # Testing the model
 
 Tests are included in the `tests` subdirectory. You can see which ones run in
@@ -217,6 +210,22 @@ Regression tests which check the bit-reproducibility of results are
 performed for a set of reference configurations included in `tests/pytest/config`.
 Please read the README in `tests/pytest` for more information about these regression
 tests and how to update the reference checksums.
+
+## Native tests
+
+The `--native` flag only runs tests intended to be run in a native environment
+(e.g. nix, bare metal, or inside a docker container). A native environment is
+capable of running the file `FV3/fv3.exe`.
+
+Then, to run some simple tests execute
+
+    pytest --native tests/pytest
+
+## Image tests
+
+Certain tests are more convenient or reliable to run within a docker container.
+For example, regression tests are only valid within a consistent environment as
+represented by a docker container.
 
 # Serialization
 
