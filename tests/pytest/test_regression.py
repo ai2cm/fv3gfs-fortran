@@ -8,12 +8,12 @@ import fv3config
 
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
-REFERENCE_DIR = os.path.join(TEST_DIR, 'reference')
-OUTPUT_DIR = os.path.join(TEST_DIR, 'output')
-CONFIG_DIR = os.path.join(TEST_DIR, 'config')
-SUBMIT_JOB_FILENAME = os.path.join(TEST_DIR, 'run_files/submit_job.sh')
-STDOUT_FILENAME = 'stdout.log'
-STDERR_FILENAME = 'stderr.log'
+REFERENCE_DIR = os.path.join(TEST_DIR, "reference")
+OUTPUT_DIR = os.path.join(TEST_DIR, "output")
+CONFIG_DIR = os.path.join(TEST_DIR, "config")
+SUBMIT_JOB_FILENAME = os.path.join(TEST_DIR, "run_files/submit_job.sh")
+STDOUT_FILENAME = "stdout.log"
+STDERR_FILENAME = "stderr.log"
 MD5SUM_FILENAME = "md5.txt"
 SERIALIZE_MD5SUM_FILENAME = "md5_serialize.txt"
 GOOGLE_APP_CREDS = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", None)
@@ -52,12 +52,12 @@ def image_runner(request):
 
 def get_config(filename):
     config_filename = os.path.join(CONFIG_DIR, filename)
-    with open(config_filename, 'r') as config_file:
+    with open(config_filename, "r") as config_file:
         return yaml.safe_load(config_file)
 
 
 def get_run_dir(model_image_tag, config):
-    run_name = config['experiment_name']
+    run_name = config["experiment_name"]
     return os.path.join(OUTPUT_DIR, model_image_tag, run_name)
 
 
@@ -67,7 +67,7 @@ def get_n_processes(config):
 
 
 @pytest.mark.parametrize(
-    ("config_filename", "tag"), 
+    ("config_filename", "tag"),
     [
         ("default.yml", "{version}-debug"),
         ("baroclinic.yml", "{version}-debug"),
@@ -75,27 +75,22 @@ def get_n_processes(config):
         ("default.yml", "{version}-serialize"),
         ("restart.yml", "{version}"),
         ("model-level-coarse-graining.yml", "{version}-debug"),
-        ("pressure-level-coarse-graining.yml", "{version}-debug")
-    ]
+        ("pressure-level-coarse-graining.yml", "{version}-debug"),
+    ],
 )
 def test_regression(
-    config_filename,
-    tag,
-    image,
-    image_version,
-    reference_dir,
-    image_runner
+    config_filename, tag, image, image_version, reference_dir, image_runner
 ):
     model_image_tag = tag.format(version=image_version)
     model_image = f"{image}:{model_image_tag}"
     config = get_config(config_filename)
     run_dir = get_run_dir(model_image_tag, config)
     run_model(config, run_dir, model_image, image_runner)
-    run_name = config['experiment_name']
+    run_name = config["experiment_name"]
     run_reference_dir = os.path.join(reference_dir, run_name)
     md5sum_filename = os.path.join(run_reference_dir, MD5SUM_FILENAME)
     check_rundir_md5sum(run_dir, md5sum_filename)
-    if 'serialize' in model_image:
+    if "serialize" in model_image:
         serialize_md5sum_filename = os.path.join(
             run_reference_dir, SERIALIZE_MD5SUM_FILENAME
         )
@@ -128,10 +123,10 @@ def ensure_reference_exists(filename):
 def run_model_docker(rundir, model_image, n_processes, additional_env_vars=None):
     if USE_LOCAL_ARCHIVE:
         archive = fv3config.get_cache_dir()
-        archive_mount = ['-v', f'{archive}:{archive}']
+        archive_mount = ["-v", f"{archive}:{archive}"]
     else:
         archive_mount = []
-    
+
     if GOOGLE_APP_CREDS is not None:
         secret_mount = ["-v", f"{GOOGLE_APP_CREDS}:/tmp/key.json"]
         env_vars = ["--env", "GOOGLE_APPLICATION_CREDENTIALS"]
@@ -143,25 +138,25 @@ def run_model_docker(rundir, model_image, n_processes, additional_env_vars=None)
         env_vars += additional_env_vars
 
     docker_runpath = ""
-    docker_run = ['docker', 'run', '--rm']
+    docker_run = ["docker", "run", "--rm"]
     rundir_abs = os.path.abspath(rundir)
-    rundir_mount = ['-v', f'{rundir_abs}:' + docker_runpath + '/rundir']
-    data_abs = os.path.abspath(os.path.join(rundir_abs, 'test_data'))
+    rundir_mount = ["-v", f"{rundir_abs}:" + docker_runpath + "/rundir"]
+    data_abs = os.path.abspath(os.path.join(rundir_abs, "test_data"))
     os.makedirs(data_abs, exist_ok=True)
-    data_mount = ['-v', f'{data_abs}:' + docker_runpath + '/rundir/test_data']
-    fv3out_filename = join(rundir, 'stdout.log')
-    fv3err_filename = join(rundir, 'stderr.log')
+    data_mount = ["-v", f"{data_abs}:" + docker_runpath + "/rundir/test_data"]
+    fv3out_filename = join(rundir, "stdout.log")
+    fv3err_filename = join(rundir, "stderr.log")
     call = (
-        docker_run + 
-        rundir_mount + 
-        archive_mount + 
-        data_mount + 
-        secret_mount + 
-        env_vars + 
-        [model_image] + 
-        ["bash", "/rundir/submit_job.sh", str(n_processes)]
+        docker_run
+        + rundir_mount
+        + archive_mount
+        + data_mount
+        + secret_mount
+        + env_vars
+        + [model_image]
+        + ["bash", "/rundir/submit_job.sh", str(n_processes)]
     )
-    with open(fv3out_filename, 'w') as fv3out_f, open(fv3err_filename, 'w') as fv3err_f:
+    with open(fv3out_filename, "w") as fv3out_f, open(fv3err_filename, "w") as fv3err_f:
         subprocess.check_call(
             call,
             stdout=fv3out_f,
@@ -170,7 +165,10 @@ def run_model_docker(rundir, model_image, n_processes, additional_env_vars=None)
 
 
 def run_model_sarus(rundir, model_image, n_processes):
-    shutil.copy(os.path.join(TEST_DIR, "run_files/job_jenkins_sarus"), os.path.join(rundir, "job_jenkins_sarus"))
+    shutil.copy(
+        os.path.join(TEST_DIR, "run_files/job_jenkins_sarus"),
+        os.path.join(rundir, "job_jenkins_sarus"),
+    )
     # run job_jenkins_sarus with env var FV3_CONTAINER set to model_image
     env = os.environ.copy()
     env["FV3_CONTAINER"] = model_image
@@ -185,7 +183,7 @@ def check_md5sum(run_dir, md5sum_filename):
 
 def write_run_directory(config, dirname):
     fv3config.write_run_directory(config, dirname)
-    shutil.copy(SUBMIT_JOB_FILENAME, os.path.join(dirname, 'submit_job.sh'))
+    shutil.copy(SUBMIT_JOB_FILENAME, os.path.join(dirname, "submit_job.sh"))
 
 
 def run_model(config, run_dir, model_image, image_runner, additional_env_vars=None):
@@ -195,7 +193,9 @@ def run_model(config, run_dir, model_image, image_runner, additional_env_vars=No
     write_run_directory(config, run_dir)
     n_processes = get_n_processes(config)
     if image_runner == "docker":
-        run_model_docker(run_dir, model_image, n_processes, additional_env_vars=additional_env_vars)
+        run_model_docker(
+            run_dir, model_image, n_processes, additional_env_vars=additional_env_vars
+        )
     elif image_runner == "sarus":
         run_model_sarus(run_dir, model_image, n_processes)
     else:
@@ -203,21 +203,15 @@ def run_model(config, run_dir, model_image, image_runner, additional_env_vars=No
 
 
 @pytest.mark.parametrize(
-    ("config_filename", "tag", "layout"), 
+    ("config_filename", "tag", "layout"),
     [
         ("model-level-coarse-graining.yml", "{version}", [1, 2]),
-        ("pressure-level-coarse-graining.yml", "{version}", [1, 2])
+        ("pressure-level-coarse-graining.yml", "{version}", [1, 2]),
     ],
-    ids=lambda x: str(x)
+    ids=lambda x: str(x),
 )
 def test_run_reproduces_across_layouts(
-    config_filename,
-    tag,
-    layout,
-    image,
-    image_version,
-    image_runner,
-    reference_dir
+    config_filename, tag, layout, image, image_version, image_runner, reference_dir
 ):
     model_image_tag = tag.format(version=image_version)
     model_image = f"{image}:{model_image_tag}"
@@ -235,5 +229,5 @@ def test_run_reproduces_across_layouts(
     shutil.rmtree(run_dir)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     pytest.main()
