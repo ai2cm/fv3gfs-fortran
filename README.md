@@ -225,7 +225,9 @@ Then, to run some simple tests execute
 
 Certain tests are more convenient or reliable to run within a docker container.
 For example, regression tests are only valid within a consistent environment as
-represented by a docker container.
+represented by a docker container. These test are run from a host environment like this
+
+    pytest tests/pytest
 
 # Serialization
 
