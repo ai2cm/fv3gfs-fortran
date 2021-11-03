@@ -27,14 +27,14 @@ jobs:
             git submodule init
             git submodule update
       - run: |
-          nix-build -j 4 -A fv3 | cachix push vulcanclimatemodeling
+          nix-build -j 4 -A fms | cachix push vulcanclimatemodeling
+          nix-shell --run "cp -f nix/fv3/configure.fv3 FV3/conf && make -j 4 -C FV3"
           # additional changes to the DNS settings are needed for mac
           # https://stackoverflow.com/questions/23112515/mpich2-gethostbyname-failed
           echo "127.0.0.1 $HOSTNAME" | sudo tee -a /etc/hosts
-
       - run:
           name: Test
-          command: nix-shell tests.nix --run tox
+          command: nix-shell --run "pytest --native tests/pytest"
   nix:
     docker:
       - image: nixos/nix
@@ -56,10 +56,12 @@ jobs:
       - run: |
           nix-env -iA cachix -f https://cachix.org/api/v1/install
           cachix use vulcanclimatemodeling
-          nix-build -j 4 -A fv3 | cachix push vulcanclimatemodeling
+      - run: |
+          nix-build -j 4 -A fms | cachix push vulcanclimatemodeling
+          nix-shell --run "cp -f nix/fv3/configure.fv3 FV3/conf && make -j 4 -C FV3"
       - run:
           name: Test
-          command: nix-shell tests.nix --run tox
+          command: nix-shell --run "pytest --native tests/pytest"
   build_default:
     machine:
       docker_layer_caching: true
@@ -87,7 +89,7 @@ jobs:
           command: |
             git submodule init
             git submodule update
-      - run: DOCKER_BUILDKIT=1 BUILDKIT_PROGRESS=plain BUILD_FROM_INTERMEDIATE=y make build build_debug build_serialize build_emulation
+      - run: DOCKER_BUILDKIT=1 BUILDKIT_PROGRESS=plain BUILD_FROM_INTERMEDIATE=y make build build_debug build_serialize
       - restore_cache:
           keys:
             - v1.4-{{ checksum "requirements.txt"}}

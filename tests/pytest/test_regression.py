@@ -45,6 +45,8 @@ def code_root(request):
 
 @pytest.fixture
 def image_runner(request):
+    if request.config.getoption("--native"):
+        pytest.skip()
     return request.config.getoption("--image_runner")
 
 
@@ -101,18 +103,13 @@ def test_regression(
     shutil.rmtree(run_dir)
 
 
-def test_callpyfort_integration(image, image_version):
+def test_callpyfort_integration(run_native, tmpdir):
 
     config = get_config("emulation.yml")
-    model_image_tag = "{version}-emulation".format(version=image_version)
-    model_image = f"{image}:{model_image_tag}"
-    run_dir = get_run_dir(model_image_tag, config)
-
-    run_model(config, run_dir, model_image, "docker")
-
+    run_dir = str(tmpdir.join("rundir"))
+    run_native(config, run_dir)
     assert os.path.exists(join(run_dir, "microphysics_success.txt"))
     assert os.path.exists(join(run_dir, "store_success.txt"))
-    shutil.rmtree(run_dir)
 
 
 def check_rundir_md5sum(run_dir, md5sum_filename):

@@ -1,6 +1,7 @@
 {
   stdenv
   , bash
+  , call_py_fort
   , fms
   , esmf
   , nceplibs
@@ -22,6 +23,10 @@ stdenv.mkDerivation {
   name = "fv3";
   inherit fms;
   buildInputs = [
+      call_py_fort
+      call_py_fort.pypkgs.fv3config
+      call_py_fort.pypkgs.pytest
+      call_py_fort.pypkgs.pyyaml
       fms
       esmf
       nceplibs
@@ -93,5 +98,10 @@ installPhase = ''
   INCLUDE="-I${fms}/include -I${netcdffortran}/include -I${esmf}/include/";
   NCEPLIBS_DIR="${nceplibs}/lib";
   OMPI_CC="${gfortran.cc}/bin/gcc";
+  CALLPYFORT="${call_py_fort}";
+
+  shellHook = ''
+    export PYTHONPATH=$(pwd)/tests/emulation:$PYTHONPATH
+  '';
 }
 
