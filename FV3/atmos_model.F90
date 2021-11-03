@@ -258,6 +258,7 @@ contains
 ! </INOUT>
 
 subroutine update_atmos_radiation_physics (Atmos)
+  use callpy_mod
 #ifdef OPENMP
     use omp_lib
 #endif
@@ -265,6 +266,7 @@ subroutine update_atmos_radiation_physics (Atmos)
   type (atmos_data_type), intent(in) :: Atmos
 !--- local variables---
     integer :: nb, jdat(8), rc
+    character(len=8) :: ch
     procedure(IPD_func0d_proc), pointer :: Func0d => NULL()
     procedure(IPD_func1d_proc), pointer :: Func1d => NULL()
     integer :: nthrds
@@ -277,6 +279,10 @@ subroutine update_atmos_radiation_physics (Atmos)
 #else
     nthrds = 1
 #endif
+
+write(ch, "(I2)") mpp_pe()
+
+    call set_state_char("rank", ch)
 
     if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "statein driver"
 !--- get atmospheric state from the dynamic core

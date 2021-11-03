@@ -27,6 +27,7 @@ stdenv.mkDerivation {
       call_py_fort.pypkgs.fv3config
       call_py_fort.pypkgs.pytest
       call_py_fort.pypkgs.pyyaml
+      call_py_fort.pypkgs.joblib
       fms
       esmf
       nceplibs

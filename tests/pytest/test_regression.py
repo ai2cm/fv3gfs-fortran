@@ -6,6 +6,8 @@ import subprocess
 import pytest
 import fv3config
 
+from datetime import timedelta
+
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
 REFERENCE_DIR = os.path.join(TEST_DIR, "reference")
@@ -105,6 +107,65 @@ def test_callpyfort_integration(run_native, tmpdir):
     run_native(config, run_dir)
     assert os.path.exists(join(run_dir, "microphysics_success.txt"))
     assert os.path.exists(join(run_dir, "store_success.txt"))
+
+
+def _get_restart_assets(restart_dir, time):
+
+    files = [
+        f"{time}.coupler.res",
+        f"{time}.fv_core.res.nc",
+        f"{time}.fv_core.res.tile1.nc",
+        f"{time}.fv_core.res.tile2.nc",
+        f"{time}.fv_core.res.tile3.nc",
+        f"{time}.fv_core.res.tile4.nc",
+        f"{time}.fv_core.res.tile5.nc",
+        f"{time}.fv_core.res.tile6.nc",
+        f"{time}.fv_srf_wnd.res.tile1.nc",
+        f"{time}.fv_srf_wnd.res.tile2.nc",
+        f"{time}.fv_srf_wnd.res.tile3.nc",
+        f"{time}.fv_srf_wnd.res.tile4.nc",
+        f"{time}.fv_srf_wnd.res.tile5.nc",
+        f"{time}.fv_srf_wnd.res.tile6.nc",
+        f"{time}.fv_tracer.res.tile1.nc",
+        f"{time}.fv_tracer.res.tile2.nc",
+        f"{time}.fv_tracer.res.tile3.nc",
+        f"{time}.fv_tracer.res.tile4.nc",
+        f"{time}.fv_tracer.res.tile5.nc",
+        f"{time}.fv_tracer.res.tile6.nc",
+        f"{time}.phy_data.tile1.nc",
+        f"{time}.phy_data.tile2.nc",
+        f"{time}.phy_data.tile3.nc",
+        f"{time}.phy_data.tile4.nc",
+        f"{time}.phy_data.tile5.nc",
+        f"{time}.phy_data.tile6.nc",
+        f"{time}.sfc_data.tile1.nc",
+        f"{time}.sfc_data.tile2.nc",
+        f"{time}.sfc_data.tile3.nc",
+        f"{time}.sfc_data.tile4.nc",
+        f"{time}.sfc_data.tile5.nc",
+        f"{time}.sfc_data.tile6.nc",
+    ]
+
+    return [
+        fv3config.get_asset_dict(restart_dir, file, target_location="INPUT", target_name=file[len(f"{time}.") :], copy_method="link")
+        for file in files
+    ]
+
+
+def test_emulation_two_steps(run_native, tmpdir):
+    length = timedelta(seconds=900)
+    config = get_config("emulation.yml")
+    config["namelist"]["coupler_nml"]["restart_secs"] = int(length.total_seconds())
+    run_full = str(tmpdir.join("full"))
+    run_second_half = str(tmpdir.join("part1"))
+    run_native(fv3config.set_run_duration(config, length * 2), run_full)
+
+    config = fv3config.enable_restart(config, "")
+    config["initial_conditions"] = _get_restart_assets(
+        str(tmpdir.join("full").join("RESTART")), time="20160801.001500"
+    )
+    run_native(fv3config.set_run_duration(config, length), run_second_half)
+    assert False
 
 
 def check_rundir_md5sum(run_dir, md5sum_filename):
