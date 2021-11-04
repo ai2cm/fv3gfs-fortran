@@ -1,4 +1,5 @@
 !***********************************************************************
+
 !*                   GNU Lesser General Public License                 
 !*
 !* This file is part of the FV3 dynamical core.
@@ -205,7 +206,7 @@ private
 
 !--- driver routines
 public :: atmosphere_init, atmosphere_end, atmosphere_restart, &
-          atmosphere_dynamics, atmosphere_state_update
+          atmosphere_dynamics, atmosphere_state_update, print_atmos_regression
 
 !--- utility routines
 public :: atmosphere_resolution,   atmosphere_grid_bdry,         &
@@ -276,6 +277,9 @@ character(len=20)   :: mod_name = 'fvGFS/atmosphere_mod'
 
 contains
 
+  subroutine print_atmos_regression()
+    if (mpp_pe() == 0) print*, "REGRESSION NOAH TEMPERATURE", Atm(mytile)%pt(1,:,1)
+  end subroutine
 
 !>@brief The subroutine 'atmosphere_init' is an API to initialize the FV3 dynamical core,
 !! including the grid structures, memory, initial state (self-initialization or restart), 

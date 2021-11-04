@@ -40,6 +40,7 @@ use  atmos_model_mod,  only: atmos_model_init, atmos_model_end,  &
                              update_atmos_radiation_physics,     &
                              update_atmos_model_state,           &
                              atmos_data_type, atmos_model_restart
+use atmosphere_mod, only: print_atmos_regression
 
 use constants_mod,     only: constants_init
 #ifdef INTERNAL_FILE_NML
@@ -169,6 +170,9 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
     end if
 
     Time_atmos = Time_atmos + Time_step_atmos
+
+    call print_atmos_regression()
+
 
     call update_atmos_model_dynamics (Atm)
 

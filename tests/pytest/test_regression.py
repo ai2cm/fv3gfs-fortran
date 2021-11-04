@@ -155,6 +155,7 @@ def _get_restart_assets(restart_dir, time):
 def test_emulation_two_steps(run_native, tmpdir):
     length = timedelta(seconds=900)
     config = get_config("emulation.yml")
+    config["namelist"]["atmos_model_nml"]["chksum_debug"] = True
     config["namelist"]["coupler_nml"]["restart_secs"] = int(length.total_seconds())
     run_full = str(tmpdir.join("full"))
     run_second_half = str(tmpdir.join("part1"))
