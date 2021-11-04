@@ -129,9 +129,9 @@ module GFS_typedefs
     integer :: iau_offset                        !< iau running window length
     real(kind=kind_phys) :: dt_dycore            !< dynamics time step in seconds
     real(kind=kind_phys) :: dt_phys              !< physics  time step in seconds
-#ifdef CCPP
 !--- restart information
     logical :: restart                           !< flag whether this is a coldstart (.false.) or a warmstart/restart (.true.)
+#ifdef CCPP
 !--- hydrostatic/non-hydrostatic flag
     logical :: hydrostatic                       !< flag whether this is a hydrostatic or non-hydrostatic run
 #endif
@@ -1061,9 +1061,9 @@ module GFS_typedefs
     integer              :: kdt             !< current forecast iteration
 #ifdef CCPP
     logical              :: first_time_step !< flag signaling first time step for time integration routine
-    logical              :: restart         !< flag whether this is a coldstart (.false.) or a warmstart/restart (.true.)
     logical              :: hydrostatic     !< flag whether this is a hydrostatic or non-hydrostatic run
 #endif
+    logical              :: restart         !< flag whether this is a coldstart (.false.) or a warmstart/restart (.true.)
     integer              :: jdat(1:8)       !< current forecast date and time
                                             !< (yr, mon, day, t-zone, hr, min, sec, mil-sec)
     integer              :: imn             !< current forecast month
@@ -2714,8 +2714,9 @@ module GFS_typedefs
                                  dt_phys, iau_offset, idat, jdat,   &
                                  tracer_names,                      &
                                  input_nml_file, tile_num, blksz    &
+                                 , restart                          &
 #ifdef CCPP
-                                ,ak, bk, restart, hydrostatic,      &
+                                ,ak, bk, hydrostatic,      &
                                  communicator, ntasks, nthreads     &
 #endif
                                  )
@@ -2762,10 +2763,10 @@ module GFS_typedefs
     character(len=32),      intent(in) :: tracer_names(:)
     character(len=256),     intent(in), pointer :: input_nml_file(:)
     integer,                intent(in) :: blksz(:)
+    logical,                intent(in) :: restart
 #ifdef CCPP
     real(kind=kind_phys), dimension(:), intent(in) :: ak
     real(kind=kind_phys), dimension(:), intent(in) :: bk
-    logical,                intent(in) :: restart
     logical,                intent(in) :: hydrostatic
     integer,                intent(in) :: communicator
     integer,                intent(in) :: ntasks
@@ -3870,9 +3871,9 @@ module GFS_typedefs
     Model%fhour            = (rinc(4) + Model%dtp)/con_hr
     Model%zhour            = mod(Model%phour,Model%fhzero)
     Model%kdt              = 0
+    Model%restart          = restart
 #ifdef CCPP
     Model%first_time_step  = .true.
-    Model%restart          = restart
     Model%hydrostatic      = hydrostatic
 #endif
     Model%jdat(1:8)        = jdat(1:8)
@@ -4752,11 +4753,11 @@ module GFS_typedefs
       print *, ' zhour             : ', Model%zhour
       print *, ' kdt               : ', Model%kdt
       print *, ' jdat              : ', Model%jdat
+      print *, ' restart           : ', Model%restart
 #ifdef CCPP
       print *, ' sec               : ', Model%sec
       print *, ' si                : ', Model%si
       print *, ' first_time_step   : ', Model%first_time_step
-      print *, ' restart           : ', Model%restart
       print *, ' hydrostatic       : ', Model%hydrostatic
 #endif
     endif
