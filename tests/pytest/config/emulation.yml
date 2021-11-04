@@ -218,8 +218,8 @@ namelist:
     debug: false
     dspheat: true
     fhcyc: 24.0
-    fhlwr: 3600.0
-    fhswr: 3600.0
+    fhlwr: 900.0
+    fhswr: 900.0
     fhzero: 0.25
     hybedmf: true
     iaer: 111

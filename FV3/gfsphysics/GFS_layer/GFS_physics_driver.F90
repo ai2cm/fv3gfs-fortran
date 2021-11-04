@@ -714,7 +714,6 @@ module module_physics_driver
 
 !===> ...  begin here
       ldiag_ugwp = Model%ldiag_ugwp
-      if (Model%me == 0) print *, "REGRESSION", sum(Statein%qgrs)
       
 !===>
       master = Model%master
@@ -2299,7 +2298,6 @@ module module_physics_driver
       if (nvdiff == ntrac .or. Model%do_ysu .or. Model%shinhong) then
 !
         ntiwx = 0
-
         if (Model%do_shoc) then
           call moninshoc(ix, im, levs, nvdiff, ntcw, nncl, dvdt, dudt, dtdt, dqdt, &
                          Statein%ugrs, Statein%vgrs, Statein%tgrs, Statein%qgrs,   &
@@ -3117,6 +3115,7 @@ module module_physics_driver
         enddo
       enddo
       Stateout%gq0(1:im,:,:) = Statein%qgrs(1:im,:,:) + dqdt(1:im,:,:) * dtp
+
 
 !================================================================================
 !     above: updates of the state by UGWP oro-GWS and RF-damp

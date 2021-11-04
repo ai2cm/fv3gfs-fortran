@@ -284,8 +284,6 @@ write(ch, "(I2)") mpp_pe()
 
     call set_state_char("rank", ch)
 
-
-    if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "statein driver"
 !--- get atmospheric state from the dynamic core
 
     call mpp_clock_begin(otherClock)
@@ -296,6 +294,47 @@ write(ch, "(I2)") mpp_pe()
     call mpp_clock_begin(getClock)
     call atmos_phys_driver_statein (IPD_data, Atm_block, flip_vc)
     call mpp_clock_end(getClock)
+
+    do nb=1,Atm_block%nblks
+      IPD_Data(nb)%Radtend%lwhc= 0.0
+      IPD_Data(nb)%Radtend%swhc= 0.0
+      IPD_Data(nb)%Coupling%nirbmdi = 0.0
+      IPD_Data(nb)%Coupling%nirbmui = 0.0
+      IPD_Data(nb)%Coupling%nirdfdi = 0.0
+      IPD_Data(nb)%Coupling%nirdfui = 0.0
+      IPD_Data(nb)%Coupling%sfcdlw = 0.0
+      IPD_Data(nb)%Coupling%sfcdsw = 0.0
+      IPD_Data(nb)%Coupling%visbmdi =0.0
+      IPD_Data(nb)%Coupling%visbmui =0.0
+      IPD_Data(nb)%Coupling%visdfdi =0.0
+      IPD_Data(nb)%Coupling%visdfui =0.0
+      IPD_Data(nb)%Radtend%coszdg =0.0
+      IPD_Data(nb)%Radtend%coszen =0.0
+      IPD_Data(nb)%Radtend%semis =0.0
+      IPD_Data(nb)%Radtend%sfalb =0.0
+      IPD_Data(nb)%Radtend%sfcflw(:)%dnfx0 = 0.0
+      IPD_Data(nb)%Radtend%sfcflw(:)%dnfxc = 0.0
+      IPD_Data(nb)%Radtend%sfcflw(:)%upfx0 = 0.0
+      IPD_Data(nb)%Radtend%sfcflw(:)%upfxc = 0.0
+      IPD_Data(nb)%Radtend%sfcfsw(:)%dnfx0 = 0.0
+      IPD_Data(nb)%Radtend%sfcfsw(:)%dnfxc = 0.0
+      IPD_Data(nb)%Radtend%sfcfsw(:)%upfx0 = 0.0
+      IPD_Data(nb)%Radtend%sfcfsw(:)%upfxc = 0.0
+      IPD_Data(nb)%Radtend%tsflw = 0.0
+      IPD_Data(nb)%Radtend%htrlw = 0.0
+      IPD_Data(nb)%Radtend%htrsw = 0.0
+      IPD_Data(nb)%Stateout%gt0 = 0.0
+      IPD_Data(nb)%Stateout%gu0 = 0.0
+      IPD_Data(nb)%Stateout%gv0 = 0.0
+      IPD_Data(nb)%Stateout%gq0 = 0.0
+    end do
+
+
+      if (chksum_debug) then
+        if (mpp_pe() == mpp_root_pe()) print *,'TIMESTEP START  ', IPD_Control%kdt, IPD_Control%fhour
+        call FV3GFS_IPD_checksum(IPD_Control, IPD_Data, Atm_block)
+      endif
+
 
 !--- if dycore only run, set up the dummy physics output state as the input state
     if (dycore_only) then
@@ -403,7 +442,6 @@ write(ch, "(I2)") mpp_pe()
       do nb = 1,Atm_block%nblks
         call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d)
       enddo
-    if (mpp_pe() == mpp_root_pe()) print *, "REGRESSION", sum(IPD_Data(1)%Stateout%gt0(1,:))
 #endif
       call mpp_clock_end(physClock)
 

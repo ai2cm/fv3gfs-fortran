@@ -469,13 +469,13 @@ module FV3GFS_io_mod
    outunit = stdout()
    do i = 1,nsfcprop2d+Model%ntot2d+Model%nctp
      write (name, '(i3.3,3x,4a)') i, ' 2d '
-     write(outunit,100) name, mpp_chksum(temp2d(:,:,i:i))
+     write(outunit,100) name, mpp_chksum(temp2d(:,:,i:i)), maxval(temp2d(:, :, i:i))
    enddo
    do i = 1,17+Model%ntot3d+2*ntr
      write (name, '(i2.2,3x,4a)') i, ' 3d '
-     write(outunit,100) name, mpp_chksum(temp3d(:,:,:,i:i))
+     write(outunit,100) name, mpp_chksum(temp3d(:,:,:,i:i)), maxval(temp3d(:, :, :, i:i))
    enddo
-100 format("CHECKSUM::",A32," = ",Z20)
+100 format("CHECKSUM::",A32," = ",Z20, " ", E10.5)
 
    end subroutine FV3GFS_IPD_checksum
 
