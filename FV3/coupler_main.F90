@@ -171,14 +171,13 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
 
     Time_atmos = Time_atmos + Time_step_atmos
 
-    call print_atmos_regression()
-
 
     call update_atmos_model_dynamics (Atm)
 
     call update_atmos_radiation_physics (Atm)
 
     call update_atmos_model_state (Atm)
+
 
 !--- intermediate restart
     call mpp_clock_begin(rstrtClock)

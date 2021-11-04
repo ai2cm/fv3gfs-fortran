@@ -700,6 +700,7 @@ contains
 
    call mpp_clock_begin(id_dynam)
 
+
    do psc=1,abs(p_split)
      !$ser verbatim if ((psc == abs(p_split)) .and. (a_step == 1)) then
        !$ser on
@@ -722,6 +723,7 @@ contains
        !$ser verbatim if (mpp_pe() == 0) write(*,*) "Stopping after serialization of fv_dynamics() input"
        !$ser verbatim call mp_stop(); call exit(0)
      !$ser verbatim endif
+
      call fv_dynamics(npx, npy, npz, nq, Atm(n)%ng, dt_atmos/real(abs(p_split)),&
                        Atm(n)%flagstruct%consv_te, Atm(n)%flagstruct%fill,       &
                        Atm(n)%flagstruct%reproduce_sum, kappa, cp_air, zvir,     &

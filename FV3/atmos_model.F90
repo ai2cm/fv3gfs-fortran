@@ -64,6 +64,7 @@ use tracer_manager_mod, only: get_number_tracers, get_tracer_names, &
                               get_tracer_index, NO_TRACER
 use xgrid_mod,          only: grid_box_type
 use atmosphere_mod,     only: atmosphere_init
+use atmosphere_mod,     only: print_atmos_regression
 use atmosphere_mod,     only: atmosphere_restart
 use atmosphere_mod,     only: atmosphere_end
 use atmosphere_mod,     only: atmosphere_state_update
@@ -906,6 +907,7 @@ subroutine update_atmos_model_state (Atmos)
     call set_atmosphere_pelist()
     call mpp_clock_end(otherClock)
 
+    call print_atmos_regression()
     call mpp_clock_begin(updClock)
     call atmosphere_state_update (Atmos%Time, IPD_Data, IAU_Data, Atm_block, flip_vc)
     call mpp_clock_end(updClock)
