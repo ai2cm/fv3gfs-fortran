@@ -335,7 +335,6 @@ write(ch, "(I2)") mpp_pe()
         call FV3GFS_IPD_checksum(IPD_Control, IPD_Data, Atm_block)
       endif
 
-
 !--- if dycore only run, set up the dummy physics output state as the input state
     if (dycore_only) then
       call mpp_clock_begin(updClock)

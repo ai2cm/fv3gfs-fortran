@@ -1258,6 +1258,8 @@
 !--- only call GFS_radiation_driver at radiation time step
 
       if (.not. (Model%lsswr .or. Model%lslwr )) return
+      if (Model%me == 0) print *, "Control REGRESSION"
+      call Model%print()
 
 !--- set commonly used integers
       me    = Model%me
