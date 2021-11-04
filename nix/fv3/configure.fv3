@@ -128,6 +128,11 @@ FFLAGS += $(FFLAGS_VERBOSE)
 LDFLAGS += $(LDFLAGS_VERBOSE)
 endif
 
+ifneq ($(CALLPYFORT),)
+FFLAGS += -I$(CALLPYFORT)/include -DENABLE_CALLPYFORT
+LDFLAGS += -L$(CALLPYFORT)/lib -lcallpy 
+endif
+
 # static linking of esmf works on darwin
 #LIBS += -lFMS -lnetcdff -lnetcdf -llapack -lblas ${ESMF_DIR}/lib/libesmf.a -lstdc++ #-lc -lrt
 LIBS += -lFMS -lnetcdff -lnetcdf -llapack -lblas -lesmf #-lc -lrt

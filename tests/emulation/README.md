@@ -27,6 +27,42 @@ Available input state fields for emulation
 - ratio_of_snowfall_to_rainfall
 - tendency_of_rain_water_mixing_ratio_due_to_microphysics
 
+
+Fortran Diagnostics
+----------------------------------------
+
+Several diagnostics related to the emulator have been added the fortran diagnostics manager.
+Here is a an example `diag_table` configuration with these:
+
+```
+diag_table:
+  name: emulation_diags
+  base_time: 2000-01-01T00:00:00
+  file_configs:
+    - name: physics
+      frequency: 1
+      frequency_units: "hours"
+      field_configs:
+        - field_name: tendency_of_air_temperature_due_to_emulator
+          module_name: zhao_carr_microphysics
+          output_name: tendency_of_air_temperature_due_to_zhao_carr_emulator
+        - field_name: tendency_of_cloud_water_due_to_emulator
+          module_name: zhao_carr_microphysics
+          output_name: tendency_of_cloud_water_due_to_zhao_carr_emulator
+        - field_name: tendency_of_specific_humidity_due_to_emulator
+          module_name: zhao_carr_microphysics
+          output_name: tendency_of_specific_humidity_due_to_zhao_carr_emulator
+        - field_name: tendency_of_air_temperature_due_to_physics
+          module_name: zhao_carr_microphysics
+          output_name: tendency_of_air_temperature_due_to_zhao_carr_physics
+        - field_name: tendency_of_cloud_water_due_to_physics
+          module_name: zhao_carr_microphysics
+          output_name: tendency_of_cloud_water_due_to_zhao_carr_physics
+        - field_name: tendency_of_specific_humidity_due_to_physics
+          module_name: zhao_carr_microphysics
+          output_name: tendency_of_specific_humidity_due_to_zhao_carr_physics
+```
+
 Notes
 -----
 
