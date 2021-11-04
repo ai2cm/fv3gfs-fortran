@@ -714,7 +714,8 @@ module module_physics_driver
 
 !===> ...  begin here
       ldiag_ugwp = Model%ldiag_ugwp
-!
+      if (Model%me == 0) print *, "REGRESSION", sum(Statein%qgrs)
+      
 !===>
       master = Model%master
 
@@ -4566,7 +4567,7 @@ module module_physics_driver
                 qc_post_precpd(i,k) = Stateout%gq0(i,k,ntcw)
               enddo
             enddo
-
+!
             call set_state("air_temperature_output", Stateout%gt0)
             call set_state("specific_humidity_output", qv_post_precpd)
             call set_state("cloud_water_mixing_ratio_output", qc_post_precpd)
