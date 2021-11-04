@@ -1257,6 +1257,11 @@
 
 !--- only call GFS_radiation_driver at radiation time step
 
+      Model%solhr = 0.0
+      Model%phour = 0.0
+      Model%fhour = 0.0
+      Model%zhour = 0.0
+
       if (.not. (Model%lsswr .or. Model%lslwr )) return
       if (Model%me == 0) print *, "Control REGRESSION"
       call Model%print()

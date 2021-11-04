@@ -366,6 +366,11 @@ write(ch, "(I2)") mpp_pe()
       call IPD_step (IPD_Control, IPD_Data(:), IPD_Diag, IPD_Restart, IPD_func1d=Func1d)
 #endif
 
+      if (chksum_debug) then
+        if (mpp_pe() == mpp_root_pe()) print *,'TIME VARY  ', IPD_Control%kdt, IPD_Control%fhour
+        call FV3GFS_IPD_checksum(IPD_Control, IPD_Data, Atm_block)
+      endif
+
 !--- call stochastic physics pattern generation / cellular automata
     if (IPD_Control%do_sppt .OR. IPD_Control%do_shum .OR. IPD_Control%do_skeb .OR. IPD_Control%do_sfcperts) then
        call run_stochastic_physics(IPD_Control, IPD_Data(:)%Grid, IPD_Data(:)%Coupling, nthrds)
