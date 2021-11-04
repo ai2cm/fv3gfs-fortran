@@ -64,7 +64,6 @@ use tracer_manager_mod, only: get_number_tracers, get_tracer_names, &
                               get_tracer_index, NO_TRACER
 use xgrid_mod,          only: grid_box_type
 use atmosphere_mod,     only: atmosphere_init
-use atmosphere_mod,     only: print_atmos_regression
 use atmosphere_mod,     only: atmosphere_restart
 use atmosphere_mod,     only: atmosphere_end
 use atmosphere_mod,     only: atmosphere_state_update
@@ -285,6 +284,7 @@ write(ch, "(I2)") mpp_pe()
 
     call set_state_char("rank", ch)
 
+
     if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "statein driver"
 !--- get atmospheric state from the dynamic core
 
@@ -403,6 +403,7 @@ write(ch, "(I2)") mpp_pe()
       do nb = 1,Atm_block%nblks
         call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d)
       enddo
+    if (mpp_pe() == mpp_root_pe()) print *, "REGRESSION", sum(IPD_Data(1)%Stateout%gt0(1,:))
 #endif
       call mpp_clock_end(physClock)
 
@@ -907,7 +908,6 @@ subroutine update_atmos_model_state (Atmos)
     call set_atmosphere_pelist()
     call mpp_clock_end(otherClock)
 
-    call print_atmos_regression()
     call mpp_clock_begin(updClock)
     call atmosphere_state_update (Atmos%Time, IPD_Data, IAU_Data, Atm_block, flip_vc)
     call mpp_clock_end(updClock)
