@@ -189,10 +189,10 @@ module GFS_driver
                      Init_parm%iau_offset, Init_parm%bdat,         &
                      Init_parm%cdat, Init_parm%tracer_names,       &
                      Init_parm%input_nml_file, Init_parm%tile_num, &
-                     Init_parm%blksz                               &
+                     Init_parm%blksz, Init_parm%restart            &
 #ifdef CCPP
                     ,Init_parm%ak, Init_parm%bk,                   &
-                     Init_parm%restart, Init_parm%hydrostatic,     &
+                     Init_parm%hydrostatic,     &
                      communicator, ntasks, nthrds                  &
 #endif
                      )
@@ -855,20 +855,25 @@ module GFS_driver
       enddo
     endif  ! isubc_lw and isubc_sw
 
-    if (Model%imp_physics == 99) then
-      if (Model%kdt == 1) then
-        do nb = 1,nblks
-          Tbd(nb)%phy_f3d(:,:,1) = Statein(nb)%tgrs
-          Tbd(nb)%phy_f3d(:,:,2) = max(qmin,Statein(nb)%qgrs(:,:,1))
-          Tbd(nb)%phy_f3d(:,:,3) = Statein(nb)%tgrs
-          Tbd(nb)%phy_f3d(:,:,4) = max(qmin,Statein(nb)%qgrs(:,:,1))
-          Tbd(nb)%phy_f2d(:,1)   = Statein(nb)%prsi(:,1)
-          Tbd(nb)%phy_f2d(:,2)   = Statein(nb)%prsi(:,1)
-        enddo
-      endif
-    endif
-
   end subroutine GFS_rad_time_vary
+
+  subroutine cold_start_tbd_for_zhao_carr(Tbd, Statein)
+    type(GFS_tbd_type), dimension(:), intent(inout) :: Tbd
+    type(GFS_statein_type), dimension(:), intent(in) :: Statein
+
+    ! locals
+
+    integer nb
+
+    do nb = 1,size(Tbd)
+      Tbd(nb)%phy_f3d(:,:,1) = Statein(nb)%tgrs
+      Tbd(nb)%phy_f3d(:,:,2) = max(qmin,Statein(nb)%qgrs(:,:,1))
+      Tbd(nb)%phy_f3d(:,:,3) = Statein(nb)%tgrs
+      Tbd(nb)%phy_f3d(:,:,4) = max(qmin,Statein(nb)%qgrs(:,:,1))
+      Tbd(nb)%phy_f2d(:,1)   = Statein(nb)%prsi(:,1)
+      Tbd(nb)%phy_f2d(:,2)   = Statein(nb)%prsi(:,1)
+    enddo
+  end subroutine cold_start_tbd_for_zhao_carr
 
 
 !-----------------------------------------------------------------------
@@ -893,6 +898,10 @@ module GFS_driver
     real(kind=kind_phys) :: rndval(Model%cnx*Model%cny*Model%nrcm)
 
     nblks = size(blksz,1)
+
+    if ((Model%imp_physics == Model%imp_physics_zhao_carr) .and. (Model%kdt == 1) .and. (.not. Model%restart))  then
+        call cold_start_tbd_for_zhao_carr(Tbd, Statein)
+    endif
 
     !--- switch for saving convective clouds - cnvc90.f 
     !--- aka Ken Campana/Yu-Tai Hou legacy
