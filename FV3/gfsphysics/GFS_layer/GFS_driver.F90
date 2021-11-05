@@ -899,7 +899,7 @@ module GFS_driver
 
     nblks = size(blksz,1)
 
-    if ((Model%imp_physics == 99) .and. (Model%kdt == 1) .and. (.not. Model%restart))  then
+    if ((Model%imp_physics == Model%imp_physics_zhao_carr) .and. (Model%kdt == 1) .and. (.not. Model%restart))  then
         call cold_start_tbd_for_zhao_carr(Tbd, Statein)
     endif
 
