@@ -30,6 +30,10 @@ variables:
 		time:long_name = time ;
 		time:cartesian_axis = T ;
 		time:calendar_type = JULIAN ;
+	float32 delp(time, pfull, grid_yt, grid_xt) ;
+		delp:long_name = pressure thickness ;
+		delp:units = pa ;
+		delp:cell_methods = time: point ;
 	float32 tendency_of_air_temperature_due_to_zhao_carr_emulator(time, pfull, grid_yt, grid_xt) ;
 		tendency_of_air_temperature_due_to_zhao_carr_emulator:long_name = temperature tendency due to Zhao Carr emulator ;
 		tendency_of_air_temperature_due_to_zhao_carr_emulator:units = K/s ;
@@ -56,11 +60,11 @@ variables:
 		tendency_of_specific_humidity_due_to_zhao_carr_physics:cell_methods = time: point ;
 	float32 surface_precipitation_due_to_zhao_carr_emulator(time, grid_yt, grid_xt) ;
 		surface_precipitation_due_to_zhao_carr_emulator:long_name = surface precipitation due to Zhao Carr emulator ;
-		surface_precipitation_due_to_zhao_carr_emulator:units = kg/s ;
+		surface_precipitation_due_to_zhao_carr_emulator:units = kg/m^2/s ;
 		surface_precipitation_due_to_zhao_carr_emulator:cell_methods = time: point ;
 	float32 surface_precipitation_due_to_zhao_carr_physics(time, grid_yt, grid_xt) ;
 		surface_precipitation_due_to_zhao_carr_physics:long_name = surface precipitation due to Zhao Carr physics ;
-		surface_precipitation_due_to_zhao_carr_physics:units = kg/s ;
+		surface_precipitation_due_to_zhao_carr_physics:units = kg/m^2/s ;
 		surface_precipitation_due_to_zhao_carr_physics:cell_methods = time: point ;
 
 // global attributes:

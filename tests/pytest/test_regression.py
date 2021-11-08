@@ -1,10 +1,11 @@
 import os
 from os.path import join
 import shutil
-import subprocess
 import pytest
 import fv3config
+import numpy as np
 import xarray
+import subprocess
 
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -119,10 +120,30 @@ def test_zhao_carr_diagnostics(emulation_run, regtest):
     ds.info(regtest)
 
 
-def test_zhao_carr_diagnostics(emulation_run, regtest):
+def test_zhao_carr_surface_precipitation_matches_total_water_source(emulation_run):
+    """The column integrated water sink roughly matches the surface
+    precipitation in the Zhao-carr scheme.
+
+    Large relative changes indicate a problem with the surface precipitation
+    diagnostic
+    """
     ds = xarray.open_dataset(os.path.join(emulation_run, "piggy.tile1.nc"))
-    # print schema to regression data
-    ds.info(regtest)
+
+    total_water_source = (
+        ds.tendency_of_cloud_water_due_to_zhao_carr_physics
+        + ds.tendency_of_specific_humidity_due_to_zhao_carr_physics
+    )
+
+    precip = ds.surface_precipitation_due_to_zhao_carr_physics
+
+    column_water_source = (total_water_source * ds.delp).sum("pfull") / 9.81
+
+    def rms(x):
+        return np.sqrt((x ** 2).mean().item())
+
+    rms_column_water_source = rms(column_water_source)
+    rms_precip = rms(precip)
+    assert rms_precip == pytest.approx(rms_column_water_source, rel=0.1)
 
 
 def check_rundir_md5sum(run_dir, md5sum_filename):

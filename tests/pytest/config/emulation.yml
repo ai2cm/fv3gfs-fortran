@@ -11,6 +11,9 @@ diag_table:
       frequency: 900
       frequency_units: seconds
       field_configs:
+        - field_name: delp
+          module_name: dynamics
+          output_name: delp
         - field_name: tendency_of_air_temperature_due_to_emulator
           module_name: zhao_carr_microphysics
           output_name: tendency_of_air_temperature_due_to_zhao_carr_emulator
