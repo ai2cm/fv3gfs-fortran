@@ -2028,7 +2028,7 @@
                               ( (8.0/5.0)*(COS(grid(i,j+1,2))**3.0)*(SIN(grid(i,j+1,2))**2.0 + 2.0/3.0) - PI/4.0 )*radius*omega )
                phis(i,j) = 0.25*pt1 + 0.125*(pt2+pt3+pt4+pt5) + 0.0625*(pt6+pt7+pt8+pt9)
                if ((i==is) .and. (j==js) .and. (z==1) .and.  (is_master()) ) then 
-                  WRITE(0,*) 'BAROCLINIC SAMPLE phis', phis(is, js, 1), pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8,pt9
+                  WRITE(0,*) 'BAROCLINIC SAMPLE phis', phis(is, js), pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8,pt9
                endif
 #else
                phis(i,j) = pt1
