@@ -652,7 +652,7 @@
       real :: eta(npz), eta_0, eta_s, eta_t
       real :: eta_v(npz), press, anti_rot
       real :: T_0, T_mean, delta_T, lapse_rate, n2, zeta, s0
-      real :: pt1,pt2,pt3,pt4,pt5,pt6, pt7, pt8, pt9, u1, pt0
+      real :: pt1,pt2,pt3,pt4,pt5,pt6, pt7, pt8, pt9, u1, pt0, leta, leta_z, griddy
       real :: uu1, uu2, uu3, vv1, vv2, vv3
 !     real wbuffer(npx+1,npz)
 !     real sbuffer(npy+1,npz)
@@ -1689,7 +1689,7 @@
               
 #else
  !$ser savepoint InitPreJab-In
- !$ser data ptop=ptop ak=ak bk=bk 
+ !$ser data ptop=ptop ak=ak bk=bk delp=delp
               
          q(:,:,:,:) = 0.
 
@@ -1799,9 +1799,13 @@
                   utmp =  Ubar * COS(eta_v(z))**(3.0/2.0) * SIN(2.0*grid(i,j+1,2))**2.0
              ! Perturbation if Case==13
                   r = great_circle_dist( pcen, grid(i,j+1,1:2), radius )
+                  if ((i==is+3) .and. (j==js) .and. (z==1) .and.  (is_master()) ) then 
+                     WRITE(0,*) 'BAROCLINIC SAMPLE PRE vv1', r, utmp, -(r/r0)**2.0 > -40.0
+                     WRITE(0,*) 'BAROCLINIC SAMPLE PRE R parts', r,pcen,  grid(i,j+1,1:2), radius
+                  endif
                   if (-(r/r0)**2.0 > -40.0) utmp = utmp + u1*EXP(-(r/r0)**2.0) 
                   vv1 = utmp*(ee2(2,i,j+1)*cos(grid(i,j+1,1)) - ee2(1,i,j+1)*sin(grid(i,j+1,1)))
-                  if ((i==is) .and. (j==js) .and. (z==1) .and.  (is_master()) ) then 
+                  if ((i==is+3) .and. (j==js) .and. (z==1) .and.  (is_master()) ) then 
                      WRITE(0,*) 'BAROCLINIC SAMPLE vv1',  vv1, r, utmp
                   endif
                   utmp =  Ubar * COS(eta_v(z))**(3.0/2.0) * SIN(2.0*grid(i,j,2))**2.0
@@ -1809,7 +1813,7 @@
                   r = great_circle_dist( pcen, grid(i,j,1:2), radius )
                   if (-(r/r0)**2.0 > -40.0) utmp = utmp + u1*EXP(-(r/r0)**2.0) 
                   vv3 = utmp*(ee2(2,i,j)*cos(grid(i,j,1)) - ee2(1,i,j)*sin(grid(i,j,1)))
-                  if ((i==is) .and. (j==js) .and. (z==1) .and.  (is_master()) ) then 
+                  if ((i==is+3) .and. (j==js) .and. (z==1) .and.  (is_master()) ) then 
                      WRITE(0,*) 'BAROCLINIC SAMPLE vv3',  vv3, r, utmp
                   endif
 ! Mid-point:
@@ -1823,25 +1827,32 @@
                   vv2 = utmp*(ew(2,i,j,2)*cos(pa(1)) - ew(1,i,j,2)*sin(pa(1)))
 ! 3-point average:
                   v(i,j,z) = 0.25*(vv1 + 2.*vv2 + vv3)
-                  if ((i==is) .and. (j==js) .and. (z==1) .and.  (is_master()) ) then 
-                     WRITE(0,*) 'BAROCLINIC SAMPLE vv2', vv2, r, utmp, v(i,j,z) 
+                  if ((i==is+3) .and. (j==js) .and. (z==1) .and.  (is_master()) ) then 
+                     WRITE(0,*) 'BAROCLINIC SAMPLE vv2', vv2, r, utmp, v(i,j,z), pa(1), pa(2), ew(2,i,j,2), ew(1,i,j,2)
+                    
                   endif
                enddo
             enddo
             do j=js,je+1
                do i=is,ie
+                 
                   utmp =  Ubar * COS(eta_v(z))**(3.0/2.0) * SIN(2.0*grid(i,j,2))**2.0
              ! Perturbation if Case==13
                   r = great_circle_dist( pcen, grid(i,j,1:2), radius )
                   if (-(r/r0)**2.0 > -40.0) utmp = utmp + u1*EXP(-(r/r0)**2.0)
                   uu1 = utmp*(ee1(2,i,j)*cos(grid(i,j,1)) - ee1(1,i,j)*sin(grid(i,j,1)))
-
+                  if ((i==is) .and. (j==js) .and. (z==1) .and.  (is_master()) ) then 
+                     WRITE(0,*) 'BAROCLINIC SAMPLE uu1',  uu1, r, utmp
+                  endif
                   utmp =  Ubar * COS(eta_v(z))**(3.0/2.0) * SIN(2.0*grid(i+1,j,2))**2.0
              ! Perturbation if Case==13
                   r = great_circle_dist( pcen, grid(i+1,j,1:2), radius )
                   if (-(r/r0)**2.0 > -40.0) utmp = utmp + u1*EXP(-(r/r0)**2.0)
                   uu3 = utmp*(ee1(2,i+1,j)*cos(grid(i+1,j,1)) - ee1(1,i+1,j)*sin(grid(i+1,j,1)))
-! Mid-point:
+                   if ((i==is) .and. (j==js) .and. (z==1) .and.  (is_master()) ) then 
+                     WRITE(0,*) 'BAROCLINIC SAMPLE uu3',  uu3, r, utmp
+                  endif
+                ! Mid-point:
                   p1(:) = grid(i  ,j  ,1:2)
                   p2(:) = grid(i+1,j  ,1:2)
                   call mid_pt_sphere(p1, p2, pa)
@@ -1850,6 +1861,9 @@
                   r = great_circle_dist( pcen, pa, radius )
                   if (-(r/r0)**2.0 > -40.0) utmp = utmp + u1*EXP(-(r/r0)**2.0)
                   uu2 = utmp*(es(2,i,j,1)*cos(pa(1)) - es(1,i,j,1)*sin(pa(1)))
+                  if ((i==is) .and. (j==js) .and. (z==1) .and.  (is_master()) ) then 
+                     WRITE(0,*) 'BAROCLINIC SAMPLE uu2',  uu2, r, utmp
+                  endif
 ! 3-point average:
                   u(i,j,z) = 0.25*(uu1 + 2.*uu2 + uu3)
                enddo
@@ -1884,6 +1898,13 @@
                               ( -2.0*(SIN(agrid(i,j,2))**6.0) *(COS(agrid(i,j,2))**2.0 + 1.0/3.0) + 10.0/63.0 ) * &
                               2.0*Ubar*COS(eta_v(z))**(3.0/2.0) + &
                               ( (8.0/5.0)*(COS(agrid(i,j,2))**3.0)*(SIN(agrid(i,j,2))**2.0 + 2.0/3.0) - PI/4.0 )*radius*omega )
+
+                  if ((i==is) .and. (j==js) .and. (z==1) .and.  (is_master()) ) then
+                     leta = eta(z)
+                     leta_z  = eta_v(z)
+                     griddy =  agrid(i,j,2)
+                     WRITE(0,*) 'BAROCLINIC SAMPLE pt1 inputs', pt1, radius, omega, T_mean, leta, leta_z, griddy
+                  endif
 #ifndef NO_AVG13
 ! 9-point average: should be 2nd order accurate for a rectangular cell
 !
@@ -1931,6 +1952,9 @@
                               2.0*Ubar*COS(eta_v(z))**(3.0/2.0) + &
                               ( (8.0/5.0)*(COS(grid(i,j+1,2))**3.0)*(SIN(grid(i,j+1,2))**2.0 + 2.0/3.0) - PI/4.0 )*radius*omega )
                   pt(i,j,z) = 0.25*pt1 + 0.125*(pt2+pt3+pt4+pt5) + 0.0625*(pt6+pt7+pt8+pt9)
+                  if ((i==is) .and. (j==js) .and. (z==1) .and.  (is_master()) ) then 
+                     WRITE(0,*) 'BAROCLINIC SAMPLE pt', pt(is, js, 1), pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8,pt9
+                  endif
 #else
                   pt(i,j,z) = pt1
 #endif
@@ -2003,6 +2027,9 @@
                               Ubar*COS( (eta_s-eta_0)*PI/2.0 )**(3.0/2.0) + &
                               ( (8.0/5.0)*(COS(grid(i,j+1,2))**3.0)*(SIN(grid(i,j+1,2))**2.0 + 2.0/3.0) - PI/4.0 )*radius*omega )
                phis(i,j) = 0.25*pt1 + 0.125*(pt2+pt3+pt4+pt5) + 0.0625*(pt6+pt7+pt8+pt9)
+               if ((i==is) .and. (j==js) .and. (z==1) .and.  (is_master()) ) then 
+                  WRITE(0,*) 'BAROCLINIC SAMPLE phis', phis(is, js, 1), pt1, pt2, pt3, pt4, pt5, pt6, pt7, pt8,pt9
+               endif
 #else
                phis(i,j) = pt1
 #endif
