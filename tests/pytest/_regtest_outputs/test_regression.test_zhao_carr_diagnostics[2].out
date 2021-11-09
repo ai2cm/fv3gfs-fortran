@@ -1,0 +1,75 @@
+xarray.Dataset {
+dimensions:
+	grid_xt = 12 ;
+	grid_yt = 12 ;
+	pfull = 63 ;
+	phalf = 64 ;
+	time = 4 ;
+
+variables:
+	float64 grid_xt(grid_xt) ;
+		grid_xt:long_name = T-cell longitude ;
+		grid_xt:units = degrees_E ;
+		grid_xt:cartesian_axis = X ;
+	float64 grid_yt(grid_yt) ;
+		grid_yt:long_name = T-cell latitude ;
+		grid_yt:units = degrees_N ;
+		grid_yt:cartesian_axis = Y ;
+	float64 pfull(pfull) ;
+		pfull:long_name = ref full pressure level ;
+		pfull:units = mb ;
+		pfull:cartesian_axis = Z ;
+		pfull:positive = down ;
+		pfull:edges = phalf ;
+	float64 phalf(phalf) ;
+		phalf:long_name = ref half pressure level ;
+		phalf:units = mb ;
+		phalf:cartesian_axis = Z ;
+		phalf:positive = down ;
+	object time(time) ;
+		time:long_name = time ;
+		time:cartesian_axis = T ;
+		time:calendar_type = JULIAN ;
+	float32 delp(time, pfull, grid_yt, grid_xt) ;
+		delp:long_name = pressure thickness ;
+		delp:units = pa ;
+		delp:cell_methods = time: point ;
+	float32 tendency_of_air_temperature_due_to_zhao_carr_emulator(time, pfull, grid_yt, grid_xt) ;
+		tendency_of_air_temperature_due_to_zhao_carr_emulator:long_name = temperature tendency due to Zhao Carr emulator ;
+		tendency_of_air_temperature_due_to_zhao_carr_emulator:units = K/s ;
+		tendency_of_air_temperature_due_to_zhao_carr_emulator:cell_methods = time: point ;
+	float32 tendency_of_cloud_water_due_to_zhao_carr_emulator(time, pfull, grid_yt, grid_xt) ;
+		tendency_of_cloud_water_due_to_zhao_carr_emulator:long_name = cloud water due to Zhao Carr emulator ;
+		tendency_of_cloud_water_due_to_zhao_carr_emulator:units = kg/kg/s ;
+		tendency_of_cloud_water_due_to_zhao_carr_emulator:cell_methods = time: point ;
+	float32 tendency_of_specific_humidity_due_to_zhao_carr_emulator(time, pfull, grid_yt, grid_xt) ;
+		tendency_of_specific_humidity_due_to_zhao_carr_emulator:long_name = specific humidity tendency due to Zhao Carr emulator ;
+		tendency_of_specific_humidity_due_to_zhao_carr_emulator:units = kg/kg/s ;
+		tendency_of_specific_humidity_due_to_zhao_carr_emulator:cell_methods = time: point ;
+	float32 tendency_of_air_temperature_due_to_zhao_carr_physics(time, pfull, grid_yt, grid_xt) ;
+		tendency_of_air_temperature_due_to_zhao_carr_physics:long_name = temperature tendency due to Zhao Carr physics ;
+		tendency_of_air_temperature_due_to_zhao_carr_physics:units = K/s ;
+		tendency_of_air_temperature_due_to_zhao_carr_physics:cell_methods = time: point ;
+	float32 tendency_of_cloud_water_due_to_zhao_carr_physics(time, pfull, grid_yt, grid_xt) ;
+		tendency_of_cloud_water_due_to_zhao_carr_physics:long_name = cloud water due to Zhao Carr physics ;
+		tendency_of_cloud_water_due_to_zhao_carr_physics:units = kg/kg/s ;
+		tendency_of_cloud_water_due_to_zhao_carr_physics:cell_methods = time: point ;
+	float32 tendency_of_specific_humidity_due_to_zhao_carr_physics(time, pfull, grid_yt, grid_xt) ;
+		tendency_of_specific_humidity_due_to_zhao_carr_physics:long_name = specific humidity tendency due to Zhao Carr physics ;
+		tendency_of_specific_humidity_due_to_zhao_carr_physics:units = kg/kg/s ;
+		tendency_of_specific_humidity_due_to_zhao_carr_physics:cell_methods = time: point ;
+	float32 surface_precipitation_due_to_zhao_carr_emulator(time, grid_yt, grid_xt) ;
+		surface_precipitation_due_to_zhao_carr_emulator:long_name = surface precipitation due to Zhao Carr emulator ;
+		surface_precipitation_due_to_zhao_carr_emulator:units = kg/m^2/s ;
+		surface_precipitation_due_to_zhao_carr_emulator:cell_methods = time: point ;
+	float32 surface_precipitation_due_to_zhao_carr_physics(time, grid_yt, grid_xt) ;
+		surface_precipitation_due_to_zhao_carr_physics:long_name = surface precipitation due to Zhao Carr physics ;
+		surface_precipitation_due_to_zhao_carr_physics:units = kg/m^2/s ;
+		surface_precipitation_due_to_zhao_carr_physics:cell_methods = time: point ;
+
+// global attributes:
+	:filename = piggy.tile2.nc ;
+	:title = microphysics_emulation ;
+	:grid_type = regular ;
+	:grid_tile = N/A ;
+}

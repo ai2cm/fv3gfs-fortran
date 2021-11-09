@@ -1320,6 +1320,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: temperature(:, :) => null()
     real (kind=kind_phys), pointer :: humidity(:, :) => null()
     real (kind=kind_phys), pointer :: cloud_water(:, :) => null()
+    real (kind=kind_phys), pointer :: surface_precipitation(:) => null()
 
     contains
       procedure :: create => zhao_carr_tendencies_create
@@ -1981,6 +1982,7 @@ module GFS_typedefs
     allocate(tendency%temperature(im, levels))
     allocate(tendency%humidity(im, levels))
     allocate(tendency%cloud_water(im, levels))
+    allocate(tendency%surface_precipitation(im))
   end subroutine
 
   subroutine zhao_carr_tendencies_zero(tendency)
@@ -1988,6 +1990,7 @@ module GFS_typedefs
     tendency%temperature = zero
     tendency%cloud_water = zero
     tendency%humidity = zero
+    tendency%surface_precipitation = zero
   end subroutine
 !------------------------
 ! GFS_statein_type%create

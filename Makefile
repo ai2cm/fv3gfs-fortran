@@ -77,7 +77,7 @@ push_image_%:
 	docker push $(GCR_URL)/$*:$(DEP_TAG_NAME)-$(COMMIT_SHA)
 
 ## push container images of dependencies to GCP 
-push_deps: push_image_mpi-build push_image_fms-build push_image_esmf-build push_image_serialbox-build push_image_emulation-build
+push_deps: push_image_mpi-build push_image_fms-build push_image_esmf-build push_image_serialbox-build
 
 pull_deps: ## pull container images of dependencies from GCP (for faster builds)
 	docker pull $(MPI_IMAGE)

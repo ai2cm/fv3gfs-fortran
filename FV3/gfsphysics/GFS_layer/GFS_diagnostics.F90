@@ -4310,6 +4310,19 @@ module GFS_diagnostics
       ExtDiag(idx)%data(nb)%var3 => tendencies(nb)%cloud_water
     enddo
 
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'surface_precipitation_due_to_' // trim(label)
+    ExtDiag(idx)%desc = 'surface precipitation due to Zhao Carr ' // trim(label)
+    ExtDiag(idx)%unit = 'kg/m^2/s'
+    ExtDiag(idx)%mod_name = module_name
+    ExtDiag(idx)%coarse_graining_method = 'area_weighted'
+    ExtDiag(idx)%diag_manager_controlled = .true.
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => tendencies(nb)%surface_precipitation
+    enddo
+
   end subroutine
 
 end module GFS_diagnostics
