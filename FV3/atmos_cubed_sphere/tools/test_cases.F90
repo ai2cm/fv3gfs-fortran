@@ -3789,7 +3789,7 @@
 ! The flow is initially hydrostatic
 #ifndef SUPER_K
      !$ser savepoint PVarAuxiliaryPressureVars-In
-     !$ser data delz=delz delp=delp pt=pt ps=ps pe=pe peln=peln pk=pk pkz=pkz qvapor=q(:,:,:,sphum) ptop=ptop ptop_min=ptop_min
+     !$ser data delz=delz delp=delp pt=pt ps=ps pe=pe peln=peln pk=pk pkz=pkz qvapor=q(:,:,:,sphum) ptop=ptop
      call p_var(npz, is, ie, js, je, ptop, ptop_min, delp, delz, pt, ps,   &
                 pe, peln, pk, pkz, kappa, q, ng, ncnst, area, dry_mass, .false., mountain, &
                 moist_phys, hydrostatic, nwat, domain, .not.hydrostatic)
