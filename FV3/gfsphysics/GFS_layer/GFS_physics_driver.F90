@@ -6,6 +6,7 @@ module module_physics_driver
                                    con_rerth, con_pi, rhc_max, dxmin,   &
                                    dxinv, pa2mb, rlapse, con_eps,       &
                                    con_epsm1, PQ0, A2A, A3, A4, RHmin,  &
+                                   rhowater, &
                                    tgice => con_tice, con_cvap
 
   use cs_conv,               only: cs_convr
@@ -4558,7 +4559,7 @@ module module_physics_driver
               Diag%zhao_carr_physics%temperature = (Stateout%gt0(1:im,1:levs) - dtdt) / dtp
             end if
             ! rain1 has units m, and represents surface precip over dtp
-            Diag%zhao_carr_physics%surface_precipitation = rain1 / dtp * 1000.0
+            Diag%zhao_carr_physics%surface_precipitation = rain1 / dtp * rhowater
 
 #ifdef ENABLE_CALLPYFORT
 
@@ -4593,7 +4594,7 @@ module module_physics_driver
               Diag%zhao_carr_emulator%cloud_water = (qc_post_precpd(1:im,1:levs) - dqdt(:,:,ntcw)) / dtp
               Diag%zhao_carr_emulator%temperature = (t_post_precpd(1:im,1:levs) - dtdt) / dtp
             end if
-            Diag%zhao_carr_emulator%surface_precipitation = rain1 / dtp * 1000.0
+            Diag%zhao_carr_emulator%surface_precipitation = rain1 / dtp * rhowater
 
             ! apply emulator
             if (Model%emulate_zc_microphysics) then
