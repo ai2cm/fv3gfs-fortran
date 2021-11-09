@@ -114,15 +114,17 @@ def test_callpyfort_integration(emulation_run):
     assert os.path.exists(join(run_dir, "store_success.txt"))
 
 
-@pytest.mark.parametrize('tile', range(1, 7))
+@pytest.mark.parametrize("tile", range(1, 7))
 def test_zhao_carr_diagnostics(emulation_run, regtest, tile):
     ds = xarray.open_dataset(os.path.join(emulation_run, f"piggy.tile{tile}.nc"))
     # print schema to regression data
     ds.info(regtest)
 
 
-@pytest.mark.parametrize('tile', range(1, 7))
-def test_zhao_carr_surface_precipitation_matches_total_water_source(emulation_run, tile):
+@pytest.mark.parametrize("tile", range(1, 7))
+def test_zhao_carr_surface_precipitation_matches_total_water_source(
+    emulation_run, tile
+):
     """The column integrated water sink roughly matches the surface
     precipitation in the Zhao-carr scheme.
 
