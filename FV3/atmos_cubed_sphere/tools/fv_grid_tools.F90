@@ -633,6 +633,7 @@ contains
         grid_global => Atm%grid_global
     else if( trim(grid_file) .NE. 'INPUT/grid_spec.nc') then
        allocate(grid_global(1-ng:npx  +ng,1-ng:npy  +ng,ndims,1:nregions))
+       !$ser verbatim grid_global(:,:,:,:) = 0.0
     endif
     
     iinta                         => Atm%gridstruct%iinta
