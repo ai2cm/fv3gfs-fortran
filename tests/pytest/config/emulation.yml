@@ -1,9 +1,43 @@
 data_table: default
-diag_table: default
 experiment_name: microphysics_emulation
 forcing: "gs://vcm-fv3config/data/base_forcing/v1.1/"
 orographic_forcing: gs://vcm-fv3config/data/orographic_data/v1.0
 initial_conditions: gs://vcm-fv3config/data/initial_conditions/gfs_c12_example/v1.0 
+diag_table:
+  name: my_diag_table
+  base_time: 2000-01-01T00:00:00
+  file_configs:
+    - name: piggy
+      frequency: 900
+      frequency_units: seconds
+      field_configs:
+        - field_name: delp
+          module_name: dynamics
+          output_name: delp
+        - field_name: tendency_of_air_temperature_due_to_emulator
+          module_name: zhao_carr_microphysics
+          output_name: tendency_of_air_temperature_due_to_zhao_carr_emulator
+        - field_name: tendency_of_cloud_water_due_to_emulator
+          module_name: zhao_carr_microphysics
+          output_name: tendency_of_cloud_water_due_to_zhao_carr_emulator
+        - field_name: tendency_of_specific_humidity_due_to_emulator
+          module_name: zhao_carr_microphysics
+          output_name: tendency_of_specific_humidity_due_to_zhao_carr_emulator
+        - field_name: tendency_of_air_temperature_due_to_physics
+          module_name: zhao_carr_microphysics
+          output_name: tendency_of_air_temperature_due_to_zhao_carr_physics
+        - field_name: tendency_of_cloud_water_due_to_physics
+          module_name: zhao_carr_microphysics
+          output_name: tendency_of_cloud_water_due_to_zhao_carr_physics
+        - field_name: tendency_of_specific_humidity_due_to_physics
+          module_name: zhao_carr_microphysics
+          output_name: tendency_of_specific_humidity_due_to_zhao_carr_physics
+        - field_name: surface_precipitation_due_to_emulator
+          module_name: zhao_carr_microphysics
+          output_name: surface_precipitation_due_to_zhao_carr_emulator
+        - field_name: surface_precipitation_due_to_physics
+          module_name: zhao_carr_microphysics
+          output_name: surface_precipitation_due_to_zhao_carr_physics
 namelist:
   amip_interp_nml:
     data_set: reynolds_oi
@@ -234,7 +268,7 @@ namelist:
     isubc_lw: 2
     isubc_sw: 2
     ivegsrc: 1
-    ldiag3d: false
+    ldiag3d: true
     lwhtr: true
     ncld: 1
     nst_anl: true

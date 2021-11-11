@@ -623,8 +623,8 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
    Init_parm%xlat            => Atmos%lat
    Init_parm%area            => Atmos%area
    Init_parm%tracer_names    => tracer_names
-#ifdef CCPP
    Init_parm%restart         = Atm(mytile)%flagstruct%warm_start
+#ifdef CCPP
    Init_parm%hydrostatic     = Atm(mytile)%flagstruct%hydrostatic
 #endif
 

@@ -129,9 +129,9 @@ module GFS_typedefs
     integer :: iau_offset                        !< iau running window length
     real(kind=kind_phys) :: dt_dycore            !< dynamics time step in seconds
     real(kind=kind_phys) :: dt_phys              !< physics  time step in seconds
-#ifdef CCPP
 !--- restart information
     logical :: restart                           !< flag whether this is a coldstart (.false.) or a warmstart/restart (.true.)
+#ifdef CCPP
 !--- hydrostatic/non-hydrostatic flag
     logical :: hydrostatic                       !< flag whether this is a hydrostatic or non-hydrostatic run
 #endif
@@ -1061,9 +1061,9 @@ module GFS_typedefs
     integer              :: kdt             !< current forecast iteration
 #ifdef CCPP
     logical              :: first_time_step !< flag signaling first time step for time integration routine
-    logical              :: restart         !< flag whether this is a coldstart (.false.) or a warmstart/restart (.true.)
     logical              :: hydrostatic     !< flag whether this is a hydrostatic or non-hydrostatic run
 #endif
+    logical              :: restart         !< flag whether this is a coldstart (.false.) or a warmstart/restart (.true.)
     integer              :: jdat(1:8)       !< current forecast date and time
                                             !< (yr, mon, day, t-zone, hr, min, sec, mil-sec)
     integer              :: imn             !< current forecast month
@@ -1315,6 +1315,17 @@ module GFS_typedefs
       procedure :: create  => radtend_create   !<   allocate array data
   end type GFS_radtend_type
 
+
+  type zhao_carr_tendencies
+    real (kind=kind_phys), pointer :: temperature(:, :) => null()
+    real (kind=kind_phys), pointer :: humidity(:, :) => null()
+    real (kind=kind_phys), pointer :: cloud_water(:, :) => null()
+    real (kind=kind_phys), pointer :: surface_precipitation(:) => null()
+
+    contains
+      procedure :: create => zhao_carr_tendencies_create
+      procedure :: zero => zhao_carr_tendencies_zero
+  end type
 !----------------------------------------------------------------
 ! GFS_diag_type
 !  internal diagnostic type used as arguments to gbphys and grrad 
@@ -1499,6 +1510,8 @@ module GFS_typedefs
 
     !--- MP quantities for 3D diagnositics 
     real (kind=kind_phys), pointer :: refl_10cm(:,:) => null()  !< instantaneous refl_10cm 
+
+    type(zhao_carr_tendencies) :: zhao_carr_emulator, zhao_carr_physics
 !
 !---vay-2018 UGWP-diagnostics daily mean
 !
@@ -1955,6 +1968,7 @@ module GFS_typedefs
          GFS_coupling_type
   public GFS_control_type,  GFS_grid_type,     GFS_tbd_type, &
          GFS_cldprop_type,  GFS_radtend_type,  GFS_diag_type
+  public zhao_carr_tendencies
 #ifdef CCPP
   public GFS_interstitial_type
 #endif
@@ -1962,6 +1976,22 @@ module GFS_typedefs
 !*******************************************************************************************
   CONTAINS
 
+  subroutine zhao_carr_tendencies_create(tendency, im, levels)
+    class(zhao_carr_tendencies), intent(inout) :: tendency
+    integer, intent(in) :: im, levels
+    allocate(tendency%temperature(im, levels))
+    allocate(tendency%humidity(im, levels))
+    allocate(tendency%cloud_water(im, levels))
+    allocate(tendency%surface_precipitation(im))
+  end subroutine
+
+  subroutine zhao_carr_tendencies_zero(tendency)
+    class(zhao_carr_tendencies), intent(inout) :: tendency
+    tendency%temperature = zero
+    tendency%cloud_water = zero
+    tendency%humidity = zero
+    tendency%surface_precipitation = zero
+  end subroutine
 !------------------------
 ! GFS_statein_type%create
 !------------------------
@@ -2687,8 +2717,9 @@ module GFS_typedefs
                                  dt_phys, iau_offset, idat, jdat,   &
                                  tracer_names,                      &
                                  input_nml_file, tile_num, blksz    &
+                                 , restart                          &
 #ifdef CCPP
-                                ,ak, bk, restart, hydrostatic,      &
+                                ,ak, bk, hydrostatic,      &
                                  communicator, ntasks, nthreads     &
 #endif
                                  )
@@ -2735,10 +2766,10 @@ module GFS_typedefs
     character(len=32),      intent(in) :: tracer_names(:)
     character(len=256),     intent(in), pointer :: input_nml_file(:)
     integer,                intent(in) :: blksz(:)
+    logical,                intent(in) :: restart
 #ifdef CCPP
     real(kind=kind_phys), dimension(:), intent(in) :: ak
     real(kind=kind_phys), dimension(:), intent(in) :: bk
-    logical,                intent(in) :: restart
     logical,                intent(in) :: hydrostatic
     integer,                intent(in) :: communicator
     integer,                intent(in) :: ntasks
@@ -3843,9 +3874,9 @@ module GFS_typedefs
     Model%fhour            = (rinc(4) + Model%dtp)/con_hr
     Model%zhour            = mod(Model%phour,Model%fhzero)
     Model%kdt              = 0
+    Model%restart          = restart
 #ifdef CCPP
     Model%first_time_step  = .true.
-    Model%restart          = restart
     Model%hydrostatic      = hydrostatic
 #endif
     Model%jdat(1:8)        = jdat(1:8)
@@ -4725,11 +4756,11 @@ module GFS_typedefs
       print *, ' zhour             : ', Model%zhour
       print *, ' kdt               : ', Model%kdt
       print *, ' jdat              : ', Model%jdat
+      print *, ' restart           : ', Model%restart
 #ifdef CCPP
       print *, ' sec               : ', Model%sec
       print *, ' si                : ', Model%si
       print *, ' first_time_step   : ', Model%first_time_step
-      print *, ' restart           : ', Model%restart
       print *, ' hydrostatic       : ', Model%hydrostatic
 #endif
     endif
@@ -5196,6 +5227,8 @@ module GFS_typedefs
       allocate (Diag%dq3dt  (IM,Model%levs,9))
       allocate (Diag%q_dt   (IM,Model%levs,5))
       allocate (Diag%q_dt_int (IM,5))
+      call Diag%zhao_carr_emulator%create(im, Model%levs)
+      call Diag%zhao_carr_physics%create(im, Model%levs)
 !      allocate (Diag%dq3dt  (IM,Model%levs,oz_coeff+5))
 !--- needed to allocate GoCart coupling fields
 !      allocate (Diag%upd_mf (IM,Model%levs))
@@ -5507,6 +5540,8 @@ module GFS_typedefs
       Diag%dv3dt    = zero
       Diag%dt3dt    = zero
       Diag%dq3dt    = zero
+      call Diag%zhao_carr_emulator%zero()
+      call Diag%zhao_carr_physics%zero()
 !     Diag%upd_mf   = zero
 !     Diag%dwn_mf   = zero
 !     Diag%det_mf   = zero
