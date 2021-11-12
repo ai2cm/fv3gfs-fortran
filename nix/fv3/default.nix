@@ -24,6 +24,7 @@ stdenv.mkDerivation {
   inherit fms;
   buildInputs = [
       call_py_fort
+      call_py_fort.pypkgs.black
       call_py_fort.pypkgs.fv3config
       call_py_fort.pypkgs.numpy
       call_py_fort.pypkgs.pytest
