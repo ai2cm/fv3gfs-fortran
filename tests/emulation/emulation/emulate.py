@@ -8,6 +8,7 @@ def assert_expected_variables_present(state):
 
     expected_fields = {
         "air_pressure",
+        "air_temperature_after_gscond",
         "air_temperature_after_last_gscond",
         "air_temperature_input",
         "air_temperature_output",
@@ -22,7 +23,6 @@ def assert_expected_variables_present(state):
         "specific_humidity_after_last_gscond",
         "specific_humidity_input",
         "specific_humidity_output",
-        "surface_air_pressure_after_gscond",
         "surface_air_pressure_after_last_gscond",
         "surface_air_pressure",
         "tendency_of_rain_water_mixing_ratio_due_to_microphysics",
