@@ -4575,9 +4575,9 @@ module module_physics_driver
               enddo
             enddo
 
-            call set_state("air_temperature_output", Stateout%gt0)
-            call set_state("specific_humidity_output", qv_post_precpd)
-            call set_state("cloud_water_mixing_ratio_output", qc_post_precpd)
+            call set_state("air_temperature_after_precpd", Stateout%gt0)
+            call set_state("specific_humidity_after_precpd", qv_post_precpd)
+            call set_state("cloud_water_mixing_ratio_after_precpd", qc_post_precpd)
             call set_state("total_precipitation", rain1)
             call set_state("ratio_of_snowfall_to_rainfall", Diag%sr)
             call set_state("tendency_of_rain_water_mixing_ratio_due_to_microphysics", rainp)
@@ -4588,11 +4588,11 @@ module module_physics_driver
               call call_function("emulation", "store")
             endif
 
-            call get_state("air_temperature_output", t_post_precpd)
-            call get_state("specific_humidity_output", qv_post_precpd)
-            call get_state("cloud_water_mixing_ratio_output", qc_post_precpd)
-            call get_state("air_temperature_after_gscond_output", tp_cpf)
-            call get_state("specific_humdity_after_gscond_output", qvp_cpf)
+            call get_state("air_temperature_after_precpd", t_post_precpd)
+            call get_state("specific_humidity_after_precpd", qv_post_precpd)
+            call get_state("cloud_water_mixing_ratio_after_precpd", qc_post_precpd)
+            call get_state("air_temperature_after_gscond", tp_cpf)
+            call get_state("specific_humdity_after_gscond", qvp_cpf)
 
             if (Model%ldiag3d) then
               Diag%zhao_carr_emulator%humidity = (qv_post_precpd(1:im,1:levs) - dqdt(:,:,1)) / dtp
