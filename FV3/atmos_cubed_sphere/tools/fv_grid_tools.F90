@@ -774,6 +774,7 @@ contains
          call fill_corners(grid(:,:,1), npx, npy, FILL=XDir, BGRID=.true.)
          call fill_corners(grid(:,:,2), npx, npy, FILL=XDir, BGRID=.true.)
        endif
+
        !$ser savepoint GridGrid-Out
        !$ser data grid=grid
 
@@ -920,11 +921,11 @@ contains
           dyc(i,jed+1) = dyc(i,jed)
        end do
 
+
        if( .not. stretched_grid )      &
            call sorted_intb(isd, ied, jsd, jed, is, ie, js, je, npx, npy, &
                             cubed_sphere, agrid, iintb, jintb)
 
-       
        call grid_area( npx, npy, ndims, nregions, Atm%neststruct%nested, Atm%gridstruct, Atm%domain, Atm%bd, Atm%flagstruct%regional )
 !      stretched_grid = .false.
 

@@ -234,6 +234,7 @@
       Atm%gridstruct%stretched_grid = .false.
            symm_grid = .true.
       endif
+
       !$ser savepoint SetEta-In
       !$ser data npz=npz ks=Atm%ks ptop=Atm%ptop ak=Atm%ak bk=Atm%bk
       if ( npz == 1 ) then
@@ -266,6 +267,7 @@
       if (.not. allocated(sst_ncep)) allocate (sst_ncep(i_sst,j_sst))
       if (.not. allocated(sst_anom)) allocate (sst_anom(i_sst,j_sst))
 #endif
+
 
       cos_sg(:,:,:) =  big_number
       sin_sg(:,:,:) = tiny_number
@@ -632,10 +634,11 @@
       enddo
       !$ser savepoint DerivedTrig-Out
       !$ser data ee1=ee1 ee2=ee2 cosa_u=cosa_u cosa_v=cosa_v cosa_s=cosa_s sina_u=sina_u sina_v=sina_v cosa=cosa sina=sina rsin_u=rsin_u rsin_v=rsin_v rsina=rsina rsin2=rsin2
-      
+
       !EXPLANATION HERE: calling fill_ghost overwrites **SOME** of the sin_sg 
       !values along the outward-facing edge of a tile in the corners, which is incorrect. 
       !What we will do is call fill_ghost and then fill in the appropriate values
+
       if (.not. (Atm%neststruct%nested .or. Atm%flagstruct%regional)) then
        do k=1,9
         call fill_ghost(sin_sg(:,:,k), npx, npy, tiny_number, Atm%bd)  ! this will cause NAN if used
@@ -719,7 +722,7 @@
            rsin_u = 1.
            rsin_v = 1.
    endif
-   
+
    if ( grid_type < 3 ) then
 
 #ifdef USE_NORM_VECT
