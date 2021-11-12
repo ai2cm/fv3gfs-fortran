@@ -610,8 +610,7 @@ module module_physics_driver
         t_post_precpd, &
         tp_cpf
 
-      real(kind=kind_phys), dimension(size(Grid%xlon,1))  ::            &
-          psp_cpf, psp1_cpf
+      real(kind=kind_phys), dimension(size(Grid%xlon,1))  :: psp_cpf
 #endif
 
 !--- ALLOCATABLE ELEMENTS
@@ -4523,7 +4522,6 @@ module module_physics_driver
 
               do i=1,im
                 psp_cpf(i) = Tbd%phy_f2d(i,1)
-                psp1_cpf(i) = Tbd%phy_f2d(i,2)
               enddo
 
   !           For creating training data & emulation
