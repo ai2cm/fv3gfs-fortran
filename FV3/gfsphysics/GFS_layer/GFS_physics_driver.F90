@@ -600,9 +600,15 @@ module module_physics_driver
 #ifdef ENABLE_CALLPYFORT
       !--- intermediate for callpyfort set_state
       real(kind=kind_phys), dimension(size(Grid%xlon,1),Model%levs) ::  &
-          qv_cpf, qc_cpf, qvp_cpf, tp_cpf, qvp1_cpf, tp1_cpf,           &
-          qv_post_gscond, qc_post_gscond, qv_post_precpd, qc_post_precpd,&
-          t_post_precpd
+        qc_cpf,&
+        qc_post_gscond,&
+        qc_post_precpd,&
+        qv_cpf,&
+        qv_post_gscond,&
+        qv_post_precpd,&
+        qvp_cpf,&
+        t_post_precpd, &
+        tp_cpf
 
       real(kind=kind_phys), dimension(size(Grid%xlon,1))  ::            &
           psp_cpf, psp1_cpf
@@ -4512,8 +4518,6 @@ module module_physics_driver
                 qc_cpf(i,k) = Stateout%gq0(i,k,ntcw)
                 tp_cpf(i,k) = Tbd%phy_f3d(i,k,1)
                 qvp_cpf(i,k) = Tbd%phy_f3d(i,k,2)
-                tp1_cpf(i,k) = Tbd%phy_f3d(i,k,3)
-                qvp1_cpf(i,k) = Tbd%phy_f3d(i,k,4)
               enddo
             enddo
 
@@ -4532,14 +4536,10 @@ module module_physics_driver
               call set_state("air_temperature_input", Stateout%gt0)
               call set_state("specific_humidity_input", qv_cpf)
               call set_state("cloud_water_mixing_ratio_input", qc_cpf)
-  !           previous timestep             
-              call set_state("air_temperature_two_time_steps_back", tp_cpf)
-              call set_state("specific_humidity_two_time_steps_back", qvp_cpf)
-              call set_state("surface_air_pressure_two_time_steps_back", psp_cpf)
   !           tp1,qp1,psp1 only used if physics dt > dynamics dt + 1e-3            
-              call set_state("air_temperature_at_previous_time_step", tp1_cpf)
-              call set_state("specific_humidity_at_previous_time_step", qvp1_cpf)
-              call set_state("surface_air_pressure_at_previous_time_step", psp1_cpf)
+              call set_state("air_temperature_after_last_gscond", tp_cpf)
+              call set_state("specific_humidity_after_last_gscond", qvp_cpf)
+              call set_state("surface_air_pressure_after_last_gscond", psp_cpf)
 #endif
             
             call gscond (im, ix, levs, dtp, dtf, Statein%prsl, Statein%pgr,    &
@@ -4547,6 +4547,11 @@ module module_physics_driver
                          Stateout%gt0, Tbd%phy_f3d(1,1,1), Tbd%phy_f3d(1,1,2), &
                          Tbd%phy_f2d(1,1), Tbd%phy_f3d(1,1,3),                 &
                          Tbd%phy_f3d(1,1,4), Tbd%phy_f2d(1,2), rhc,lprnt, ipr)
+
+#ifdef ENABLE_CALLPYFORT
+            call set_state("specific_humidity_after_gscond", Stateout%gq0(1:im, 1:levs, 1))
+            call set_state("surface_air_pressure_after_gscond", Stateout%gt0(1:im, 1:levs))
+#endif
 
             call precpd (im, ix, levs, dtp, del, Statein%prsl,                 &
                         Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),           &
