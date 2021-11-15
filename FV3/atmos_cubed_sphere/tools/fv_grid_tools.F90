@@ -591,6 +591,9 @@ contains
     integer :: isd, ied, jsd, jed
     integer :: istart, iend, jstart, jend
 
+    !$ser verbatim integer:: nxm1
+    !$ser verbatim nxm1=npx-1
+    
     is  = Atm%bd%is
     ie  = Atm%bd%ie
     js  = Atm%bd%js
@@ -630,6 +633,7 @@ contains
         grid_global => Atm%grid_global
     else if( trim(grid_file) .NE. 'INPUT/grid_spec.nc') then
        allocate(grid_global(1-ng:npx  +ng,1-ng:npy  +ng,ndims,1:nregions))
+       !$ser verbatim grid_global(:,:,:,:) = 0.0
     endif
     
     iinta                         => Atm%gridstruct%iinta
@@ -674,10 +678,19 @@ contains
           if (Atm%neststruct%nested) then
              call setup_aligned_nest(Atm)
           else
+          !$ser savepoint GridGrid-In
+          !$ser data grid_global=grid_global
            if(trim(grid_file) == 'INPUT/grid_spec.nc') then  
              call read_grid(Atm, grid_file, ndims, nregions, ng)
            else
-            if (Atm%flagstruct%grid_type>=0) call gnomonic_grids(Atm%flagstruct%grid_type, npx-1, xs, ys)
+            if (Atm%flagstruct%grid_type>=0) then
+
+               !$ser savepoint GnomonicGrids-In
+               !$ser data grid_type=Atm%flagstruct%grid_type nx=nxm1 lon=xs lat=ys
+               call gnomonic_grids(Atm%flagstruct%grid_type, npx-1, xs, ys)
+               !$ser savepoint GnomonicGrids-Out
+               !$ser data lon=xs lat=ys
+            endif ! (Atm%flagstruct%grid_type>=0)
             if (is_master()) then
              if (Atm%flagstruct%grid_type>=0) then
                 do j=1,npy
@@ -687,7 +700,11 @@ contains
                    enddo
                 enddo
 ! mirror_grid assumes that the tile=1 is centered on equator and greenwich meridian Lon[-pi,pi] 
+                !$ser savepoint MirrorGrid-In
+                !$ser data master_grid_global=grid_global master_ng=ng master_npx=npx master_npy=npy
                 call mirror_grid(grid_global, ng, npx, npy, 2, 6)
+                !$ser savepoint MirrorGrid-Out
+                !$ser data master_grid_global=grid_global
                 do n=1,nregions
                    do j=1,npy
                       do i=1,npx
@@ -758,9 +775,13 @@ contains
          call fill_corners(grid(:,:,2), npx, npy, FILL=XDir, BGRID=.true.)
        endif
 
+       !$ser savepoint GridGrid-Out
+       !$ser data grid=grid
 
           !--- dx and dy         
 
+          !$ser savepoint DxDy-In
+          !$ser data grid=grid
           if( .not. Atm%flagstruct%regional) then
             istart=is
             iend=ie
@@ -816,6 +837,8 @@ contains
             call fill_corners(dx, dy, npx, npy, DGRID=.true.)
           endif
 
+          !$ser savepoint DxDy-Out
+          !$ser data dx=dx dy=dy
        if( .not. stretched_grid )         &
            call sorted_inta(isd, ied, jsd, jed, cubed_sphere, grid, iinta, jinta)
 
@@ -823,6 +846,8 @@ contains
  
           !--- compute agrid (use same indices as for dx/dy above)
 
+       !$ser savepoint AGrid-In
+       !$ser data agrid=agrid grid=grid
        do j=jstart,jend
           do i=istart,iend
              if ( stretched_grid ) then
@@ -844,6 +869,12 @@ contains
          call fill_corners(agrid(:,:,1), npx, npy, XDir, AGRID=.true.)
          call fill_corners(agrid(:,:,2), npx, npy, YDir, AGRID=.true.)
        endif
+
+       !$ser savepoint AGrid-Out
+       !$ser data agrid=agrid grid=grid
+
+       !$ser savepoint GridAreas-In
+       !$ser data grid=Atm%gridstruct%grid_64 agrid=Atm%gridstruct%agrid_64 area=Atm%gridstruct%area_64 area_c=Atm%gridstruct%area_c_64 dxa=dxa dya=dya dxc=dxc dyc=dyc
 
        do j=jsd,jed
           do i=isd,ied
@@ -1037,13 +1068,13 @@ contains
           end if
        end if
 
-       call mpp_update_domains( area_c, Atm%domain, position=CORNER, complete=.true.)
+      call mpp_update_domains( area_c, Atm%domain, position=CORNER, complete=.true.)
 
-       ! Handle corner Area ghosting
-       if (cubed_sphere .and. (.not. (Atm%neststruct%nested .or. Atm%flagstruct%regional))) then
-          call fill_ghost(area, npx, npy, -big_number, Atm%bd)  ! fill in garbage values
-          call fill_corners(area_c, npx, npy, FILL=XDir, BGRID=.true.)
-       endif
+        ! Handle corner Area ghosting
+        if (cubed_sphere .and. (.not. (Atm%neststruct%nested .or. Atm%flagstruct%regional))) then
+           call fill_ghost(area, npx, npy, -big_number, Atm%bd)  ! fill in garbage values
+           call fill_corners(area_c, npx, npy, FILL=XDir, BGRID=.true.)
+        endif
 
        do j=jsd,jed+1
           do i=isd,ied
@@ -1149,6 +1180,9 @@ contains
           write(*,*  ) ''
        endif
     endif!if gridtype > 3
+
+    !$ser savepoint GridAreas-Out
+    !$ser data grid=Atm%gridstruct%grid_64 agrid=Atm%gridstruct%agrid_64 area=Atm%gridstruct%area_64 area_c=Atm%gridstruct%area_c_64 dxa=dxa dya=dya dxc=dxc dyc=dyc
 
     if (Atm%neststruct%nested .or. ANY(Atm%neststruct%child_grids)) then
     nullify(grid_global)
