@@ -4591,7 +4591,7 @@ module module_physics_driver
             call get_state("cloud_water_mixing_ratio_after_precpd", qc_post_precpd)
             call get_state("total_precipitation", rain1)
             call get_state("air_temperature_after_gscond", tp_cpf)
-            call get_state("specific_humdity_after_gscond", qvp_cpf)
+            call get_state("specific_humidity_after_gscond", qvp_cpf)
 
             if (Model%ldiag3d) then
               Diag%zhao_carr_emulator%humidity = (qv_post_precpd(1:im,1:levs) - dqdt(:,:,1)) / dtp
