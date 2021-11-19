@@ -767,11 +767,10 @@
          js2 = js
          je2 = je
       end if
-
+      !$ser off
       pe(:,:,:) = 0.0
       pt(:,:,:) = 1.0
-      !$ser savepoint DefaultfC0-In
-      !$ser data fC=fC f0=f0
+      
       f0(:,:) = huge(dummy)
       fC(:,:) = huge(dummy)
       do j=jsd,jed+1
@@ -788,8 +787,7 @@
       enddo
       call mpp_update_domains( f0, domain )
       if (cubed_sphere) call fill_corners(f0, npx, npy, YDir)
-      !$ser savepoint DefaultfC0-Out
-      !$ser data fC=fC f0=f0
+      
       delp(isd:is-1,jsd:js-1,1:npz)=0.
       delp(isd:is-1,je+1:jed,1:npz)=0.
       delp(ie+1:ied,jsd:js-1,1:npz)=0.
@@ -3820,6 +3818,8 @@
 #endif
 
 #endif
+    !$ser on
+    !$ser data preupdateu=u preupdatev=v
     call mp_update_dwinds(u, v, npx, npy, npz, domain)
 
 
