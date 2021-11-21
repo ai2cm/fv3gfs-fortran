@@ -1749,7 +1749,10 @@
             eta(k) = 0.5*( (ak(k)+ak(k+1))/1.e5 + bk(k)+bk(k+1) )
             eta_v(k) = (eta(k) - eta_0)*PI*0.5
          enddo
-
+  !$ser savepoint InitPreJab-Out
+  !$ser data ps=ps delp=delp pe=pe peln=peln pk=pk pkz=pkz eta=eta eta_v=eta_v 
+  !$ser savepoint JablonowskiBaroclinic-In
+  !$ser data ps=ps delp=delp pe=pe peln=peln pk=pk pkz=pkz eta=eta eta_v=eta_v  ptop=ptop
     if ( .not. adiabatic ) then
     !Set up moisture
          sphum = get_tracer_index (MODEL_ATMOS, 'sphum')
@@ -1771,10 +1774,7 @@
          enddo
          enddo
     endif
-   !$ser savepoint InitPreJab-Out
-    !$ser data ps=ps delp=delp pe=pe peln=peln pk=pk pkz=pkz eta=eta eta_v=eta_v qvapor=q(:,:,:,sphum)
-   !$ser savepoint JablonowskiBaroclinic-In
-   !$ser data ps=ps delp=delp pe=pe peln=peln pk=pk pkz=pkz eta=eta eta_v=eta_v qvapor=q(:,:,:,sphum) ptop=ptop
+  
     ! Initialize winds 
          Ubar = 35.0
          r0 = 1.0
