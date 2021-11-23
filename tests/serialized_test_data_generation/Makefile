@@ -10,7 +10,7 @@ SER_ENV ?= ALL
 # -convention: <tag>-<some large conceptual version change>.<serialization statement change>.<hotfix>
 # -version number should be increased when serialization data is expected to change
 # -omit tag (e.g. 7.1.1) for "operational" serialization data, use tag for experimental serialization data
-FORTRAN_VERSION ?= initdev-7.2.6
+FORTRAN_VERSION ?= 7.2.7
 # docker container image setup (used for running model, see ../../README.md)
 GCR_URL = us.gcr.io/vcm-ml
 COMPILED_IMAGE = $(GCR_URL)/fv3gfs-compiled:$(FORTRAN_VERSION)-serialize-gt4pydev
