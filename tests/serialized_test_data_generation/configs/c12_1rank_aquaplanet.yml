@@ -102,6 +102,7 @@ namelist:
     print_memory_usage: false
   fv_core_nml:
     a_imp: 1.0
+    add_noise: 0.1
     adjust_dry_mass: false
     beta: 0.0
     consv_am: false
@@ -109,15 +110,15 @@ namelist:
     d2_bg: 0.0
     d2_bg_k1: 0.2
     d2_bg_k2: 0.1
-    d4_bg: 0.15
+    d4_bg: 0.12
     d_con: 1.0
     d_ext: 0.0
-    dddmp: 0.5
+    dddmp: 0.2
     deglat: 0.
-    delt_max: 0.002
+    delt_max: 0.01
     dnats: 1
     do_sat_adj: true
-    do_vort_damp: true
+    do_vort_damp: false
     dwind_2d: false
     dx_const: 2000.
     dy_const: 2000.
@@ -125,24 +126,24 @@ namelist:
     fill: true
     fill_dp: false
     fv_debug: false
-    fv_sg_adj: 0
+    fv_sg_adj: 900
     gfs_phil: false
     grid_type: 4
-    hord_dp: 8
-    hord_mt: 8
-    hord_tm: 8
-    hord_tr: 8
-    hord_vt: 8
+    hord_dp: 5
+    hord_mt: 5
+    hord_tm: 5
+    hord_tr: -5
+    hord_vt: 5
     hydrostatic: false
     io_layout:
     - 1
     - 1
     k_split: 1
     ke_bg: 0.0
-    kord_mt: 9
-    kord_tm: -9
-    kord_tr: 9
-    kord_wz: 9
+    kord_mt: 11
+    kord_tm: -11
+    kord_tr: 11
+    kord_wz: 11
     layout:
     - 1
     - 1
@@ -150,10 +151,10 @@ namelist:
     mountain: false
     n_split: 1
     n_sponge: 4
-    na_init: 0
+    na_init: 1
     ncep_ic: false
     nggps_ic: false
-    nord: 3
+    nord: 2
     npx: 13
     npy: 13
     npz: 79
@@ -166,9 +167,9 @@ namelist:
     print_freq: 1
     range_warn: true
     reset_eta: false
-    rf_cutoff: 3000.0
+    rf_cutoff: 2000.0
     rf_fast: true
-    tau: 10.0
+    tau: 1.0
     tau_h2o: 0.0
     use_hydro_pressure: false
     vtdm4: 0.06
