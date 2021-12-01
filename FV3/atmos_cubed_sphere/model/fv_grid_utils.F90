@@ -234,6 +234,7 @@
       Atm%gridstruct%stretched_grid = .false.
            symm_grid = .true.
       endif
+
       !$ser savepoint SetEta-In
       !$ser data npz=npz ks=Atm%ks ptop=Atm%ptop ak=Atm%ak bk=Atm%bk
       if ( npz == 1 ) then
@@ -517,7 +518,7 @@
   endif !if (grid_type < 3)
 
    if ( non_ortho ) then
-      !$ser savepoint MoreTrig-In
+      !$ser savepoint DerivedTrig-In
       !$ser data grid=grid cos_sg1=cos_sg(:,:,1) sin_sg1=sin_sg(:,:,1) cos_sg2=cos_sg(:,:,2) sin_sg2=sin_sg(:,:,2) cos_sg3=cos_sg(:,:,3) sin_sg3=sin_sg(:,:,3) cos_sg4=cos_sg(:,:,4) sin_sg4=sin_sg(:,:,4) cos_sg5=cos_sg(:,:,5) sin_sg5=sin_sg(:,:,5) cos_sg6=cos_sg(:,:,6) sin_sg6=sin_sg(:,:,6) cos_sg7=cos_sg(:,:,7) sin_sg7=sin_sg(:,:,7) cos_sg8=cos_sg(:,:,8) sin_sg8=sin_sg(:,:,8) cos_sg9=cos_sg(:,:,9) sin_sg9=sin_sg(:,:,9) ee1=ee1 ee2=ee2 cosa_u=cosa_u cosa_v=cosa_v cosa_s=cosa_s sina_u=sina_u sina_v=sina_v cosa=cosa sina=sina rsin_u=rsin_u rsin_v=rsin_v rsina=rsina rsin2=rsin2
            cosa_u = big_number
            cosa_v = big_number
@@ -632,7 +633,7 @@
             endif
          enddo
       enddo
-      !$ser savepoint MoreTrig-Out
+      !$ser savepoint DerivedTrig-Out
       !$ser data ee1=ee1 ee2=ee2 cosa_u=cosa_u cosa_v=cosa_v cosa_s=cosa_s sina_u=sina_u sina_v=sina_v cosa=cosa sina=sina rsin_u=rsin_u rsin_v=rsin_v rsina=rsina rsin2=rsin2
 
       !EXPLANATION HERE: calling fill_ghost overwrites **SOME** of the sin_sg 
@@ -706,9 +707,11 @@
 !!!         cos_sg(npx+i,npy,7) = cos_sg(npx-1,npy+i,8)
          end do
 !!!      cos_sg(npx,npy,6) = 0.5*(cos_sg(npx-1,npy,7)+cos_sg(npx,npy-1,9))
-      endif     
-      !$ser savepoint FixSgCorners-Out
-      !$ser data cos_sg1=cos_sg(:,:,1) sin_sg1=sin_sg(:,:,1) cos_sg2=cos_sg(:,:,2) sin_sg2=sin_sg(:,:,2) cos_sg3=cos_sg(:,:,3) sin_sg3=sin_sg(:,:,3) cos_sg4=cos_sg(:,:,4) sin_sg4=sin_sg(:,:,4) cos_sg5=cos_sg(:,:,5) sin_sg5=sin_sg(:,:,5) cos_sg6=cos_sg(:,:,6) sin_sg6=sin_sg(:,:,6) cos_sg7=cos_sg(:,:,7) sin_sg7=sin_sg(:,:,7) cos_sg8=cos_sg(:,:,8) sin_sg8=sin_sg(:,:,8) cos_sg9=cos_sg(:,:,9) sin_sg9=sin_sg(:,:,9) 
+
+      endif
+      
+      !$ser savepoint TrigSg-Out
+      !$ser data cos_sg1=cos_sg(:,:,1) sin_sg1=sin_sg(:,:,1) cos_sg2=cos_sg(:,:,2) sin_sg2=sin_sg(:,:,2) cos_sg3=cos_sg(:,:,3) sin_sg3=sin_sg(:,:,3) cos_sg4=cos_sg(:,:,4) sin_sg4=sin_sg(:,:,4) cos_sg5=cos_sg(:,:,5) sin_sg5=sin_sg(:,:,5) cos_sg6=cos_sg(:,:,6) sin_sg6=sin_sg(:,:,6) cos_sg7=cos_sg(:,:,7) sin_sg7=sin_sg(:,:,7) cos_sg8=cos_sg(:,:,8) sin_sg8=sin_sg(:,:,8) cos_sg9=cos_sg(:,:,9) sin_sg9=sin_sg(:,:,9)
    else !if non_ortho
            sina = 1.
            cosa = 0.

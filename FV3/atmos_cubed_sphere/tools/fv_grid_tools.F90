@@ -633,6 +633,7 @@ contains
         grid_global => Atm%grid_global
     else if( trim(grid_file) .NE. 'INPUT/grid_spec.nc') then
        allocate(grid_global(1-ng:npx  +ng,1-ng:npy  +ng,ndims,1:nregions))
+       !$ser verbatim grid_global(:,:,:,:) = 0.0
     endif
     
     iinta                         => Atm%gridstruct%iinta
@@ -773,6 +774,7 @@ contains
          call fill_corners(grid(:,:,1), npx, npy, FILL=XDir, BGRID=.true.)
          call fill_corners(grid(:,:,2), npx, npy, FILL=XDir, BGRID=.true.)
        endif
+
        !$ser savepoint GridGrid-Out
        !$ser data grid=grid
 
@@ -801,7 +803,7 @@ contains
                 dx(i,j) = great_circle_dist( p2, p1, radius )
              enddo
           enddo
-          if( stretched_grid ) then
+          if( stretched_grid .or. Atm%flagstruct%edge_subdomain_shrink_factor < 1.0 ) then
              do j = jstart, jend
                 do i = istart, iend+1
                    p1(1) = grid(i,j,  1)
@@ -812,6 +814,8 @@ contains
                 enddo
              enddo
           else
+             ! Note: get_symmetry makes some assumptions about subdomain size which will cause
+             !       it to fail if edge_subdomain_shrink_factor < 1.0
              call get_symmetry(dx(is:ie,js:je+1), dy(is:ie+1,js:je), 0, 1, Atm%layout(1), Atm%layout(2), &
                   Atm%domain, Atm%tile, Atm%gridstruct%npx_g, Atm%bd)
           endif
