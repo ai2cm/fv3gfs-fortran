@@ -638,6 +638,7 @@
       !EXPLANATION HERE: calling fill_ghost overwrites **SOME** of the sin_sg 
       !values along the outward-facing edge of a tile in the corners, which is incorrect. 
       !What we will do is call fill_ghost and then fill in the appropriate values
+
       if (.not. (Atm%neststruct%nested .or. Atm%flagstruct%regional)) then
        do k=1,9
         call fill_ghost(sin_sg(:,:,k), npx, npy, tiny_number, Atm%bd)  ! this will cause NAN if used
@@ -721,7 +722,7 @@
            rsin_u = 1.
            rsin_v = 1.
    endif
-   
+
    if ( grid_type < 3 ) then
 
 #ifdef USE_NORM_VECT
