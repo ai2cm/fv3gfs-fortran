@@ -770,7 +770,6 @@
 
       pe(:,:,:) = 0.0
       pt(:,:,:) = 1.0
-
       f0(:,:) = huge(dummy)
       fC(:,:) = huge(dummy)
       do j=jsd,jed+1
@@ -1799,12 +1798,12 @@
                   r = great_circle_dist( pcen, grid(i,j+1,1:2), radius )
                   if (-(r/r0)**2.0 > -40.0) utmp = utmp + u1*EXP(-(r/r0)**2.0) 
                   vv1 = utmp*(ee2(2,i,j+1)*cos(grid(i,j+1,1)) - ee2(1,i,j+1)*sin(grid(i,j+1,1)))
+
                   utmp =  Ubar * COS(eta_v(z))**(3.0/2.0) * SIN(2.0*grid(i,j,2))**2.0
              ! Perturbation if Case==13
                   r = great_circle_dist( pcen, grid(i,j,1:2), radius )
                   if (-(r/r0)**2.0 > -40.0) utmp = utmp + u1*EXP(-(r/r0)**2.0) 
                   vv3 = utmp*(ee2(2,i,j)*cos(grid(i,j,1)) - ee2(1,i,j)*sin(grid(i,j,1)))
-                  endif
 ! Mid-point:
                   p1(:) = grid(i  ,j ,1:2)
                   p2(:) = grid(i,j+1 ,1:2)
@@ -1820,18 +1819,18 @@
             enddo
             do j=js,je+1
                do i=is,ie
-                 
                   utmp =  Ubar * COS(eta_v(z))**(3.0/2.0) * SIN(2.0*grid(i,j,2))**2.0
              ! Perturbation if Case==13
                   r = great_circle_dist( pcen, grid(i,j,1:2), radius )
                   if (-(r/r0)**2.0 > -40.0) utmp = utmp + u1*EXP(-(r/r0)**2.0)
                   uu1 = utmp*(ee1(2,i,j)*cos(grid(i,j,1)) - ee1(1,i,j)*sin(grid(i,j,1)))
+
                   utmp =  Ubar * COS(eta_v(z))**(3.0/2.0) * SIN(2.0*grid(i+1,j,2))**2.0
              ! Perturbation if Case==13
                   r = great_circle_dist( pcen, grid(i+1,j,1:2), radius )
                   if (-(r/r0)**2.0 > -40.0) utmp = utmp + u1*EXP(-(r/r0)**2.0)
                   uu3 = utmp*(ee1(2,i+1,j)*cos(grid(i+1,j,1)) - ee1(1,i+1,j)*sin(grid(i+1,j,1)))
-                ! Mid-point:
+! Mid-point:
                   p1(:) = grid(i  ,j  ,1:2)
                   p2(:) = grid(i+1,j  ,1:2)
                   call mid_pt_sphere(p1, p2, pa)
@@ -1874,7 +1873,6 @@
                               ( -2.0*(SIN(agrid(i,j,2))**6.0) *(COS(agrid(i,j,2))**2.0 + 1.0/3.0) + 10.0/63.0 ) * &
                               2.0*Ubar*COS(eta_v(z))**(3.0/2.0) + &
                               ( (8.0/5.0)*(COS(agrid(i,j,2))**3.0)*(SIN(agrid(i,j,2))**2.0 + 2.0/3.0) - PI/4.0 )*radius*omega )
-
 #ifndef NO_AVG13
 ! 9-point average: should be 2nd order accurate for a rectangular cell
 !
@@ -1994,7 +1992,6 @@
                               Ubar*COS( (eta_s-eta_0)*PI/2.0 )**(3.0/2.0) + &
                               ( (8.0/5.0)*(COS(grid(i,j+1,2))**3.0)*(SIN(grid(i,j+1,2))**2.0 + 2.0/3.0) - PI/4.0 )*radius*omega )
                phis(i,j) = 0.25*pt1 + 0.125*(pt2+pt3+pt4+pt5) + 0.0625*(pt6+pt7+pt8+pt9)
-
 #else
                phis(i,j) = pt1
 #endif
