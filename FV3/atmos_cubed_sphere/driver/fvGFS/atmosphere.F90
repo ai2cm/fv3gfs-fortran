@@ -737,7 +737,6 @@ contains
                        Atm(n)%neststruct,  Atm(n)%idiag, Atm(n)%bd,              &
                        Atm(n)%parent_grid, Atm(n)%domain,Atm(n)%diss_est,        &
                        Atm(n)%lagrangian_tendency_of_hydrostatic_pressure)
-<<<<<<< Updated upstream
      !$ser savepoint FVDynamics-Out
      !$ser data u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
      !$ser verbatim if (sgs_tke > 0) then
@@ -748,23 +747,6 @@ contains
      !$ser verbatim if (sgs_tke > 0) then
        !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
      !$ser verbatim endif
-=======
-      !$ser verbatim if ((psc == abs(p_split)) .and. (a_step == 1)) then
-        !$ser off
-        !$ser savepoint FVDynamics-Out
-        !$ser data u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
-        !$ser verbatim if (sgs_tke > 0) then
-          !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
-        !$ser verbatim endif
-        !$ser savepoint GFSPhysicsDriver-In
-        !$ser data u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
-        !$ser verbatim if (sgs_tke > 0) then
-          !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
-        !$ser verbatim endif
-     !$ser verbatim else
-            !$ser off
-      !$ser verbatim endif
->>>>>>> Stashed changes
       call timing_off('fv_dynamics')
 
       if (ngrids > 1 .and. (psc < p_split .or. p_split < 0)) then
@@ -1611,14 +1593,8 @@ contains
 !SJL: perform vertical filling to fix the negative humidity if the SAS convection scheme is used
 !     This call may be commented out if RAS or other positivity-preserving CPS is used.
      blen = Atm_block%blksz(nb)
-<<<<<<< Updated upstream
      !$ser savepoint FillGFS-In
      !$ser data IPD_gq0=IPD_Data(nb)%Stateout%gq0 nb=nb IPD_prsi=IPD_Data(nb)%Statein%prsi
-=======
-    !$ser on
-    !$ser savepoint FillGFS-In
-    !$ser data IPD_gq0=IPD_Data(nb)%Stateout%gq0 nb=nb IPD_prsi=IPD_Data(nb)%Statein%prsi
->>>>>>> Stashed changes
      call fill_gfs(blen, npz, IPD_Data(nb)%Statein%prsi, IPD_Data(nb)%Stateout%gq0, 1.e-9_kind_phys)
      !$ser savepoint FillGFS-Out
      !$ser data IPD_gq0=IPD_Data(nb)%Stateout%gq0 IPD_delp=Atm(n)%delp IPD_qvapor=IPD_Data(nb)%Stateout%gq0(:,:,1)
