@@ -15,3 +15,12 @@ depend
 **/.vscode
 fv3.exe
 *.tmp.f90
+venv/**
+*.html
+**data/*
+*.dat
+*.json
+**rundir**
+**/RESTART/*
+*.nc
+**/data/**
