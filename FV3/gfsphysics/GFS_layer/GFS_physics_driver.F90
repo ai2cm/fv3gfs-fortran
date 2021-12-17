@@ -752,7 +752,8 @@ module module_physics_driver
             Statein%adjsfcnsw_override = 0.0
           endwhere
         endif
-        adjsfcnsw_for_lsm => Statein%adjsfcnsw_override
+        ! adjsfcnsw_for_lsm => Statein%adjsfcnsw_override
+        adjsfcnsw_for_lsm => adjsfcnsw
       else
         adjsfcdlw_for_lsm => adjsfcdlw
         adjsfcdsw_for_lsm => adjsfcdsw
@@ -2133,7 +2134,8 @@ module module_physics_driver
         Diag%epi(i)     = ep1d(i)
         Diag%dlwsfci(i) = adjsfcdlw_for_lsm(i)
         Diag%ulwsfci(i) = adjsfculw(i)
-        Diag%uswsfci(i) = adjsfcdsw_for_lsm(i) - adjsfcnsw_for_lsm(i)
+        ! Diag%uswsfci(i) = adjsfcdsw_for_lsm(i) - adjsfcnsw_for_lsm(i)
+        Diag%uswsfci(i) = adjsfcdsw_for_lsm(i) - Statein%adjsfcnsw(i)
         Diag%dswsfci(i) = adjsfcdsw_for_lsm(i)
         Diag%gfluxi(i)  = gflx(i)
         Diag%t1(i)      = Statein%tgrs(i,1)
