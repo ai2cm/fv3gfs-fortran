@@ -2135,7 +2135,11 @@ module module_physics_driver
         Diag%dlwsfci(i) = adjsfcdlw_for_lsm(i)
         Diag%ulwsfci(i) = adjsfculw(i)
         ! Diag%uswsfci(i) = adjsfcdsw_for_lsm(i) - adjsfcnsw_for_lsm(i)
-        Diag%uswsfci(i) = adjsfcdsw_for_lsm(i) - Statein%adjsfcnsw_override(i)
+        if (Model%override_surface_radiative_fluxes) then
+          Diag%uswsfci(i) = adjsfcdsw_for_lsm(i) - Statein%adjsfcnsw_override(i)
+        else
+          Diag%uswsfci(i) = adjsfcdsw_for_lsm(i) - adjsfcnsw_for_lsm(i)
+        endif
         Diag%dswsfci(i) = adjsfcdsw_for_lsm(i)
         Diag%gfluxi(i)  = gflx(i)
         Diag%t1(i)      = Statein%tgrs(i,1)
