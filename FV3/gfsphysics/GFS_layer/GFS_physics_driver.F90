@@ -1457,6 +1457,14 @@ module module_physics_driver
 !---------------------------------------------------------------------
       endif
 !
+      if (Model%override_surface_radiative_fluxes .and. Model%derive_net_surface_shortwave_radiative_flux) then
+        where (adjsfcdsw .gt. adjsfcnsw)
+          Statein%adjsfcnsw_override = (adjsfcnsw / adjsfcdsw) * Statein%adjsfcdsw_override
+        elsewhere
+          Statein%adjsfcnsw_override = 0.0
+        endwhere
+      endif
+
       if (Model%lsidea) then                       !idea jw
         dtdt(:,:) = zero
       endif
