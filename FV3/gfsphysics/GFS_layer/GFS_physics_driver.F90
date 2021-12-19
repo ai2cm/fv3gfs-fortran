@@ -747,7 +747,7 @@ module module_physics_driver
         adjsfcdsw_for_lsm => Statein%adjsfcdsw_override
         if (Model%derive_net_surface_shortwave_radiative_flux) then
           where (adjsfcdsw .gt. adjsfcnsw)
-            Statein%adjsfcnsw_override = adjsfcnsw / adjsfcdsw
+            Statein%adjsfcnsw_override = 1.0 ! adjsfcnsw / adjsfcdsw
           elsewhere
             Statein%adjsfcnsw_override = 0.0
           endwhere
