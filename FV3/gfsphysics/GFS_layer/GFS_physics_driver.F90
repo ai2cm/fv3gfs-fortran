@@ -745,13 +745,6 @@ module module_physics_driver
       if (Model%override_surface_radiative_fluxes) then
         adjsfcdlw_for_lsm => Statein%adjsfcdlw_override
         adjsfcdsw_for_lsm => Statein%adjsfcdsw_override
-        if (Model%derive_net_surface_shortwave_radiative_flux) then
-          where (adjsfcdsw .gt. adjsfcnsw)
-            Statein%adjsfcnsw_override = adjsfcnsw / adjsfcdsw
-          elsewhere
-            Statein%adjsfcnsw_override = 0.0
-          endwhere
-        endif
         ! adjsfcnsw_for_lsm => Statein%adjsfcnsw_override
         adjsfcnsw_for_lsm => adjsfcnsw
       else
@@ -1563,6 +1556,15 @@ module module_physics_driver
             Diag%dlwsfc_rrtmg(i) = Diag%dlwsfc_rrtmg(i) + adjsfcdlw(i)*dtf
             Diag%ulwsfc_rrtmg(i) = Diag%ulwsfc_rrtmg(i) + adjsfculw(i)*dtf
           enddo
+
+          if (Model%derive_net_surface_shortwave_radiative_flux) then
+            where (adjsfcdsw .gt. adjsfcnsw)
+              Statein%adjsfcnsw_override = adjsfcnsw / adjsfcdsw
+            elsewhere
+              Statein%adjsfcnsw_override = 0.0
+            endwhere
+          endif
+
         endif
 
         if (Model%ldiag3d) then
