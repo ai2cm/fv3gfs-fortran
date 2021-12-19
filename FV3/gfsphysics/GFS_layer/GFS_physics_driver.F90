@@ -745,8 +745,7 @@ module module_physics_driver
       if (Model%override_surface_radiative_fluxes) then
         adjsfcdlw_for_lsm => Statein%adjsfcdlw_override
         adjsfcdsw_for_lsm => Statein%adjsfcdsw_override
-        ! adjsfcnsw_for_lsm => Statein%adjsfcnsw_override
-        adjsfcnsw_for_lsm => adjsfcnsw
+        adjsfcnsw_for_lsm => Statein%adjsfcnsw_override
       else
         adjsfcdlw_for_lsm => adjsfcdlw
         adjsfcdsw_for_lsm => adjsfcdsw
@@ -1458,6 +1457,14 @@ module module_physics_driver
 !---------------------------------------------------------------------
       endif
 !
+      if (Model%override_surface_radiative_fluxes .and. Model%derive_net_surface_shortwave_radiative_flux) then
+          where (adjsfcdsw .gt. adjsfcnsw)
+            Statein%adjsfcnsw_override = (adjsfcnsw / adjsfcdsw) * Statein%adjsfcdsw_override
+          elsewhere
+            Statein%adjsfcnsw_override = 0.0
+          endwhere
+      endif
+
       if (Model%lsidea) then                       !idea jw
         dtdt(:,:) = zero
       endif
@@ -1556,15 +1563,6 @@ module module_physics_driver
             Diag%dlwsfc_rrtmg(i) = Diag%dlwsfc_rrtmg(i) + adjsfcdlw(i)*dtf
             Diag%ulwsfc_rrtmg(i) = Diag%ulwsfc_rrtmg(i) + adjsfculw(i)*dtf
           enddo
-
-          if (Model%derive_net_surface_shortwave_radiative_flux) then
-            where (adjsfcdsw .gt. adjsfcnsw)
-              Statein%adjsfcnsw_override = adjsfcnsw / adjsfcdsw
-            elsewhere
-              Statein%adjsfcnsw_override = 0.0
-            endwhere
-          endif
-
         endif
 
         if (Model%ldiag3d) then
@@ -2136,13 +2134,7 @@ module module_physics_driver
         Diag%epi(i)     = ep1d(i)
         Diag%dlwsfci(i) = adjsfcdlw_for_lsm(i)
         Diag%ulwsfci(i) = adjsfculw(i)
-        ! Diag%uswsfci(i) = adjsfcdsw_for_lsm(i) - adjsfcnsw_for_lsm(i)
-        if (Model%override_surface_radiative_fluxes) then
-          Diag%uswsfci(i) = Statein%adjsfcnsw_override(i)
-          ! Diag%uswsfci(i) = adjsfcdsw_for_lsm(i) - Statein%adjsfcnsw_override(i)
-        else
-          Diag%uswsfci(i) = adjsfcdsw_for_lsm(i) - adjsfcnsw_for_lsm(i)
-        endif
+        Diag%uswsfci(i) = adjsfcdsw_for_lsm(i) - adjsfcnsw_for_lsm(i)
         Diag%dswsfci(i) = adjsfcdsw_for_lsm(i)
         Diag%gfluxi(i)  = gflx(i)
         Diag%t1(i)      = Statein%tgrs(i,1)
