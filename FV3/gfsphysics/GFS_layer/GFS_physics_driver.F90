@@ -2563,6 +2563,17 @@ module module_physics_driver
         else
           if (Model%satmedmf) then
              if (Model%isatmedmf == 0) then   ! initial version of satmedmfvdif (Nov 2018)
+                !$ser on
+                !$ser savepoint Turb-In
+                !$ser data turb_ix=ix turb_im=im turb_levs=levs turb_nvdiff=nvdiff turb_ntcw=ntcw turb_ntiw=ntiw turb_ntke=ntke
+                !$ser data turb_dvdt=dvdt turb_dudt=dudt turb_dtdt=dtdt turb_dqdt=dqdt
+                !$ser data turb_ugrs=Statein%ugrs turb_vgrs=Statein%vgrs turb_tgrs=Statein%tgrs turb_qgrs=Statein%qgrs
+                !$ser data turb_htrsw=Radtend%htrsw turb_htrlw=Radtend%htrlw turb_xmu=xmu turb_garea=garea turb_prsik=Statein%prsik(1,1) turb_rb=rb 
+                !$ser data turb_zorl=Sfcprop%zorl turb_u10m=Diag%u10m turb_v10m=Diag%v10m turb_ffmm=Sfcprop%ffmm turb_ffhh=Sfcprop%ffhh turb_tsfc=Sfcprop%tsfc
+                !$ser data turb_hflx=hflx turb_evap=evap turb_stress=stress turb_wind=wind turb_kpbl=kpbl turb_prsi=Statein%prsi
+                !$ser data turb_del=del turb_prsl=Statein%prsl turb_prslk=Statein%prslk turb_phii=Statein%phii turb_phil=Statein%phil turb_dtp=dtp 
+                !$ser data turb_dspheat=Model%dspheat turb_dusfc1=dusfc1 turb_dvsfc1=dvsfc1 turb_dtsfc1=dtsfc1 turb_dqsfc1=dqsfc1 turb_hpbl=Diag%hpbl 
+                !$ser data turb_kinver=kinver turb_xkzm_m=Model%xkzm_m turb_xkzm_h=Model%xkzm_h turb_xkzm_s=Model%xkzm_s
                 call satmedmfvdif(ix, im, levs, nvdiff, ntcw, ntiwx, ntkev,           &
                          dvdt, dudt, dtdt, dvdftra,                                   &
                          Statein%ugrs, Statein%vgrs, Statein%tgrs, vdftra,            &
@@ -2573,6 +2584,16 @@ module module_physics_driver
                          Statein%prslk, Statein%phii, Statein%phil, dtp,              &
                          Model%dspheat, dusfc1, dvsfc1, dtsfc1, dqsfc1, Diag%hpbl,    &
                          kinver, Model%xkzm_m, Model%xkzm_h, Model%xkzm_s)
+                !$ser savepoint Turb-out
+                !$ser data turb_ix=ix turb_im=im turb_levs=levs turb_nvdiff=nvdiff turb_ntcw=ntcw turb_ntiw=ntiw turb_ntke=ntke
+                !$ser data turb_dvdt=dvdt turb_dudt=dudt turb_dtdt=dtdt turb_dqdt=dqdt
+                !$ser data turb_ugrs=Statein%ugrs turb_vgrs=Statein%vgrs turb_tgrs=Statein%tgrs turb_qgrs=Statein%qgrs
+                !$ser data turb_htrsw=Radtend%htrsw turb_htrlw=Radtend%htrlw turb_xmu=xmu turb_garea=garea turb_prsik=Statein%prsik(1,1) turb_rb=rb 
+                !$ser data turb_zorl=Sfcprop%zorl turb_u10m=Diag%u10m turb_v10m=Diag%v10m turb_ffmm=Sfcprop%ffmm turb_ffhh=Sfcprop%ffhh turb_tsfc=Sfcprop%tsfc
+                !$ser data turb_hflx=hflx turb_evap=evap turb_stress=stress turb_wind=wind turb_kpbl=kpbl turb_prsi=Statein%prsi
+                !$ser data turb_del=del turb_prsl=Statein%prsl turb_prslk=Statein%prslk turb_phii=Statein%phii turb_phil=Statein%phil turb_dtp=dtp 
+                !$ser data turb_dspheat=Model%dspheat turb_dusfc1=dusfc1 turb_dvsfc1=dvsfc1 turb_dtsfc1=dtsfc1 turb_dqsfc1=dqsfc1 turb_hpbl=Diag%hpbl 
+                !$ser data turb_kinver=kinver turb_xkzm_m=Model%xkzm_m turb_xkzm_h=Model%xkzm_h turb_xkzm_s=Model%xkzm_s
              elseif (Model%isatmedmf == 1) then   ! updated version of satmedmfvdif (May 2019)
                 call satmedmfvdifq(ix, im, levs, nvdiff, ntcw, ntiwx, ntkev,          &
                          dvdt, dudt, dtdt, dvdftra,                                   &
