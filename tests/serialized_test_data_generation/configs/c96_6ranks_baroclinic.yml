@@ -3,9 +3,8 @@ diag_table: gs://vcm-fv3config/config/diag_table/no_output/v1.0/diag_table
 field_table: gs://vcm-fv3config/config/field_table/baroclinic_test/v1.0/field_table
 experiment_name: c96_6ranks_baroclinic
 forcing: gs://vcm-fv3config/data/base_forcing/v1.1/
-orographic_forcing: gs://vcm-fv3config/data/orographic_data/v1.0
-# To use internal test cases, point to an empty ICs directory
-initial_conditions: ""
+orographic_forcing: []
+initial_conditions: []
 namelist:
   amip_interp_nml:
     data_set: hurrell
@@ -100,7 +99,7 @@ namelist:
     max_files_w: 100
   fms_nml:
     clock_grain: ROUTINE
-    domains_stack_size: 3000000
+    domains_stack_size: 16000000
     print_memory_usage: false
   fv_core_nml:
     a_imp: 1.0

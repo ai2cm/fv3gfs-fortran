@@ -10,7 +10,7 @@ SER_ENV ?= ALL
 # -convention: <tag>-<some large conceptual version change>.<serialization statement change>.<hotfix>
 # -version number should be increased when serialization data is expected to change
 # -omit tag (e.g. 7.1.1) for "operational" serialization data, use tag for experimental serialization data
-FORTRAN_VERSION ?= 7.2.5
+FORTRAN_VERSION ?= 7.2.7
 # docker container image setup (used for running model, see ../../README.md)
 GCR_URL = us.gcr.io/vcm-ml
 COMPILED_IMAGE = $(GCR_URL)/fv3gfs-compiled:gnu7-mpich314-nocuda-serialize
@@ -82,6 +82,7 @@ run_model: ## run model using Docker image to generate serialized data
 		find . -type f \( -name "*.dat" -o -name "*.nml" -o -name "*.json" \) -exec md5sum {} \; > md5sums.txt
 	./check_data_dir.sh $(DATA_DIR_HOST)
 	cp $(EXPERIMENT_DIR)/$(EXPERIMENT).yml $(DATA_DIR_HOST)
+	cp $(EXPERIMENT_DIR)/$(EXPERIMENT).yml $(DATA_DIR_HOST)/input.yml
 
 pack_data: ## pack *.dat files into a *.tar.gz and delete them
 	@echo ""

@@ -235,6 +235,8 @@
            symm_grid = .true.
       endif
 
+      !$ser savepoint SetEta-In
+      !$ser data npz=npz ks=Atm%ks ptop=Atm%ptop ak=Atm%ak bk=Atm%bk
       if ( npz == 1 ) then
            Atm%ak(1) = 0.
            Atm%ak(2) = 0.
@@ -257,6 +259,8 @@
               endif
            endif
       endif
+      !$ser savepoint SetEta-Out
+      !$ser data ks=Atm%ks ptop=Atm%ptop ak=Atm%ak bk=Atm%bk
 
 ! NCEP analysis available from amip-Interp (allocate if needed)
 #ifndef DYCORE_SOLO
@@ -288,6 +292,8 @@
 
   if (grid_type < 3) then
 !xxx if ( .not. Atm%neststruct%nested ) then
+     !$ser savepoint UtilVectors-In
+     !$ser data grid=grid agrid=agrid ec1=ec1 ec2=ec2 ew1=ew(:,:,:,1) ew2=ew(:,:,:,2) es1=es(:,:,:,1) es2=es(:,:,:,2)
      if ( .not. Atm%neststruct%nested .and. .not.Atm%flagstruct%regional ) then
        call fill_corners(grid(:,:,1), npx, npy, FILL=XDir, BGRID=.true.)
        call fill_corners(grid(:,:,2), npx, npy, FILL=XDir, BGRID=.true.)
@@ -367,6 +373,12 @@
         enddo
      enddo
 
+     !$ser savepoint UtilVectors-Out
+     !$ser data ec1=ec1 ec2=ec2 ew1=ew(:,:,:,1) ew2=ew(:,:,:,2) es1=es(:,:,:,1) es2=es(:,:,:,2)
+
+     !$ser savepoint TrigSg-In
+     !$ser data grid=grid agrid=agrid cos_sg1=cos_sg(:,:,1) sin_sg1=sin_sg(:,:,1) cos_sg2=cos_sg(:,:,2) sin_sg2=sin_sg(:,:,2) cos_sg3=cos_sg(:,:,3) sin_sg3=sin_sg(:,:,3) cos_sg4=cos_sg(:,:,4) sin_sg4=sin_sg(:,:,4) cos_sg5=cos_sg(:,:,5) sin_sg5=sin_sg(:,:,5) cos_sg6=cos_sg(:,:,6) sin_sg6=sin_sg(:,:,6) cos_sg7=cos_sg(:,:,7) sin_sg7=sin_sg(:,:,7) cos_sg8=cos_sg(:,:,8) sin_sg8=sin_sg(:,:,8) cos_sg9=cos_sg(:,:,9) sin_sg9=sin_sg(:,:,9) ec1=ec1 ec2=ec2
+     
 !     9---4---8
 !     |       |
 !     1   5   3
@@ -450,6 +462,8 @@
      endif
 
 ! For AAM correction:
+     !$ser savepoint AAMCorrection-In
+     !$ser data grid=grid l2c_v=Atm%gridstruct%l2c_v l2c_u=Atm%gridstruct%l2c_u
      do j=js,je
         do i=is,ie+1
            pp1(:) = grid(i  ,j ,1:2)
@@ -470,8 +484,10 @@
            Atm%gridstruct%l2c_u(i,j) = cos(pp3(2)) * inner_prod(e1, ex)
         enddo
      enddo
+     !$ser savepoint AAMCorrection-Out
+     !$ser data l2c_v=Atm%gridstruct%l2c_v l2c_u=Atm%gridstruct%l2c_u
 
-   else
+   else !if (grid_type < 3)
      cos_sg(:,:,:) = 0.
      sin_sg(:,:,:) = 1.
 
@@ -498,9 +514,11 @@
      es(1,:,:,2)=0.
      es(2,:,:,2)=1.
      es(3,:,:,2)=0.
-  endif
+  endif !if (grid_type < 3)
 
    if ( non_ortho ) then
+      !$ser savepoint DerivedTrig-In
+      !$ser data grid=grid cos_sg1=cos_sg(:,:,1) sin_sg1=sin_sg(:,:,1) cos_sg2=cos_sg(:,:,2) sin_sg2=sin_sg(:,:,2) cos_sg3=cos_sg(:,:,3) sin_sg3=sin_sg(:,:,3) cos_sg4=cos_sg(:,:,4) sin_sg4=sin_sg(:,:,4) cos_sg5=cos_sg(:,:,5) sin_sg5=sin_sg(:,:,5) cos_sg6=cos_sg(:,:,6) sin_sg6=sin_sg(:,:,6) cos_sg7=cos_sg(:,:,7) sin_sg7=sin_sg(:,:,7) cos_sg8=cos_sg(:,:,8) sin_sg8=sin_sg(:,:,8) cos_sg9=cos_sg(:,:,9) sin_sg9=sin_sg(:,:,9) ee1=ee1 ee2=ee2 cosa_u=cosa_u cosa_v=cosa_v cosa_s=cosa_s sina_u=sina_u sina_v=sina_v cosa=cosa sina=sina rsin_u=rsin_u rsin_v=rsin_v rsina=rsina rsin2=rsin2
            cosa_u = big_number
            cosa_v = big_number
            cosa_s = big_number
@@ -614,6 +632,8 @@
             endif
          enddo
       enddo
+      !$ser savepoint DerivedTrig-Out
+      !$ser data ee1=ee1 ee2=ee2 cosa_u=cosa_u cosa_v=cosa_v cosa_s=cosa_s sina_u=sina_u sina_v=sina_v cosa=cosa sina=sina rsin_u=rsin_u rsin_v=rsin_v rsina=rsina rsin2=rsin2
 
       !EXPLANATION HERE: calling fill_ghost overwrites **SOME** of the sin_sg 
       !values along the outward-facing edge of a tile in the corners, which is incorrect. 
@@ -685,9 +705,11 @@
 !!!         cos_sg(npx+i,npy,7) = cos_sg(npx-1,npy+i,8)
          end do
 !!!      cos_sg(npx,npy,6) = 0.5*(cos_sg(npx-1,npy,7)+cos_sg(npx,npy-1,9))
-      endif     
-
-   else
+      endif
+      
+      !$ser savepoint TrigSg-Out
+      !$ser data cos_sg1=cos_sg(:,:,1) sin_sg1=sin_sg(:,:,1) cos_sg2=cos_sg(:,:,2) sin_sg2=sin_sg(:,:,2) cos_sg3=cos_sg(:,:,3) sin_sg3=sin_sg(:,:,3) cos_sg4=cos_sg(:,:,4) sin_sg4=sin_sg(:,:,4) cos_sg5=cos_sg(:,:,5) sin_sg5=sin_sg(:,:,5) cos_sg6=cos_sg(:,:,6) sin_sg6=sin_sg(:,:,6) cos_sg7=cos_sg(:,:,7) sin_sg7=sin_sg(:,:,7) cos_sg8=cos_sg(:,:,8) sin_sg8=sin_sg(:,:,8) cos_sg9=cos_sg(:,:,9) sin_sg9=sin_sg(:,:,9)
+   else !if non_ortho
            sina = 1.
            cosa = 0.
            rsina  = 1.
@@ -756,11 +778,13 @@
 !-------------------------------------------------------------
 ! Make unit vectors for the coordinate extension:
 !-------------------------------------------------------------
-  endif
+  endif !if (grid_type < 3)
  
 !xxxx
 !!!  should we insert .not.regional into the following loops alongside .not.nested ????
 !xxxx
+  !$ser savepoint DivgDel6-In
+  !$ser data sin_sg1=sin_sg(:,:,1) sin_sg2=sin_sg(:,:,2) sin_sg3=sin_sg(:,:,3) sin_sg4=sin_sg(:,:,4) sina_v=sina_v sina_u=sina_u dx=dx dy=dy dxc=dxc dyc=dyc divg_u=divg_u divg_v=divg_v del6_u=del6_u del6_v=del6_v
   do j=jsd,jed+1
      if ((j==1 .OR. j==npy) .and. .not. (Atm%neststruct%nested .or. Atm%flagstruct%regional)) then
         do i=isd,ied
@@ -788,6 +812,8 @@
          del6_v(ie+1,j) = 0.5*(sin_sg(npx,j,1)+sin_sg(npx-1,j,3))*dy(ie+1,j)/dxc(ie+1,j)
      endif
   enddo
+  !$ser savepoint DivgDel6-Out
+  !$ser data divg_u=divg_u divg_v=divg_v del6_u=del6_u del6_v=del6_v
 
 ! Initialize cubed_sphere to lat-lon transformation:
      call init_cubed_to_latlon( Atm%gridstruct, Atm%flagstruct%hydrostatic, agrid, grid_type, c2l_order, Atm%bd )
@@ -808,11 +834,15 @@
                                 gridtype=CGRID_NE_PARAM, complete=.true.)
         call mpp_update_domains(del6_v, del6_u, Atm%domain, flags=SCALAR_PAIR,      &
                                 gridtype=CGRID_NE_PARAM, complete=.true.)
+        !$ser savepoint EdgeFactors-In
+        !$ser data grid=grid agrid=agrid edge_s=Atm%gridstruct%edge_s(is:ie+1) edge_n=Atm%gridstruct%edge_n(is:ie+1) edge_w=Atm%gridstruct%edge_w(js:je+1) edge_e=Atm%gridstruct%edge_e(js:je+1) edge_vect_s=Atm%gridstruct%edge_vect_s edge_vect_n=Atm%gridstruct%edge_vect_n edge_vect_w=Atm%gridstruct%edge_vect_w edge_vect_e=Atm%gridstruct%edge_vect_e
         call edge_factors (Atm%gridstruct%edge_s, Atm%gridstruct%edge_n, Atm%gridstruct%edge_w, &
              Atm%gridstruct%edge_e, non_ortho, grid, agrid, npx, npy, Atm%bd)
         call efactor_a2c_v(Atm%gridstruct%edge_vect_s, Atm%gridstruct%edge_vect_n, &
              Atm%gridstruct%edge_vect_w, Atm%gridstruct%edge_vect_e, &
              non_ortho, grid, agrid, npx, npy, Atm%neststruct%nested, Atm%bd, Atm%flagstruct%regional)
+        !$ser savepoint EdgeFactors-Out
+        !$ser data edge_s=Atm%gridstruct%edge_s(is:ie+1) edge_n=Atm%gridstruct%edge_n(is:ie+1) edge_w=Atm%gridstruct%edge_w(js:je+1) edge_e=Atm%gridstruct%edge_e(js:je+1) edge_vect_s=Atm%gridstruct%edge_vect_s edge_vect_n=Atm%gridstruct%edge_vect_n edge_vect_w=Atm%gridstruct%edge_vect_w edge_vect_e=Atm%gridstruct%edge_vect_e
 !       call extend_cube_s(non_ortho, grid, agrid, npx, npy, .false., Atm%neststruct%nested)
 !       call van2d_init(grid, agrid, npx, npy)
      else
@@ -2316,6 +2346,8 @@
      ec1    => gridstruct%ec1
      ec2    => gridstruct%ec2
 
+     !$ser savepoint InitCubedtoLatLon-In
+     !$ser data agrid=agrid ec1=gridstruct%ec1 ec2=gridstruct%ec2 sin_sg5=gridstruct%sin_sg(:,:,5)
      do j=js-2,je+2
         do i=is-2,ie+2
            call unit_vect_latlon(agrid(i,j,1:2), vlon(i,j,1:3), vlat(i,j,1:3))
@@ -2337,6 +2369,8 @@
 !          if(.not.hydrostatic) gridstruct%w00(i,j) = 2.d0*omega*cos(agrid(i,j,2))
         enddo
      enddo
+     !$ser savepoint InitCubedtoLatLon-Out
+     !$ser data vlon=vlon vlat=vlat z11=z11 z12=z12 z21=z21 z22=z22 a11=a11 a12=a12 a21=a21 a22=a22
   endif
 
   end subroutine init_cubed_to_latlon

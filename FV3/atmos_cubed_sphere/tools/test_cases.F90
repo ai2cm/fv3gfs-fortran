@@ -1685,7 +1685,9 @@
 #endif
               
 #else
-
+ !$ser savepoint InitPreJab-In
+ !$ser data ptop=ptop ak=ak bk=bk delp=delp
+              
          q(:,:,:,:) = 0.
 
 #ifdef HIWPP
@@ -1744,7 +1746,10 @@
             eta(k) = 0.5*( (ak(k)+ak(k+1))/1.e5 + bk(k)+bk(k+1) )
             eta_v(k) = (eta(k) - eta_0)*PI*0.5
          enddo
-
+  !$ser savepoint InitPreJab-Out
+  !$ser data ps=ps delp=delp pe=pe peln=peln pk=pk pkz=pkz eta=eta eta_v=eta_v 
+  !$ser savepoint JablonowskiBaroclinic-In
+  !$ser data ps=ps delp=delp pe=pe peln=peln pk=pk pkz=pkz eta=eta eta_v=eta_v  ptop=ptop
     if ( .not. adiabatic ) then
     !Set up moisture
          sphum = get_tracer_index (MODEL_ATMOS, 'sphum')
@@ -2023,7 +2028,8 @@
 
       write(stdout(), *) 'PI:', pi
       write(stdout(), *) 'PHIS:', mpp_chksum(phis(is:ie,js:je))
-
+      !$ser savepoint JablonowskiBaroclinic-Out
+      !$ser data qvapor=q(:,:,:,sphum) pt=pt delz=delz w=w phis=phis u=u v=v utmpi=utmp vtmpi=vtmp eta=eta press=press
       else if ( (test_case==-12) .or. (test_case==-13) ) then
 
          call DCMIP16_BC(delp,pt,u,v,q,w,delz, &
@@ -3744,9 +3750,13 @@
 
 ! The flow is initially hydrostatic
 #ifndef SUPER_K
+     !$ser savepoint PVarAuxiliaryPressureVars-In
+     !$ser data delz=delz delp=delp pt=pt ps=ps pe=pe peln=peln pk=pk pkz=pkz qvapor=q(:,:,:,sphum) ptop=ptop
      call p_var(npz, is, ie, js, je, ptop, ptop_min, delp, delz, pt, ps,   &
                 pe, peln, pk, pkz, kappa, q, ng, ncnst, area, dry_mass, .false., mountain, &
                 moist_phys, hydrostatic, nwat, domain, .not.hydrostatic)
+    !$ser savepoint PVarAuxiliaryPressureVars-Out
+     !$ser data delz=delz delp=delp ps=ps pe=pe peln=peln pk=pk pkz=pkz 
 #endif
 
 #ifdef COLUMN_TRACER

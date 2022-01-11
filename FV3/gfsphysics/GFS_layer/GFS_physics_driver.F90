@@ -7,6 +7,7 @@ module module_physics_driver
                                    con_rerth, con_pi, rhc_max, dxmin,   &
                                    dxinv, pa2mb, rlapse, con_eps,       &
                                    con_epsm1, PQ0, A2A, A3, A4, RHmin,  &
+                                   rhowater, &
                                    tgice => con_tice, con_cvap
 
   use cs_conv,               only: cs_convr
@@ -41,6 +42,10 @@ module module_physics_driver
 !
   use cires_ugwp_module,     only:  cires_ugwp_driver, knob_ugwp_version
 !
+
+#ifdef ENABLE_CALLPYFORT
+  use callpy_mod
+#endif
 
   implicit none
 
@@ -593,6 +598,24 @@ module module_physics_driver
       real (kind=kind_phys), dimension(size(Grid%xlon,1)) :: &
          z01d, zt1d, bexp1d, xlai1d, alb1d, vegf1d
       real(kind=kind_phys) :: cdfz
+
+
+#ifdef ENABLE_CALLPYFORT
+      !--- intermediate for callpyfort set_state
+      real(kind=kind_phys), dimension(size(Grid%xlon,1),Model%levs) ::  &
+        qc_cpf,&
+        qc_post_gscond,&
+        qc_post_precpd,&
+        qv_cpf,&
+        qv_post_gscond,&
+        qv_post_precpd,&
+        qvp_cpf,&
+        t_post_precpd, &
+        tp_cpf
+
+      real(kind=kind_phys), dimension(size(Grid%xlon,1))  :: psp_cpf
+#endif
+
 !--- ALLOCATABLE ELEMENTS
       !--- in clw, the first two varaibles are cloud water and ice.
       !--- from third to ntrac are convective transportable tracers,
@@ -4514,16 +4537,112 @@ module module_physics_driver
                               psautco_l, prautco_l, Model%evpco, Model%wminco, &
                               Tbd%phy_f3d(1,1,ntot3d-2), lprnt, ipr)
           else
+#ifdef ENABLE_CALLPYFORT
+            ! copy tracer fields for state saving
+            do k=1,levs
+              do i=1,im
+                qv_cpf(i,k) = Stateout%gq0(i,k,1)
+                qc_cpf(i,k) = Stateout%gq0(i,k,ntcw)
+                tp_cpf(i,k) = Tbd%phy_f3d(i,k,1)
+                qvp_cpf(i,k) = Tbd%phy_f3d(i,k,2)
+              enddo
+            enddo
+
+              do i=1,im
+                psp_cpf(i) = Tbd%phy_f2d(i,1)
+              enddo
+
+  !           For creating training data & emulation
+              call set_state("model_time", Model%jdat)
+              call set_state("latitude", Grid%xlat)
+              call set_state("longitude", Grid%xlon)
+              call set_state("pressure_thickness_of_atmospheric_layer", del)
+              call set_state("air_pressure", Statein%prsl)
+              call set_state("surface_air_pressure", Statein%pgr)
+              call set_state("air_temperature_input", Stateout%gt0)
+              call set_state("specific_humidity_input", qv_cpf)
+              call set_state("cloud_water_mixing_ratio_input", qc_cpf)
+  !           tp1,qp1,psp1 only used if physics dt > dynamics dt + 1e-3            
+              call set_state("air_temperature_after_last_gscond", tp_cpf)
+              call set_state("specific_humidity_after_last_gscond", qvp_cpf)
+              call set_state("surface_air_pressure_after_last_gscond", psp_cpf)
+#endif
+            
             call gscond (im, ix, levs, dtp, dtf, Statein%prsl, Statein%pgr,    &
                          Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),          &
                          Stateout%gt0, Tbd%phy_f3d(1,1,1), Tbd%phy_f3d(1,1,2), &
                          Tbd%phy_f2d(1,1), Tbd%phy_f3d(1,1,3),                 &
                          Tbd%phy_f3d(1,1,4), Tbd%phy_f2d(1,2), rhc,lprnt, ipr)
 
+#ifdef ENABLE_CALLPYFORT
+            call set_state("specific_humidity_after_gscond", Stateout%gq0(1:im, 1:levs, 1))
+            call set_state("air_temperature_after_gscond", Stateout%gt0(1:im, 1:levs))
+#endif
+
             call precpd (im, ix, levs, dtp, del, Statein%prsl,                 &
                         Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),           &
                         Stateout%gt0, rain1, Diag%sr, rainp, rhc, psautco_l,   &
                         prautco_l, Model%evpco, Model%wminco, lprnt, ipr)
+
+            if (Model%ldiag3d) then
+              Diag%zhao_carr_physics%humidity = (Stateout%gq0(1:im,1:levs, 1) - dqdt(:,:,1)) / dtp
+              Diag%zhao_carr_physics%cloud_water = (Stateout%gq0(1:im,1:levs,ntcw) - dqdt(:,:,ntcw)) / dtp
+              Diag%zhao_carr_physics%temperature = (Stateout%gt0(1:im,1:levs) - dtdt) / dtp
+            end if
+            ! rain1 has units m, and represents surface precip over dtp
+            Diag%zhao_carr_physics%surface_precipitation = rain1 / dtp * rhowater
+
+#ifdef ENABLE_CALLPYFORT
+
+            do k=1,levs
+              do i=1,im
+                qv_post_precpd(i,k) = Stateout%gq0(i,k,1)
+                qc_post_precpd(i,k) = Stateout%gq0(i,k,ntcw)
+              enddo
+            enddo
+
+            call set_state("air_temperature_after_precpd", Stateout%gt0)
+            call set_state("specific_humidity_after_precpd", qv_post_precpd)
+            call set_state("cloud_water_mixing_ratio_after_precpd", qc_post_precpd)
+            call set_state("total_precipitation", rain1)
+            call set_state("ratio_of_snowfall_to_rainfall", Diag%sr)
+            call set_state("tendency_of_rain_water_mixing_ratio_due_to_microphysics", rainp)
+
+            call call_function("emulation", "microphysics")
+            
+            if (Model%save_zc_microphysics) then
+              call call_function("emulation", "store")
+            endif
+
+            call get_state("air_temperature_after_precpd", t_post_precpd)
+            call get_state("specific_humidity_after_precpd", qv_post_precpd)
+            call get_state("cloud_water_mixing_ratio_after_precpd", qc_post_precpd)
+            call get_state("total_precipitation", rain1)
+            call get_state("air_temperature_after_gscond", tp_cpf)
+            call get_state("specific_humidity_after_gscond", qvp_cpf)
+
+            if (Model%ldiag3d) then
+              Diag%zhao_carr_emulator%humidity = (qv_post_precpd(1:im,1:levs) - dqdt(:,:,1)) / dtp
+              Diag%zhao_carr_emulator%cloud_water = (qc_post_precpd(1:im,1:levs) - dqdt(:,:,ntcw)) / dtp
+              Diag%zhao_carr_emulator%temperature = (t_post_precpd(1:im,1:levs) - dtdt) / dtp
+            end if
+            Diag%zhao_carr_emulator%surface_precipitation = rain1 / dtp * rhowater
+
+            ! apply emulator
+            if (Model%emulate_zc_microphysics) then
+              do k=1,levs
+                do i=1,im
+                  Stateout%gq0(i,k,1) = qv_post_precpd(i,k)
+                  Stateout%gq0(i,k,ntcw) = qc_post_precpd(i,k)
+                  Stateout%gt0(i,k) = t_post_precpd(i,k)
+                  Tbd%phy_f3d(i,k,1) = tp_cpf(i,k)
+                  Tbd%phy_f3d(i,k,2) = qvp_cpf(i,k)
+                enddo
+              enddo
+            endif
+
+#endif
+            
           endif
 !         if (lprnt) then
 !           write(0,*)' prsl=',prsl(ipr,:)
@@ -5432,13 +5551,13 @@ module module_physics_driver
         nwat = Statein%nwat
 
         if (Statein%dycore_hydrostatic) then
-          call moist_cp_nwat6(Statein%qgrs(1:im,1:levs,1:nwat), Stateout%gq0(1:im,1:levs,1:nwat), &
+          call moist_cp(Statein%qgrs(1:im,1:levs,1:nwat), Stateout%gq0(1:im,1:levs,1:nwat), &
               Statein%prsi(1:im,1:levs+1), im, levs, nwat, 1, Model%ntcw, Model%ntiw, &
-              Model%ntrw, Model%ntsw, Model%ntgl, specific_heat)
+              Model%ntrw, Model%ntsw, Model%ntgl, specific_heat, Stateout%gt0(1:im,1:levs))
         else
-          call moist_cv_nwat6(Statein%qgrs(1:im,1:levs,1:nwat), Stateout%gq0(1:im,1:levs,1:nwat), &
+          call moist_cv(Statein%qgrs(1:im,1:levs,1:nwat), Stateout%gq0(1:im,1:levs,1:nwat), &
               Statein%prsi(1:im,1:levs+1), im, levs, nwat, 1, Model%ntcw, Model%ntiw, &
-              Model%ntrw, Model%ntsw, Model%ntgl, specific_heat)
+              Model%ntrw, Model%ntsw, Model%ntgl, specific_heat, Stateout%gt0(1:im,1:levs))
         endif
         call compute_updated_delp_following_dynamics_definition(Statein%prsi(1:im,1:levs+1), &
             dq3dt_initial, Diag%dq3dt, Stateout%gq0(:,:,1:nwat), im, levs, &
@@ -5647,12 +5766,72 @@ module module_physics_driver
 
       end subroutine moist_bud2
 
-      subroutine moist_cv_nwat6(initial_dynamics_q, physics_q, pressure_on_interfaces, &
-            im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, cvm)
+      subroutine compute_q_liquid_and_q_ice_nwat2(im, levs, nwat, ntcw, new_dynamics_q, q_liquid, q_ice, temperature)
+        integer, intent(in) :: im, levs, nwat, ntcw
+        real(kind=kind_phys), dimension(1:im,1:levs,1:nwat), intent(in) :: new_dynamics_q
+        real(kind=kind_phys), dimension(1:im,1:levs), intent(out) :: q_liquid
+        real(kind=kind_phys), dimension(1:im,1:levs), intent(out) :: q_ice
+        real(kind=kind_phys), dimension(1:im,1:levs), intent(in), optional :: temperature
+
+        real(kind=kind_phys), allocatable, dimension(:,:) :: q_condensate
+        real(kind=kind_phys), parameter :: tice = 273.16  ! Name and value taken from fv_mapz.F90
+        real(kind=kind_phys), parameter :: t_i0 = 15.0    ! Name and value taken from fv_mapz.F90
+
+        if (present(temperature)) then
+          allocate(q_condensate(1:im,1:levs))
+          q_condensate = max(0.0, new_dynamics_q(:,:,ntcw))
+          where (temperature .gt. tice)
+            q_ice = 0.0
+          elsewhere (temperature .lt. tice - t_i0)
+            q_ice = q_condensate
+          elsewhere
+            q_ice = q_condensate * (tice - temperature) / t_i0
+          endwhere
+          q_liquid = q_condensate - q_ice
+        else
+          q_liquid = 0.0
+          q_ice = 0.0
+        endif
+      end subroutine compute_q_liquid_and_q_ice_nwat2
+
+      subroutine compute_q_liquid(im, levs, nwat, ntcw, ntrw, new_dynamics_q, q_liquid)
+        integer, intent(in) :: im, levs, nwat, ntcw, ntrw
+        real(kind=kind_phys), dimension(1:im,1:levs,1:nwat), intent(in) :: new_dynamics_q
+        real(kind=kind_phys), dimension(1:im,1:levs), intent(out) :: q_liquid
+
+        q_liquid = 0.0
+        if (ntcw .gt. 0) then
+          q_liquid = q_liquid + new_dynamics_q(:,:,ntcw)
+        endif
+        if (ntrw .gt. 0) then
+          q_liquid = q_liquid + new_dynamics_q(:,:,ntrw)
+        endif
+      end subroutine compute_q_liquid
+
+      subroutine compute_q_ice(im, levs, nwat, ntiw, ntsw, ntgl, new_dynamics_q, q_ice)
+        integer, intent(in) :: im, levs, nwat, ntiw, ntsw, ntgl
+        real(kind=kind_phys), dimension(1:im,1:levs,1:nwat), intent(in) :: new_dynamics_q
+        real(kind=kind_phys), dimension(1:im,1:levs), intent(out) :: q_ice
+
+        q_ice = 0.0
+        if (ntiw .gt. 0) then
+          q_ice = q_ice + new_dynamics_q(:,:,ntiw)
+        endif
+        if (ntsw .gt. 0) then
+          q_ice = q_ice + new_dynamics_q(:,:,ntsw)
+        endif
+        if (ntgl .gt. 0) then
+          q_ice = q_ice + new_dynamics_q(:,:,ntgl)
+        endif
+      end subroutine compute_q_ice
+
+      subroutine moist_cv(initial_dynamics_q, physics_q, pressure_on_interfaces, &
+            im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, cvm, temperature)
         integer, intent(in) :: im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl
         real(kind=kind_phys), dimension(1:im,1:levs,1:nwat), intent(in) :: initial_dynamics_q, physics_q
         real(kind=kind_phys), intent(in) :: pressure_on_interfaces(1:im,1:levs+1)
         real(kind=kind_phys), intent(out) :: cvm(1:im,1:levs)
+        real(kind=kind_phys), intent(in), optional :: temperature(1:im,1:levs)
 
         real(kind=kind_phys) :: new_dynamics_q(1:im,1:levs,1:nwat)
         real(kind=kind_phys) :: q_vapor(1:im,1:levs)
@@ -5665,40 +5844,44 @@ module module_physics_driver
         real(kind=kind_phys) :: c_liq = 4.1855e+3  ! Hard-coded in fv_mapz.F90
         real(kind=kind_phys) :: c_ice = 1972.0  ! Hard-coded in fv_mapz.F90
 
-        ! fv_mapz.moist_cv defines branches for using other moist tracer configurations.
-        ! For simplicity we choose not to replicate that behavior here, since we have
-        ! only run in one tracer configuration (nwat = 6) so far.  We also do not implement
-        ! the branch of code that is run if the compiler directive MULTI_GASES is defined.
-        ! In those cases we default to using the specific heat at constant volume for dry
-        ! air, and emit a warning.
+        ! We do not currently implement the branch of code that is run if the compiler 
+        ! directive MULTI_GASES is defined.  In those cases we default to using the 
+        ! specific heat at constant volume for dry air, and emit a warning.
 #ifdef MULTI_GASES
         call mpp_error (NOTE, 'GFS_physics_driver::moist_cv - moist_cv for tracer configuration not implemented; using default cv_air for t_dt diagnostics')
         cvm = cv_air
 #else
-        if (nwat /= 6) then
-          call mpp_error (NOTE, 'GFS_physics_driver::moist_cv - moist_cv for tracer configuration not implemented; using default cv_air for t_dt diagnostics')
-          cvm = cv_air
+        call physics_to_dycore_mass_fraction(initial_dynamics_q, physics_q, &
+            pressure_on_interfaces, im, levs, nwat, new_dynamics_q)
+
+        ! In the case that nwat = 2, FV3GFS has a special way of partitioning the condensate,
+        ! stored in the cloud liquid water tracer field, into liquid and ice.
+        if (nwat .eq. 2) then
+          q_vapor = max(0.0, new_dynamics_q(:,:,ntqv))
+          if (present(temperature)) then
+            call compute_q_liquid_and_q_ice_nwat2(im, levs, nwat, ntcw, new_dynamics_q, q_liquid, q_ice, temperature)
+          else
+            call compute_q_liquid_and_q_ice_nwat2(im, levs, nwat, ntcw, new_dynamics_q, q_liquid, q_ice)
+          endif
         else
-          call physics_to_dycore_mass_fraction(initial_dynamics_q, physics_q, &
-              pressure_on_interfaces, im, levs, nwat, new_dynamics_q)
-
           q_vapor = new_dynamics_q(:,:,ntqv)
-          q_liquid = new_dynamics_q(:,:,ntcw) + new_dynamics_q(:,:,ntrw)
-          q_ice = new_dynamics_q(:,:,ntiw) + new_dynamics_q(:,:,ntsw) + new_dynamics_q(:,:,ntgl)
-          q_dry_air = 1.0 - q_vapor - q_liquid - q_ice
-
-          ! By definition now, the weights sum to 1.0.
-          cvm = cv_air * q_dry_air + cv_vap * q_vapor + c_liq * q_liquid + c_ice * q_ice
+          call compute_q_liquid(im, levs, nwat, ntcw, ntrw, new_dynamics_q, q_liquid)
+          call compute_q_ice(im, levs, nwat, ntiw, ntsw, ntgl, new_dynamics_q, q_ice)
         endif
-#endif
-      end subroutine moist_cv_nwat6
+        q_dry_air = 1.0 - q_vapor - q_liquid - q_ice
 
-      subroutine moist_cp_nwat6(initial_dynamics_q, physics_q, pressure_on_interfaces, &
-        im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, cpm)
+        ! By definition now, the weights sum to 1.0.
+        cvm = cv_air * q_dry_air + cv_vap * q_vapor + c_liq * q_liquid + c_ice * q_ice
+#endif
+      end subroutine moist_cv
+
+      subroutine moist_cp(initial_dynamics_q, physics_q, pressure_on_interfaces, &
+        im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl, cpm, temperature)
     integer, intent(in) :: im, levs, nwat, ntqv, ntcw, ntiw, ntrw, ntsw, ntgl
     real(kind=kind_phys), dimension(1:im,1:levs,1:nwat), intent(in) :: initial_dynamics_q, physics_q
     real(kind=kind_phys), intent(in) :: pressure_on_interfaces(1:im,1:levs+1)
     real(kind=kind_phys), intent(out) :: cpm(1:im,1:levs)
+    real(kind=kind_phys), intent(in), optional :: temperature(1:im,1:levs)
 
     real(kind=kind_phys) :: new_dynamics_q(1:im,1:levs,1:nwat)
     real(kind=kind_phys) :: q_vapor(1:im,1:levs)
@@ -5711,33 +5894,36 @@ module module_physics_driver
     real(kind=kind_phys) :: c_liq = 4.1855e+3  ! Hard-coded in fv_mapz.F90
     real(kind=kind_phys) :: c_ice = 1972.0  ! Hard-coded in fv_mapz.F90
 
-    ! fv_mapz.moist_cp defines branches for using other moist tracer configurations.
-    ! For simplicity we choose not to replicate that behavior here, since we have
-    ! only run in one tracer configuration (nwat = 6) so far.  We also do not implement
-    ! the branch of code that is run if the compiler directive MULTI_GASES is defined.
-    ! In those cases we default to using the specific heat at constant volume for dry
-    ! air, and emit a warning.
+    ! We do not currently implement the branch of code that is run if the compiler 
+    ! directive MULTI_GASES is defined.  In those cases we default to using the 
+    ! specific heat at constant volume for dry air, and emit a warning.
 #ifdef MULTI_GASES
     call mpp_error (NOTE, 'GFS_physics_driver::moist_cp - moist_cp for tracer configuration not implemented; using default cp_air for t_dt diagnostics')
     cpm = cp_air
 #else
-    if (nwat /= 6) then
-      call mpp_error (NOTE, 'GFS_physics_driver::moist_cp - moist_cp for tracer configuration not implemented; using default cp_air for t_dt diagnostics')
-      cpm = cp_air
+    call physics_to_dycore_mass_fraction(initial_dynamics_q, physics_q, &
+        pressure_on_interfaces, im, levs, nwat, new_dynamics_q)
+
+    ! In the case that nwat = 2, FV3GFS has a special way of partitioning the condensate,
+    ! stored in the cloud liquid water tracer field, into liquid and ice.
+    if (nwat .eq. 2) then
+      q_vapor = max(0.0, new_dynamics_q(:,:,ntqv))
+      if (present(temperature)) then
+        call compute_q_liquid_and_q_ice_nwat2(im, levs, nwat, ntcw, new_dynamics_q, q_liquid, q_ice, temperature)
+      else
+        call compute_q_liquid_and_q_ice_nwat2(im, levs, nwat, ntcw, new_dynamics_q, q_liquid, q_ice)
+      endif
     else
-      call physics_to_dycore_mass_fraction(initial_dynamics_q, physics_q, &
-          pressure_on_interfaces, im, levs, nwat, new_dynamics_q)
-
       q_vapor = new_dynamics_q(:,:,ntqv)
-      q_liquid = new_dynamics_q(:,:,ntcw) + new_dynamics_q(:,:,ntrw)
-      q_ice = new_dynamics_q(:,:,ntiw) + new_dynamics_q(:,:,ntsw) + new_dynamics_q(:,:,ntgl)
-      q_dry_air = 1.0 - q_vapor - q_liquid - q_ice
-
-      ! By definition now, the weights sum to 1.0.
-      cpm = cp_air * q_dry_air + cp_vap * q_vapor + c_liq * q_liquid + c_ice * q_ice
+      call compute_q_liquid(im, levs, nwat, ntcw, ntrw, new_dynamics_q, q_liquid)
+      call compute_q_ice(im, levs, nwat, ntiw, ntsw, ntgl, new_dynamics_q, q_ice)
     endif
+    q_dry_air = 1.0 - q_vapor - q_liquid - q_ice
+
+    ! By definition now, the weights sum to 1.0.
+    cpm = cp_air * q_dry_air + cp_vap * q_vapor + c_liq * q_liquid + c_ice * q_ice
 #endif
-  end subroutine moist_cp_nwat6
+  end subroutine moist_cp
 
       subroutine physics_to_dycore_mass_fraction(initial_dynamics_q, physics_q, &
             pressure_on_interfaces, im, levs, nwat, new_dynamics_q)

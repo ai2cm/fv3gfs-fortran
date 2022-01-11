@@ -24,3 +24,5 @@ venv/**
 **/RESTART/*
 *.nc
 **/data/**
+**/*.egg-info
+

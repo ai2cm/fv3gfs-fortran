@@ -174,6 +174,7 @@ module fv_control_mod
    character(len=80) , pointer :: grid_name
    character(len=120), pointer :: grid_file
    integer, pointer :: grid_type
+   real    , pointer :: edge_subdomain_shrink_factor
    integer , pointer :: hord_mt 
    integer , pointer :: kord_mt 
    integer , pointer :: kord_wz 
@@ -455,14 +456,24 @@ module fv_control_mod
             !!CLEANUP: Convenience pointers
             Atm(n)%gridstruct%nested      => Atm(n)%neststruct%nested
             Atm(n)%gridstruct%grid_type   => Atm(n)%flagstruct%grid_type
+
             Atm(n)%flagstruct%grid_number => Atm(n)%grid_number
             Atm(n)%gridstruct%regional  => Atm(n)%flagstruct%regional
 
+            !$ser savepoint InitGrid-In
+            !$ser data grid_file=grid_file ndims=ndims nregions=ntiles grid_name=grid_name sw_corner=Atm(n)%gridstruct%sw_corner se_corner=Atm(n)%gridstruct%se_corner ne_corner=Atm(n)%gridstruct%ne_corner nw_corner=Atm(n)%gridstruct%nw_corner npx=npx npy=npy npz=npz
             call init_grid(Atm(n), grid_name, grid_file, npx, npy, npz, ndims, ntiles, ng)
+            !$ser savepoint InitGrid-Out
+            !$ser data gridvar=Atm(n)%gridstruct%grid_64 agrid=Atm(n)%gridstruct%agrid_64 area=Atm(n)%gridstruct%area_64 area_c=Atm(n)%gridstruct%area_c_64 dx=Atm(n)%gridstruct%dx_64 dy=Atm(n)%gridstruct%dy_64 dxc=Atm(n)%gridstruct%dxc_64 dyc=Atm(n)%gridstruct%dyc_64 dxa=Atm(n)%gridstruct%dxa_64 dya=Atm(n)%gridstruct%dya_64 latlon=Atm(n)%gridstruct%latlon cubedsphere=Atm(n)%gridstruct%latlon
 
             ! Initialize the SW (2D) part of the model
             !!!CLEANUP: this call could definitely use some cleaning up
+            
+            !$ser savepoint InitGridUtils-In
+            !$ser data gridvar=Atm(n)%gridstruct%grid_64 agrid=Atm(n)%gridstruct%agrid_64 area=Atm(n)%gridstruct%area_64 area_c=Atm(n)%gridstruct%area_c_64 rarea=Atm(n)%gridstruct%rarea rarea_c=Atm(n)%gridstruct%rarea_c dx=Atm(n)%gridstruct%dx_64 dy=Atm(n)%gridstruct%dy_64 dxc=Atm(n)%gridstruct%dxc_64 dyc=Atm(n)%gridstruct%dyc_64 dxa=Atm(n)%gridstruct%dxa_64 dya=Atm(n)%gridstruct%dya_64 npx=npx npy=npy npz=npz
             call grid_utils_init(Atm(n), npx, npy, npz, non_ortho, grid_type, c2l_ord)
+            !$ser savepoint InitGridUtils-Out
+            !$ser data edge_s=Atm(n)%gridstruct%edge_s(Atm(n)%bd%isc:Atm(n)%bd%iec+1) edge_n=Atm(n)%gridstruct%edge_n(Atm(n)%bd%isc:Atm(n)%bd%iec+1) edge_w=Atm(n)%gridstruct%edge_w(Atm(n)%bd%jsc:Atm(n)%bd%jec+1) edge_e=Atm(n)%gridstruct%edge_e(Atm(n)%bd%jsc:Atm(n)%bd%jec+1) edge_vect_s=Atm(n)%gridstruct%edge_vect_s edge_vect_n=Atm(n)%gridstruct%edge_vect_n edge_vect_w=Atm(n)%gridstruct%edge_vect_w edge_vect_e=Atm(n)%gridstruct%edge_vect_e del6_u=Atm(n)%gridstruct%del6_u del6_v=Atm(n)%gridstruct%del6_v divg_u=Atm(n)%gridstruct%divg_u divg_v=Atm(n)%gridstruct%divg_v cosa_u=Atm(n)%gridstruct%cosa_u cosa_v=Atm(n)%gridstruct%cosa_v cosa_s=Atm(n)%gridstruct%cosa_s sina_u=Atm(n)%gridstruct%sina_u sina_v=Atm(n)%gridstruct%sina_v rsin_u=Atm(n)%gridstruct%rsin_u rsin_v=Atm(n)%gridstruct%rsin_v rsina=Atm(n)%gridstruct%rsina rsin2=Atm(n)%gridstruct%rsin2 cosa=Atm(n)%gridstruct%cosa sina=Atm(n)%gridstruct%sina sin_sg1=Atm(n)%gridstruct%sin_sg(:,:,1) cos_sg1=Atm(n)%gridstruct%cos_sg(:,:,1) sin_sg2=Atm(n)%gridstruct%sin_sg(:,:,2) cos_sg2=Atm(n)%gridstruct%cos_sg(:,:,2) sin_sg3=Atm(n)%gridstruct%sin_sg(:,:,3) cos_sg3=Atm(n)%gridstruct%cos_sg(:,:,3) sin_sg4=Atm(n)%gridstruct%sin_sg(:,:,4) cos_sg4=Atm(n)%gridstruct%cos_sg(:,:,4) sin_sg5=Atm(n)%gridstruct%sin_sg(:,:,5) cos_sg5=Atm(n)%gridstruct%cos_sg(:,:,5) sin_sg6=Atm(n)%gridstruct%sin_sg(:,:,6) cos_sg6=Atm(n)%gridstruct%cos_sg(:,:,6) sin_sg7=Atm(n)%gridstruct%sin_sg(:,:,7) cos_sg7=Atm(n)%gridstruct%cos_sg(:,:,7) sin_sg8=Atm(n)%gridstruct%sin_sg(:,:,8) cos_sg8=Atm(n)%gridstruct%cos_sg(:,:,8) sin_sg9=Atm(n)%gridstruct%sin_sg(:,:,9) cos_sg9=Atm(n)%gridstruct%cos_sg(:,:,9) ks=Atm(n)%ks ptop=Atm(n)%ptop ak=Atm(n)%ak bk=Atm(n)%bk z11=Atm(n)%gridstruct%z11 z12=Atm(n)%gridstruct%z12 z21=Atm(n)%gridstruct%z21 z22=Atm(n)%gridstruct%z22 a11=Atm(n)%gridstruct%a11 a12=Atm(n)%gridstruct%a12 a21=Atm(n)%gridstruct%a21 a22=Atm(n)%gridstruct%a22 da_min=Atm(n)%gridstruct%da_min da_max=Atm(n)%gridstruct%da_max da_min_c=Atm(n)%gridstruct%da_min_c da_max_c=Atm(n)%gridstruct%da_max_c ec1=Atm(n)%gridstruct%ec1 ec2=Atm(n)%gridstruct%ec2 ew1=Atm(n)%gridstruct%ew(:,:,:,1) ew2=Atm(n)%gridstruct%ew(:,:,:,2) es1=Atm(n)%gridstruct%es(:,:,:,1) es2=Atm(n)%gridstruct%es(:,:,:,2) l2c_v=Atm(n)%gridstruct%l2c_v l2c_u=Atm(n)%gridstruct%l2c_u ee1=Atm(n)%gridstruct%ee1 ee2=Atm(n)%gridstruct%ee2 vlon=Atm(n)%gridstruct%vlon vlat=Atm(n)%gridstruct%vlat
 
             !!!CLEANUP: Are these correctly writing out on all pes?
             if ( is_master() ) then
@@ -679,10 +690,10 @@ module fv_control_mod
                          refinement, nestbctype, nestupdate, nsponge, s_weight, &
                          ioffset, joffset, check_negative, nudge_ic, halo_update_type, gfs_phil, agrid_vel_rst,     &
                          do_uni_zfull, adj_mass_vmr, fac_n_spl, fhouri, &
-                         regional, bc_update_interval,&
-                         write_coarse_restart_files, write_coarse_diagnostics,&
-                         write_only_coarse_intermediate_restarts,&
-                         restart_from_agrid_winds, write_optional_dgrid_vel_rst,&
+                         regional, bc_update_interval, edge_subdomain_shrink_factor, &
+                         write_coarse_restart_files, write_coarse_diagnostics, &
+                         write_only_coarse_intermediate_restarts, &
+                         restart_from_agrid_winds, write_optional_dgrid_vel_rst, &
                          write_coarse_dgrid_vel_rst, write_coarse_agrid_vel_rst
 
    namelist /test_case_nml/test_case, bubble_do, alpha, nsolitons, soliton_Umax, soliton_size
@@ -845,6 +856,14 @@ module fv_control_mod
       endif
       n0split = max ( 1, n0split )
 
+      if (edge_subdomain_shrink_factor <= 0.0 .or. edge_subdomain_shrink_factor > 1.0) then
+         call mpp_error(FATAL, 'edge_subdomain_shrink_factor must be in range (0.0, 1.0]')
+      end if
+      if (grid_type >= 3 .and. edge_subdomain_shrink_factor < 1.0) then
+         if (is_master()) write(*,*) 'Resetting edge_subdomain_shrink_factor=1.0. Other values are only for cubed-sphere grids.'
+         edge_subdomain_shrink_factor = 1.0
+      end if
+
       if ( n_split == 0 ) then
            n_split = nint( real(n0split)/real(k_split*abs(p_split)) * stretch_fac + 0.5 )
            if(is_master()) write(*,*) 'For k_split (remapping)=', k_split
@@ -990,7 +1009,8 @@ module fv_control_mod
       call switch_current_Atm(Atm(n),.false.)
       call setup_pointers(Atm(n))
       !! CLEANUP: WARNING not sure what changes to domain_decomp may cause
-      call domain_decomp(npx,npy,ntiles,grid_type,nested,Atm(n),layout,io_layout)
+      call domain_decomp(npx, npy, ntiles, grid_type, nested, Atm(n), layout, io_layout, &
+                         edge_subdomain_shrink_factor)
    enddo
 
    !!! CLEANUP: This sets the pelist to ALL, which is also
@@ -1193,6 +1213,7 @@ module fv_control_mod
      res_latlon_tracers            => Atm%flagstruct%res_latlon_tracers
 
      grid_type                     => Atm%flagstruct%grid_type
+     edge_subdomain_shrink_factor  => Atm%flagstruct%edge_subdomain_shrink_factor
      grid_name                     => Atm%flagstruct%grid_name
      grid_file                     => Atm%flagstruct%grid_file
      hord_mt                       => Atm%flagstruct%hord_mt

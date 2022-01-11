@@ -1,4 +1,5 @@
 ARG serialize=false
+ARG fv3_build_env_tag=standard
 ARG BASE_IMAGE
 ARG MPI_IMAGE=fv3gfs-mpi
 ARG FMS_IMAGE=fv3gfs-fms
@@ -189,15 +190,21 @@ RUN cp $FV3_BASE/conf/$configure_file \
     cd $FV3_BASE && \
     make serialize_preprocess
 
+
+## Convert FV3GFS sources for emulation image
+##---------------------------------------------------------------------------------
+
 FROM fv3gfs-src-serialize-$serialize AS fv3gfs-sources
 
 FROM $FMS_IMAGE AS fms_image
 FROM $ESMF_IMAGE AS esmf_image
 FROM $SERIALBOX_IMAGE AS serialbox_image
 
+FROM fv3gfs-environment AS fv3gfs-environment-standard
+
 ## Build FV3 executable in its own image
 ##---------------------------------------------------------------------------------
-FROM fv3gfs-environment AS fv3gfs-build
+FROM fv3gfs-environment-${fv3_build_env_tag} AS fv3gfs-build
 
 ENV SERIALBOX_DIR=/serialbox \
     SERIALBOX_OUTDIR=/FV3 \
