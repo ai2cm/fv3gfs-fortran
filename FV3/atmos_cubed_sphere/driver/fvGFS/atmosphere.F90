@@ -257,7 +257,7 @@ character(len=20)   :: mod_name = 'fvGFS/atmosphere_mod'
 #endif
   !$ser verbatim integer :: o3mr, sgs_tke
   !$ser verbatim character(len=256) :: ser_env
-  !$ser verbatim logical :: serialize_only_driver
+  !$ser verbatim logical :: serialize_only_driver, serialize_dycore_and_physics
   integer :: mytile  = 1
   integer :: p_split = 1
   integer, allocatable :: pelist(:)
@@ -1540,6 +1540,8 @@ contains
    real(kind=kind_phys):: rcp, q0, qwat(nq), qt, rdt
    real, allocatable, dimension(:,:,:,:) :: debug_qwat
    real, allocatable, dimension(:,:,:)   :: debug_qt, debug_sumq
+   !$ser verbatim logical :: serialize_dycore_and_physics
+   !$ser verbatim serialize_dycore_and_physics = (index(ser_env, "DYCORE_AND_PHYSICS") /= 0)
    allocate( debug_qwat(isd:ied,jsd:jed,npz,nq), debug_qt(isd:ied,jsd:jed,npz), debug_sumq(isd:ied,jsd:jed,npz))
    call mpp_clock_begin(id_update_other)
 
@@ -1773,7 +1775,10 @@ contains
     !$ser data pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr)  
     !$ser data ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con
      !$ser verbatim if (serialize_dycore_and_physics) then
-        !$ser off
+        
+       !$ser verbatim if (mpp_pe() == 0) write(*,*) "Stopping after saving serialize Driver data once"
+       !$ser verbatim call mp_stop(); call exit(0)
+     
      !$ser verbatim endif
        call timing_off('FV_UPDATE_PHYS')
    call mpp_clock_end(id_update)
