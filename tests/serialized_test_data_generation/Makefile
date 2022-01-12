@@ -10,7 +10,7 @@ SER_ENV ?= ALL
 # -convention: <tag>-<some large conceptual version change>.<serialization statement change>.<hotfix>
 # -version number should be increased when serialization data is expected to change
 # -omit tag (e.g. 7.1.1) for "operational" serialization data, use tag for experimental serialization data
-FORTRAN_VERSION ?= 7.2.7
+FORTRAN_VERSION ?= driver-7.2.7
 # docker container image setup (used for running model, see ../../README.md)
 GCR_URL = us.gcr.io/vcm-ml
 COMPILED_IMAGE = $(GCR_URL)/fv3gfs-compiled:gnu7-mpich314-nocuda-serialize
@@ -29,7 +29,7 @@ GROUP_ID_HOST = $(shell id -g)
 
 # cloud storage location for pushing generated data
 STORAGE_BUCKET = gs://vcm-fv3gfs-serialized-regression-data
-DATA_DIR_BUCKET = $(STORAGE_BUCKET)/$(FORTRAN_VERSION)/$(EXPERIMENT)
+DATA_DIR_BUCKET = $(STORAGE_BUCKET)/$(FORTRAN_VERSION)/$(EXPERIMENT)/$(SER_ENV)
 
 help:
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
