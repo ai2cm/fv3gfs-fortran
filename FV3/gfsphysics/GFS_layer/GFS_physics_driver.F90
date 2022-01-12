@@ -1663,6 +1663,20 @@ module module_physics_driver
 !     if (lprnt) write(0,*)' tsfc=',Sfcprop%tsfc(ipr),' tsurf=',tsurf(ipr),'iter=', &
 !           iter ,'wet=',wet(ipr),'dry=',dry(ipr),' icy=',icy(ipr)
 ! #ifndef GT4PY_DEV
+        !$ser verbatim if (iter == 1) then
+        !$ser savepoint SfcDiff1-In
+        !$ser verbatim else
+        !$ser savepoint SfcDiff2-In
+        !$ser verbatim end if
+        !$ser data tgrs_sfc=Statein%tgrs(:,1) qgrs_sfc=Statein%qgrs(:,1,1) zlvl=Diag%zlvl wind=wind
+        !$ser data prsl_sfc=Statein%prsl(:,1) work3=work3
+        !$ser data sigmaf=sigmaf vegtype=vegtype shdmax=Sfcprop%shdmax ivegsrc=Model%ivegsrc
+        !$ser data z01d=z01d zt1d=zt1d
+        !$ser data flag_iter=flag_iter redrag=Model%redrag
+        !$ser data u10m=Diag%u10m v10m=Diag%v10m sfc_z0_type=Model%sfc_z0_type
+        !$ser data wet=wet dry=dry icy=icy tsfc3=tsfc3 tsurf3=tsurf3 snowd3=snowd3
+        !$ser data zorl3=zorl3 uustar3=uustar3
+        !$ser data cd3=cd3 cdq3=cdq3 rb3=rb3 stress3=stress3 ffmm3=ffmm3 ffhh3=ffhh3 fm103=fm103 fh23=fh23
         call sfc_diff                                                   &
 !  ---  inputs:
           (im, Statein%pgr,                                             &
@@ -1680,6 +1694,13 @@ module module_physics_driver
 !          cd3, cdq3, rb3, stress3, ffmm3, ffhh3, fm103, fh23, wind, lprnt, ipr)
 !
 !  --- ...  lu: update flag_guess
+        !$ser verbatim if (iter == 1) then
+        !$ser savepoint SfcDiff1-Out
+        !$ser verbatim else
+        !$ser savepoint SfcDiff2-Out
+        !$ser verbatim end if
+        !$ser data zorl3=zorl3 uustar3=uustar3
+        !$ser data cd3=cd3 cdq3=cdq3 rb3=rb3 stress3=stress3 ffmm3=ffmm3 ffhh3=ffhh3 fm103=fm103 fh23=fh23
 ! #endif
         do i=1,im
           if (iter == 1 .and. wind(i) < 2.0) then
@@ -1774,6 +1795,17 @@ module module_physics_driver
 
 !  --- ...  surface energy balance over ocean
 ! #ifndef GT4PY_DEV
+          !$ser verbatim if (iter == 1) then
+          !$ser savepoint SfcOcean1-In
+          !$ser verbatim else
+          !$ser savepoint SfcOcean2-In
+          !$ser verbatim end if
+          !$ser data im=im pgr=Statein%pgr 
+          !$ser data tgrs_sfc=Statein%tgrs(:,1) qgrs_sfc=Statein%qgrs(:,1,1) tsfc33=tsfc3(:,3)
+          !$ser data cd33=cd3(:,3) cdq33=cdq3(:,3) prsl_sfc=Statein%prsl(:,1) work3=work3 wet=wet
+          !$ser data wind=wind flag_iter=flag_iter
+          !$ser data qss33=qss3(:,3) cmm33=cmm3(:,3) chh33=chh3(:,3) gflx33=gflx3(:,3) evap33=evap3(:,3)
+          !$ser data hflx33=hflx3(:,3) ep1d33=ep1d3(:,3)
           call sfc_ocean                                                &
 !  ---  inputs:
            (im, Statein%pgr,                                            &
@@ -1783,6 +1815,13 @@ module module_physics_driver
 !  ---  outputs:
             qss3(:,3), cmm3(:,3), chh3(:,3), gflx3(:,3), evap3(:,3),    &
             hflx3(:,3), ep1d3(:,3))
+          !$ser verbatim if (iter == 1) then
+          !$ser savepoint SfcOcean1-Out
+          !$ser verbatim else
+          !$ser savepoint SfcOcean2-Out
+          !$ser verbatim end if
+          !$ser data qss33=qss3(:,3) cmm33=cmm3(:,3) chh33=chh3(:,3) gflx33=gflx3(:,3) evap33=evap3(:,3)
+          !$ser data hflx33=hflx3(:,3) ep1d33=ep1d3(:,3)
 ! #endif
         endif       ! if nstf_name(1) > 0
 
@@ -1798,7 +1837,7 @@ module module_physics_driver
 !     if (lprnt) write(0,*)' tseal=',tseal(ipr),' tsurf=',tsurf(ipr),iter &
 !     ,' stsoil0=',stsoil(ipr,:)
 !    &,' pgr=',pgr(ipr),' sfcemis=',sfcemis(ipr)
-! #ifndef GT4PY_DEV
+#ifndef GT4PY_DEV
           call sfc_drv                                                   &
 !  ---  inputs:
            (im, lsoil, Statein%pgr,                                      &
@@ -1820,7 +1859,7 @@ module module_physics_driver
             hflx3(:,1), ep1d3(:,1), runof,                               &
             cmm3(:,1),  chh3(:,1), evbs, evcw, sbsno, snowc, Diag%soilm, &
             snohf, Diag%smcwlt2, Diag%smcref2, Diag%wet1)
-! #endif
+#endif
 !     if (lprnt) write(0,*)' tseae=',tseal(ipr),' tsurf=',tsurf(ipr),iter&
 !                         ,' phy_f2d=',phy_f2d(ipr,num_p2d)
 
@@ -1893,7 +1932,7 @@ module module_physics_driver
 
 ! call sfc_cice for sea ice points in the coupled model (i.e. islmsk=4)
 !
-! #ifndef GT4PY_DEV
+#ifndef GT4PY_DEV
           call sfc_cice                                                  &
 !  ---  inputs:
            (im, Statein%tgrs(:,1),                                       &
@@ -1904,13 +1943,13 @@ module module_physics_driver
 !  ---  outputs:
             qss3(:,2), cmm3(:,2), chh3(:,2), evap3(:,2), hflx3(:,2),     &
             stress3(:,2))
-! #endif
+#endif
         endif
 
 !
 ! call sfc_sice for lake ice and for the uncoupled case, sea ice (i.e. islmsk=2)
 !
-! #ifndef GT4PY_DEV
+#ifndef GT4PY_DEV
         call sfc_sice                                                            &
 !  ---  inputs:
            (im, lsoil, Statein%pgr,                                             &
@@ -1926,7 +1965,7 @@ module module_physics_driver
 !  ---  outputs:
             snowd3(:,2), qss3(:,2), snowmt, gflx3(:,2), cmm3(:,2), chh3(:,2),    &
             evap3(:,2),  hflx3(:,2))
-! #endif
+#endif
         if (Model%cplflx) then
           do i = 1, im
             if (flag_cice(i)) then
@@ -2140,12 +2179,12 @@ module module_physics_driver
       endif
 
 !  --- ...  update near surface fields
-! #ifndef GT4PY_DEV
+#ifndef GT4PY_DEV
       call sfc_diag (im, Statein%pgr, Statein%ugrs(:,1), Statein%vgrs(:,1),       &
                      Statein%tgrs(:,1), Statein%qgrs(:,1,1), work3, evap,         &
                      Sfcprop%ffmm, Sfcprop%ffhh, fm10, fh2, Sfcprop%tsfc, qss,    &
                      Sfcprop%f10m, Diag%u10m, Diag%v10m, Sfcprop%t2m, Sfcprop%q2m)
-! #endif
+#endif
       Tbd%phy_f2d(:,Model%num_p2d) = zero
 
       if (Model%lsm == Model%lsm_noahmp) then
@@ -2670,7 +2709,7 @@ module module_physics_driver
         if (ntke > 0) then
           do k=1,levs
             do i=1,im
-              dqdt(i,k,ntke)  = 0. ! dvdftra(i,k,ntkev) !TODO[EW]: changed to 0
+              dqdt(i,k,ntke)  = dvdftra(i,k,ntkev)
             enddo
           enddo
         endif
@@ -3131,15 +3170,19 @@ module module_physics_driver
 
 ! Standard accum-Update before "moist physics" by "PBL + GWP + RF" as in GFS/GSM
 !
-
+      !$ser savepoint StateBeforeMoistPhy-In
+      !$ser data gt0=Stateout%gt0 gu0=Stateout%gu0 gv0=Stateout%gv0 gq0=Stateout%gq0
+      !$ser data tgrs=Statein%tgrs dtdt=dtdt dtp=dtp
       do k=1,levs
         do i=1,im
-          Stateout%gt0(i,k)  = Statein%tgrs(i,k) ! + dtdt(i,k) * dtp [EW]: override this since we can't turn off moninq
-          Stateout%gu0(i,k)  = Statein%ugrs(i,k) ! + dudt(i,k) * dtp
-          Stateout%gv0(i,k)  = Statein%vgrs(i,k) ! + dvdt(i,k) * dtp
+          Stateout%gt0(i,k)  = Statein%tgrs(i,k) + dtdt(i,k) * dtp
+          Stateout%gu0(i,k)  = Statein%ugrs(i,k) + dudt(i,k) * dtp
+          Stateout%gv0(i,k)  = Statein%vgrs(i,k) + dvdt(i,k) * dtp
         enddo
       enddo
-      Stateout%gq0(1:im,:,:) = Statein%qgrs(1:im,:,:) ! + dqdt(1:im,:,:) * dtp
+      Stateout%gq0(1:im,:,:) = Statein%qgrs(1:im,:,:) + dqdt(1:im,:,:) * dtp
+      !$ser savepoint StateBeforeMoistPhy-Out
+      !$ser data gt0=Stateout%gt0 gu0=Stateout%gu0 gv0=Stateout%gv0 gq0=Stateout%gq0
 
 !================================================================================
 !     above: updates of the state by UGWP oro-GWS and RF-damp
