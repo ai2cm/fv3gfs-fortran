@@ -1,10 +1,10 @@
 data_table: default
 diag_table: gs://vcm-fv3config/config/diag_table/baroclinic_test/v1.0/diag_table_custom
 field_table: gs://vcm-fv3config/config/field_table/baroclinic_test/v1.0/field_table
-experiment_name: c12_6ranks_baroclinic_dycore_microph
+experiment_name: c48_6ranks_baroclinic_dycore_microph
 forcing: gs://vcm-fv3config/data/base_forcing/v1.1/
 orographic_forcing: gs://vcm-fv3config/data/orographic_data/v1.0
-initial_conditions:  gs://vcm-fv3config/data/initial_conditions/c12_baroclinic_restart_day_10/v1.0
+initial_conditions:  gs://vcm-fv3config/data/initial_conditions/c48_baroclinic_restart_day_10/RESTART
 namelist:
   amip_interp_nml:
     data_set: hurrell
@@ -150,8 +150,8 @@ namelist:
     ncep_ic: false
     nggps_ic: false
     nord: 3
-    npx: 13
-    npy: 13
+    npx: 49
+    npy: 49
     npz: 79
     ntiles: 6
     nudge: false
