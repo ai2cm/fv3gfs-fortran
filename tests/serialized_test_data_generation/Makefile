@@ -5,12 +5,12 @@ EXPERIMENT_DIR = $(CWD)/configs
 EXPERIMENT ?= c12_6ranks_standard
 # base images w/ or w/o CUDA
 CUDA ?=y
-SER_ENV ?= ALL
+SER_ENV ?= DYCORE
 # version number or tag (determines image tag and destination directory in cloud storage)
 # -convention: <tag>-<some large conceptual version change>.<serialization statement change>.<hotfix>
 # -version number should be increased when serialization data is expected to change
 # -omit tag (e.g. 7.1.1) for "operational" serialization data, use tag for experimental serialization data
-FORTRAN_VERSION ?= 7.3.0
+FORTRAN_VERSION ?= dev-8.0.0
 # docker container image setup (used for running model, see ../../README.md)
 GCR_URL = us.gcr.io/vcm-ml
 COMPILED_IMAGE = $(GCR_URL)/fv3gfs-compiled:gnu7-mpich314-nocuda-serialize
@@ -20,8 +20,8 @@ DATA_DIR_CONTAINER = /data
 # local host setup
 CWD=$(shell pwd)
 FORTRAN_DIR = $(CWD)/../../
-RUN_DIR_HOST = $(CWD)/rundir/$(EXPERIMENT)
-DATA_DIR_HOST = $(CWD)/data/$(EXPERIMENT)
+RUN_DIR_HOST = $(CWD)/rundir/$(EXPERIMENT)/$(SER_ENV)
+DATA_DIR_HOST = $(CWD)/data/$(EXPERIMENT)/$(SER_ENV)
 TARFILE_HOST = $(DATA_DIR_HOST)/dat_files.tar.gz
 TARFILE_INDEX_HOST = $(DATA_DIR_HOST)/tarfile_index.txt
 USER_ID_HOST = $(shell id -u)
