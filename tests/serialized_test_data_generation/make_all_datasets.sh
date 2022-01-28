@@ -70,7 +70,7 @@ for exp_file in ${EXPERIMENTS} ; do
       if [ "${VALIDATE_ONLY}" == "true" ] ; then
       	  EXPERIMENT=${exp_name} make generate_data validate_data
       else
-	  EXPERIMENT=${exp_name} make generate_data pack_data#push_data
+	  EXPERIMENT=${exp_name} make generate_data pack_data push_data
       fi
   done
   echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++"
