@@ -45,14 +45,6 @@ if [ -z "${EXPERIMENTS}" ] ; then
     echo "Error: No matching experiment files for pattern ${EXPERIMENT_PATTERN} in ${EXPERIMENT_DIR} found."
     exit 1
 fi
-# small sizes < c50
-# DRIVER
-# DYNAMICS
-# PHYSICS
-# < c200:
-# DRIVER
-# larger dataset sizes
-# ONLY_DRIVER_IN
 
 export SAVE_TIMESTEP=1
 # loop over experiments
