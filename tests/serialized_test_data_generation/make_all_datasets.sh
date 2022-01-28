@@ -59,13 +59,15 @@ for exp_file in ${EXPERIMENTS} ; do
       envs=("DRIVER")
   fi
   if [ ${npx} -lt 50 ] ; then
-      envs=("DRIVER", "DYCORE", "PHYSICS")    
+      envs=("DRIVER" "DYCORE" "PHYSICS")
   fi
-  for env in ${envs}; do
+  echo "For npx ${npx} running savepoint configurations ${envs[*]}"
+  for env in ${envs[*]}; do
       export SER_ENV=${env}
+      echo "RUNNING savepoint configuration ${env}"
       make distclean
       if [ "${VALIDATE_ONLY}" == "true" ] ; then
-	  EXPERIMENT=${exp_name} make generate_data validate_data
+      	  EXPERIMENT=${exp_name} make generate_data validate_data
       else
 	  EXPERIMENT=${exp_name} make generate_data pack_data push_data
       fi
