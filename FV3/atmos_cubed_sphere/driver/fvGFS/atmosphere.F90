@@ -330,8 +330,8 @@ contains
   !$ser verbatim if (timestep_status .eq. 0 .and. timestep_len .gt. 0) then
     !$ser verbatim read (save_timestep_str,*) save_timestep
   !$ser verbatim else
-    !$ser verbatime save_timestep = 1
-  !$ser verbatime endif
+    !$ser verbatim save_timestep = 1
+  !$ser verbatim endif
    current_time_in_seconds = time_type_to_real( Time - Time_init )
    if (mpp_pe() == 0) write(*,"('atmosphere_init: current_time_seconds = ',f9.1)")current_time_in_seconds
 
@@ -350,9 +350,9 @@ contains
 !----- initialize FV dynamical core -----
    !NOTE do we still need the second file_exist call?
    cold_start = (.not.file_exist('INPUT/fv_core.res.nc') .and. .not.file_exist('INPUT/fv_core.res.tile1.nc'))
-   !$ser verbatim if serialize_dycore then
+   !$ser verbatim if (serialize_dycore) then
      !$ser on
-   !$ser verbatime endif
+   !$ser verbatim endif
    call fv_init( Atm, dt_atmos, grids_on_this_pe, p_split )  ! allocates Atm components
    !$ser off
 
