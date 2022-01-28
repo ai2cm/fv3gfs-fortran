@@ -45,47 +45,39 @@ if [ -z "${EXPERIMENTS}" ] ; then
     echo "Error: No matching experiment files for pattern ${EXPERIMENT_PATTERN} in ${EXPERIMENT_DIR} found."
     exit 1
 fi
+# small sizes < c50
+# DRIVER
+# DYNAMICS
+# PHYSICS
+# < c200:
+# DRIVER
+# larger dataset sizes
+# ONLY_DRIVER_IN
 
-# loop over experiments
-#for exp_file in ${EXPERIMENTS} ; do
-#  exp_name=`basename ${exp_file} .yml`
-#  echo ""
-#  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-#  echo "> Generating data for ${exp_name} ..."
-#  npx=`cat ${exp_file} | grep npx | sed s/npx://g | sed 's/^ *//g'`
-#  if [ ${npx} -gt 49 ] ; then
-#      export SER_ENV="ONLY_DRIVER"
-#  else
-#      export SER_ENV="ALL"
-#  fi
-#  make distclean
-#  if [ "${VALIDATE_ONLY}" == "true" ] ; then
-#      EXPERIMENT=${exp_name} make generate_data validate_data
-#  else
-#      EXPERIMENT=${exp_name} make generate_data pack_data push_data
-#  fi
- 
-#  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-#  echo ""
-#done
+export SAVE_TIMESTEP=1
 # loop over experiments
 for exp_file in ${EXPERIMENTS} ; do
   exp_name=`basename ${exp_file} .yml`
- 
+  echo ""
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+  echo "> Generating driver data for ${exp_name} ..."
   npx=`cat ${exp_file} | grep npx | sed s/npx://g | sed 's/^ *//g'`
- # save full driver data for smaller experiments
-  if [ ${npx} -lt 320 ] ; then
-      echo ""
-      echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-      echo "> Generating driver data for ${exp_name} ..."
-      export SER_ENV="DYCORE_AND_PHYSICS"
+  envs=("DRIVER_IN_ONLY")
+  if [ ${npx} -lt 200 ] ; then
+      envs=("DRIVER")
+  fi
+  if [ ${npx} -lt 50 ] ; then
+      envs=("DYCORE", "PHYSICS")    
+  fi
+  for env in ${envs}; do
+      export SER_ENV=${env}
       make distclean
       if [ "${VALIDATE_ONLY}" == "true" ] ; then
 	  EXPERIMENT=${exp_name} make generate_data validate_data
       else
 	  EXPERIMENT=${exp_name} make generate_data pack_data push_data
       fi
-  fi
+  done
+  echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+  echo ""
 done
-exit 0
-
