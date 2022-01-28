@@ -59,7 +59,7 @@ for exp_file in ${EXPERIMENTS} ; do
       envs=("DRIVER")
   fi
   if [ ${npx} -lt 50 ] ; then
-      envs=("DYCORE", "PHYSICS")    
+      envs=("DRIVER", "DYCORE", "PHYSICS")    
   fi
   for env in ${envs}; do
       export SER_ENV=${env}
