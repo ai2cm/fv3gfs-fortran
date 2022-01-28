@@ -1057,7 +1057,7 @@ module module_physics_driver
                    Statein%prsl, Statein%prslk, Statein%phii, Statein%phil, del)
 #else
 !GFDL   Adjust the geopotential height hydrostatically in a way consistent with FV3 discretization
-      !$ser on
+
       !$ser savepoint PrsFV3-In
       !$ser data prs_ix=ix prs_levs=levs prs_ntrac=ntrac prs_phii=Statein%phii prs_prsi=Statein%prsi
       !$ser data prs_tgrs=Statein%tgrs prs_qgrs=Statein%qgrs 
@@ -3269,7 +3269,7 @@ module module_physics_driver
                    Statein%prsl, Statein%prslk, Statein%phii, Statein%phil)
 #else
 !GFDL   Adjust the height hydrostatically in a way consistent with FV3 discretization
-      !$ser on
+
       !$ser savepoint PhiFV3-In
       !$ser data phi_ix=ix phi_levs=levs phi_ntrac=ntrac phi_gt0=Stateout%gt0 phi_gq0=Stateout%gq0
       !$ser data phi_del_gz=del_gz phi_phii=Statein%phii phi_phil=Statein%phil
@@ -4991,7 +4991,7 @@ module module_physics_driver
 
           if ( Model%do_gfdl_mp_in_physics ) then
             call mpp_clock_begin(mphClock)
-            !$ser on
+
             !$ser savepoint Microph-In
             !$ser data mph_qv1=qv1 mph_ql1=ql1 mph_qr1=qr1 mph_qi1=qi1 mph_qs1=qs1 mph_qg1=qg1 mph_qa1=qa1 mph_qn1=qn1 mph_qv_dt=qv_dt
             !$ser data mph_ql_dt=ql_dt mph_qr_dt=qr_dt mph_qi_dt=qi_dt mph_qs_dt=qs_dt mph_qg_dt=qg_dt mph_qa_dt=qa_dt

@@ -395,13 +395,6 @@ subroutine update_atmos_radiation_physics (Atmos)
 !$OMP            schedule (dynamic,1), &
 !$OMP            shared   (Atm_block, IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Func0d, mphClock) &
 !$OMP            private  (nb)
-      !$ser savepoint GFSPhysicsDriver1-In
-      !$ser data IPD_gt0=IPD_Data(1)%Stateout%gt0 IPD_gu0=IPD_Data(1)%Stateout%gu0 IPD_gv0=IPD_Data(1)%Stateout%gv0 IPD_gq0=IPD_Data(1)%Stateout%gq0
-      !$ser data IPD_refl_10cm=IPD_Data(1)%Intdiag%refl_10cm IPD_area=IPD_Data(1)%Grid%area
-      !$ser data IPD_phii=IPD_Data(1)%Statein%phii IPD_prsi=IPD_Data(1)%Statein%prsi IPD_tgrs=IPD_Data(1)%Statein%tgrs IPD_qgrs=IPD_Data(1)%Statein%qgrs
-      !$ser data IPD_xlon=IPD_Data(1)%Grid%xlon IPD_levs=IPD_Control%levs IPD_ntrac=IPD_Control%ntrac IPD_lradar=IPD_Control%lradar
-      !$ser data IPD_kdt=IPD_Control%kdt IPD_prsl=IPD_Data(1)%Statein%prsl IPD_vvl=IPD_Data(1)%Statein%vvl IPD_dtp=IPD_control%dtp
-      !$ser data IPD_ugrs=IPD_Data(1)%Statein%ugrs IPD_vgrs=IPD_Data(1)%Statein%vgrs
       do nb = 1,Atm_block%nblks
         call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d, mphClock=mphClock)
       enddo
