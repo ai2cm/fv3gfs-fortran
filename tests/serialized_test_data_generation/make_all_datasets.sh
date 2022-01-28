@@ -54,9 +54,10 @@ for exp_file in ${EXPERIMENTS} ; do
   echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   echo "> Generating driver data for ${exp_name} ..."
   npx=`cat ${exp_file} | grep npx | sed s/npx://g | sed 's/^ *//g'`
-  envs=("DRIVER_IN_ONLY")
+  envs=("DRIVER")
+  export SER_INPUT_ONLY="TRUE"
   if [ ${npx} -lt 200 ] ; then
-      envs=("DRIVER")
+      export SER_INPUT_ONLY="FALSE"
   fi
   if [ ${npx} -lt 50 ] ; then
       envs=("DRIVER" "DYCORE" "PHYSICS")
@@ -69,7 +70,7 @@ for exp_file in ${EXPERIMENTS} ; do
       if [ "${VALIDATE_ONLY}" == "true" ] ; then
       	  EXPERIMENT=${exp_name} make generate_data validate_data
       else
-	  EXPERIMENT=${exp_name} make generate_data pack_data push_data
+	  EXPERIMENT=${exp_name} make generate_data pack_data#push_data
       fi
   done
   echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++"
