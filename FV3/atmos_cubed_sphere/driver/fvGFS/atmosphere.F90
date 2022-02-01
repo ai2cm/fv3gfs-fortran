@@ -257,7 +257,7 @@ character(len=20)   :: mod_name = 'fvGFS/atmosphere_mod'
 #endif
   !$ser verbatim integer :: o3mr, sgs_tke
   !$ser verbatim character(len=256) :: ser_env, ser_input_only_str
-  !$ser verbatim logical :: serialize_only_driver_input, serialize_driver_inout, serialize_dycore, serialize_physics, save_step, ser_input_only
+  !$ser verbatim logical :: serialize_only_driver_input, serialize_driver, serialize_dycore, serialize_physics, save_step, ser_input_only
   !$ser verbatim integer, save :: driver_savepoints_saved = 0
  
   integer :: mytile  = 1
@@ -325,7 +325,7 @@ contains
   !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
   !$ser verbatim call get_environment_variable("SER_INPUT_ONLY", ser_input_only_str)
   !$ser verbatim serialize_only_driver_input = (index(ser_input_only_str, "true") /= 0)
-  !$ser verbatim serialize_driver_inout = (index(ser_env, "driver") /= 0)
+  !$ser verbatim serialize_driver = (index(ser_env, "driver") /= 0)
   !$ser verbatim serialize_dycore = (index(ser_env, "dycore") /= 0)
   !$ser verbatim serialize_physics = (index(ser_env, "physics") /= 0)
   !$ser verbatim save_step = .false.
@@ -741,39 +741,40 @@ contains
      p_step = psc
                     call timing_on('fv_dynamics')
 !uc/vc only need be same on coarse grid? However BCs do need to be the same
-     !$ser verbatim if (serialize_driver_inout .or.  serialize_only_driver_input) then
+
+     !$ser verbatim if (serialize_driver .or.  serialize_only_driver_input) then
          !$ser verbatim if (driver_savepoints_saved == 1) then
                !$ser on
                !$ser savepoint Driver-Out
                !$ser verbatim driver_savepoints_saved = 2
          !$ser verbatim else               
             !$ser savepoint Driver-In
-            !$ser verbatim if (save_step) then
-               !$ser verbatim  driver_savepoints_saved =  1
-           !$ser verbatim endif
          !$ser verbatim endif            
-      !$ser verbatim else if (serialize_dycore) then
+     !$ser verbatim else if (serialize_dycore) then
           !$ser savepoint FVDynamics-In
-      !$ser verbatim else
+     !$ser verbatim else
           !$ser off
      !$ser verbatim endif
+    
      !$ser verbatim bdt=dt_atmos/real(abs(p_split))
      !$ser data bdt=bdt nq_tot=nq zvir=zvir ptop=Atm(n)%ptop ks=Atm(n)%ks ncnst=nq n_split=n_split_loc u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp  qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr)  ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc ak=Atm(n)%ak bk=Atm(n)%bk mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est consv_te=Atm(n)%flagstruct%consv_te do_adiabatic_init=do_adiabatic_init
      !$ser verbatim if (sgs_tke > 0) then
        !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
      !$ser verbatim endif
                     
-     !$ser verbatim if (serialize_only_driver_input) then
+     !$ser verbatim if (save_step) then
+       !$ser verbatim  driver_savepoints_saved =  1
+     !$ser verbatim endif               
+     !$ser verbatim if (serialize_only_driver_input .and. save_step) then
        !$ser verbatim if (mpp_pe() == 0) write(*,*) "Stopping after serialization of fv_dynamics() input"
        !$ser verbatim call mp_stop(); call exit(0)
      !$ser verbatim endif
-     !$ser verbatim if (serialize_driver_inout) then
-       !$ser verbatim if (driver_savepoints_saved == 2) then
-         !$ser verbatim if (mpp_pe() == 0) write(*,*) "Stopping after saving serialization of Driver in/out data once"
-         !$ser verbatim call mp_stop(); call exit(0) 
-       !$ser verbatim  else
+     !$ser verbatim if (driver_savepoints_saved == 2) then
+         !$ser verbatim if (mpp_pe() == 0) write(*,*) "Stopping after saving serialization of one saved timestep"
+         !$ser verbatim call mp_stop(); call exit(0)
+     !$ser verbatim endif
+     !$ser verbatim if (serialize_driver) then
          !$ser off
-       !$ser verbatim endif
      !$ser verbatim endif
      call fv_dynamics(npx, npy, npz, nq, Atm(n)%ng, dt_atmos/real(abs(p_split)),&
                        Atm(n)%flagstruct%consv_te, Atm(n)%flagstruct%fill,       &
@@ -831,7 +832,7 @@ contains
       if ( w_diff /= NO_TRACER ) then
         nt_dyn = nq - 1
      endif
-     !$ser verbatim if ((serialize_driver_inout  .or. serialize_dycore) .and. save_step) then
+     !$ser verbatim if ((serialize_driver  .or. serialize_dycore) .and. save_step) then
        !$ser on
      !$ser verbatim else
        !$ser off
