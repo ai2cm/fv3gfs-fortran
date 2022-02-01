@@ -2671,8 +2671,12 @@ module module_physics_driver
 !
         if (ntke > 0) then
           do k=1,levs
-            do i=1,im
-              dqdt(i,k,ntke)  = 0. ! dvdftra(i,k,ntkev) !TODO[EW]: changed to 0
+             do i=1,im
+#ifdef GT4PY_DEV
+               dqdt(i,k,ntke)  = 0. ! dvdftra(i,k,ntkev) !TODO[EW]: changed to 0
+#else
+               dqdt(i,k,ntke)  = dvdftra(i,k,ntkev)
+#endif
             enddo
           enddo
         endif
@@ -3135,14 +3139,24 @@ module module_physics_driver
 !
 
       do k=1,levs
-        do i=1,im
-          Stateout%gt0(i,k)  = Statein%tgrs(i,k) ! + dtdt(i,k) * dtp [EW]: override this since we can't turn off moninq
-          Stateout%gu0(i,k)  = Statein%ugrs(i,k) ! + dudt(i,k) * dtp
-          Stateout%gv0(i,k)  = Statein%vgrs(i,k) ! + dvdt(i,k) * dtp
-        enddo
-      enddo
-      Stateout%gq0(1:im,:,:) = Statein%qgrs(1:im,:,:) ! + dqdt(1:im,:,:) * dtp
+         do i=1,im
+#ifdef GT4PY_DEV
+        Stateout%gt0(i,k)  = Statein%tgrs(i,k) ! + dtdt(i,k) * dtp [EW]: override this since we can't turn off moninq
+        Stateout%gu0(i,k)  = Statein%ugrs(i,k) ! + dudt(i,k) * dtp
+        Stateout%gv0(i,k)  = Statein%vgrs(i,k) ! + dvdt(i,k) * dtp    
+#else 
+        Stateout%gt0(i,k)  = Statein%tgrs(i,k) + dtdt(i,k) * dtp 
+        Stateout%gu0(i,k)  = Statein%ugrs(i,k) + dudt(i,k) * dtp
+        Stateout%gv0(i,k)  = Statein%vgrs(i,k) + dvdt(i,k) * dtp
 
+#endif
+        enddo
+     enddo
+#ifdef GT4PY_DEV
+      Stateout%gq0(1:im,:,:) = Statein%qgrs(1:im,:,:) ! + dqdt(1:im,:,:) * dtp
+#else
+      Stateout%gq0(1:im,:,:) = Statein%qgrs(1:im,:,:) + dqdt(1:im,:,:) * dtp
+#endif
 !================================================================================
 !     above: updates of the state by UGWP oro-GWS and RF-damp
 !  Diag%tav_ugwp & Diag%uav_ugwp(i,k)-Updated U-T state before moist/micro !  physics
