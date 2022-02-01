@@ -54,13 +54,13 @@ for exp_file in ${EXPERIMENTS} ; do
   echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   echo "> Generating driver data for ${exp_name} ..."
   npx=`cat ${exp_file} | grep npx | sed s/npx://g | sed 's/^ *//g'`
-  envs=("DRIVER")
-  export SER_INPUT_ONLY="TRUE"
+  envs=("driver")
+  export SER_INPUT_ONLY="true"
   if [ ${npx} -lt 200 ] ; then
-      export SER_INPUT_ONLY="FALSE"
+      export SER_INPUT_ONLY="false"
   fi
   if [ ${npx} -lt 50 ] ; then
-      envs=("DRIVER" "DYCORE" "PHYSICS")
+      envs=("driver" "dycore" "physics")
   fi
   echo "For npx ${npx} running savepoint configurations ${envs[*]}"
   for env in ${envs[*]}; do

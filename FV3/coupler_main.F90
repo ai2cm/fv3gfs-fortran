@@ -129,7 +129,7 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
    !$ser verbatim character(len=256) :: ser_env, save_timestep_str
 !#######################################################################
    !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
-   !$ser verbatim serialize_physics = (index(ser_env, "PHYSICS") /= 0)
+   !$ser verbatim serialize_physics = (index(ser_env, "physics") /= 0)
    !$ser verbatim call get_environment_variable("SAVE_TIMESTEP", save_timestep_str, timestep_len, timestep_status)
    !$ser verbatim if (timestep_status .eq. 0 .and. timestep_len .gt. 0) then
      !$ser verbatim read (save_timestep_str,*) save_timestep

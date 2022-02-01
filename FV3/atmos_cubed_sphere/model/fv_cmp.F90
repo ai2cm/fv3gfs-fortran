@@ -1049,7 +1049,7 @@ subroutine qs_init (kmp)
     allocate (des2 (length))
     allocate (desw (length))
     !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
-    !$ser verbatim serialize_dycore = (index(ser_env, "DYCORE") /= 0)
+    !$ser verbatim serialize_dycore = (index(ser_env, "dycore") /= 0)
     !$ser verbatim ser_on=fs_is_serialization_on()
     !$ser verbatim if (serialize_dycore) then
      !$ser on

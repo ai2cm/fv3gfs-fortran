@@ -324,10 +324,10 @@ contains
 #endif
   !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
   !$ser verbatim call get_environment_variable("SER_INPUT_ONLY", ser_input_only_str)
-  !$ser verbatim serialize_only_driver_input = (index(ser_input_only_str, "TRUE") /= 0)
-  !$ser verbatim serialize_driver_inout = (index(ser_env, "DRIVER") /= 0)
-  !$ser verbatim serialize_dycore = (index(ser_env, "DYCORE") /= 0)
-  !$ser verbatim serialize_physics = (index(ser_env, "PHYSICS") /= 0)
+  !$ser verbatim serialize_only_driver_input = (index(ser_input_only_str, "true") /= 0)
+  !$ser verbatim serialize_driver_inout = (index(ser_env, "driver") /= 0)
+  !$ser verbatim serialize_dycore = (index(ser_env, "dycore") /= 0)
+  !$ser verbatim serialize_physics = (index(ser_env, "physics") /= 0)
   !$ser verbatim save_step = .false.
 
    current_time_in_seconds = time_type_to_real( Time - Time_init )
@@ -728,15 +728,17 @@ contains
        !$ser data agrid1=Atm(n)%gridstruct%agrid(:,:,1) agrid2=Atm(n)%gridstruct%agrid(:,:,2) bgrid1=Atm(n)%gridstruct%grid(:,:,1)
        !$ser data bgrid2=Atm(n)%gridstruct%grid(:,:,2) edge_w=Atm(n)%gridstruct%edge_w(jsc:jec+1) edge_e=Atm(n)%gridstruct%edge_e(jsc:jec+1)
        !$ser data edge_s=Atm(n)%gridstruct%edge_s(isc:iec+1) edge_n=Atm(n)%gridstruct%edge_n(isc:iec+1) a11=Atm(n)%gridstruct%a11
-       !$ser data a12=Atm(n)%gridstruct%a12  a21=Atm(n)%gridstruct%a21  a22=Atm(n)%gridstruct%a22 
+       !$ser data a12=Atm(n)%gridstruct%a12  a21=Atm(n)%gridstruct%a21  a22=Atm(n)%gridstruct%a22 ak=Atm(n)%ak bk=Atm(n)%bk ptop=Atm(n)%ptop ks=Atm(n)%ks
+       !$ser data ee1=Atm(n)%gridstruct%ee1 ee2=Atm(n)%gridstruct%ee2 ew1=Atm(n)%gridstruct%ew(:,:,:,1) ew2=Atm(n)%gridstruct%ew(:,:,:,2)
+       !$ser data  es1=Atm(n)%gridstruct%es(:,:,:,1) es2=Atm(n)%gridstruct%es(:,:,:,2)
+       !$ser data vlon=Atm(n)%gridstruct%vlon vlat=Atm(n)%gridstruct%vlat
+       !$ser data edge_vect_w=Atm(n)%gridstruct%edge_vect_w edge_vect_e=Atm(n)%gridstruct%edge_vect_e edge_vect_s=Atm(n)%gridstruct%edge_vect_s edge_vect_n=Atm(n)%gridstruct%edge_vect_n
        !$ser verbatim call set_nz(npz)
-      !$ser verbatim else
+       !$ser verbatim else
        !$ser verbatim save_step = .false.
        !$ser off
      !$ser verbatim endif
-      p_step = psc
-    
-      
+     p_step = psc
                     call timing_on('fv_dynamics')
 !uc/vc only need be same on coarse grid? However BCs do need to be the same
      !$ser verbatim if (serialize_driver_inout .or.  serialize_only_driver_input) then
