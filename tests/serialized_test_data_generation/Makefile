@@ -5,7 +5,7 @@ EXPERIMENT_DIR = $(CWD)/configs
 EXPERIMENT ?= c12_6ranks_standard
 # base images w/ or w/o CUDA
 CUDA ?=y
-SER_ENV ?= DYCORE
+SER_ENV ?= dycore
 # version number or tag (determines image tag and destination directory in cloud storage)
 # -convention: <tag>-<some large conceptual version change>.<serialization statement change>.<hotfix>
 # -version number should be increased when serialization data is expected to change
