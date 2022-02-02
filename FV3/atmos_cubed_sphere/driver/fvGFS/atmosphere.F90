@@ -741,12 +741,13 @@ contains
      p_step = psc
                     call timing_on('fv_dynamics')
 !uc/vc only need be same on coarse grid? However BCs do need to be the same
-
+     !$ser verbatim if (driver_savepoints_saved == 1) then
+       !$ser verbatim driver_savepoints_saved = 2
+     !$ser verbatim endif
      !$ser verbatim if (serialize_driver .or.  serialize_only_driver_input) then
-         !$ser verbatim if (driver_savepoints_saved == 1) then
+         !$ser verbatim if (driver_savepoints_saved == 2) then
                !$ser on
                !$ser savepoint Driver-Out
-               !$ser verbatim driver_savepoints_saved = 2
          !$ser verbatim else               
             !$ser savepoint Driver-In
          !$ser verbatim endif            
