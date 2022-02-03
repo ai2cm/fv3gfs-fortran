@@ -72,7 +72,7 @@ run_model: ## run model using Docker image to generate serialized data
 	fi
 	mkdir -p $(DATA_DIR_HOST)
 	docker run -e USER_ID_HOST=$(USER_ID_HOST) -e GROUP_ID_HOST=$(GROUP_ID_HOST) \
-		-e SER_ENV=$(SER_ENV) \
+		-e SER_ENV=$(SER_ENV) -e SAVE_TIMESTEP=$(SAVE_TIMESTEP) \
 		--network host --rm -v $(RUN_DIR_HOST):$(RUN_DIR_CONTAINER) \
 		-v $(DATA_DIR_HOST):$(DATA_DIR_CONTAINER) \
                 --mount type=tmpfs,destination=$(RUN_DIR_CONTAINER)/test_data \

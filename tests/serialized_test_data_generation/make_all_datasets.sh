@@ -46,7 +46,7 @@ if [ -z "${EXPERIMENTS}" ] ; then
     exit 1
 fi
 
-export SAVE_TIMESTEP=1
+
 # loop over experiments
 for exp_file in ${EXPERIMENTS} ; do
   exp_name=`basename ${exp_file} .yml`
@@ -54,9 +54,16 @@ for exp_file in ${EXPERIMENTS} ; do
   echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   echo "> Generating driver data for ${exp_name} ..."
   npx=`cat ${exp_file} | grep npx | sed s/npx://g | sed 's/^ *//g'`
+  seconds=`cat ${exp_file} | grep seconds | sed s/seconds://g | sed 's/^ *//g'`
+  dt_atmos=`cat ${exp_file} | grep dt_atmos | sed s/dt_atmos://g | sed 's/^ *//g'`
   dycore_only=`cat ${exp_file} | grep dycore_only | sed s/dycore_only://g | sed 's/^ *//g'`
   envs=("driver")
   export SER_INPUT_ONLY="true"
+  export SAVE_TIMESTEP=1
+  if [ ${seconds} -gt 100 ] ; then
+      export SAVE_TIMESTEP=$((${seconds}/${dt_atmos} - 1))
+      echo  "saving timstep $SAVE_TIMESTEP"
+  fi
   if [ ${npx} -lt 200 ] ; then
       export SER_INPUT_ONLY="false"
   fi
@@ -67,6 +74,7 @@ for exp_file in ${EXPERIMENTS} ; do
 	  envs=("driver" "dycore" "physics")
       fi
   fi
+ 
   echo "For npx ${npx} running savepoint configurations ${envs[*]}"
   for env in ${envs[*]}; do
       export SER_ENV=${env}
