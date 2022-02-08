@@ -3800,13 +3800,13 @@ module GFS_diagnostics
   enddo
 
   call populate_emulator_diagnostics(&
-    ExtDiag, IntDiag(:)%zhao_carr_emulator, 'emulator', nblks, idx)
+    ExtDiag, IntDiag(:)%zhao_carr_emulator, 'zhao_carr_microphysics', 'emulator', nblks, idx)
   call populate_emulator_diagnostics(&
-    ExtDiag, IntDiag(:)%zhao_carr_physics, 'physics', nblks, idx)
+    ExtDiag, IntDiag(:)%zhao_carr_physics, 'zhao_carr_microphysics', 'physics', nblks, idx)
   call populate_emulator_diagnostics(&
-    ExtDiag, IntDiag(:)%gscond_emulator, 'gscond_emulator', nblks, idx)
+    ExtDiag, IntDiag(:)%gscond_emulator, 'zhao_carr_gscond', 'emulator', nblks, idx)
   call populate_emulator_diagnostics(&
-    ExtDiag, IntDiag(:)%gscond_physics, 'gscond_physics', nblks, idx)
+    ExtDiag, IntDiag(:)%gscond_physics, 'zhao_carr_gscond', 'physics', nblks, idx)
 
 !--------------------------aerosols
 #ifdef CCPP
@@ -4266,22 +4266,22 @@ module GFS_diagnostics
 #endif
 
 !-------------------------------------------------------------------------      
-  subroutine populate_emulator_diagnostics(ExtDiag, tendencies, label, nblks, idx)
+  subroutine populate_emulator_diagnostics(ExtDiag, tendencies, module_name, label, nblks, idx)
     type(GFS_externaldiag_type),  intent(inout) :: ExtDiag(:)
     type(zhao_carr_tendencies),          intent(in)    :: tendencies(:)
     character(len=*), intent(in) :: label
+    character(len=*), intent(in) :: module_name
     integer, intent(in) :: nblks
     integer, intent(inout) :: idx
     ! locals
     integer nb
-    character(len=128), parameter :: module_name = "zhao_carr_microphysics"
 
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_' // trim(label)
-    ExtDiag(idx)%desc = 'temperature tendency due to Zhao Carr ' // trim(label)
+    ExtDiag(idx)%desc = 'temperature tendency due to ' // trim(module_name) // '' // trim(label)
     ExtDiag(idx)%unit = 'K/s'
-    ExtDiag(idx)%mod_name = module_name
+    ExtDiag(idx)%mod_name = trim(module_name)
     ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
     ExtDiag(idx)%diag_manager_controlled = .true.
     allocate (ExtDiag(idx)%data(nblks))
@@ -4291,9 +4291,9 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'tendency_of_specific_humidity_due_to_' // trim(label)
-    ExtDiag(idx)%desc = 'specific humidity tendency due to Zhao Carr ' // trim(label)
+    ExtDiag(idx)%desc = 'specific humidity tendency due to ' // trim(module_name) // ' ' // trim(label)
     ExtDiag(idx)%unit = 'kg/kg/s'
-    ExtDiag(idx)%mod_name = module_name
+    ExtDiag(idx)%mod_name = trim(module_name)
     ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
     ExtDiag(idx)%diag_manager_controlled = .true.
     allocate (ExtDiag(idx)%data(nblks))
@@ -4304,9 +4304,9 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'tendency_of_cloud_water_due_to_' // trim(label)
-    ExtDiag(idx)%desc = 'cloud water due to Zhao Carr ' // trim(label)
+    ExtDiag(idx)%desc = 'cloud water due to ' // trim(module_name) // ' ' // trim(label)
     ExtDiag(idx)%unit = 'kg/kg/s'
-    ExtDiag(idx)%mod_name = module_name
+    ExtDiag(idx)%mod_name = trim(module_name)
     ExtDiag(idx)%coarse_graining_method = 'mass_weighted'
     ExtDiag(idx)%diag_manager_controlled = .true.
     allocate (ExtDiag(idx)%data(nblks))
@@ -4317,9 +4317,9 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 2
     ExtDiag(idx)%name = 'surface_precipitation_due_to_' // trim(label)
-    ExtDiag(idx)%desc = 'surface precipitation due to Zhao Carr ' // trim(label)
+    ExtDiag(idx)%desc = 'surface precipitation due to ' // trim(module_name) // ' ' // trim(label)
     ExtDiag(idx)%unit = 'kg/m^2/s'
-    ExtDiag(idx)%mod_name = module_name
+    ExtDiag(idx)%mod_name = trim(module_name)
     ExtDiag(idx)%coarse_graining_method = 'area_weighted'
     ExtDiag(idx)%diag_manager_controlled = .true.
     allocate (ExtDiag(idx)%data(nblks))
