@@ -66,6 +66,22 @@ variables:
 		surface_precipitation_due_to_zhao_carr_physics:long_name = surface precipitation due to Zhao Carr physics ;
 		surface_precipitation_due_to_zhao_carr_physics:units = kg/m^2/s ;
 		surface_precipitation_due_to_zhao_carr_physics:cell_methods = time: point ;
+	float32 tendency_of_air_temperature_due_to_zhao_carr_gscond_emulator(time, pfull, grid_yt, grid_xt) ;
+		tendency_of_air_temperature_due_to_zhao_carr_gscond_emulator:long_name = temperature tendency due to Zhao Carr gscond_emulator ;
+		tendency_of_air_temperature_due_to_zhao_carr_gscond_emulator:units = K/s ;
+		tendency_of_air_temperature_due_to_zhao_carr_gscond_emulator:cell_methods = time: point ;
+	float32 tendency_of_specific_humidity_due_to_zhao_carr_gscond_emulator(time, pfull, grid_yt, grid_xt) ;
+		tendency_of_specific_humidity_due_to_zhao_carr_gscond_emulator:long_name = specific humidity tendency due to Zhao Carr gscond_emulator ;
+		tendency_of_specific_humidity_due_to_zhao_carr_gscond_emulator:units = kg/kg/s ;
+		tendency_of_specific_humidity_due_to_zhao_carr_gscond_emulator:cell_methods = time: point ;
+	float32 tendency_of_air_temperature_due_to_zhao_carr_gscond_physics(time, pfull, grid_yt, grid_xt) ;
+		tendency_of_air_temperature_due_to_zhao_carr_gscond_physics:long_name = temperature tendency due to Zhao Carr gscond_physics ;
+		tendency_of_air_temperature_due_to_zhao_carr_gscond_physics:units = K/s ;
+		tendency_of_air_temperature_due_to_zhao_carr_gscond_physics:cell_methods = time: point ;
+	float32 tendency_of_specific_humidity_due_to_zhao_carr_gscond_physics(time, pfull, grid_yt, grid_xt) ;
+		tendency_of_specific_humidity_due_to_zhao_carr_gscond_physics:long_name = specific humidity tendency due to Zhao Carr gscond_physics ;
+		tendency_of_specific_humidity_due_to_zhao_carr_gscond_physics:units = kg/kg/s ;
+		tendency_of_specific_humidity_due_to_zhao_carr_gscond_physics:cell_methods = time: point ;
 
 // global attributes:
 	:filename = piggy.tile5.nc ;

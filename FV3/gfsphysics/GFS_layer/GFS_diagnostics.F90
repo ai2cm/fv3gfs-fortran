@@ -3803,6 +3803,10 @@ module GFS_diagnostics
     ExtDiag, IntDiag(:)%zhao_carr_emulator, 'emulator', nblks, idx)
   call populate_emulator_diagnostics(&
     ExtDiag, IntDiag(:)%zhao_carr_physics, 'physics', nblks, idx)
+  call populate_emulator_diagnostics(&
+    ExtDiag, IntDiag(:)%gscond_emulator, 'gscond_emulator', nblks, idx)
+  call populate_emulator_diagnostics(&
+    ExtDiag, IntDiag(:)%gscond_physics, 'gscond_physics', nblks, idx)
 
 !--------------------------aerosols
 #ifdef CCPP

@@ -1511,7 +1511,7 @@ module GFS_typedefs
     !--- MP quantities for 3D diagnositics 
     real (kind=kind_phys), pointer :: refl_10cm(:,:) => null()  !< instantaneous refl_10cm 
 
-    type(zhao_carr_tendencies) :: zhao_carr_emulator, zhao_carr_physics
+    type(zhao_carr_tendencies) :: zhao_carr_emulator, zhao_carr_physics, gscond_emulator, gscond_physics
 !
 !---vay-2018 UGWP-diagnostics daily mean
 !
@@ -5229,6 +5229,8 @@ module GFS_typedefs
       allocate (Diag%q_dt_int (IM,5))
       call Diag%zhao_carr_emulator%create(im, Model%levs)
       call Diag%zhao_carr_physics%create(im, Model%levs)
+      call Diag%gscond_emulator%create(im, Model%levs)
+      call Diag%gscond_physics%create(im, Model%levs)
 !      allocate (Diag%dq3dt  (IM,Model%levs,oz_coeff+5))
 !--- needed to allocate GoCart coupling fields
 !      allocate (Diag%upd_mf (IM,Model%levs))
@@ -5542,6 +5544,8 @@ module GFS_typedefs
       Diag%dq3dt    = zero
       call Diag%zhao_carr_emulator%zero()
       call Diag%zhao_carr_physics%zero()
+      call Diag%gscond_physics%zero()
+      call Diag%gscond_physics%zero()
 !     Diag%upd_mf   = zero
 !     Diag%dwn_mf   = zero
 !     Diag%det_mf   = zero
