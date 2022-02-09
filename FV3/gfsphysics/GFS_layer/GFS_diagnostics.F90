@@ -4279,7 +4279,7 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 3
     ExtDiag(idx)%name = 'tendency_of_air_temperature_due_to_' // trim(label)
-    ExtDiag(idx)%desc = 'temperature tendency due to ' // trim(module_name) // '' // trim(label)
+    ExtDiag(idx)%desc = 'temperature tendency due to ' // trim(module_name) // ' ' // trim(label)
     ExtDiag(idx)%unit = 'K/s'
     ExtDiag(idx)%mod_name = trim(module_name)
     ExtDiag(idx)%coarse_graining_method = 'mass_weighted'

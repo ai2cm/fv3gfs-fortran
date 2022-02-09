@@ -35,7 +35,7 @@ variables:
 		delp:units = pa ;
 		delp:cell_methods = time: point ;
 	float32 tendency_of_air_temperature_due_to_zhao_carr_emulator(time, pfull, grid_yt, grid_xt) ;
-		tendency_of_air_temperature_due_to_zhao_carr_emulator:long_name = temperature tendency due to zhao_carr_microphysicsemulator ;
+		tendency_of_air_temperature_due_to_zhao_carr_emulator:long_name = temperature tendency due to zhao_carr_microphysics emulator ;
 		tendency_of_air_temperature_due_to_zhao_carr_emulator:units = K/s ;
 		tendency_of_air_temperature_due_to_zhao_carr_emulator:cell_methods = time: point ;
 	float32 tendency_of_cloud_water_due_to_zhao_carr_emulator(time, pfull, grid_yt, grid_xt) ;
@@ -47,7 +47,7 @@ variables:
 		tendency_of_specific_humidity_due_to_zhao_carr_emulator:units = kg/kg/s ;
 		tendency_of_specific_humidity_due_to_zhao_carr_emulator:cell_methods = time: point ;
 	float32 tendency_of_air_temperature_due_to_zhao_carr_physics(time, pfull, grid_yt, grid_xt) ;
-		tendency_of_air_temperature_due_to_zhao_carr_physics:long_name = temperature tendency due to zhao_carr_microphysicsphysics ;
+		tendency_of_air_temperature_due_to_zhao_carr_physics:long_name = temperature tendency due to zhao_carr_microphysics physics ;
 		tendency_of_air_temperature_due_to_zhao_carr_physics:units = K/s ;
 		tendency_of_air_temperature_due_to_zhao_carr_physics:cell_methods = time: point ;
 	float32 tendency_of_cloud_water_due_to_zhao_carr_physics(time, pfull, grid_yt, grid_xt) ;
@@ -67,7 +67,7 @@ variables:
 		surface_precipitation_due_to_zhao_carr_physics:units = kg/m^2/s ;
 		surface_precipitation_due_to_zhao_carr_physics:cell_methods = time: point ;
 	float32 tendency_of_air_temperature_due_to_zhao_carr_gscond_emulator(time, pfull, grid_yt, grid_xt) ;
-		tendency_of_air_temperature_due_to_zhao_carr_gscond_emulator:long_name = temperature tendency due to zhao_carr_gscondemulator ;
+		tendency_of_air_temperature_due_to_zhao_carr_gscond_emulator:long_name = temperature tendency due to zhao_carr_gscond emulator ;
 		tendency_of_air_temperature_due_to_zhao_carr_gscond_emulator:units = K/s ;
 		tendency_of_air_temperature_due_to_zhao_carr_gscond_emulator:cell_methods = time: point ;
 	float32 tendency_of_specific_humidity_due_to_zhao_carr_gscond_emulator(time, pfull, grid_yt, grid_xt) ;
@@ -75,7 +75,7 @@ variables:
 		tendency_of_specific_humidity_due_to_zhao_carr_gscond_emulator:units = kg/kg/s ;
 		tendency_of_specific_humidity_due_to_zhao_carr_gscond_emulator:cell_methods = time: point ;
 	float32 tendency_of_air_temperature_due_to_zhao_carr_gscond_physics(time, pfull, grid_yt, grid_xt) ;
-		tendency_of_air_temperature_due_to_zhao_carr_gscond_physics:long_name = temperature tendency due to zhao_carr_gscondphysics ;
+		tendency_of_air_temperature_due_to_zhao_carr_gscond_physics:long_name = temperature tendency due to zhao_carr_gscond physics ;
 		tendency_of_air_temperature_due_to_zhao_carr_gscond_physics:units = K/s ;
 		tendency_of_air_temperature_due_to_zhao_carr_gscond_physics:cell_methods = time: point ;
 	float32 tendency_of_specific_humidity_due_to_zhao_carr_gscond_physics(time, pfull, grid_yt, grid_xt) ;
