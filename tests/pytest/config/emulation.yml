@@ -38,6 +38,19 @@ diag_table:
         - field_name: surface_precipitation_due_to_physics
           module_name: zhao_carr_microphysics
           output_name: surface_precipitation_due_to_zhao_carr_physics
+        # Gscond outputs
+        - field_name: tendency_of_air_temperature_due_to_emulator
+          module_name: zhao_carr_gscond
+          output_name: tendency_of_air_temperature_due_to_zhao_carr_gscond_emulator
+        - field_name: tendency_of_specific_humidity_due_to_emulator
+          module_name: zhao_carr_gscond
+          output_name: tendency_of_specific_humidity_due_to_zhao_carr_gscond_emulator
+        - field_name: tendency_of_air_temperature_due_to_physics
+          module_name: zhao_carr_gscond
+          output_name: tendency_of_air_temperature_due_to_zhao_carr_gscond_physics
+        - field_name: tendency_of_specific_humidity_due_to_physics
+          module_name: zhao_carr_gscond
+          output_name: tendency_of_specific_humidity_due_to_zhao_carr_gscond_physics
 namelist:
   amip_interp_nml:
     data_set: reynolds_oi
