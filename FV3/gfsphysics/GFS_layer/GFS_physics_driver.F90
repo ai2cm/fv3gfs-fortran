@@ -606,7 +606,7 @@ module module_physics_driver
         qv_cpf,&
         qv_post_gscond,&
         qv_post_precpd,&
-        qvp_cpf,&
+        humidity_after_gscond_tmp,&
         t_post_precpd, &
         tp_cpf
 
@@ -4516,7 +4516,7 @@ module module_physics_driver
                 qv_cpf(i,k) = Stateout%gq0(i,k,1)
                 qc_cpf(i,k) = Stateout%gq0(i,k,ntcw)
                 tp_cpf(i,k) = Tbd%phy_f3d(i,k,1)
-                qvp_cpf(i,k) = Tbd%phy_f3d(i,k,2)
+                humidity_after_gscond_tmp(i,k) = Tbd%phy_f3d(i,k,2)
               enddo
             enddo
 
@@ -4536,7 +4536,7 @@ module module_physics_driver
               call set_state("cloud_water_mixing_ratio_input", qc_cpf)
   !           tp1,qp1,psp1 only used if physics dt > dynamics dt + 1e-3            
               call set_state("air_temperature_after_last_gscond", tp_cpf)
-              call set_state("specific_humidity_after_last_gscond", qvp_cpf)
+              call set_state("specific_humidity_after_last_gscond", humidity_after_gscond_tmp)
               call set_state("surface_air_pressure_after_last_gscond", psp_cpf)
 #endif
             
@@ -4599,14 +4599,14 @@ module module_physics_driver
             call get_state("cloud_water_mixing_ratio_after_precpd", qc_post_precpd)
             call get_state("total_precipitation", rain1)
             call get_state("air_temperature_after_gscond", tp_cpf)
-            call get_state("specific_humidity_after_gscond", qvp_cpf)
+            call get_state("specific_humidity_after_gscond", humidity_after_gscond_tmp)
 
             if (Model%ldiag3d) then
               Diag%zhao_carr_emulator%humidity = (qv_post_precpd(1:im,1:levs) - dqdt(:,:,1)) / dtp
               Diag%zhao_carr_emulator%cloud_water = (qc_post_precpd(1:im,1:levs) - dqdt(:,:,ntcw)) / dtp
               Diag%zhao_carr_emulator%temperature = (t_post_precpd(1:im,1:levs) - dtdt) / dtp
 
-              Diag%gscond_emulator%humidity = (qv_cpf(1:im,1:levs) - dqdt(:,:,1)) / dtp
+              Diag%gscond_emulator%humidity = (humidity_after_gscond_tmp(1:im,1:levs) - dqdt(:,:,1)) / dtp
               Diag%gscond_emulator%temperature = (tp_cpf(1:im,1:levs) - dtdt) / dtp
             end if
             Diag%zhao_carr_emulator%surface_precipitation = rain1 / dtp * rhowater
@@ -4619,7 +4619,7 @@ module module_physics_driver
                   Stateout%gq0(i,k,ntcw) = qc_post_precpd(i,k)
                   Stateout%gt0(i,k) = t_post_precpd(i,k)
                   Tbd%phy_f3d(i,k,1) = tp_cpf(i,k)
-                  Tbd%phy_f3d(i,k,2) = qvp_cpf(i,k)
+                  Tbd%phy_f3d(i,k,2) = humidity_after_gscond_tmp(i,k)
                 enddo
               enddo
             endif
