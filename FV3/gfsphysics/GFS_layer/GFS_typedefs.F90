@@ -5544,7 +5544,7 @@ module GFS_typedefs
       Diag%dq3dt    = zero
       call Diag%zhao_carr_emulator%zero()
       call Diag%zhao_carr_physics%zero()
-      call Diag%gscond_physics%zero()
+      call Diag%gscond_emulator%zero()
       call Diag%gscond_physics%zero()
 !     Diag%upd_mf   = zero
 !     Diag%dwn_mf   = zero
