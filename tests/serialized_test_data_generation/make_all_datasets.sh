@@ -66,8 +66,6 @@ for exp_file in ${EXPERIMENTS} ; do
   fi
   if [ ${npx} -lt 200 ] ; then
       export SER_INPUT_ONLY="false"
-  fi
-  if [ ${npx} -lt 50 ] ; then
       if [ "${dycore_only}" == "true" ] ; then
 	  envs=("driver" "dycore")
       else
