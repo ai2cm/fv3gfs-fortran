@@ -257,7 +257,7 @@ character(len=20)   :: mod_name = 'fvGFS/atmosphere_mod'
 #endif
   !$ser verbatim integer :: o3mr, sgs_tke
   !$ser verbatim character(len=256) :: ser_env, ser_input_only_str
-  !$ser verbatim logical :: serialize_only_driver_input, serialize_driver, serialize_dycore, serialize_physics, save_step, ser_input_only
+  !$ser verbatim logical :: serialize_only_driver_input, serialize_driver, serialize_dycore, serialize_physics, serialize_init, save_step, ser_input_only
   !$ser verbatim integer, save :: driver_savepoints_saved = 0
  
   integer :: mytile  = 1
@@ -328,6 +328,7 @@ contains
   !$ser verbatim serialize_driver = (index(ser_env, "driver") /= 0)
   !$ser verbatim serialize_dycore = (index(ser_env, "dycore") /= 0)
   !$ser verbatim serialize_physics = (index(ser_env, "physics") /= 0)
+  !$ser verbatim serialize_init = (index(ser_env, "init") /= 0)
   !$ser verbatim save_step = .false.
 
    current_time_in_seconds = time_type_to_real( Time - Time_init )
@@ -348,7 +349,7 @@ contains
 !----- initialize FV dynamical core -----
    !NOTE do we still need the second file_exist call?
    cold_start = (.not.file_exist('INPUT/fv_core.res.nc') .and. .not.file_exist('INPUT/fv_core.res.tile1.nc'))
-   !$ser verbatim if (serialize_dycore) then
+   !$ser verbatim if (serialize_init) then
      !$ser on
    !$ser verbatim endif
    call fv_init( Atm, dt_atmos, grids_on_this_pe, p_split )  ! allocates Atm components
@@ -734,10 +735,16 @@ contains
        !$ser data vlon=Atm(n)%gridstruct%vlon vlat=Atm(n)%gridstruct%vlat
        !$ser data edge_vect_w=Atm(n)%gridstruct%edge_vect_w edge_vect_e=Atm(n)%gridstruct%edge_vect_e edge_vect_s=Atm(n)%gridstruct%edge_vect_s edge_vect_n=Atm(n)%gridstruct%edge_vect_n
        !$ser verbatim call set_nz(npz)
-       !$ser verbatim else
-       !$ser verbatim save_step = .false.
+       !$ser verbatim if (serialize_init) then
+           !$ser verbatim if (mpp_pe() == 0) write(*,*) "Stopping after saving fv_init and grid"
+           !$ser verbatim call mp_stop(); call exit(0)
+       !$ser verbatim endif
+      !$ser verbatim else
+         !$ser verbatim save_step = .false.
        !$ser off
-     !$ser verbatim endif
+      !$ser verbatim endif
+
+     
      p_step = psc
                     call timing_on('fv_dynamics')
 !uc/vc only need be same on coarse grid? However BCs do need to be the same
