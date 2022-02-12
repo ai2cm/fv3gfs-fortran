@@ -457,7 +457,7 @@ contains
    allocate(pref(npz+1,2), dum1d(npz+1))
 
    call set_domain ( Atm(mytile)%domain )
-   !$ser verbatim if (serialize_dycore) then
+   !$ser verbatim if (serialize_dycore .or. serialize_init) then
    !$ser on
    !$ser verbatim endif
    call fv_restart(Atm(mytile)%domain, Atm, dt_atmos, seconds, days, cold_start, Atm(mytile)%gridstruct%grid_type, grids_on_this_pe)
