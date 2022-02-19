@@ -10,8 +10,11 @@ The emulation function `microphysics` should overwrite the fields:
 - `specific_humidity_after_precpd`
 - `cloud_water_mixing_ratio_after_precpd`
 - `total_precipitation`
+
+The function `gscond` should overwrite the fields:
 - `air_temperature_after_gscond`
 - `specific_humidity_after_gscond`
+- `cloud_water_mixing_ratio_after_gscond`
 
 to control the microphysical updates during runtime.  Otherwise
 the default parameterization will be in control.

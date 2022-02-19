@@ -600,6 +600,7 @@ module module_physics_driver
 #ifdef ENABLE_CALLPYFORT
       !--- intermediate for callpyfort set_state
       real(kind=kind_phys), dimension(size(Grid%xlon,1),Model%levs) ::  &
+        cloud_after_gscond_tmp,&
         qc_cpf,&
         qc_post_gscond,&
         qc_post_precpd,&
@@ -4557,6 +4558,26 @@ module module_physics_driver
 
             call set_state("specific_humidity_after_gscond", Stateout%gq0(1:im, 1:levs, 1))
             call set_state("air_temperature_after_gscond", Stateout%gt0(1:im, 1:levs))
+            call set_state("cloud_water_mixing_ratio_after_gscond", Stateout%gq0(1:im, 1:levs, ntcw))
+            call call_function("emulation", "gscond")
+            call get_state("air_temperature_after_gscond", tp_cpf)
+            call get_state("specific_humidity_after_gscond", humidity_after_gscond_tmp)
+            call get_state("cloud_water_mixing_ratio_after_gscond", cloud_after_gscond_tmp)
+
+            if (Model%emulate_zc_microphysics) then
+              do k=1,levs
+                do i=1,im
+                  ! temperature
+                  Stateout%gt0(i,k) = tp_cpf(i,k)
+
+                  ! humidity
+                  Stateout%gq0(i,k,1) = humidity_after_gscond_tmp(i,k)
+
+                  ! cloud
+                  Stateout%gq0(i,k,ntcw) = cloud_after_gscond_tmp(i,k)
+                enddo
+              enddo
+            endif
 #endif
 
             call precpd (im, ix, levs, dtp, del, Statein%prsl,                 &
@@ -4600,6 +4621,7 @@ module module_physics_driver
             call get_state("total_precipitation", rain1)
             call get_state("air_temperature_after_gscond", tp_cpf)
             call get_state("specific_humidity_after_gscond", humidity_after_gscond_tmp)
+            call get_state("cloud_water_mixing_ratio_after_gscond", cloud_after_gscond_tmp)
 
             if (Model%ldiag3d) then
               Diag%zhao_carr_emulator%humidity = (qv_post_precpd(1:im,1:levs) - dqdt(:,:,1)) / dtp
@@ -4607,6 +4629,7 @@ module module_physics_driver
               Diag%zhao_carr_emulator%temperature = (t_post_precpd(1:im,1:levs) - dtdt) / dtp
 
               Diag%gscond_emulator%humidity = (humidity_after_gscond_tmp(1:im,1:levs) - dqdt(:,:,1)) / dtp
+              Diag%gscond_emulator%cloud_water = (cloud_after_gscond_tmp(1:im,1:levs) - dqdt(:,:,ntcw)) / dtp
               Diag%gscond_emulator%temperature = (tp_cpf(1:im,1:levs) - dtdt) / dtp
             end if
             Diag%zhao_carr_emulator%surface_precipitation = rain1 / dtp * rhowater

@@ -56,8 +56,10 @@ def run_native(request):
 
     def run_native(config, run_dir: str):
         fv3config.write_run_directory(config, run_dir)
-        subprocess.check_call(
-            ["mpirun", "-n", "6", exe.absolute().as_posix()], cwd=run_dir
+        return subprocess.run(
+            ["mpirun", "-n", "6", exe.absolute().as_posix()],
+            cwd=run_dir,
+            capture_output=True,
         )
 
     return run_native
