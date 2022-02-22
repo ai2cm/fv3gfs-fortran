@@ -4460,7 +4460,23 @@ module module_physics_driver
       else                                  ! all microphysics
         if (imp_physics == Model%imp_physics_zhao_carr) then  ! call zhao/carr/sundqvist microphysics
 
-          call call_zhao_carr_microphysics(kpbl, Model, Statein%prslk, Statein%prsl, Statein%pgr, Stateout, Tbd, Grid, Diag, work1, del, rain1)
+#ifdef ENABLE_CALLPYFORT
+              call set_state("latitude", Grid%xlat)
+              call set_state("longitude", Grid%xlon)
+#endif
+          call call_zhao_carr_microphysics(&
+              kpbl,&
+              Model,&
+              Statein%prslk,&
+              Statein%prsl,&
+              Statein%pgr,&
+              Stateout%gt0,&
+              Stateout%gq0,&
+              Tbd,&
+              Diag,&
+              work1,&
+              del,&
+              rain1)
 
         elseif (imp_physics == Model%imp_physics_zhao_carr_pdf) then ! with pdf clouds
           allocate(rainp(im,levs))
@@ -5875,27 +5891,27 @@ module module_physics_driver
       end subroutine
 
 
-      subroutine call_zhao_carr_microphysics(kpbl, Model, prslk, prsl, pgr, Stateout, Tbd, Grid, Diag, work1, del, rain1)
+      subroutine call_zhao_carr_microphysics(kpbl, Model, prslk, prsl, pgr, gt0, gq0, Tbd, Diag, work1, del, rain1)
         type(GFS_control_type),         intent(inout) :: Model
-        type(GFS_stateout_type),        intent(inout) :: Stateout
         type(GFS_tbd_type),             intent(inout) :: Tbd
-        type(GFS_grid_type),            intent(inout) :: Grid
         type(GFS_diag_type),            intent(inout) :: Diag
         integer, dimension(:), intent(in) :: kpbl
         real(kind=kind_phys), dimension(:), intent(in) :: work1
 
         real(kind=kind_phys), dimension(:, :), intent(in) :: prslk
         real(kind=kind_phys), dimension(:, :), intent(in) :: del, prsl
+        real(kind=kind_phys), dimension(:, :, :), intent(inout) :: gq0
+        real(kind=kind_phys), dimension(:, :), intent(inout) :: gt0
         real(kind=kind_phys), dimension(:), intent(out) :: rain1, pgr
 
         ! x temporaries
         real(kind=kind_phys), dimension(size(work1, 1)) :: prautco_l, psautco_l
 
         ! x-lev temporaries
-        real(kind=kind_phys), dimension(size(Grid%xlon, 1), size(prsl, 2)) :: rainp, dtdt, rhc
+        real(kind=kind_phys), dimension(size(prsl, 1), size(prsl, 2)) :: rainp, dtdt, rhc
 
         ! tracer temporaries
-        real(kind=kind_phys), dimension(size(Grid%xlon, 1), size(prsl, 2), size(Stateout%gq0, 3)) :: dqdt
+        real(kind=kind_phys), dimension(size(prsl, 1), size(prsl, 2), size(gq0, 3)) :: dqdt
 
         ! scalar temporaries
         real(kind=kind_phys) :: dtp, dtf
@@ -5903,7 +5919,7 @@ module module_physics_driver
 
 #ifdef ENABLE_CALLPYFORT
         !--- intermediate for callpyfort set_state
-        real(kind=kind_phys), dimension(size(Grid%xlon,1),Model%levs) ::  &
+        real(kind=kind_phys), dimension(size(gt0,1),size(gt0, 2)) ::  &
           qc_cpf,&
           qc_post_gscond,&
           qc_post_precpd,&
@@ -5914,11 +5930,11 @@ module module_physics_driver
           t_post_precpd, &
           tp_cpf
 
-        real(kind=kind_phys), dimension(size(Grid%xlon,1))  :: psp_cpf
+        real(kind=kind_phys), dimension(size(gt0, 1))  :: psp_cpf
 #endif
 
-          ix     = size(Grid%xlon,1)
-          im     = size(Grid%xlon,1)
+          ix     = size(prsl,1)
+          im     = size(prsl,1)
           ipr    = min(im,10)
           levs   = Model%levs
           dtf    = Model%dtf
@@ -5927,8 +5943,8 @@ module module_physics_driver
           ntot3d  = Model%ntot3d
           ntcw    = Model%ntcw
 
-          dqdt = Stateout%gq0
-          dtdt = Stateout%gt0
+          dqdt = gq0
+          dtdt = gt0
 
           call compute_rhc(kpbl, Model%crtrh, prslk, work1, rhc)
           psautco_l = Model%psautco(1)*work1 + Model%psautco(2)*(1-work1)
@@ -5937,8 +5953,8 @@ module module_physics_driver
                                               ! ------------------
           if (Model%do_shoc) then
             call precpd_shoc (im, ix, levs, dtp, del, prsl,            &
-                              Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),     &
-                              Stateout%gt0, rain1, Diag%sr, rainp, rhc,        &
+                              gq0(1,1,1), gq0(1,1,ntcw),     &
+                              gt0, rain1, Diag%sr, rainp, rhc,        &
                               psautco_l, prautco_l, Model%evpco, Model%wminco, &
                               Tbd%phy_f3d(1,1,ntot3d-2), lprnt, ipr)
           else
@@ -5946,8 +5962,8 @@ module module_physics_driver
             ! copy tracer fields for state saving
             do k=1,levs
               do i=1,im
-                qv_cpf(i,k) = Stateout%gq0(i,k,1)
-                qc_cpf(i,k) = Stateout%gq0(i,k,ntcw)
+                qv_cpf(i,k) = gq0(i,k,1)
+                qc_cpf(i,k) = gq0(i,k,ntcw)
                 tp_cpf(i,k) = Tbd%phy_f3d(i,k,1)
                 humidity_after_gscond_tmp(i,k) = Tbd%phy_f3d(i,k,2)
               enddo
@@ -5959,12 +5975,10 @@ module module_physics_driver
 
   !           For creating training data & emulation
               call set_state("model_time", Model%jdat)
-              call set_state("latitude", Grid%xlat)
-              call set_state("longitude", Grid%xlon)
               call set_state("air_pressure", prsl)
               call set_state("pressure_thickness_of_atmospheric_layer", del)
               call set_state("surface_air_pressure", pgr)
-              call set_state("air_temperature_input", Stateout%gt0)
+              call set_state("air_temperature_input", gt0)
               call set_state("specific_humidity_input", qv_cpf)
               call set_state("cloud_water_mixing_ratio_input", qc_cpf)
   !           tp1,qp1,psp1 only used if physics dt > dynamics dt + 1e-3            
@@ -5974,33 +5988,33 @@ module module_physics_driver
 #endif
             
             call gscond (im, ix, levs, dtp, dtf, prsl, pgr,    &
-                         Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),          &
-                         Stateout%gt0, Tbd%phy_f3d(1,1,1), Tbd%phy_f3d(1,1,2), &
+                         gq0(1,1,1), gq0(1,1,ntcw),          &
+                         gt0, Tbd%phy_f3d(1,1,1), Tbd%phy_f3d(1,1,2), &
                          Tbd%phy_f2d(1,1), Tbd%phy_f3d(1,1,3),                 &
                          Tbd%phy_f3d(1,1,4), Tbd%phy_f2d(1,2), rhc,lprnt, ipr)
 
             if (Model%ldiag3d) then
-              Diag%gscond_physics%humidity = (Stateout%gq0(1:im,1:levs, 1) - dqdt(:,:,1)) / dtp
-              Diag%gscond_physics%cloud_water = (Stateout%gq0(1:im,1:levs,ntcw) - dqdt(:,:,ntcw)) / dtp
-              Diag%gscond_physics%temperature = (Stateout%gt0(1:im,1:levs) - dtdt) / dtp
+              Diag%gscond_physics%humidity = (gq0(1:im,1:levs, 1) - dqdt(:,:,1)) / dtp
+              Diag%gscond_physics%cloud_water = (gq0(1:im,1:levs,ntcw) - dqdt(:,:,ntcw)) / dtp
+              Diag%gscond_physics%temperature = (gt0(1:im,1:levs) - dtdt) / dtp
             end if
 
 #ifdef ENABLE_CALLPYFORT
 
 
-            call set_state("specific_humidity_after_gscond", Stateout%gq0(1:im, 1:levs, 1))
-            call set_state("air_temperature_after_gscond", Stateout%gt0(1:im, 1:levs))
+            call set_state("specific_humidity_after_gscond", gq0(1:im, 1:levs, 1))
+            call set_state("air_temperature_after_gscond", gt0(1:im, 1:levs))
 #endif
 
             call precpd (im, ix, levs, dtp, del, prsl,                 &
-                        Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),           &
-                        Stateout%gt0, rain1, Diag%sr, rainp, rhc, psautco_l,   &
+                        gq0(1,1,1), gq0(1,1,ntcw),           &
+                        gt0, rain1, Diag%sr, rainp, rhc, psautco_l,   &
                         prautco_l, Model%evpco, Model%wminco, lprnt, ipr)
 
             if (Model%ldiag3d) then
-              Diag%zhao_carr_physics%humidity = (Stateout%gq0(1:im,1:levs, 1) - dqdt(:,:,1)) / dtp
-              Diag%zhao_carr_physics%cloud_water = (Stateout%gq0(1:im,1:levs,ntcw) - dqdt(:,:,ntcw)) / dtp
-              Diag%zhao_carr_physics%temperature = (Stateout%gt0(1:im,1:levs) - dtdt) / dtp
+              Diag%zhao_carr_physics%humidity = (gq0(1:im,1:levs, 1) - dqdt(:,:,1)) / dtp
+              Diag%zhao_carr_physics%cloud_water = (gq0(1:im,1:levs,ntcw) - dqdt(:,:,ntcw)) / dtp
+              Diag%zhao_carr_physics%temperature = (gt0(1:im,1:levs) - dtdt) / dtp
             end if
             ! rain1 has units m, and represents surface precip over dtp
             Diag%zhao_carr_physics%surface_precipitation = rain1 / dtp * rhowater
@@ -6009,12 +6023,12 @@ module module_physics_driver
 
             do k=1,levs
               do i=1,im
-                qv_post_precpd(i,k) = Stateout%gq0(i,k,1)
-                qc_post_precpd(i,k) = Stateout%gq0(i,k,ntcw)
+                qv_post_precpd(i,k) = gq0(i,k,1)
+                qc_post_precpd(i,k) = gq0(i,k,ntcw)
               enddo
             enddo
 
-            call set_state("air_temperature_after_precpd", Stateout%gt0)
+            call set_state("air_temperature_after_precpd", gt0)
             call set_state("specific_humidity_after_precpd", qv_post_precpd)
             call set_state("cloud_water_mixing_ratio_after_precpd", qc_post_precpd)
             call set_state("total_precipitation", rain1)
@@ -6048,9 +6062,9 @@ module module_physics_driver
             if (Model%emulate_zc_microphysics) then
               do k=1,levs
                 do i=1,im
-                  Stateout%gq0(i,k,1) = qv_post_precpd(i,k)
-                  Stateout%gq0(i,k,ntcw) = qc_post_precpd(i,k)
-                  Stateout%gt0(i,k) = t_post_precpd(i,k)
+                  gq0(i,k,1) = qv_post_precpd(i,k)
+                  gq0(i,k,ntcw) = qc_post_precpd(i,k)
+                  gt0(i,k) = t_post_precpd(i,k)
                   Tbd%phy_f3d(i,k,1) = tp_cpf(i,k)
                   Tbd%phy_f3d(i,k,2) = humidity_after_gscond_tmp(i,k)
                 enddo
