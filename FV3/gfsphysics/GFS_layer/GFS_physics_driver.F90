@@ -3349,10 +3349,6 @@ module module_physics_driver
 !
       if (imp_physics == Model%imp_physics_zhao_carr .or. &
           imp_physics == Model%imp_physics_zhao_carr_pdf) then   ! zhao-carr microphysics
-        do i=1,im
-          psautco_l(i) = Model%psautco(1)*work1(i) + Model%psautco(2)*work2(i)
-          prautco_l(i) = Model%prautco(1)*work1(i) + Model%prautco(2)*work2(i)
-        enddo
         do k=1,levs
           do i=1,im
             clw(i,k,1) = Stateout%gq0(i,k,ntcw)
@@ -4479,6 +4475,8 @@ module module_physics_driver
       else                                  ! all microphysics
         if (imp_physics == Model%imp_physics_zhao_carr) then  ! call zhao/carr/sundqvist microphysics
                                                               ! ------------
+          psautco_l = Model%psautco(1)*work1 + Model%psautco(2)*(1-work1)
+          prautco_l = Model%prautco(1)*work1 + Model%prautco(2)*(1-work1)
 
           allocate(rainp(im,levs))
 !         if (lprnt) then
@@ -4626,6 +4624,8 @@ module module_physics_driver
           deallocate(rainp)
         elseif (imp_physics == Model%imp_physics_zhao_carr_pdf) then ! with pdf clouds
           allocate(rainp(im,levs))
+          psautco_l = Model%psautco(1)*work1 + Model%psautco(2)*(1-work1)
+          prautco_l = Model%prautco(1)*work1 + Model%prautco(2)*(1-work1)
           call gscondp (im, ix, levs, dtp, dtf, Statein%prsl,        &
                         Statein%pgr, Stateout%gq0(1,1,1),            &
                         Stateout%gq0(1,1,ntcw), Stateout%gt0,        &
