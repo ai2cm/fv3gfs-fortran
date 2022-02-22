@@ -1,3 +1,4 @@
+import glob
 import os
 from os.path import join
 import shutil
@@ -6,6 +7,7 @@ import fv3config
 import numpy as np
 import xarray
 import subprocess
+import hashlib
 
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -148,6 +150,25 @@ def test_zhao_carr_surface_precipitation_matches_total_water_source(
     rms_column_water_source = rms(column_water_source)
     rms_precip = rms(precip)
     assert rms_precip == pytest.approx(rms_column_water_source, rel=0.1)
+
+
+def checksum_file(path: str) -> str:
+    sum = hashlib.md5()
+    BUFFER_SIZE = 1024 * 1024
+    with open(path, "rb") as f:
+        while True:
+            buf = f.read(BUFFER_SIZE)
+            if not buf:
+                break
+            sum.update(buf)
+    return sum.hexdigest()
+
+
+def test_checksum_emulation(emulation_run, system_regtest):
+    files = glob.glob(os.path.join(emulation_run, "*.nc"))
+    assert files
+    for path in sorted(files):
+        print(path, checksum_file(path), file=system_regtest)
 
 
 def check_rundir_md5sum(run_dir, md5sum_filename):
