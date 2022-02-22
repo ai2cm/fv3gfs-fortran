@@ -3343,7 +3343,7 @@ module module_physics_driver
             enddo
           enddo
         else
-          call compute_rhc(kpbl, Model%crtrh, Statein%prslk, work1, work2, rhc)
+          call compute_rhc(kpbl, Model%crtrh, Statein%prslk, work1, rhc)
         endif
       endif      ! ntcw > 0
 !
@@ -6008,11 +6008,11 @@ module module_physics_driver
         delp = initial_mass_of_dry_air_plus_vapor * dry_air_plus_hydrometeor_mass_fraction_after_physics
       end subroutine compute_updated_delp_following_dynamics_definition
 
-      subroutine compute_rhc(kpbl, crtrh, prslk, work1, work2, rhc)
+      subroutine compute_rhc(kpbl, crtrh, prslk, work1, rhc)
         integer, dimension(:), intent(in) :: kpbl
         real(kind=kind_phys), intent(in) :: crtrh(2)
         real(kind=kind_phys), dimension(:,:), intent(in)  :: prslk
-        real(kind=kind_phys), dimension(:), intent(in) :: work1, work2
+        real(kind=kind_phys), dimension(:), intent(in) :: work1
         real(kind=kind_phys), dimension(:,:), intent(out) :: rhc
         ! locals
         real(kind=kind_phys) :: tem
@@ -6028,7 +6028,7 @@ module module_physics_driver
               tem    = crtrh(2) - (crtrh(2)-crtrh(3))     &
                                       * (prslk(i,kk)-prslk(i,k)) / prslk(i,kk)
             endif
-            tem      = rhc_max * work1(i) + tem * work2(i)
+            tem      = rhc_max * work1(i) + tem * (one-work1(i))
             rhc(i,k) = max(zero, min(one, tem))
           enddo
         enddo
