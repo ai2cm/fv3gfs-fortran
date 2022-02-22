@@ -1,4 +1,5 @@
 from pathlib import Path
+import platform
 import subprocess
 import pytest
 import fv3config
@@ -46,8 +47,17 @@ def pytest_addoption(parser):
     )
 
 
+@pytest.fixture(params=[platform.system()])
+def system_regtest(regtest):
+    # A hack to get the system name into the regtest names
+    # e.g. tests/pytest/test_regression.py::test_checksum_emulation[Linux]
+    return regtest
+
+
 @pytest.fixture(scope="session")
-def run_native(request):
+def run_native(
+    request,
+):
     root = Path(__file__).parent.parent.parent
     exe = root / "FV3" / "fv3.exe"
 
