@@ -4460,7 +4460,7 @@ module module_physics_driver
       else                                  ! all microphysics
         if (imp_physics == Model%imp_physics_zhao_carr) then  ! call zhao/carr/sundqvist microphysics
 
-          call call_zhao_carr_microphysics(kpbl, Model, Statein, Stateout, Tbd, Grid, Diag, work1, del, rain1)
+          call call_zhao_carr_microphysics(kpbl, Model, Statein%prslk, Statein%prsl, Statein%pgr, Stateout, Tbd, Grid, Diag, work1, del, rain1)
 
         elseif (imp_physics == Model%imp_physics_zhao_carr_pdf) then ! with pdf clouds
           allocate(rainp(im,levs))
@@ -5875,26 +5875,27 @@ module module_physics_driver
       end subroutine
 
 
-      subroutine call_zhao_carr_microphysics(kpbl, Model, Statein, Stateout, Tbd, Grid, Diag, work1, del, rain1)
+      subroutine call_zhao_carr_microphysics(kpbl, Model, prslk, prsl, pgr, Stateout, Tbd, Grid, Diag, work1, del, rain1)
         type(GFS_control_type),         intent(inout) :: Model
-        type(GFS_statein_type),         intent(inout) :: Statein
         type(GFS_stateout_type),        intent(inout) :: Stateout
         type(GFS_tbd_type),             intent(inout) :: Tbd
         type(GFS_grid_type),            intent(inout) :: Grid
         type(GFS_diag_type),            intent(inout) :: Diag
         integer, dimension(:), intent(in) :: kpbl
         real(kind=kind_phys), dimension(:), intent(in) :: work1
-        real(kind=kind_phys), dimension(:, :), intent(in) :: del
-        real(kind=kind_phys), dimension(:), intent(out) :: rain1
+
+        real(kind=kind_phys), dimension(:, :), intent(in) :: prslk
+        real(kind=kind_phys), dimension(:, :), intent(in) :: del, prsl
+        real(kind=kind_phys), dimension(:), intent(out) :: rain1, pgr
 
         ! x temporaries
         real(kind=kind_phys), dimension(size(work1, 1)) :: prautco_l, psautco_l
 
         ! x-lev temporaries
-        real(kind=kind_phys), dimension(size(Grid%xlon, 1), size(Statein%prslk, 2)) :: rainp, dtdt, rhc
+        real(kind=kind_phys), dimension(size(Grid%xlon, 1), size(prsl, 2)) :: rainp, dtdt, rhc
 
         ! tracer temporaries
-        real(kind=kind_phys), dimension(size(Grid%xlon, 1), size(Statein%prslk, 2), size(Statein%qgrs, 3)) :: dqdt
+        real(kind=kind_phys), dimension(size(Grid%xlon, 1), size(prsl, 2), size(Stateout%gq0, 3)) :: dqdt
 
         ! scalar temporaries
         real(kind=kind_phys) :: dtp, dtf
@@ -5929,13 +5930,13 @@ module module_physics_driver
           dqdt = Stateout%gq0
           dtdt = Stateout%gt0
 
-          call compute_rhc(kpbl, Model%crtrh, Statein%prslk, work1, rhc)
+          call compute_rhc(kpbl, Model%crtrh, prslk, work1, rhc)
           psautco_l = Model%psautco(1)*work1 + Model%psautco(2)*(1-work1)
           prautco_l = Model%prautco(1)*work1 + Model%prautco(2)*(1-work1)
 
                                               ! ------------------
           if (Model%do_shoc) then
-            call precpd_shoc (im, ix, levs, dtp, del, Statein%prsl,            &
+            call precpd_shoc (im, ix, levs, dtp, del, prsl,            &
                               Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),     &
                               Stateout%gt0, rain1, Diag%sr, rainp, rhc,        &
                               psautco_l, prautco_l, Model%evpco, Model%wminco, &
@@ -5960,9 +5961,9 @@ module module_physics_driver
               call set_state("model_time", Model%jdat)
               call set_state("latitude", Grid%xlat)
               call set_state("longitude", Grid%xlon)
-              call set_state("air_pressure", Statein%prsl)
+              call set_state("air_pressure", prsl)
               call set_state("pressure_thickness_of_atmospheric_layer", del)
-              call set_state("surface_air_pressure", Statein%pgr)
+              call set_state("surface_air_pressure", pgr)
               call set_state("air_temperature_input", Stateout%gt0)
               call set_state("specific_humidity_input", qv_cpf)
               call set_state("cloud_water_mixing_ratio_input", qc_cpf)
@@ -5972,7 +5973,7 @@ module module_physics_driver
               call set_state("surface_air_pressure_after_last_gscond", psp_cpf)
 #endif
             
-            call gscond (im, ix, levs, dtp, dtf, Statein%prsl, Statein%pgr,    &
+            call gscond (im, ix, levs, dtp, dtf, prsl, pgr,    &
                          Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),          &
                          Stateout%gt0, Tbd%phy_f3d(1,1,1), Tbd%phy_f3d(1,1,2), &
                          Tbd%phy_f2d(1,1), Tbd%phy_f3d(1,1,3),                 &
@@ -5991,7 +5992,7 @@ module module_physics_driver
             call set_state("air_temperature_after_gscond", Stateout%gt0(1:im, 1:levs))
 #endif
 
-            call precpd (im, ix, levs, dtp, del, Statein%prsl,                 &
+            call precpd (im, ix, levs, dtp, del, prsl,                 &
                         Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),           &
                         Stateout%gt0, rain1, Diag%sr, rainp, rhc, psautco_l,   &
                         prautco_l, Model%evpco, Model%wminco, lprnt, ipr)
