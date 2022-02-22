@@ -196,9 +196,9 @@ the FV3 makefiles:
 
     cp -f nix/fv3/configure.fv3 FV3/conf/
 
-And build the model
+And build the model (with coverage outputs)
 
-    make -C FV3
+    make build_native
 
 At this point you can run [the native tests](#native-tests).
 # Testing the model
@@ -213,13 +213,19 @@ tests and how to update the reference checksums.
 
 ## Native tests
 
-The `--native` flag only runs tests intended to be run in a native environment
-(e.g. nix, bare metal, or inside a docker container). A native environment is
-capable of running the file `FV3/fv3.exe`.
+Some of the tests can be run in a native environment (e.g. nix, bare metal,
+or inside a docker container). A native environment is capable of running the
+file `FV3/fv3.exe`.
 
-Then, to run some simple tests execute
+After building the model inside of the `FV3` subdirectory, you can run these
+tests like this:
 
+    make test_native
+    # or manually
     pytest --native tests/pytest
+
+When using the makefile target, code coverages reports will be saved to the
+folder `coverage_<timestamp>`.
 
 ## Image tests
 
