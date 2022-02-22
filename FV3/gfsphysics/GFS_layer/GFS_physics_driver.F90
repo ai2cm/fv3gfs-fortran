@@ -597,21 +597,6 @@ module module_physics_driver
       real(kind=kind_phys) :: cdfz
 
 
-#ifdef ENABLE_CALLPYFORT
-      !--- intermediate for callpyfort set_state
-      real(kind=kind_phys), dimension(size(Grid%xlon,1),Model%levs) ::  &
-        qc_cpf,&
-        qc_post_gscond,&
-        qc_post_precpd,&
-        qv_cpf,&
-        qv_post_gscond,&
-        qv_post_precpd,&
-        humidity_after_gscond_tmp,&
-        t_post_precpd, &
-        tp_cpf
-
-      real(kind=kind_phys), dimension(size(Grid%xlon,1))  :: psp_cpf
-#endif
 
 !--- ALLOCATABLE ELEMENTS
       !--- in clw, the first two varaibles are cloud water and ice.
@@ -4474,154 +4459,9 @@ module module_physics_driver
 
       else                                  ! all microphysics
         if (imp_physics == Model%imp_physics_zhao_carr) then  ! call zhao/carr/sundqvist microphysics
-                                                              ! ------------
-          psautco_l = Model%psautco(1)*work1 + Model%psautco(2)*(1-work1)
-          prautco_l = Model%prautco(1)*work1 + Model%prautco(2)*(1-work1)
 
-          allocate(rainp(im,levs))
-!         if (lprnt) then
-!           write(0,*)' prsl=',prsl(ipr,:)
-!           write(0,*) ' del=',del(ipr,:)
-!           write(0,*) ' beflsgt0=',gt0(ipr,:),' kdt=',kdt
-!           write(0,*) ' beflsgq0=',gq0(ipr,:,1),' kdt=',kdt
-!           write(0,*) ' beflsgw0=',gq0(ipr,:,3),' kdt=',kdt
-!         endif
-                                              ! ------------------
-          if (Model%do_shoc) then
-            call precpd_shoc (im, ix, levs, dtp, del, Statein%prsl,            &
-                              Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),     &
-                              Stateout%gt0, rain1, Diag%sr, rainp, rhc,        &
-                              psautco_l, prautco_l, Model%evpco, Model%wminco, &
-                              Tbd%phy_f3d(1,1,ntot3d-2), lprnt, ipr)
-          else
-#ifdef ENABLE_CALLPYFORT
-            ! copy tracer fields for state saving
-            do k=1,levs
-              do i=1,im
-                qv_cpf(i,k) = Stateout%gq0(i,k,1)
-                qc_cpf(i,k) = Stateout%gq0(i,k,ntcw)
-                tp_cpf(i,k) = Tbd%phy_f3d(i,k,1)
-                humidity_after_gscond_tmp(i,k) = Tbd%phy_f3d(i,k,2)
-              enddo
-            enddo
+          call call_zhao_carr_microphysics(kpbl, Model, Statein, Stateout, Tbd, Grid, Diag, work1, del, rain1)
 
-              do i=1,im
-                psp_cpf(i) = Tbd%phy_f2d(i,1)
-              enddo
-
-  !           For creating training data & emulation
-              call set_state("model_time", Model%jdat)
-              call set_state("latitude", Grid%xlat)
-              call set_state("longitude", Grid%xlon)
-              call set_state("pressure_thickness_of_atmospheric_layer", del)
-              call set_state("air_pressure", Statein%prsl)
-              call set_state("surface_air_pressure", Statein%pgr)
-              call set_state("air_temperature_input", Stateout%gt0)
-              call set_state("specific_humidity_input", qv_cpf)
-              call set_state("cloud_water_mixing_ratio_input", qc_cpf)
-  !           tp1,qp1,psp1 only used if physics dt > dynamics dt + 1e-3            
-              call set_state("air_temperature_after_last_gscond", tp_cpf)
-              call set_state("specific_humidity_after_last_gscond", humidity_after_gscond_tmp)
-              call set_state("surface_air_pressure_after_last_gscond", psp_cpf)
-#endif
-            
-            call gscond (im, ix, levs, dtp, dtf, Statein%prsl, Statein%pgr,    &
-                         Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),          &
-                         Stateout%gt0, Tbd%phy_f3d(1,1,1), Tbd%phy_f3d(1,1,2), &
-                         Tbd%phy_f2d(1,1), Tbd%phy_f3d(1,1,3),                 &
-                         Tbd%phy_f3d(1,1,4), Tbd%phy_f2d(1,2), rhc,lprnt, ipr)
-
-            if (Model%ldiag3d) then
-              Diag%gscond_physics%humidity = (Stateout%gq0(1:im,1:levs, 1) - dqdt(:,:,1)) / dtp
-              Diag%gscond_physics%cloud_water = (Stateout%gq0(1:im,1:levs,ntcw) - dqdt(:,:,ntcw)) / dtp
-              Diag%gscond_physics%temperature = (Stateout%gt0(1:im,1:levs) - dtdt) / dtp
-            end if
-
-#ifdef ENABLE_CALLPYFORT
-
-
-            call set_state("specific_humidity_after_gscond", Stateout%gq0(1:im, 1:levs, 1))
-            call set_state("air_temperature_after_gscond", Stateout%gt0(1:im, 1:levs))
-#endif
-
-            call precpd (im, ix, levs, dtp, del, Statein%prsl,                 &
-                        Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),           &
-                        Stateout%gt0, rain1, Diag%sr, rainp, rhc, psautco_l,   &
-                        prautco_l, Model%evpco, Model%wminco, lprnt, ipr)
-
-            if (Model%ldiag3d) then
-              Diag%zhao_carr_physics%humidity = (Stateout%gq0(1:im,1:levs, 1) - dqdt(:,:,1)) / dtp
-              Diag%zhao_carr_physics%cloud_water = (Stateout%gq0(1:im,1:levs,ntcw) - dqdt(:,:,ntcw)) / dtp
-              Diag%zhao_carr_physics%temperature = (Stateout%gt0(1:im,1:levs) - dtdt) / dtp
-            end if
-            ! rain1 has units m, and represents surface precip over dtp
-            Diag%zhao_carr_physics%surface_precipitation = rain1 / dtp * rhowater
-
-#ifdef ENABLE_CALLPYFORT
-
-            do k=1,levs
-              do i=1,im
-                qv_post_precpd(i,k) = Stateout%gq0(i,k,1)
-                qc_post_precpd(i,k) = Stateout%gq0(i,k,ntcw)
-              enddo
-            enddo
-
-            call set_state("air_temperature_after_precpd", Stateout%gt0)
-            call set_state("specific_humidity_after_precpd", qv_post_precpd)
-            call set_state("cloud_water_mixing_ratio_after_precpd", qc_post_precpd)
-            call set_state("total_precipitation", rain1)
-            call set_state("ratio_of_snowfall_to_rainfall", Diag%sr)
-            call set_state("tendency_of_rain_water_mixing_ratio_due_to_microphysics", rainp)
-
-            call call_function("emulation", "microphysics")
-            
-            if (Model%save_zc_microphysics) then
-              call call_function("emulation", "store")
-            endif
-
-            call get_state("air_temperature_after_precpd", t_post_precpd)
-            call get_state("specific_humidity_after_precpd", qv_post_precpd)
-            call get_state("cloud_water_mixing_ratio_after_precpd", qc_post_precpd)
-            call get_state("total_precipitation", rain1)
-            call get_state("air_temperature_after_gscond", tp_cpf)
-            call get_state("specific_humidity_after_gscond", humidity_after_gscond_tmp)
-
-            if (Model%ldiag3d) then
-              Diag%zhao_carr_emulator%humidity = (qv_post_precpd(1:im,1:levs) - dqdt(:,:,1)) / dtp
-              Diag%zhao_carr_emulator%cloud_water = (qc_post_precpd(1:im,1:levs) - dqdt(:,:,ntcw)) / dtp
-              Diag%zhao_carr_emulator%temperature = (t_post_precpd(1:im,1:levs) - dtdt) / dtp
-
-              Diag%gscond_emulator%humidity = (humidity_after_gscond_tmp(1:im,1:levs) - dqdt(:,:,1)) / dtp
-              Diag%gscond_emulator%temperature = (tp_cpf(1:im,1:levs) - dtdt) / dtp
-            end if
-            Diag%zhao_carr_emulator%surface_precipitation = rain1 / dtp * rhowater
-
-            ! apply emulator
-            if (Model%emulate_zc_microphysics) then
-              do k=1,levs
-                do i=1,im
-                  Stateout%gq0(i,k,1) = qv_post_precpd(i,k)
-                  Stateout%gq0(i,k,ntcw) = qc_post_precpd(i,k)
-                  Stateout%gt0(i,k) = t_post_precpd(i,k)
-                  Tbd%phy_f3d(i,k,1) = tp_cpf(i,k)
-                  Tbd%phy_f3d(i,k,2) = humidity_after_gscond_tmp(i,k)
-                enddo
-              enddo
-            endif
-
-#endif
-            
-          endif
-!         if (lprnt) then
-!           write(0,*)' prsl=',prsl(ipr,:)
-!           write(0,*) ' del=',del(ipr,:)
-!           write(0,*) ' aftlsgt0=',gt0(ipr,:),' kdt=',kdt
-!           write(0,*) ' aftlsgq0=',gq0(ipr,:,1),' kdt=',kdt
-!           write(0,*) ' aftlsgw0=',gq0(ipr,:,3),' kdt=',kdt
-!           write(0,*)' aft precpd rain1=',rain1(1:3),' lat=',lat
-!           endif
-
-          deallocate(rainp)
         elseif (imp_physics == Model%imp_physics_zhao_carr_pdf) then ! with pdf clouds
           allocate(rainp(im,levs))
           psautco_l = Model%psautco(1)*work1 + Model%psautco(2)*(1-work1)
@@ -6032,6 +5872,193 @@ module module_physics_driver
             rhc(i,k) = max(zero, min(one, tem))
           enddo
         enddo
+      end subroutine
+
+
+      subroutine call_zhao_carr_microphysics(kpbl, Model, Statein, Stateout, Tbd, Grid, Diag, work1, del, rain1)
+        type(GFS_control_type),         intent(inout) :: Model
+        type(GFS_statein_type),         intent(inout) :: Statein
+        type(GFS_stateout_type),        intent(inout) :: Stateout
+        type(GFS_tbd_type),             intent(inout) :: Tbd
+        type(GFS_grid_type),            intent(inout) :: Grid
+        type(GFS_diag_type),            intent(inout) :: Diag
+        integer, dimension(:), intent(in) :: kpbl
+        real(kind=kind_phys), dimension(:), intent(in) :: work1
+        real(kind=kind_phys), dimension(:, :), intent(in) :: del
+        real(kind=kind_phys), dimension(:), intent(out) :: rain1
+
+        ! x temporaries
+        real(kind=kind_phys), dimension(size(work1, 1)) :: prautco_l, psautco_l
+
+        ! x-lev temporaries
+        real(kind=kind_phys), dimension(size(Grid%xlon, 1), size(Statein%prslk, 2)) :: rainp, dtdt, rhc
+
+        ! tracer temporaries
+        real(kind=kind_phys), dimension(size(Grid%xlon, 1), size(Statein%prslk, 2), size(Statein%qgrs, 3)) :: dqdt
+
+        ! scalar temporaries
+        real(kind=kind_phys) :: dtp, dtf
+        integer :: i,k,levs,im,lprnt,ipr,ix,ntot3d,ntcw
+
+#ifdef ENABLE_CALLPYFORT
+        !--- intermediate for callpyfort set_state
+        real(kind=kind_phys), dimension(size(Grid%xlon,1),Model%levs) ::  &
+          qc_cpf,&
+          qc_post_gscond,&
+          qc_post_precpd,&
+          qv_cpf,&
+          qv_post_gscond,&
+          qv_post_precpd,&
+          humidity_after_gscond_tmp,&
+          t_post_precpd, &
+          tp_cpf
+
+        real(kind=kind_phys), dimension(size(Grid%xlon,1))  :: psp_cpf
+#endif
+
+          ix     = size(Grid%xlon,1)
+          im     = size(Grid%xlon,1)
+          ipr    = min(im,10)
+          levs   = Model%levs
+          dtf    = Model%dtf
+          dtp    = Model%dtp
+          lprnt   = Model%lprnt
+          ntot3d  = Model%ntot3d
+          ntcw    = Model%ntcw
+
+          dqdt = Stateout%gq0
+          dtdt = Stateout%gt0
+
+          call compute_rhc(kpbl, Model%crtrh, Statein%prslk, work1, rhc)
+          psautco_l = Model%psautco(1)*work1 + Model%psautco(2)*(1-work1)
+          prautco_l = Model%prautco(1)*work1 + Model%prautco(2)*(1-work1)
+
+                                              ! ------------------
+          if (Model%do_shoc) then
+            call precpd_shoc (im, ix, levs, dtp, del, Statein%prsl,            &
+                              Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),     &
+                              Stateout%gt0, rain1, Diag%sr, rainp, rhc,        &
+                              psautco_l, prautco_l, Model%evpco, Model%wminco, &
+                              Tbd%phy_f3d(1,1,ntot3d-2), lprnt, ipr)
+          else
+#ifdef ENABLE_CALLPYFORT
+            ! copy tracer fields for state saving
+            do k=1,levs
+              do i=1,im
+                qv_cpf(i,k) = Stateout%gq0(i,k,1)
+                qc_cpf(i,k) = Stateout%gq0(i,k,ntcw)
+                tp_cpf(i,k) = Tbd%phy_f3d(i,k,1)
+                humidity_after_gscond_tmp(i,k) = Tbd%phy_f3d(i,k,2)
+              enddo
+            enddo
+
+              do i=1,im
+                psp_cpf(i) = Tbd%phy_f2d(i,1)
+              enddo
+
+  !           For creating training data & emulation
+              call set_state("model_time", Model%jdat)
+              call set_state("latitude", Grid%xlat)
+              call set_state("longitude", Grid%xlon)
+              call set_state("air_pressure", Statein%prsl)
+              call set_state("pressure_thickness_of_atmospheric_layer", del)
+              call set_state("surface_air_pressure", Statein%pgr)
+              call set_state("air_temperature_input", Stateout%gt0)
+              call set_state("specific_humidity_input", qv_cpf)
+              call set_state("cloud_water_mixing_ratio_input", qc_cpf)
+  !           tp1,qp1,psp1 only used if physics dt > dynamics dt + 1e-3            
+              call set_state("air_temperature_after_last_gscond", tp_cpf)
+              call set_state("specific_humidity_after_last_gscond", humidity_after_gscond_tmp)
+              call set_state("surface_air_pressure_after_last_gscond", psp_cpf)
+#endif
+            
+            call gscond (im, ix, levs, dtp, dtf, Statein%prsl, Statein%pgr,    &
+                         Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),          &
+                         Stateout%gt0, Tbd%phy_f3d(1,1,1), Tbd%phy_f3d(1,1,2), &
+                         Tbd%phy_f2d(1,1), Tbd%phy_f3d(1,1,3),                 &
+                         Tbd%phy_f3d(1,1,4), Tbd%phy_f2d(1,2), rhc,lprnt, ipr)
+
+            if (Model%ldiag3d) then
+              Diag%gscond_physics%humidity = (Stateout%gq0(1:im,1:levs, 1) - dqdt(:,:,1)) / dtp
+              Diag%gscond_physics%cloud_water = (Stateout%gq0(1:im,1:levs,ntcw) - dqdt(:,:,ntcw)) / dtp
+              Diag%gscond_physics%temperature = (Stateout%gt0(1:im,1:levs) - dtdt) / dtp
+            end if
+
+#ifdef ENABLE_CALLPYFORT
+
+
+            call set_state("specific_humidity_after_gscond", Stateout%gq0(1:im, 1:levs, 1))
+            call set_state("air_temperature_after_gscond", Stateout%gt0(1:im, 1:levs))
+#endif
+
+            call precpd (im, ix, levs, dtp, del, Statein%prsl,                 &
+                        Stateout%gq0(1,1,1), Stateout%gq0(1,1,ntcw),           &
+                        Stateout%gt0, rain1, Diag%sr, rainp, rhc, psautco_l,   &
+                        prautco_l, Model%evpco, Model%wminco, lprnt, ipr)
+
+            if (Model%ldiag3d) then
+              Diag%zhao_carr_physics%humidity = (Stateout%gq0(1:im,1:levs, 1) - dqdt(:,:,1)) / dtp
+              Diag%zhao_carr_physics%cloud_water = (Stateout%gq0(1:im,1:levs,ntcw) - dqdt(:,:,ntcw)) / dtp
+              Diag%zhao_carr_physics%temperature = (Stateout%gt0(1:im,1:levs) - dtdt) / dtp
+            end if
+            ! rain1 has units m, and represents surface precip over dtp
+            Diag%zhao_carr_physics%surface_precipitation = rain1 / dtp * rhowater
+
+#ifdef ENABLE_CALLPYFORT
+
+            do k=1,levs
+              do i=1,im
+                qv_post_precpd(i,k) = Stateout%gq0(i,k,1)
+                qc_post_precpd(i,k) = Stateout%gq0(i,k,ntcw)
+              enddo
+            enddo
+
+            call set_state("air_temperature_after_precpd", Stateout%gt0)
+            call set_state("specific_humidity_after_precpd", qv_post_precpd)
+            call set_state("cloud_water_mixing_ratio_after_precpd", qc_post_precpd)
+            call set_state("total_precipitation", rain1)
+            call set_state("ratio_of_snowfall_to_rainfall", Diag%sr)
+            call set_state("tendency_of_rain_water_mixing_ratio_due_to_microphysics", rainp)
+
+            call call_function("emulation", "microphysics")
+            
+            if (Model%save_zc_microphysics) then
+              call call_function("emulation", "store")
+            endif
+
+            call get_state("air_temperature_after_precpd", t_post_precpd)
+            call get_state("specific_humidity_after_precpd", qv_post_precpd)
+            call get_state("cloud_water_mixing_ratio_after_precpd", qc_post_precpd)
+            call get_state("total_precipitation", rain1)
+            call get_state("air_temperature_after_gscond", tp_cpf)
+            call get_state("specific_humidity_after_gscond", humidity_after_gscond_tmp)
+
+            if (Model%ldiag3d) then
+              Diag%zhao_carr_emulator%humidity = (qv_post_precpd(1:im,1:levs) - dqdt(:,:,1)) / dtp
+              Diag%zhao_carr_emulator%cloud_water = (qc_post_precpd(1:im,1:levs) - dqdt(:,:,ntcw)) / dtp
+              Diag%zhao_carr_emulator%temperature = (t_post_precpd(1:im,1:levs) - dtdt) / dtp
+
+              Diag%gscond_emulator%humidity = (humidity_after_gscond_tmp(1:im,1:levs) - dqdt(:,:,1)) / dtp
+              Diag%gscond_emulator%temperature = (tp_cpf(1:im,1:levs) - dtdt) / dtp
+            end if
+            Diag%zhao_carr_emulator%surface_precipitation = rain1 / dtp * rhowater
+
+            ! apply emulator
+            if (Model%emulate_zc_microphysics) then
+              do k=1,levs
+                do i=1,im
+                  Stateout%gq0(i,k,1) = qv_post_precpd(i,k)
+                  Stateout%gq0(i,k,ntcw) = qc_post_precpd(i,k)
+                  Stateout%gt0(i,k) = t_post_precpd(i,k)
+                  Tbd%phy_f3d(i,k,1) = tp_cpf(i,k)
+                  Tbd%phy_f3d(i,k,2) = humidity_after_gscond_tmp(i,k)
+                enddo
+              enddo
+            endif
+
+#endif
+            
+          endif
       end subroutine
 !> @}
 
