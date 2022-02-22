@@ -4464,9 +4464,14 @@ module module_physics_driver
               call set_state("latitude", Grid%xlat)
               call set_state("longitude", Grid%xlon)
 #endif
+          psautco_l = Model%psautco(1)*work1 + Model%psautco(2)*(1-work1)
+          prautco_l = Model%prautco(1)*work1 + Model%prautco(2)*(1-work1)
           call call_zhao_carr_microphysics(&
               kpbl,&
               Model,&
+              prautco_l,&
+              psautco_l,&
+              rhc,&
               Statein%prslk,&
               Statein%prsl,&
               Statein%pgr,&
@@ -4474,7 +4479,6 @@ module module_physics_driver
               Stateout%gq0,&
               Tbd,&
               Diag,&
-              work1,&
               del,&
               rain1)
 
@@ -5891,24 +5895,23 @@ module module_physics_driver
       end subroutine
 
 
-      subroutine call_zhao_carr_microphysics(kpbl, Model, prslk, prsl, pgr, gt0, gq0, Tbd, Diag, work1, del, rain1)
+      subroutine call_zhao_carr_microphysics(kpbl, Model, prautco_l, psautco_l, rhc, prslk, prsl, pgr, gt0, gq0, Tbd, Diag, del, rain1)
         type(GFS_control_type),         intent(inout) :: Model
         type(GFS_tbd_type),             intent(inout) :: Tbd
         type(GFS_diag_type),            intent(inout) :: Diag
         integer, dimension(:), intent(in) :: kpbl
-        real(kind=kind_phys), dimension(:), intent(in) :: work1
 
         real(kind=kind_phys), dimension(:, :), intent(in) :: prslk
         real(kind=kind_phys), dimension(:, :), intent(in) :: del, prsl
+        real(kind=kind_phys), dimension(:), intent(in) :: prautco_l, psautco_l
         real(kind=kind_phys), dimension(:, :, :), intent(inout) :: gq0
-        real(kind=kind_phys), dimension(:, :), intent(inout) :: gt0
+        real(kind=kind_phys), dimension(:, :), intent(inout) :: gt0, rhc
         real(kind=kind_phys), dimension(:), intent(out) :: rain1, pgr
 
         ! x temporaries
-        real(kind=kind_phys), dimension(size(work1, 1)) :: prautco_l, psautco_l
 
         ! x-lev temporaries
-        real(kind=kind_phys), dimension(size(prsl, 1), size(prsl, 2)) :: rainp, dtdt, rhc
+        real(kind=kind_phys), dimension(size(prsl, 1), size(prsl, 2)) :: rainp, dtdt
 
         ! tracer temporaries
         real(kind=kind_phys), dimension(size(prsl, 1), size(prsl, 2), size(gq0, 3)) :: dqdt
@@ -5945,11 +5948,6 @@ module module_physics_driver
 
           dqdt = gq0
           dtdt = gt0
-
-          call compute_rhc(kpbl, Model%crtrh, prslk, work1, rhc)
-          psautco_l = Model%psautco(1)*work1 + Model%psautco(2)*(1-work1)
-          prautco_l = Model%prautco(1)*work1 + Model%prautco(2)*(1-work1)
-
                                               ! ------------------
           if (Model%do_shoc) then
             call precpd_shoc (im, ix, levs, dtp, del, prsl,            &
