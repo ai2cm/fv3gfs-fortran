@@ -3343,20 +3343,7 @@ module module_physics_driver
             enddo
           enddo
         else
-          do k=1,levs
-            do i=1,im
-              kk = max(10,kpbl(i))
-              if (k < kk) then
-                tem    = Model%crtrh(1) - (Model%crtrh(1)-Model%crtrh(2))     &
-                                        * (one-Statein%prslk(i,k)) / (one-Statein%prslk(i,kk))
-              else
-                tem    = Model%crtrh(2) - (Model%crtrh(2)-Model%crtrh(3))     &
-                                        * (Statein%prslk(i,kk)-Statein%prslk(i,k)) / Statein%prslk(i,kk)
-              endif
-              tem      = rhc_max * work1(i) + tem * work2(i)
-              rhc(i,k) = max(zero, min(one, tem))
-            enddo
-          enddo
+          call compute_rhc(kpbl, Model%crtrh, Statein%prslk, work1, work2, rhc)
         endif
       endif      ! ntcw > 0
 !
@@ -6020,6 +6007,32 @@ module module_physics_driver
         ! Compute the mass of dry air plus all hydrometeors at the end of the physics.
         delp = initial_mass_of_dry_air_plus_vapor * dry_air_plus_hydrometeor_mass_fraction_after_physics
       end subroutine compute_updated_delp_following_dynamics_definition
+
+      subroutine compute_rhc(kpbl, crtrh, prslk, work1, work2, rhc)
+        integer, dimension(:), intent(in) :: kpbl
+        real(kind=kind_phys), intent(in) :: crtrh(2)
+        real(kind=kind_phys), dimension(:,:), intent(in)  :: prslk
+        real(kind=kind_phys), dimension(:), intent(in) :: work1, work2
+        real(kind=kind_phys), dimension(:,:), intent(out) :: rhc
+        ! locals
+        real(kind=kind_phys) :: tem
+        integer :: i, k, kk
+
+        do k=1,size(prslk, 2)
+          do i=1,size(kpbl, 1)
+            kk = max(10,kpbl(i))
+            if (k < kk) then
+              tem    = crtrh(1) - (crtrh(1)-crtrh(2))     &
+                                      * (one-prslk(i,k)) / (one-prslk(i,kk))
+            else
+              tem    = crtrh(2) - (crtrh(2)-crtrh(3))     &
+                                      * (prslk(i,kk)-prslk(i,k)) / prslk(i,kk)
+            endif
+            tem      = rhc_max * work1(i) + tem * work2(i)
+            rhc(i,k) = max(zero, min(one, tem))
+          enddo
+        enddo
+      end subroutine
 !> @}
 
 end module module_physics_driver
