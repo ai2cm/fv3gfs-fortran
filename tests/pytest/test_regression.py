@@ -101,6 +101,23 @@ def test_regression(
     shutil.rmtree(run_dir)
 
 
+@pytest.mark.parametrize(
+    "config_filename",
+    [
+        "default.yml",
+        "baroclinic.yml",
+        "restart.yml",
+        "model-level-coarse-graining.yml",
+        "pressure-level-coarse-graining.yml",
+    ],
+)
+def test_regression_native(run_native, config_filename: str, tmpdir, system_regtest):
+    config = get_config(config_filename)
+    rundir = tmpdir.join("rundir")
+    run_native(config, str(rundir))
+    _checksum_rundir(str(rundir), file=system_regtest)
+
+
 @pytest.fixture(scope="session")
 def emulation_run(run_native, tmpdir_factory):
     config = get_config("emulation.yml")
@@ -164,11 +181,16 @@ def checksum_file(path: str) -> str:
     return sum.hexdigest()
 
 
+def _checksum_rundir(rundir: str, file):
+    """checksum rundir storing output in file"""
+    files = glob.glob(os.path.join(rundir, "*.nc"))
+    restart_files = glob.glob(os.path.join(rundir, "RESTART", "*.nc"))
+    for path in sorted(files) + sorted(restart_files):
+        print(path, checksum_file(path), file=file)
+
+
 def test_checksum_emulation(emulation_run, system_regtest):
-    files = glob.glob(os.path.join(emulation_run, "*.nc"))
-    assert files
-    for path in sorted(files):
-        print(path, checksum_file(path), file=system_regtest)
+    _checksum_rundir(emulation_run, file=system_regtest)
 
 
 def check_rundir_md5sum(run_dir, md5sum_filename):
