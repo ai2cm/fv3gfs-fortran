@@ -16,3 +16,5 @@ depend
 fv3.exe
 *.tmp.f90
 **/*.egg-info
+*.gcno
+*.gcda
