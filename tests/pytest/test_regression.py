@@ -124,8 +124,11 @@ def test_zhao_carr_diagnostics(emulation_run, regtest, tile):
     ds.info(regtest)
 
 
-def test_gscond_logs(emulation_run, regtest):
-    process, _ = emulation_run
+def test_gscond_logs(run_native, regtest, tmpdir):
+    config = get_config("emulation.yml")
+    config["namelist"]["gfs_physics_nml"]["emulate_gscond_only"] = True
+    rundir = tmpdir.join("rundir")
+    process = run_native(config, str(rundir))
     gscond_state_info = re.findall(r"gscond.state:(.*)", process.stderr.decode())
     first_state = gscond_state_info[0]
     print(first_state, file=regtest)
