@@ -101,11 +101,13 @@ test: ## run tests (set COMPILED_TAG_NAME to override default)
 build_native: ## build FV3 locally (assuming all tools and dependencies are available in the environment)
 	$(MAKE) -j 8 -C FV3 GCOV=Y
 
+
+test_native: DIR=coverage_$(shell date -Is)
 test_native: ## run native tests (all tools and build dependencies are assumed to be available in the environment)
 	find FV3 -type f -name '*.gcda' -delete
 	pytest --native tests/pytest
-	mkdir -p test_run_$(shell date -Is) && \
-		cd coverage_$(shell date -Is)  && \
+	mkdir -p $(DIR) && \
+		cd $(DIR)  && \
 		gcovr -d -r ../FV3 --html --html-details -o index.html
 
 clean: ## cleanup source tree and test output
