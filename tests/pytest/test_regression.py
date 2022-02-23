@@ -106,14 +106,7 @@ def emulation_run(run_native, tmpdir_factory):
     config = get_config("emulation.yml")
     rundir = tmpdir_factory.mktemp("rundir")
     run_dir = str(rundir)
-    completed_process: subprocess.CompletedProcess = run_native(config, run_dir)
-    if completed_process.returncode != 0:
-        print("Tail of Stderr:")
-        print(completed_process.stderr[-2000:].decode())
-        print("Tail of Stdout:")
-        print(completed_process.stdout[-2000:].decode())
-        pytest.fail()
-
+    completed_process = run_native(config, run_dir)
     return completed_process, run_dir
 
 
