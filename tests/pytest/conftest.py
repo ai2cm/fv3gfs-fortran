@@ -55,9 +55,7 @@ def system_regtest(regtest):
 
 
 @pytest.fixture(scope="session")
-def run_native(
-    request,
-):
+def run_native(request):
     root = Path(__file__).parent.parent.parent
     exe = root / "FV3" / "fv3.exe"
 
