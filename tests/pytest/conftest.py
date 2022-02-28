@@ -1,4 +1,5 @@
 from pathlib import Path
+import platform
 import subprocess
 import pytest
 import fv3config
@@ -44,6 +45,13 @@ def pytest_addoption(parser):
         help="Run tests natively. Assumes FV3/fv3.exe exists and is executable. "
         "Skips image tests.",
     )
+
+
+@pytest.fixture(params=[platform.system()])
+def system_regtest(regtest):
+    # A hack to get the system name into the regtest names
+    # e.g. tests/pytest/test_regression.py::test_checksum_emulation[Linux]
+    return regtest
 
 
 @pytest.fixture(scope="session")

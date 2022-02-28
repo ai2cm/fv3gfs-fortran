@@ -1,3 +1,5 @@
+# Image tests
+
 Reference files exist in subdirectories of `reference`, e.g. `reference/circleci` for
 the baseline md5 checksums for Circle CI. 
 
@@ -21,3 +23,13 @@ yaml files to this directory will add new regression tests automatically.
 These tests also support running on sarus using the SLURM scheduler, by setting `--image-runner=sarus`
 as an argument to `pytest`.
 
+# Native tests
+
+The native tests use [pytest-regtest](https://pypi.org/project/pytest-regtest/)
+to store regression information. To update the regression information for native
+tests (e.g. checksums, ncdump outputs) simply add the `--regtest-reset` flag to
+the pytest command invoking the failing test. For example::
+
+    pytest --regtest-reset --native tests/pytest
+    
+Then, add any modified/created `.out` files to git.

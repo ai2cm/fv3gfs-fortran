@@ -1,3 +1,4 @@
+import glob
 import os
 from os.path import join
 import shutil
@@ -6,6 +7,7 @@ import fv3config
 import numpy as np
 import xarray
 import subprocess
+import hashlib
 
 import re
 
@@ -101,6 +103,23 @@ def test_regression(
     shutil.rmtree(run_dir)
 
 
+@pytest.mark.parametrize(
+    "config_filename",
+    [
+        "default.yml",
+        "baroclinic.yml",
+        "restart.yml",
+        "model-level-coarse-graining.yml",
+        "pressure-level-coarse-graining.yml",
+    ],
+)
+def test_regression_native(run_native, config_filename: str, tmpdir, system_regtest):
+    config = get_config(config_filename)
+    rundir = tmpdir.join("rundir")
+    run_native(config, str(rundir))
+    _checksum_rundir(str(rundir), file=system_regtest)
+
+
 @pytest.fixture(scope="session")
 def emulation_run(run_native, tmpdir_factory):
     config = get_config("emulation.yml")
@@ -162,6 +181,31 @@ def test_zhao_carr_surface_precipitation_matches_total_water_source(
     rms_column_water_source = rms(column_water_source)
     rms_precip = rms(precip)
     assert rms_precip == pytest.approx(rms_column_water_source, rel=0.1)
+
+
+def checksum_file(path: str) -> str:
+    sum = hashlib.md5()
+    BUFFER_SIZE = 1024 * 1024
+    with open(path, "rb") as f:
+        while True:
+            buf = f.read(BUFFER_SIZE)
+            if not buf:
+                break
+            sum.update(buf)
+    return sum.hexdigest()
+
+
+def _checksum_rundir(rundir: str, file):
+    """checksum rundir storing output in file"""
+    files = glob.glob(os.path.join(rundir, "*.nc"))
+    restart_files = glob.glob(os.path.join(rundir, "RESTART", "*.nc"))
+    for path in sorted(files) + sorted(restart_files):
+        print(path, checksum_file(path), file=file)
+
+
+def test_checksum_emulation(emulation_run, system_regtest):
+    _, run_dir = emulation_run
+    _checksum_rundir(run_dir, file=system_regtest)
 
 
 def check_rundir_md5sum(run_dir, md5sum_filename):

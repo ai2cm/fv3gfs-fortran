@@ -6036,25 +6036,8 @@ module module_physics_driver
 
       subroutine apply_python_gscond_updates_to_tbd(Tbd)
         type(GFS_tbd_type), intent(inout) :: Tbd
-        ! locals
-        real(kind=kind_phys), dimension(size(Tbd%phy_f3d, 1), size(Tbd%phy_f3d, 2)) :: &
-            humidity_after_gscond_tmp,&
-            tp_cpf
-        integer levs, im, i, k
-
         call get_state("air_temperature_after_gscond", Tbd%phy_f3d(:, :, 1))
         call get_state("specific_humidity_after_gscond", Tbd%phy_f3d(:, :, 2))
-
-        levs = size(Tbd%phy_f3d, 2)
-        im = size(Tbd%phy_f3d, 1)
-
-        do k=1,levs
-          do i=1,im
-            Tbd%phy_f3d(i,k,2) = humidity_after_gscond_tmp(i,k)
-            Tbd%phy_f3d(i,k,1) = tp_cpf(i,k)
-          enddo
-        enddo
-
       end subroutine
 
       subroutine apply_python_gscond_updates_to_stateout(Stateout, ntcw)
