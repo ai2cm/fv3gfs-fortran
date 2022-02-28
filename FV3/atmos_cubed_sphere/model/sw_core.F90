@@ -49,13 +49,15 @@
  use fv_mp_mod, only: fill_corners, XDir, YDir
  use fv_arrays_mod, only: fv_grid_type, fv_grid_bounds_type, fv_flags_type
  use a2b_edge_mod, only: a2b_ord4
+ use fms_mod, only: mpp_clock_id, mpp_clock_begin, mpp_clock_end, CLOCK_SUBCOMPONENT, clock_flag_default
+ 
  !$ser verbatim use k_checkpoint, only: get_k,get_nz
 #ifdef SW_DYNAMICS
  use test_cases_mod,   only: test_case
 #endif
 
  implicit none
-
+  integer :: id_fvtp2d = -1
   real, parameter:: r3 = 1./3.
   real, parameter:: t11=27./28., t12=-13./28., t13=3./7., t14=6./7., t15=3./28.
   real, parameter:: s11=11./14., s13=-13./14., s14=4./7., s15=3./14.
@@ -719,6 +721,8 @@
       nw_corner = gridstruct%nw_corner
       ne_corner = gridstruct%ne_corner
 
+      id_fvtp2d  = mpp_clock_id ('   3.1.1.5-FvTp2d', flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+
 #ifdef SW_DYNAMICS 
       if ( test_case == 1 ) then
         do j=jsd,jed
@@ -1116,7 +1120,7 @@
                enddo
             enddo
 #endif
-
+      call mpp_clock_begin(id_fvtp2d)
 !    if ( inline_q .and. zvir>0.01 ) then
 !       do j=jsd,jed
 !          do i=isd,ied
@@ -1135,6 +1139,7 @@
 !                     mfx=fx, mfy=fy, mass=delp, nord=nord_t, damp_c=damp_t)
       !$ser savepoint FvTp2d-Out
       !$ser data_kbuff k=k k_size=nz q=pt fx=gx fy=gy
+      call mpp_clock_end(id_fvtp2d)
 #endif
 
      if ( inline_q ) then
