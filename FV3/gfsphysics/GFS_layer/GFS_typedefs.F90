@@ -1087,6 +1087,7 @@ module GFS_typedefs
     logical :: use_climatological_sst  ! Whether to allow the Python wrapper to override the sea surface temperature
     logical :: emulate_zc_microphysics ! Use an emulator in place of ZC microphysics
     logical :: save_zc_microphysics ! Save ZC microphysics state
+    logical :: emulate_gscond_only
 #ifdef CCPP
     ! From physcons.F90, updated/set in control_initialize
     real(kind=kind_phys) :: dxinv           ! inverse scaling factor for critical relative humidity, replaces dxinv in physcons.F90
@@ -3165,6 +3166,7 @@ module GFS_typedefs
     logical :: use_climatological_sst = .true.
     logical :: emulate_zc_microphysics = .false.
     logical :: save_zc_microphysics = .false.
+    logical :: emulate_gscond_only = .false.
 !--- END NAMELIST VARIABLES
 
     NAMELIST /gfs_physics_nml/                                                              &
@@ -3257,7 +3259,8 @@ module GFS_typedefs
                                fscav_aero, &
                                sst_perturbation,                                            & 
                                override_surface_radiative_fluxes, use_climatological_sst,   &
-                               emulate_zc_microphysics, save_zc_microphysics
+                               emulate_zc_microphysics, save_zc_microphysics,&
+                               emulate_gscond_only
 
 !--- other parameters 
     integer :: nctp    =  0                !< number of cloud types in CS scheme
@@ -3731,6 +3734,7 @@ module GFS_typedefs
     !--- emulation parameters
     Model%emulate_zc_microphysics = emulate_zc_microphysics
     Model%save_zc_microphysics = save_zc_microphysics
+    Model%emulate_gscond_only = emulate_gscond_only
 
 !--- tracer handling
     Model%ntrac            = size(tracer_names)

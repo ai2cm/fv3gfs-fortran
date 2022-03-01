@@ -31,6 +31,7 @@ def assert_expected_variables_present(state):
         qc_p,
         qc_in,
         "air_temperature_after_last_gscond",
+        "cloud_water_mixing_ratio_after_gscond",
         "latitude",
         "longitude",
         "model_time",
@@ -72,3 +73,9 @@ def microphysics(state):
         logger.error(e)
         raise e
     logger.info("Successful call to microphysics in emulate.py")
+
+
+def gscond(state):
+    logger = logging.getLogger("gscond.state")
+    # used for regression testing later on
+    logger.info(sorted(state))
