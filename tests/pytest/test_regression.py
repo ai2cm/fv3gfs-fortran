@@ -176,7 +176,7 @@ def test_zhao_carr_surface_precipitation_matches_total_water_source(
     column_water_source = (total_water_source * ds.delp).sum("pfull") / 9.81
 
     def rms(x):
-        return np.sqrt((x**2).mean().item())
+        return np.sqrt((x ** 2).mean().item())
 
     rms_column_water_source = rms(column_water_source)
     rms_precip = rms(precip)
