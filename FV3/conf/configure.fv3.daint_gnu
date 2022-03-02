@@ -125,4 +125,4 @@ endif
 
 LIBS += -L$(ESMF_DIR)/lib -lesmf -L$(FMS_DIR)/lib -lfms -L$(NETCDF_DIR)/lib -lnetcdff -lnetcdf
 
-LDFLAGS += $(LIBS) -llapack -lblas -lstdc++ -lc -lrt
+LDFLAGS += $(LIBS) -lstdc++ -lc -lrt
