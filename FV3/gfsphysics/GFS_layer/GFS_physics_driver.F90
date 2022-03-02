@@ -606,7 +606,7 @@ module module_physics_driver
         qv_cpf,&
         qv_post_gscond,&
         qv_post_precpd,&
-        humidity_after_gscond_tmp,&
+        humidity_tmp,&
         t_post_precpd, &
         tp_cpf
 
@@ -4516,7 +4516,7 @@ module module_physics_driver
                 qv_cpf(i,k) = Stateout%gq0(i,k,1)
                 qc_cpf(i,k) = Stateout%gq0(i,k,ntcw)
                 tp_cpf(i,k) = Tbd%phy_f3d(i,k,1)
-                humidity_after_gscond_tmp(i,k) = Tbd%phy_f3d(i,k,2)
+                humidity_tmp(i,k) = Tbd%phy_f3d(i,k,2)
               enddo
             enddo
 
@@ -4536,7 +4536,7 @@ module module_physics_driver
               call set_state("cloud_water_mixing_ratio_input", qc_cpf)
   !           tp1,qp1,psp1 only used if physics dt > dynamics dt + 1e-3            
               call set_state("air_temperature_after_last_gscond", tp_cpf)
-              call set_state("specific_humidity_after_last_gscond", humidity_after_gscond_tmp)
+              call set_state("specific_humidity_after_last_gscond", humidity_tmp)
               call set_state("surface_air_pressure_after_last_gscond", psp_cpf)
 #endif
             
@@ -4557,6 +4557,17 @@ module module_physics_driver
 
             call set_state("specific_humidity_after_gscond", Stateout%gq0(1:im, 1:levs, 1))
             call set_state("air_temperature_after_gscond", Stateout%gt0(1:im, 1:levs))
+            call set_state("cloud_water_mixing_ratio_after_gscond", Stateout%gq0(1:im, 1:levs, ntcw))
+
+            if (Model%emulate_gscond_only) then
+              call call_function("emulation", "gscond")
+              call apply_python_gscond_updates_to_diags(Diag, dqdt, dtdt, Model%ntcw, dtp)
+              if (Model%emulate_zc_microphysics) then
+                call apply_python_gscond_updates_to_stateout(Stateout, Model%ntcw)
+                call apply_python_gscond_updates_to_tbd(Tbd)
+              end if
+            endif
+
 #endif
 
             call precpd (im, ix, levs, dtp, del, Statein%prsl,                 &
@@ -4589,6 +4600,13 @@ module module_physics_driver
             call set_state("tendency_of_rain_water_mixing_ratio_due_to_microphysics", rainp)
 
             call call_function("emulation", "microphysics")
+
+            if (.not. Model%emulate_gscond_only) then
+              call apply_python_gscond_updates_to_diags(Diag, dqdt, dtdt, Model%ntcw, dtp)
+              if (Model%emulate_zc_microphysics) then
+                call apply_python_gscond_updates_to_tbd(Tbd)
+              end if
+            end if
             
             if (Model%save_zc_microphysics) then
               call call_function("emulation", "store")
@@ -4598,16 +4616,11 @@ module module_physics_driver
             call get_state("specific_humidity_after_precpd", qv_post_precpd)
             call get_state("cloud_water_mixing_ratio_after_precpd", qc_post_precpd)
             call get_state("total_precipitation", rain1)
-            call get_state("air_temperature_after_gscond", tp_cpf)
-            call get_state("specific_humidity_after_gscond", humidity_after_gscond_tmp)
 
             if (Model%ldiag3d) then
               Diag%zhao_carr_emulator%humidity = (qv_post_precpd(1:im,1:levs) - dqdt(:,:,1)) / dtp
               Diag%zhao_carr_emulator%cloud_water = (qc_post_precpd(1:im,1:levs) - dqdt(:,:,ntcw)) / dtp
               Diag%zhao_carr_emulator%temperature = (t_post_precpd(1:im,1:levs) - dtdt) / dtp
-
-              Diag%gscond_emulator%humidity = (humidity_after_gscond_tmp(1:im,1:levs) - dqdt(:,:,1)) / dtp
-              Diag%gscond_emulator%temperature = (tp_cpf(1:im,1:levs) - dtdt) / dtp
             end if
             Diag%zhao_carr_emulator%surface_precipitation = rain1 / dtp * rhowater
 
@@ -4618,8 +4631,6 @@ module module_physics_driver
                   Stateout%gq0(i,k,1) = qv_post_precpd(i,k)
                   Stateout%gq0(i,k,ntcw) = qc_post_precpd(i,k)
                   Stateout%gt0(i,k) = t_post_precpd(i,k)
-                  Tbd%phy_f3d(i,k,1) = tp_cpf(i,k)
-                  Tbd%phy_f3d(i,k,2) = humidity_after_gscond_tmp(i,k)
                 enddo
               enddo
             endif
@@ -6020,6 +6031,68 @@ module module_physics_driver
         ! Compute the mass of dry air plus all hydrometeors at the end of the physics.
         delp = initial_mass_of_dry_air_plus_vapor * dry_air_plus_hydrometeor_mass_fraction_after_physics
       end subroutine compute_updated_delp_following_dynamics_definition
+
+#ifdef ENABLE_CALLPYFORT
+
+      subroutine apply_python_gscond_updates_to_tbd(Tbd)
+        type(GFS_tbd_type), intent(inout) :: Tbd
+        call get_state("air_temperature_after_gscond", Tbd%phy_f3d(:, :, 1))
+        call get_state("specific_humidity_after_gscond", Tbd%phy_f3d(:, :, 2))
+      end subroutine
+
+      subroutine apply_python_gscond_updates_to_stateout(Stateout, ntcw)
+        type(GFS_stateout_type), intent(inout) :: Stateout
+        integer, intent(in) :: ntcw
+        ! locals
+        real(kind=kind_phys), dimension(size(Stateout%gt0, 1), size(Stateout%gt0, 2)) :: &
+            cloud_after_gscond_tmp,&
+            humidity_after_gscond_tmp,&
+            tp_cpf
+        integer :: i, k
+
+        call get_state("air_temperature_after_gscond", tp_cpf)
+        call get_state("specific_humidity_after_gscond", humidity_after_gscond_tmp)
+        call get_state("cloud_water_mixing_ratio_after_gscond", cloud_after_gscond_tmp)
+
+        do k=1,size(Stateout%gt0,2)
+          do i=1,size(Stateout%gt0,1)
+            Stateout%gt0(i,k) = tp_cpf(i,k)
+            Stateout%gq0(i,k,1) = humidity_after_gscond_tmp(i,k)
+            Stateout%gq0(i,k,ntcw) = cloud_after_gscond_tmp(i,k)
+          enddo
+        enddo
+
+      end subroutine
+
+      subroutine apply_python_gscond_updates_to_diags(&
+          Diag, q_before_gscond, t_before_gscond, cloud_index, timestep)
+        type(GFS_diag_type), intent(inout) :: Diag
+        real(kind=kind_phys), dimension(:, :, :), intent(in) :: q_before_gscond
+        real(kind=kind_phys), dimension(:, :), intent(in) :: t_before_gscond
+        integer, intent(in) :: cloud_index
+        real(kind=kind_phys), intent(in) :: timestep
+        ! locals
+        real(kind=kind_phys), dimension(size(t_before_gscond, 1), size(t_before_gscond, 2)) :: &
+            cloud_after_gscond_tmp,&
+            humidity_after_gscond_tmp,&
+            tp_cpf
+        integer :: levs, im
+
+        levs = size(t_before_gscond, 2)
+        im = size(t_before_gscond, 1)
+
+        call get_state("air_temperature_after_gscond", tp_cpf)
+        call get_state("specific_humidity_after_gscond", humidity_after_gscond_tmp)
+        call get_state("cloud_water_mixing_ratio_after_gscond", cloud_after_gscond_tmp)
+
+        Diag%gscond_emulator%humidity = (humidity_after_gscond_tmp(1:im,1:levs) - q_before_gscond(:,:,1)) / timestep
+        Diag%gscond_emulator%cloud_water = (cloud_after_gscond_tmp(1:im,1:levs) - q_before_gscond(:,:,cloud_index)) / timestep
+        Diag%gscond_emulator%temperature = (tp_cpf(1:im,1:levs) - t_before_gscond) / timestep
+
+      end subroutine
+
+#endif
+
 !> @}
 
 end module module_physics_driver
