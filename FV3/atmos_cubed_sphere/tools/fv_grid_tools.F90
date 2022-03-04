@@ -678,6 +678,7 @@ contains
           if (Atm%neststruct%nested) then
              call setup_aligned_nest(Atm)
           else
+          !$ser off
           !$ser savepoint GridGrid-In
           !$ser data grid_global=grid_global
            if(trim(grid_file) == 'INPUT/grid_spec.nc') then  

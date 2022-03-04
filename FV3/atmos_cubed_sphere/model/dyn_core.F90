@@ -418,9 +418,6 @@ contains
 !-----------------------------------------------------
   do it=1,n_split
 !-----------------------------------------------------
-     !$ser verbatim if (it > 1) then
-     !$ser off
-     !$ser verbatim endif
      n_step = it
 #ifdef ROT3
      call start_group_halo_update(i_pack(8), u, v, domain, gridtype=DGRID_NE)
@@ -534,6 +531,7 @@ contains
                                                      call timing_off('COMM_TOTAL')
 
                                                      call timing_on('c_sw')
+     !$ser off
      !$ser savepoint C_SW-In
      !$ser data delpcd=delpc delpd=delp ptcd=ptc ptd=pt ud=u vd=v wd=w ucd=uc vcd=vc uad=ua vad=va omgad=omga utd=ut vtd=vt divgdd=divgd dt2=dt2
 !$OMP parallel do default(none) shared(npz,isd,jsd,delpc,delp,ptc,pt,u,v,w,uc,vc,ua,va, &

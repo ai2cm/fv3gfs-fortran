@@ -141,7 +141,6 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
  !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, mpi_rank,ier)
  !$ser init directory='./test_data/' prefix='Generator' mpi_rank=mpi_rank unique_id=.true.
  !$ser mode write
- !$ser off
 
 #ifdef GT4PY_DEV
  if (mpp_pe() == mpp_root_pe()) &

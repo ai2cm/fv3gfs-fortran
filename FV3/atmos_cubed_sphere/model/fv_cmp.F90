@@ -1047,7 +1047,7 @@ subroutine qs_init (kmp)
     allocate (des2 (length))
     allocate (desw (length))
     !$ser verbatim ser_on=fs_is_serialization_on()
-    !$ser on
+    !$ser off
     !$ser verbatim table(:)=0.0
     !$ser verbatim tablew(:)=0.0
     !$ser verbatim table2(:)=0.0

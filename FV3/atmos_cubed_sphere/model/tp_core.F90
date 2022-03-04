@@ -167,6 +167,7 @@ contains
         ord_in = hord
    endif
    ord_ou = hord
+   !$ser off
    !$ser savepoint CopyCorners-In
    !$ser verbatim dir=2
    !$ser data_kbuff k=k k_size=nz q=q

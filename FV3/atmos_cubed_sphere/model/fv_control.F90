@@ -459,7 +459,7 @@ module fv_control_mod
 
             Atm(n)%flagstruct%grid_number => Atm(n)%grid_number
             Atm(n)%gridstruct%regional  => Atm(n)%flagstruct%regional
-
+            !$ser off
             !$ser savepoint InitGrid-In
             !$ser data grid_file=grid_file ndims=ndims nregions=ntiles grid_name=grid_name sw_corner=Atm(n)%gridstruct%sw_corner se_corner=Atm(n)%gridstruct%se_corner ne_corner=Atm(n)%gridstruct%ne_corner nw_corner=Atm(n)%gridstruct%nw_corner npx=npx npy=npy npz=npz
             call init_grid(Atm(n), grid_name, grid_file, npx, npy, npz, ndims, ntiles, ng)

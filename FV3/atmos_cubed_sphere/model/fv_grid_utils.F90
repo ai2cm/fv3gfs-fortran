@@ -234,7 +234,7 @@
       Atm%gridstruct%stretched_grid = .false.
            symm_grid = .true.
       endif
-
+      !$ser off
       !$ser savepoint SetEta-In
       !$ser data npz=npz ks=Atm%ks ptop=Atm%ptop ak=Atm%ak bk=Atm%bk
       if ( npz == 1 ) then

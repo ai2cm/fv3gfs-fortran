@@ -173,6 +173,7 @@
       ne_corner = gridstruct%ne_corner
 
       iep1 = ie+1; jep1 = je+1
+      !$ser off
       !$ser savepoint D2A2C_Vect-In
       !$ser data_kbuff k=k k_size=nz uc=uc vc=vc u=u v=v ua=ua va=va utc=ut vtc=vt
       !$ser verbatim if (k == nz) then 
@@ -1128,17 +1129,21 @@
 !          enddo
 !       enddo
 !    endif
+      !$ser on
       !$ser savepoint FvTp2d-In
       !$ser data_kbuff k=k k_size=nz q=pt crx=crx_adv cry=cry_adv fx=gx fy=gy xfx=xfx_adv yfx=yfx_adv ra_x=ra_x ra_y=ra_y mfx=fx mfy=fy mass=delp damp_c=damp_v_dup nord_column=nord_v_dup
       !$ser verbatim if (k == nz) then 
       !$ser data hord=hord_tm
       !$ser verbatim endif
+      !$ser off
         call fv_tp_2d(pt, crx_adv,cry_adv, npx, npy, hord_tm, gx, gy,  &
                       xfx_adv,yfx_adv, gridstruct, bd, ra_x, ra_y, flagstruct%lim_fac, &
                       regional,mfx=fx, mfy=fy, mass=delp, nord=nord_v, damp_c=damp_v)
 !                     mfx=fx, mfy=fy, mass=delp, nord=nord_t, damp_c=damp_t)
+      !$ser on
       !$ser savepoint FvTp2d-Out
       !$ser data_kbuff k=k k_size=nz q=pt fx=gx fy=gy
+      !$ser off
       call mpp_clock_end(id_fvtp2d)
 #endif
 

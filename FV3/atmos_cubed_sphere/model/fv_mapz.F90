@@ -270,6 +270,7 @@ if (allocated(lagrangian_tendency_of_hydrostatic_pressure)) allocate(vulcan_pe3(
             call qs_init(kmp)
 #endif
        endif
+!$ser off
 !$ser savepoint Remapping_Part1-In
        !$ser data pe=pe ptop=ptop pkz=pkz pk=pk akap=akap peln=peln pt=pt qtracers=q(:,:,:,1:nq) qcld=q(:,:,:,cld_amt) cappa=cappa delp=delp delz=delz q_con=q_con r_vir=r_vir te=te u=u v=v ps=ps last_step=last_step bk=bk ak=ak hs=hs w=w wsd=ws omga=omga rrg=rrg ua=ua gz1d=gz cvm=cvm nq=nq
  

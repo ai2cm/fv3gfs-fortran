@@ -1685,6 +1685,7 @@
 #endif
               
 #else
+ !$ser off
  !$ser savepoint InitPreJab-In
  !$ser data ptop=ptop ak=ak bk=bk delp=delp
               

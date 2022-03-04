@@ -554,6 +554,7 @@ contains
 !---------------------
 
       if ( consv_te > 0.  .and. (.not.do_adiabatic_init) ) then
+         !$ser off
          !$ser savepoint ComputeTotalEnergy-In
          !$ser data u=u v=v w=w delz=delz pt=pt delp=delp  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) dp1=dp1 pe=pe peln=peln phis=phis zvir=zvir te_2d=te_2d ua=ua va=va teq=teq 
 
