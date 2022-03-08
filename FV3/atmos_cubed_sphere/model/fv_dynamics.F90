@@ -722,7 +722,6 @@ contains
 #endif
 
                                            call timing_on('DYN_CORE')
-     
       call dyn_core(npx, npy, npz, ng, sphum, nq, mdt, n_split, zvir, cp_air, akap, cappa, &
 #ifdef MULTI_GASES
                     kapad, &

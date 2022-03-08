@@ -18,3 +18,5 @@ fv3.exe
 **/*.egg-info
 *.gcno
 *.gcda
+**/c12_6ranks_baroclinic
+**/rundir

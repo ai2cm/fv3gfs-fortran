@@ -594,7 +594,7 @@
                    zvir, sphum, nq, q, k, km, inline_q,  &
                    dt, hord_tr, hord_mt, hord_vt, hord_tm, hord_dp, nord,   &
                    nord_v, nord_w, nord_t, dddmp, d2_bg, d4_bg, damp_v, damp_w, &
-                   damp_t, d_con, hydrostatic, gridstruct, flagstruct, bd)
+                   damp_t, d_con, hydrostatic, gridstruct, flagstruct, bd, time_total)
 
       integer, intent(IN):: hord_tr, hord_mt, hord_vt, hord_tm, hord_dp
       integer, intent(IN):: nord   !< nord=1 divergence damping; (del-4) or 3 (del-8)
@@ -605,6 +605,7 @@
       real   , intent(IN):: dt, dddmp, d2_bg, d4_bg, d_con
       real   , intent(IN):: zvir
       real,    intent(in):: damp_v, damp_w, damp_t, kgb
+      real, intent(in), optional:: time_total  !< total time (seconds) since start
       type(fv_grid_bounds_type), intent(IN) :: bd
       real, intent(inout):: divg_d(bd%isd:bd%ied+1,bd%jsd:bd%jed+1) !< divergence
       real, intent(IN), dimension(bd%isd:bd%ied,  bd%jsd:bd%jed):: z_rat
@@ -1121,7 +1122,7 @@
                enddo
             enddo
 #endif
-      call mpp_clock_begin(id_fvtp2d)
+
 !    if ( inline_q .and. zvir>0.01 ) then
 !       do j=jsd,jed
 !          do i=isd,ied
@@ -1129,22 +1130,27 @@
 !          enddo
 !       enddo
 !    endif
+      !$ser verbatim if (time_total>0.) then
       !$ser on
+      !$ser verbatim endif
       !$ser savepoint FvTp2d-In
       !$ser data_kbuff k=k k_size=nz q=pt crx=crx_adv cry=cry_adv fx=gx fy=gy xfx=xfx_adv yfx=yfx_adv ra_x=ra_x ra_y=ra_y mfx=fx mfy=fy mass=delp damp_c=damp_v_dup nord_column=nord_v_dup
       !$ser verbatim if (k == nz) then 
       !$ser data hord=hord_tm
       !$ser verbatim endif
       !$ser off
+      !$ser verbatim  call mpp_clock_begin(id_fvtp2d)
         call fv_tp_2d(pt, crx_adv,cry_adv, npx, npy, hord_tm, gx, gy,  &
                       xfx_adv,yfx_adv, gridstruct, bd, ra_x, ra_y, flagstruct%lim_fac, &
                       regional,mfx=fx, mfy=fy, mass=delp, nord=nord_v, damp_c=damp_v)
 !                     mfx=fx, mfy=fy, mass=delp, nord=nord_t, damp_c=damp_t)
+      !$ser verbatim call mpp_clock_end(id_fvtp2d)
+      !$ser verbatim if (time_total>0.) then
       !$ser on
+      !$ser verbatim endif
       !$ser savepoint FvTp2d-Out
       !$ser data_kbuff k=k k_size=nz q=pt fx=gx fy=gy
       !$ser off
-      call mpp_clock_end(id_fvtp2d)
 #endif
 
      if ( inline_q ) then
