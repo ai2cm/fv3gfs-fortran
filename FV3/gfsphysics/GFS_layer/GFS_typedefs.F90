@@ -1087,6 +1087,7 @@ module GFS_typedefs
     logical :: use_climatological_sst  ! Whether to allow the Python wrapper to override the sea surface temperature
     logical :: emulate_zc_microphysics ! Use an emulator in place of ZC microphysics
     logical :: save_zc_microphysics ! Save ZC microphysics state
+    logical :: emulate_gscond_only
 #ifdef CCPP
     ! From physcons.F90, updated/set in control_initialize
     real(kind=kind_phys) :: dxinv           ! inverse scaling factor for critical relative humidity, replaces dxinv in physcons.F90
@@ -1511,7 +1512,7 @@ module GFS_typedefs
     !--- MP quantities for 3D diagnositics 
     real (kind=kind_phys), pointer :: refl_10cm(:,:) => null()  !< instantaneous refl_10cm 
 
-    type(zhao_carr_tendencies) :: zhao_carr_emulator, zhao_carr_physics
+    type(zhao_carr_tendencies) :: zhao_carr_emulator, zhao_carr_physics, gscond_emulator, gscond_physics
 !
 !---vay-2018 UGWP-diagnostics daily mean
 !
@@ -3165,6 +3166,7 @@ module GFS_typedefs
     logical :: use_climatological_sst = .true.
     logical :: emulate_zc_microphysics = .false.
     logical :: save_zc_microphysics = .false.
+    logical :: emulate_gscond_only = .false.
 !--- END NAMELIST VARIABLES
 
     NAMELIST /gfs_physics_nml/                                                              &
@@ -3257,7 +3259,8 @@ module GFS_typedefs
                                fscav_aero, &
                                sst_perturbation,                                            & 
                                override_surface_radiative_fluxes, use_climatological_sst,   &
-                               emulate_zc_microphysics, save_zc_microphysics
+                               emulate_zc_microphysics, save_zc_microphysics,&
+                               emulate_gscond_only
 
 !--- other parameters 
     integer :: nctp    =  0                !< number of cloud types in CS scheme
@@ -3731,6 +3734,7 @@ module GFS_typedefs
     !--- emulation parameters
     Model%emulate_zc_microphysics = emulate_zc_microphysics
     Model%save_zc_microphysics = save_zc_microphysics
+    Model%emulate_gscond_only = emulate_gscond_only
 
 !--- tracer handling
     Model%ntrac            = size(tracer_names)
@@ -5229,6 +5233,8 @@ module GFS_typedefs
       allocate (Diag%q_dt_int (IM,5))
       call Diag%zhao_carr_emulator%create(im, Model%levs)
       call Diag%zhao_carr_physics%create(im, Model%levs)
+      call Diag%gscond_emulator%create(im, Model%levs)
+      call Diag%gscond_physics%create(im, Model%levs)
 !      allocate (Diag%dq3dt  (IM,Model%levs,oz_coeff+5))
 !--- needed to allocate GoCart coupling fields
 !      allocate (Diag%upd_mf (IM,Model%levs))
@@ -5542,6 +5548,8 @@ module GFS_typedefs
       Diag%dq3dt    = zero
       call Diag%zhao_carr_emulator%zero()
       call Diag%zhao_carr_physics%zero()
+      call Diag%gscond_emulator%zero()
+      call Diag%gscond_physics%zero()
 !     Diag%upd_mf   = zero
 !     Diag%dwn_mf   = zero
 !     Diag%det_mf   = zero

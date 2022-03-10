@@ -13,6 +13,7 @@
   , perl
   , gfortran
   , getopt
+  , gcovr
 } :
 let 
   src = builtins.fetchGit {
@@ -41,7 +42,10 @@ stdenv.mkDerivation {
       mpich
       perl
       gfortran
+      # needed for gcov utility
+      gfortran.cc
       getopt
+      gcovr
   ];
 
   propagatedBuildInputs = [

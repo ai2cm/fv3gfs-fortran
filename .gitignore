@@ -25,4 +25,5 @@ venv/**
 *.nc
 **/data/**
 **/*.egg-info
-
+*.gcno
+*.gcda

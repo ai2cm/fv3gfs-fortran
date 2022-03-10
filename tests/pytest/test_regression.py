@@ -1,3 +1,4 @@
+import glob
 import os
 from os.path import join
 import shutil
@@ -6,6 +7,9 @@ import fv3config
 import numpy as np
 import xarray
 import subprocess
+import hashlib
+
+import re
 
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -99,26 +103,54 @@ def test_regression(
     shutil.rmtree(run_dir)
 
 
+@pytest.mark.parametrize(
+    "config_filename",
+    [
+        "default.yml",
+        "baroclinic.yml",
+        "restart.yml",
+        "model-level-coarse-graining.yml",
+        "pressure-level-coarse-graining.yml",
+    ],
+)
+def test_regression_native(run_native, config_filename: str, tmpdir, system_regtest):
+    config = get_config(config_filename)
+    rundir = tmpdir.join("rundir")
+    run_native(config, str(rundir))
+    _checksum_rundir(str(rundir), file=system_regtest)
+
+
 @pytest.fixture(scope="session")
 def emulation_run(run_native, tmpdir_factory):
     config = get_config("emulation.yml")
     rundir = tmpdir_factory.mktemp("rundir")
     run_dir = str(rundir)
-    run_native(config, run_dir)
-    return run_dir
+    completed_process = run_native(config, run_dir)
+    return completed_process, run_dir
 
 
 def test_callpyfort_integration(emulation_run):
-    run_dir = emulation_run
+    _, run_dir = emulation_run
     assert os.path.exists(join(run_dir, "microphysics_success.txt"))
     assert os.path.exists(join(run_dir, "store_success.txt"))
 
 
 @pytest.mark.parametrize("tile", range(1, 7))
 def test_zhao_carr_diagnostics(emulation_run, regtest, tile):
-    ds = xarray.open_dataset(os.path.join(emulation_run, f"piggy.tile{tile}.nc"))
+    rundir = emulation_run[1]
+    ds = xarray.open_dataset(os.path.join(rundir, f"piggy.tile{tile}.nc"))
     # print schema to regression data
     ds.info(regtest)
+
+
+def test_gscond_logs(run_native, regtest, tmpdir):
+    config = get_config("emulation.yml")
+    config["namelist"]["gfs_physics_nml"]["emulate_gscond_only"] = True
+    rundir = tmpdir.join("rundir")
+    process = run_native(config, str(rundir))
+    gscond_state_info = re.findall(r"gscond.state:(.*)", process.stderr.decode())
+    first_state = gscond_state_info[0]
+    print(first_state, file=regtest)
 
 
 @pytest.mark.parametrize("tile", range(1, 7))
@@ -131,7 +163,8 @@ def test_zhao_carr_surface_precipitation_matches_total_water_source(
     Large relative changes indicate a problem with the surface precipitation
     diagnostic
     """
-    ds = xarray.open_dataset(os.path.join(emulation_run, f"piggy.tile{tile}.nc"))
+    _, rundir = emulation_run
+    ds = xarray.open_dataset(os.path.join(rundir, f"piggy.tile{tile}.nc"))
 
     total_water_source = (
         ds.tendency_of_cloud_water_due_to_zhao_carr_physics
@@ -148,6 +181,31 @@ def test_zhao_carr_surface_precipitation_matches_total_water_source(
     rms_column_water_source = rms(column_water_source)
     rms_precip = rms(precip)
     assert rms_precip == pytest.approx(rms_column_water_source, rel=0.1)
+
+
+def checksum_file(path: str) -> str:
+    sum = hashlib.md5()
+    BUFFER_SIZE = 1024 * 1024
+    with open(path, "rb") as f:
+        while True:
+            buf = f.read(BUFFER_SIZE)
+            if not buf:
+                break
+            sum.update(buf)
+    return sum.hexdigest()
+
+
+def _checksum_rundir(rundir: str, file):
+    """checksum rundir storing output in file"""
+    files = glob.glob(os.path.join(rundir, "*.nc"))
+    restart_files = glob.glob(os.path.join(rundir, "RESTART", "*.nc"))
+    for path in sorted(files) + sorted(restart_files):
+        print(path, checksum_file(path), file=file)
+
+
+def test_checksum_emulation(emulation_run, system_regtest):
+    _, run_dir = emulation_run
+    _checksum_rundir(run_dir, file=system_regtest)
 
 
 def check_rundir_md5sum(run_dir, md5sum_filename):
