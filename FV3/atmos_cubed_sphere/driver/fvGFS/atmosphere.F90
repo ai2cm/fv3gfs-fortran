@@ -804,6 +804,9 @@ contains
                        Atm(n)%parent_grid, Atm(n)%domain,Atm(n)%diss_est,        &
                        Atm(n)%lagrangian_tendency_of_hydrostatic_pressure)
      !$ser verbatim if (serialize_physics .and. save_step) then
+     ! NOTE: this is added here for convenience. In a future iteration
+     ! you may want to save this after fv_subgridz, so that physics tests
+     ! don't depend on a driver function
        !$ser on
        !$ser savepoint GFSPhysicsDriver-In
      !$ser verbatim else
