@@ -2923,6 +2923,19 @@ module GFS_diagnostics
 
     idx = idx + 1
     ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'tsfc_ave'
+    ExtDiag(idx)%desc = 'interval averaged surface temperature'
+    ExtDiag(idx)%unit = 'K'
+    ExtDiag(idx)%mod_name = 'gfs_sfc'
+    ExtDiag(idx)%coarse_graining_method = 'area_weighted'
+    ExtDiag(idx)%time_avg = .TRUE.
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%tsfc(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
     ExtDiag(idx)%name = 'tg3'
     ExtDiag(idx)%desc = 'deep soil temperature'
     ExtDiag(idx)%unit = 'K'

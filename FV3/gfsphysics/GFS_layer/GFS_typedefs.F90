@@ -1401,6 +1401,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: toticeb(:)     => null()   !< accumulated ice precipitation in bucket (kg/m2)
     real (kind=kind_phys), pointer :: totsnwb(:)     => null()   !< accumulated snow precipitation in bucket (kg/m2)
     real (kind=kind_phys), pointer :: totgrpb(:)     => null()   !< accumulated graupel precipitation in bucket (kg/m2)
+    real (kind=kind_phys), pointer :: tsfc(:)        => null()   !< accumulated surface temperature in bucket (K)
 
 #ifdef CCPP
     !--- MYNN variables                                              
@@ -5130,6 +5131,7 @@ module GFS_typedefs
     allocate (Diag%dqsfc   (IM))
     allocate (Diag%totprcp (IM))
     allocate (Diag%totprcpb(IM))
+    allocate (Diag%tsfc    (IM))
     allocate (Diag%gflux   (IM))
     allocate (Diag%dlwsfc  (IM))
     allocate (Diag%ulwsfc  (IM))
@@ -5526,6 +5528,7 @@ module GFS_typedefs
     Diag%shum_wts   = zero
     Diag%zmtnblck   = zero
     Diag%totprcpb   = zero
+    Diag%tsfc       = zero
     Diag%cnvprcpb   = zero
     Diag%toticeb    = zero
     Diag%totsnwb    = zero

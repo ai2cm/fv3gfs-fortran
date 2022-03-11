@@ -5548,6 +5548,9 @@ module module_physics_driver
             final_dynamics_delp, im, levs, nwat, dtp)
       endif
 
+      ! Accumulate surface temperature in diagnostic bucket
+      Diag%tsfc = Diag%tsfc + dtf * Sfcprop%tsfc
+
 !     if (kdt > 2 ) stop
       return
 !...................................
