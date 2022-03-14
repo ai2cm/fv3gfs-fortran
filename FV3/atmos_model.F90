@@ -348,30 +348,30 @@ subroutine update_atmos_radiation_physics (Atmos)
       endif
 
       call mpp_clock_end(setupClock)
-
-!       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "radiation driver"
+#ifndef SUBSET_PHYSICS
+      if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "radiation driver"
 
 ! !--- execute the IPD atmospheric radiation subcomponent (RRTM)
 
-!       call mpp_clock_begin(radClock)
-! #ifdef CCPP
-!       ! Performance improvement. Only enter if it is time to call the radiation physics.
-!       if (IPD_Control%lsswr .or. IPD_Control%lslwr) then
-!         call CCPP_step (step="radiation", nblks=Atm_block%nblks, ierr=ierr)
-!         if (ierr/=0)  call mpp_error(FATAL, 'Call to CCPP radiation step failed')
-!       endif
-! #else
-!       Func0d => radiation_step1
-! !$OMP parallel do default (none)       &
-! !$OMP            schedule (dynamic,1), &
-! !$OMP            shared   (Atm_block, IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Func0d) &
-! !$OMP            private  (nb)
-!       do nb = 1,Atm_block%nblks
-!         call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d)
-!       enddo
-! #endif
-!       call mpp_clock_end(radClock)
-
+      call mpp_clock_begin(radClock)
+#ifdef CCPP
+      ! Performance improvement. Only enter if it is time to call the radiation physics.
+      if (IPD_Control%lsswr .or. IPD_Control%lslwr) then
+        call CCPP_step (step="radiation", nblks=Atm_block%nblks, ierr=ierr)
+        if (ierr/=0)  call mpp_error(FATAL, 'Call to CCPP radiation step failed')
+      endif
+#else
+      Func0d => radiation_step1
+!$OMP parallel do default (none)       &
+!$OMP            schedule (dynamic,1), &
+!$OMP            shared   (Atm_block, IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Func0d) &
+!$OMP            private  (nb)
+      do nb = 1,Atm_block%nblks
+        call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d)
+      enddo
+#endif
+      call mpp_clock_end(radClock)
+#endif
       call mpp_clock_begin(otherClock)
       if (chksum_debug) then
         if (mpp_pe() == mpp_root_pe()) print *,'RADIATION STEP  ', IPD_Control%kdt, IPD_Control%fhour
@@ -410,26 +410,25 @@ subroutine update_atmos_radiation_physics (Atmos)
       call mpp_clock_end(otherClock)
 
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "stochastic physics driver"
-
+#ifndef SUBSET_PHYSICS
 !--- execute the IPD atmospheric physics step2 subcomponent (stochastic physics driver)
-! TODO: this is turned off because we don't currently support stochastic physics
 
-!       call mpp_clock_begin(physClock)
-! #ifdef CCPP
-!       call CCPP_step (step="stochastics", nblks=Atm_block%nblks, ierr=ierr)
-!       if (ierr/=0)  call mpp_error(FATAL, 'Call to CCPP stochastics step failed')
-! #else
-!       Func0d => physics_step2
-! !$OMP parallel do default (none) &
-! !$OMP            schedule (dynamic,1), &
-! !$OMP            shared   (Atm_block, IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Func0d) &
-! !$OMP            private  (nb)
-!       do nb = 1,Atm_block%nblks
-!         call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d)
-!       enddo
-! #endif
-!       call mpp_clock_end(physClock)
-
+      call mpp_clock_begin(physClock)
+#ifdef CCPP
+      call CCPP_step (step="stochastics", nblks=Atm_block%nblks, ierr=ierr)
+      if (ierr/=0)  call mpp_error(FATAL, 'Call to CCPP stochastics step failed')
+#else
+      Func0d => physics_step2
+!$OMP parallel do default (none) &
+!$OMP            schedule (dynamic,1), &
+!$OMP            shared   (Atm_block, IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Func0d) &
+!$OMP            private  (nb)
+      do nb = 1,Atm_block%nblks
+        call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d)
+      enddo
+#endif
+      call mpp_clock_end(physClock)
+#endif
       call mpp_clock_begin(otherClock)
       if (chksum_debug) then
         if (mpp_pe() == mpp_root_pe()) print *,'PHYSICS STEP2   ', IPD_Control%kdt, IPD_Control%fhour
