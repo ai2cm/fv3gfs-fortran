@@ -58,7 +58,7 @@ module IPD_typedefs
     subroutine IPD_func0d_proc (Control, Statein, Stateout,  &
                                 Sfcprop, Coupling, Grid,     &
                                 Tbd, Cldprop, Radtend,       &
-                                Intdiag, mphClock)
+                                Intdiag)
       import :: IPD_control_type, statein_type, stateout_type,    &
                 sfcprop_type, coupling_type, grid_type, tbd_type, & 
                 cldprop_type, radtend_type, intdiag_type
@@ -72,7 +72,6 @@ module IPD_typedefs
       type(cldprop_type),     intent(inout) :: Cldprop
       type(radtend_type),     intent(inout) :: Radtend
       type(intdiag_type),     intent(inout) :: Intdiag
-      integer,                intent(inout) :: mphClock
     end subroutine IPD_func0d_proc
 
     subroutine IPD_func1d_proc (Control, Statein, Stateout,  &

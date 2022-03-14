@@ -445,7 +445,7 @@ module module_physics_driver
 
     subroutine GFS_physics_driver                                 &
                    (Model, Statein, Stateout, Sfcprop, Coupling,  &
-                   Grid, Tbd, Cldprop, Radtend, Diag, mphClock)
+                   Grid, Tbd, Cldprop, Radtend, Diag)
 
       implicit none
 !
@@ -702,7 +702,6 @@ module module_physics_driver
       real(kind=kind_phys), pointer :: adjsfcdlw_for_lsm(:), adjsfcdsw_for_lsm(:), adjsfcnsw_for_lsm(:)
       real(kind=kind_phys), pointer :: sea_surface_temperature(:)
       integer :: nwat
-      integer, intent(inout) :: mphClock
       !$ser verbatim integer :: mpi_rank,ier
       !$ser verbatim logical :: ser_on
       !$ser verbatim  call mpi_comm_rank(MPI_COMM_WORLD, mpi_rank,ier)
@@ -5012,7 +5011,6 @@ module module_physics_driver
           enddo
 
           if ( Model%do_gfdl_mp_in_physics ) then
-            call mpp_clock_begin(mphClock)
 
             !$ser savepoint Microph-In
             !$ser data mph_qv1=qv1 mph_ql1=ql1 mph_qr1=qr1 mph_qi1=qi1 mph_qs1=qs1 mph_qg1=qg1 mph_qa1=qa1 mph_qn1=qn1 mph_qv_dt=qv_dt
@@ -5036,7 +5034,6 @@ module module_physics_driver
             !$ser data mph_pt_dt=pt_dt mph_w=w mph_udt=udt mph_vdt=vdt
             !$ser data mph_rain0=rain0 mph_snow0=snow0 mph_ice0=ice0 mph_graupel0=graupel0
             !$ser data mph_refl=refl
-            call mpp_clock_end(mphClock)
           endif
 
           tem = dtp * con_p001 / con_day

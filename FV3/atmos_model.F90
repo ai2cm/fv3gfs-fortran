@@ -171,7 +171,7 @@ public Atm_block, IPD_Data, IPD_Control
                                                          ! to calculate gradient on cubic sphere grid.
 !</PUBLICTYPE >
 
-integer :: fv3Clock, getClock, updClock, setupClock, radClock, physClock, mphClock, diagClock, otherClock
+integer :: fv3Clock, getClock, updClock, setupClock, radClock, physClock, diagClock, otherClock
 
 !-----------------------------------------------------------------------
 integer :: blocksize    = 1
@@ -287,9 +287,7 @@ subroutine update_atmos_radiation_physics (Atmos)
     call mpp_clock_end(otherClock)
 
     call mpp_clock_begin(getClock)
-    
     call atmos_phys_driver_statein (IPD_data, Atm_block, flip_vc)
-    
     call mpp_clock_end(getClock)
 
 !--- if dycore only run, set up the dummy physics output state as the input state
@@ -320,7 +318,7 @@ subroutine update_atmos_radiation_physics (Atmos)
       if (ierr/=0)  call mpp_error(FATAL, 'Call to CCPP time_vary step failed')
 #else
       Func1d => time_vary_step
-      call IPD_step (IPD_Control, IPD_Data(:), IPD_Diag, IPD_Restart, IPD_func1d=Func1d, mphClock=mphClock)
+      call IPD_step (IPD_Control, IPD_Data(:), IPD_Diag, IPD_Restart, IPD_func1d=Func1d)
 #endif
 
 !--- call stochastic physics pattern generation / cellular automata
@@ -393,10 +391,10 @@ subroutine update_atmos_radiation_physics (Atmos)
       Func0d => physics_step1
 !$OMP parallel do default (none) &
 !$OMP            schedule (dynamic,1), &
-!$OMP            shared   (Atm_block, IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Func0d, mphClock) &
+!$OMP            shared   (Atm_block, IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Func0d) &
 !$OMP            private  (nb)
       do nb = 1,Atm_block%nblks
-        call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d, mphClock=mphClock)
+        call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d)
       enddo
       !$ser savepoint GFSPhysicsDriver-Out
       !$ser data IPD_gt0=IPD_Data(1)%Stateout%gt0 IPD_gu0=IPD_Data(1)%Stateout%gu0 IPD_gv0=IPD_Data(1)%Stateout%gv0 IPD_gq0=IPD_Data(1)%Stateout%gq0 
@@ -427,7 +425,7 @@ subroutine update_atmos_radiation_physics (Atmos)
 ! !$OMP            shared   (Atm_block, IPD_Control, IPD_Data, IPD_Diag, IPD_Restart, Func0d) &
 ! !$OMP            private  (nb)
 !       do nb = 1,Atm_block%nblks
-!         call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d, mphClock=mphClock)
+!         call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d)
 !       enddo
 ! #endif
 !       call mpp_clock_end(physClock)
@@ -783,7 +781,6 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
    setupClock = mpp_clock_id( ' 3.3-GFS-Step-Setup', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    radClock   = mpp_clock_id( ' 3.4-GFS-Radiation', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    physClock  = mpp_clock_id( ' 3.5-GFS-Physics', flags=clock_flag_default, grain=CLOCK_COMPONENT )
-   mphClock   = mpp_clock_id( ' 3.51-GFS-Microphysics', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    updClock   = mpp_clock_id( ' 3.6-atmosphere_state_update', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    diagClock  = mpp_clock_id( ' 3.7-Diagnostics', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    ! 3.8-Write-restart is timed on the coupler_main.F90 level
