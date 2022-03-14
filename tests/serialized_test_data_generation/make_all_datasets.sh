@@ -75,7 +75,9 @@ for exp_file in ${EXPERIMENTS} ; do
        fi
      fi
   fi
- 
+  if [ ! -z "${ENVS_OVERRIDE}" ] ; then
+      envs=${ENVS_OVERRIDE}
+  fi 
   echo "For npx ${npx} running savepoint configurations ${envs[*]}"
   for env in ${envs[*]}; do
       export SER_ENV=${env}
