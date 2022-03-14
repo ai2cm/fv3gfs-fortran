@@ -395,7 +395,7 @@ subroutine gfdl_cloud_microphys_driver (qv, ql, qr, qi, qs, qg, qa, qn,   &
 !For 3D reflectivity calculations
   REAL, DIMENSION(ktop:kbot):: qv1d, t1d, p1d, qr1d, qs1d, qg1d, dBZ
 !+---+-----------------------------------------------------------------+
-
+    
     is = 1
     js = 1
     ks = 1
