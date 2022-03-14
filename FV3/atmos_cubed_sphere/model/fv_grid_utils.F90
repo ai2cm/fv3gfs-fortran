@@ -2876,7 +2876,8 @@
               angle = 0.d0 
            end if
         else
-             angle = acos( ddd )
+             !angle = acos( ddd )
+             angle = 2.d0*atan(1.0) - (ddd - ((ddd**3/6) - (3*(ddd**5/40))))
         endif
    endif
 

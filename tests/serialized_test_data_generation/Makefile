@@ -2,7 +2,7 @@ SHELL = /bin/bash
 
 # select experiment directory and file
 EXPERIMENT_DIR = $(CWD)/configs
-EXPERIMENT ?= c12_6ranks_standard
+EXPERIMENT ?= c192_6ranks_standard
 # base images w/ or w/o CUDA
 CUDA ?=y
 SER_ENV ?= dycore
@@ -10,7 +10,7 @@ SER_ENV ?= dycore
 # -convention: <tag>-<some large conceptual version change>.<serialization statement change>.<hotfix>
 # -version number should be increased when serialization data is expected to change
 # -omit tag (e.g. 7.1.1) for "operational" serialization data, use tag for experimental serialization data
-FORTRAN_VERSION ?= dev2-8.0.0
+FORTRAN_VERSION ?= dev2-8.0.0.a
 # docker container image setup (used for running model, see ../../README.md)
 GCR_URL = us.gcr.io/vcm-ml
 COMPILED_IMAGE = $(GCR_URL)/fv3gfs-compiled:gnu7-mpich314-nocuda-serialize
