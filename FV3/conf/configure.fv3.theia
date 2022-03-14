@@ -44,6 +44,10 @@ ifeq ($(GT4PY_DEV),Y)
 CPPDEFS += -DGT4PY_DEV
 endif
 
+ifeq ($(SUBSET_PHYSICS),Y)
+CPPDEFS += -DSUBSET_PHYSICS
+endif
+
 ifeq ($(HYDRO),Y)
 CPPDEFS += -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO -DGFSL64 -DGFS_PHYS
 else

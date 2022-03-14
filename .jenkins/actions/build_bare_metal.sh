@@ -125,7 +125,7 @@ echo "==== module list ===="
 module list
 echo "====================="
 
-./compile GT4PY_DEV=Y
+./compile GT4PY_DEV=Y SUBSET_PHYSICS=Y
 
 num_exe=`/bin/ls -1d *.exe | wc -l`
 if [ "$num_exe" -lt 1 ] ; then

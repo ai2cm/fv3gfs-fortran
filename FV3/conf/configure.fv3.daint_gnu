@@ -60,6 +60,10 @@ ifeq ($(GT4PY_DEV),Y)
 CPPDEFS += -DGT4PY_DEV
 endif
 
+ifeq ($(SUBSET_PHYSICS),Y)
+CPPDEFS += -DSUBSET_PHYSICS
+endif
+
 ifneq ($(HYDRO),Y)
 CPPDEFS += -DMOIST_CAPPA -DUSE_COND
 endif

@@ -1685,7 +1685,6 @@ module module_physics_driver
 !
 !     if (lprnt) write(0,*)' tsfc=',Sfcprop%tsfc(ipr),' tsurf=',tsurf(ipr),'iter=', &
 !           iter ,'wet=',wet(ipr),'dry=',dry(ipr),' icy=',icy(ipr)
-! #ifndef GT4PY_DEV
         call sfc_diff                                                   &
 !  ---  inputs:
           (im, Statein%pgr,                                             &
@@ -1703,7 +1702,6 @@ module module_physics_driver
 !          cd3, cdq3, rb3, stress3, ffmm3, ffhh3, fm103, fh23, wind, lprnt, ipr)
 !
 !  --- ...  lu: update flag_guess
-! #endif
         do i=1,im
           if (iter == 1 .and. wind(i) < 2.0) then
             flag_guess(i) = .true.
@@ -1740,7 +1738,6 @@ module module_physics_driver
           endif
 !     if (lprnt) write(0,*)' bef nst tseal=',tseal(ipr) &
 !     ,' tsfc3=',tsfc3(ipr,3),' tsurf3=',tsurf3(ipr,3),' tem=',tem
-! #ifndef GT4PY_DEV
           call sfc_nst                                                  &
 !  ---  inputs:
             (im, Statein%pgr, Statein%ugrs(:,1), Statein%vgrs(:,1),     &
@@ -1761,7 +1758,6 @@ module module_physics_driver
 !  ---  outputs:
              qss3(:,3),  gflx3(:,3), cmm3(:,3), chh3(:,3), evap3(:,3),  &
              hflx3(:,3), ep1d3(:,3))
-! #endif
 !         do i=1,im
 !!          if (wet(i) .and. .not.icy(i)) then
 !!          if (wet(i) .and. (Model%frac_grid .or. .not. icy(i))) then
@@ -1796,7 +1792,6 @@ module module_physics_driver
         else
 
 !  --- ...  surface energy balance over ocean
-! #ifndef GT4PY_DEV
           call sfc_ocean                                                &
 !  ---  inputs:
            (im, Statein%pgr,                                            &
@@ -1806,7 +1801,6 @@ module module_physics_driver
 !  ---  outputs:
             qss3(:,3), cmm3(:,3), chh3(:,3), gflx3(:,3), evap3(:,3),    &
             hflx3(:,3), ep1d3(:,3))
-! #endif
         endif       ! if nstf_name(1) > 0
 
 !       if (lprnt) write(0,*)' sfalb=',Radtend%sfalb(ipr),' ipr=',ipr   &
@@ -1821,7 +1815,6 @@ module module_physics_driver
 !     if (lprnt) write(0,*)' tseal=',tseal(ipr),' tsurf=',tsurf(ipr),iter &
 !     ,' stsoil0=',stsoil(ipr,:)
 !    &,' pgr=',pgr(ipr),' sfcemis=',sfcemis(ipr)
-! #ifndef GT4PY_DEV
           call sfc_drv                                                   &
 !  ---  inputs:
            (im, lsoil, Statein%pgr,                                      &
@@ -1843,7 +1836,6 @@ module module_physics_driver
             hflx3(:,1), ep1d3(:,1), runof,                               &
             cmm3(:,1),  chh3(:,1), evbs, evcw, sbsno, snowc, Diag%soilm, &
             snohf, Diag%smcwlt2, Diag%smcref2, Diag%wet1)
-! #endif
 !     if (lprnt) write(0,*)' tseae=',tseal(ipr),' tsurf=',tsurf(ipr),iter&
 !                         ,' phy_f2d=',phy_f2d(ipr,num_p2d)
 
@@ -1916,7 +1908,6 @@ module module_physics_driver
 
 ! call sfc_cice for sea ice points in the coupled model (i.e. islmsk=4)
 !
-! #ifndef GT4PY_DEV
           call sfc_cice                                                  &
 !  ---  inputs:
            (im, Statein%tgrs(:,1),                                       &
@@ -1927,13 +1918,11 @@ module module_physics_driver
 !  ---  outputs:
             qss3(:,2), cmm3(:,2), chh3(:,2), evap3(:,2), hflx3(:,2),     &
             stress3(:,2))
-! #endif
         endif
 
 !
 ! call sfc_sice for lake ice and for the uncoupled case, sea ice (i.e. islmsk=2)
 !
-! #ifndef GT4PY_DEV
         call sfc_sice                                                            &
 !  ---  inputs:
            (im, lsoil, Statein%pgr,                                             &
@@ -1949,7 +1938,6 @@ module module_physics_driver
 !  ---  outputs:
             snowd3(:,2), qss3(:,2), snowmt, gflx3(:,2), cmm3(:,2), chh3(:,2),    &
             evap3(:,2),  hflx3(:,2))
-! #endif
         if (Model%cplflx) then
           do i = 1, im
             if (flag_cice(i)) then
@@ -2163,12 +2151,10 @@ module module_physics_driver
       endif
 
 !  --- ...  update near surface fields
-! #ifndef GT4PY_DEV
       call sfc_diag (im, Statein%pgr, Statein%ugrs(:,1), Statein%vgrs(:,1),       &
                      Statein%tgrs(:,1), Statein%qgrs(:,1,1), work3, evap,         &
                      Sfcprop%ffmm, Sfcprop%ffhh, fm10, fh2, Sfcprop%tsfc, qss,    &
                      Sfcprop%f10m, Diag%u10m, Diag%v10m, Sfcprop%t2m, Sfcprop%q2m)
-! #endif
       Tbd%phy_f2d(:,Model%num_p2d) = zero
 
       if (Model%lsm == Model%lsm_noahmp) then
@@ -2405,7 +2391,7 @@ module module_physics_driver
           !      stop
           !  end if
           elseif (.not. Model%old_monin) then
-#ifndef GT4PY_DEV
+#ifndef SUBSET_PHYSICS
             call moninq(ix, im, levs, nvdiff, ntcw, dvdt, dudt, dtdt, dqdt,         &
                         Statein%ugrs, Statein%vgrs, Statein%tgrs, Statein%qgrs,     &
                         Radtend%htrsw, Radtend%htrlw, xmu, Statein%prsik(1,1), rb,  &
@@ -2672,7 +2658,7 @@ module module_physics_driver
         if (ntke > 0) then
           do k=1,levs
              do i=1,im
-#ifdef GT4PY_DEV
+#ifdef SUBSET_PHYSICS
                dqdt(i,k,ntke)  = 0. ! dvdftra(i,k,ntkev) !TODO[EW]: changed to 0
 #else
                dqdt(i,k,ntke)  = dvdftra(i,k,ntkev)
@@ -3140,7 +3126,7 @@ module module_physics_driver
 
       do k=1,levs
          do i=1,im
-#ifdef GT4PY_DEV
+#ifdef SUBSET_PHYSICS
         Stateout%gt0(i,k)  = Statein%tgrs(i,k) ! + dtdt(i,k) * dtp [EW]: override this since we can't turn off moninq
         Stateout%gu0(i,k)  = Statein%ugrs(i,k) ! + dudt(i,k) * dtp
         Stateout%gv0(i,k)  = Statein%vgrs(i,k) ! + dvdt(i,k) * dtp    
@@ -3152,7 +3138,7 @@ module module_physics_driver
 #endif
         enddo
      enddo
-#ifdef GT4PY_DEV
+#ifdef SUBSET_PHYSICS
       Stateout%gq0(1:im,:,:) = Statein%qgrs(1:im,:,:) ! + dqdt(1:im,:,:) * dtp
 #else
       Stateout%gq0(1:im,:,:) = Statein%qgrs(1:im,:,:) + dqdt(1:im,:,:) * dtp
@@ -3200,7 +3186,7 @@ module module_physics_driver
 !            enddo
 !          endif
         else
-#ifndef GT4PY_DEV
+#ifndef SUBSET_PHYSICS
           call ozphys (ix, im, levs, levozp, dtp,                 &
                        Stateout%gq0(1,1,ntoz),                    &
                        Stateout%gq0(1,1,ntoz),                    &
