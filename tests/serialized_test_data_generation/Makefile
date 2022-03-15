@@ -40,7 +40,7 @@ build_model: ## build Docker image with compiled model code for serialization
 	cd $(FORTRAN_DIR) && \
 		BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
 		COMPILED_IMAGE=$(COMPILED_IMAGE) \
-		COMPILE_OPTION="GT4PY_DEV=Y" \
+		COMPILE_OPTION="GT4PY_DEV=Y\\\nSUBSET_PHYSICS=Y" \
 		$(MAKE) build_compiled
 
 setup_rundir: ## create run directory on local host using fv3config
