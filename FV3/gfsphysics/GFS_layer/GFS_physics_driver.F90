@@ -35,8 +35,6 @@ module module_physics_driver
   use module_sfc_nst,        only: sfc_nst
   use module_sfc_diag,       only: sfc_diag
   use mpp_mod,               only: mpp_error, NOTE
-  use mpp_mod,               only: mpp_pe, mpp_root_pe, mpp_clock_id, mpp_clock_begin
-  use mpp_mod,               only: mpp_clock_end, CLOCK_COMPONENT, MPP_CLOCK_SYNC
 !
 !vay-2018
 !
@@ -1424,52 +1422,53 @@ module module_physics_driver
 !           faster model time steps.
 !      sw:  using cos of zenith angle as scaling factor
 !      lw:  using surface air skin temperature as scaling factor
+#ifndef SUBSET_PHYSICS
+      if (Model%pre_rad) then
+        call dcyc2t3_pre_rad                                                &
+!  ---  inputs:
+           ( Model%solhr, Model%slag, Model%sdec, Model%cdec, Grid%sinlat,  &
+             Grid%coslat, Grid%xlon, Radtend%coszen, Sfcprop%tsfc,          &
+             Statein%tgrs(1,1), Statein%tgrs(1,1), Coupling%sfcdsw,         &
+             Coupling%sfcnsw, Coupling%sfcdlw, Radtend%htrsw, Radtend%htrlw,&
+             Coupling%nirbmui, Coupling%nirdfui, Coupling%visbmui,          &
+             Coupling%visdfui, Coupling%nirbmdi, Coupling%nirdfdi,          &
+             Coupling%visbmdi, Coupling%visdfdi, ix, im, levs,              &
+!  ---  input/output:
+             dtdt,                                                          &
+!  ---  outputs:
+             adjsfcdsw, adjsfcnsw, adjsfcdlw, adjsfculw, xmu, xcosz,        &
+             adjnirbmu, adjnirdfu, adjvisbmu, adjvisdfu,                    &
+             adjnirbmd, adjnirdfd, adjvisbmd, adjvisdfd                     &
+           )
 
-!       if (Model%pre_rad) then
-!         call dcyc2t3_pre_rad                                                &
-! !  ---  inputs:
-!            ( Model%solhr, Model%slag, Model%sdec, Model%cdec, Grid%sinlat,  &
-!              Grid%coslat, Grid%xlon, Radtend%coszen, Sfcprop%tsfc,          &
-!              Statein%tgrs(1,1), Statein%tgrs(1,1), Coupling%sfcdsw,         &
-!              Coupling%sfcnsw, Coupling%sfcdlw, Radtend%htrsw, Radtend%htrlw,&
-!              Coupling%nirbmui, Coupling%nirdfui, Coupling%visbmui,          &
-!              Coupling%visdfui, Coupling%nirbmdi, Coupling%nirdfdi,          &
-!              Coupling%visbmdi, Coupling%visdfdi, ix, im, levs,              &
-! !  ---  input/output:
-!              dtdt,                                                          &
-! !  ---  outputs:
-!              adjsfcdsw, adjsfcnsw, adjsfcdlw, adjsfculw, xmu, xcosz,        &
-!              adjnirbmu, adjnirdfu, adjvisbmu, adjvisdfu,                    &
-!              adjnirbmd, adjnirdfd, adjvisbmd, adjvisdfd                     &
-!            )
+      else
 
-!       else
+        call dcyc2t3                                                        &
+!  ---  inputs:
+           ( Model%solhr, Model%slag, Model%sdec, Model%cdec, Grid%sinlat,  &
+             Grid%coslat, Grid%xlon, Radtend%coszen, tsfc3,                 &
+!            Statein%tgrs(1,1), Radtend%tsflw,  Radtend%semis,              &
+             Statein%tgrs(1,1), Radtend%tsflw,  semis3,                     &
+             Coupling%sfcdsw,  Coupling%sfcnsw, Coupling%sfcdlw,            &
+             Radtend%htrsw,    Radtend%swhc,    Radtend%htrlw, Radtend%lwhc,&
+             Coupling%nirbmui, Coupling%nirdfui, Coupling%visbmui,          &
+             Coupling%visdfui, Coupling%nirbmdi, Coupling%nirdfdi,          &
+             Coupling%visbmdi, Coupling%visdfdi, ix, im, levs, dtf,         &
+             Model%fhswr, dry, icy, wet,                                    &
+!            lprnt, ipr,                                                    &
+!  ---  input/output:
+             dtdt, dtdtc,                                                   &
+!  ---  outputs:
+             adjsfcdsw, adjsfcnsw, adjsfcdlw, adjsfculw3, xmu, xcosz,       &
+             adjnirbmu, adjnirdfu, adjvisbmu, adjvisdfu,                    &
+             adjnirbmd, adjnirdfd, adjvisbmd, adjvisdfd                     &
+           )
 
-!         call dcyc2t3                                                        &
-! !  ---  inputs:
-!            ( Model%solhr, Model%slag, Model%sdec, Model%cdec, Grid%sinlat,  &
-!              Grid%coslat, Grid%xlon, Radtend%coszen, tsfc3,                 &
-! !            Statein%tgrs(1,1), Radtend%tsflw,  Radtend%semis,              &
-!              Statein%tgrs(1,1), Radtend%tsflw,  semis3,                     &
-!              Coupling%sfcdsw,  Coupling%sfcnsw, Coupling%sfcdlw,            &
-!              Radtend%htrsw,    Radtend%swhc,    Radtend%htrlw, Radtend%lwhc,&
-!              Coupling%nirbmui, Coupling%nirdfui, Coupling%visbmui,          &
-!              Coupling%visdfui, Coupling%nirbmdi, Coupling%nirdfdi,          &
-!              Coupling%visbmdi, Coupling%visdfdi, ix, im, levs, dtf,         &
-!              Model%fhswr, dry, icy, wet,                                    &
-! !            lprnt, ipr,                                                    &
-! !  ---  input/output:
-!              dtdt, dtdtc,                                                   &
-! !  ---  outputs:
-!              adjsfcdsw, adjsfcnsw, adjsfcdlw, adjsfculw3, xmu, xcosz,       &
-!              adjnirbmu, adjnirdfu, adjvisbmu, adjvisdfu,                    &
-!              adjnirbmd, adjnirdfd, adjvisbmd, adjvisdfd                     &
-!            )
-
-! !
-! ! save temp change due to radiation - need for sttp stochastic physics
-! !---------------------------------------------------------------------
-!       endif
+!
+! save temp change due to radiation - need for sttp stochastic physics
+!---------------------------------------------------------------------
+     endif
+#endif
 !
       if (Model%lsidea) then                       !idea jw
         dtdt(:,:) = zero
@@ -1684,7 +1683,8 @@ module module_physics_driver
 !
 !     if (lprnt) write(0,*)' tsfc=',Sfcprop%tsfc(ipr),' tsurf=',tsurf(ipr),'iter=', &
 !           iter ,'wet=',wet(ipr),'dry=',dry(ipr),' icy=',icy(ipr)
-        call sfc_diff                                                   &
+
+         call sfc_diff                                                   &
 !  ---  inputs:
           (im, Statein%pgr,                                             &
            Statein%tgrs(:,1), Statein%qgrs(:,1,1), Diag%zlvl, wind,     &
@@ -1701,7 +1701,8 @@ module module_physics_driver
 !          cd3, cdq3, rb3, stress3, ffmm3, ffhh3, fm103, fh23, wind, lprnt, ipr)
 !
 !  --- ...  lu: update flag_guess
-        do i=1,im
+
+         do i=1,im
           if (iter == 1 .and. wind(i) < 2.0) then
             flag_guess(i) = .true.
           endif
@@ -1737,6 +1738,7 @@ module module_physics_driver
           endif
 !     if (lprnt) write(0,*)' bef nst tseal=',tseal(ipr) &
 !     ,' tsfc3=',tsfc3(ipr,3),' tsurf3=',tsurf3(ipr,3),' tem=',tem
+
           call sfc_nst                                                  &
 !  ---  inputs:
             (im, Statein%pgr, Statein%ugrs(:,1), Statein%vgrs(:,1),     &
@@ -1757,6 +1759,7 @@ module module_physics_driver
 !  ---  outputs:
              qss3(:,3),  gflx3(:,3), cmm3(:,3), chh3(:,3), evap3(:,3),  &
              hflx3(:,3), ep1d3(:,3))
+
 !         do i=1,im
 !!          if (wet(i) .and. .not.icy(i)) then
 !!          if (wet(i) .and. (Model%frac_grid .or. .not. icy(i))) then
@@ -1791,13 +1794,15 @@ module module_physics_driver
         else
 
 !  --- ...  surface energy balance over ocean
-          call sfc_ocean                                                &
+
+           call sfc_ocean                                                &
 !  ---  inputs:
            (im, Statein%pgr,                                            &
             Statein%tgrs(:,1), Statein%qgrs(:,1,1), tsfc3(:,3),         &
             cd3(:,3), cdq3(:,3), Statein%prsl(:,1), work3, wet,         &
             wind, flag_iter,                                            &
 !  ---  outputs:
+
             qss3(:,3), cmm3(:,3), chh3(:,3), gflx3(:,3), evap3(:,3),    &
             hflx3(:,3), ep1d3(:,3))
         endif       ! if nstf_name(1) > 0
@@ -1814,7 +1819,8 @@ module module_physics_driver
 !     if (lprnt) write(0,*)' tseal=',tseal(ipr),' tsurf=',tsurf(ipr),iter &
 !     ,' stsoil0=',stsoil(ipr,:)
 !    &,' pgr=',pgr(ipr),' sfcemis=',sfcemis(ipr)
-          call sfc_drv                                                   &
+
+           call sfc_drv                                                   &
 !  ---  inputs:
            (im, lsoil, Statein%pgr,                                      &
             Statein%tgrs(:,1), Statein%qgrs(:,1,1), soiltyp, vegtype,    &
@@ -1937,6 +1943,7 @@ module module_physics_driver
 !  ---  outputs:
             snowd3(:,2), qss3(:,2), snowmt, gflx3(:,2), cmm3(:,2), chh3(:,2),    &
             evap3(:,2),  hflx3(:,2))
+
         if (Model%cplflx) then
           do i = 1, im
             if (flag_cice(i)) then
@@ -2150,10 +2157,12 @@ module module_physics_driver
       endif
 
 !  --- ...  update near surface fields
+
       call sfc_diag (im, Statein%pgr, Statein%ugrs(:,1), Statein%vgrs(:,1),       &
                      Statein%tgrs(:,1), Statein%qgrs(:,1,1), work3, evap,         &
                      Sfcprop%ffmm, Sfcprop%ffhh, fm10, fh2, Sfcprop%tsfc, qss,    &
                      Sfcprop%f10m, Diag%u10m, Diag%v10m, Sfcprop%t2m, Sfcprop%q2m)
+
       Tbd%phy_f2d(:,Model%num_p2d) = zero
 
       if (Model%lsm == Model%lsm_noahmp) then

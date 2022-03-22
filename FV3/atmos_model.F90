@@ -351,7 +351,7 @@ subroutine update_atmos_radiation_physics (Atmos)
 #ifndef SUBSET_PHYSICS
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "radiation driver"
 
-! !--- execute the IPD atmospheric radiation subcomponent (RRTM)
+!--- execute the IPD atmospheric radiation subcomponent (RRTM)
 
       call mpp_clock_begin(radClock)
 #ifdef CCPP
