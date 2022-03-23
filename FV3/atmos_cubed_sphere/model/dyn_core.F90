@@ -144,6 +144,7 @@ module dyn_core_mod
   use fv_regional_mod,     only: dump_field, exch_uv, H_STAGGER, U_STAGGER, V_STAGGER
   use fv_regional_mod,     only: a_step, p_step, k_step, n_step
   !$ser verbatim use k_checkpoint, only: set_k
+  use fms_mod, only: mpp_clock_id, mpp_clock_begin, mpp_clock_end, CLOCK_SUBCOMPONENT, clock_flag_default
 
 implicit none
 private
@@ -289,13 +290,14 @@ contains
 
     integer :: is,  ie,  js,  je
     integer :: isd, ied, jsd, jed
+    integer :: id_riem_solver_c = -1
     !$ser verbatim integer :: mpi_rank,ier, nz
     !$ser verbatim logical :: ser_on, boolean_false, boolean_true
     !$ser verbatim boolean_false = .false.
     !$ser verbatim boolean_true = .true.
     !$ser verbatim call mpi_comm_rank(MPI_COMM_WORLD, mpi_rank,ier)
     !$ser verbatim ser_on=fs_is_serialization_on()
- 
+      id_riem_solver_c  = mpp_clock_id ('   3.1.1.6-riem_solver_c', flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
       is  = bd%is
       ie  = bd%ie
       js  = bd%js
@@ -634,6 +636,7 @@ contains
                                             call timing_on('Riem_Solver')
            !$ser savepoint Riem_Solver_C-In
            !$ser data ms=ms dt2=dt2 akap=akap cappa=cappa cp=cp ptop=ptop hs=phis w3=omga ptc=ptc q_con=q_con  delpc=delpc gz=gz  pef=pkc ws=ws3     
+           call mpp_clock_begin(id_riem_solver_c)
            call Riem_Solver_C( ms, dt2,   is,  ie,   js,   je,   npz,   ng,   &
                                akap, cappa, cp,  &
 #ifdef MULTI_GASES
@@ -643,7 +646,7 @@ contains
                                q_con,  delpc, gz,  pkc, ws3, flagstruct%p_fac, &
                                 flagstruct%a_imp, flagstruct%scale_z )
                                                call timing_off('Riem_Solver')
-
+            call mpp_clock_end(id_riem_solver_c)
            !$ser savepoint Riem_Solver_C-Out
            !$ser data gz=gz pef=pkc
            if (gridstruct%nested) then
