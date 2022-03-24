@@ -79,7 +79,7 @@ namelist:
     minutes: 0
     months: 0
     ncores_per_node: 32
-    seconds: 90000
+    seconds: 900
     use_hyper_thread: true
   diag_manager_nml:
     max_axes: 240
