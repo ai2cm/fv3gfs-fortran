@@ -766,8 +766,6 @@ if (allocated(physics_tendency_diag%t_dt)) physics_tendency_diag%t_dt = (pt(is:i
     !$ser savepoint UpdateDWindsPhys-In
     !$ser data is=is js=js ie=ie je=je isd=isd ied=ied jsd=jsd jed=jed
     !$ser data u_dt=u_dt v_dt=v_dt u=u v=v
-    !$ser data es=gridstruct%es ew=gridstruct%ew vlon=gridstruct%vlon vlat=gridstruct%vlat
-    !$ser data edge_vect_w=gridstruct%edge_vect_w edge_vect_e=gridstruct%edge_vect_e edge_vect_s=gridstruct%edge_vect_s edge_vect_n=gridstruct%edge_vect_n
     !$ser data nested=gridstruct%nested regional=gridstruct%regional
     !$ser data npx=npx npy=npy npz=npz
     call update_dwinds_phys(is, ie, js, je, isd, ied, jsd, jed, dt, u_dt, v_dt, u, v, gridstruct, npx, npy, npz, domain)

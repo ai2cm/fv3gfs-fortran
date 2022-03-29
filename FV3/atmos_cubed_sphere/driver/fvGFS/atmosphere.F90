@@ -1589,9 +1589,7 @@ contains
    integer :: i, j, ix, k, k1, n, w_diff, nt_dyn, iq
    integer :: nb, blen, nwat, dnats, nq_adv
    real(kind=kind_phys):: rcp, q0, qwat(nq), qt, rdt
-   real, allocatable, dimension(:,:,:,:) :: debug_qwat
-   real, allocatable, dimension(:,:,:)   :: debug_qt, debug_sumq
-   allocate( debug_qwat(isd:ied,jsd:jed,npz,nq), debug_qt(isd:ied,jsd:jed,npz), debug_sumq(isd:ied,jsd:jed,npz))
+
    call mpp_clock_begin(id_update_other)
 
    Time_prev = Time
@@ -1715,7 +1713,7 @@ contains
            q0 = IPD_Data(nb)%Statein%prsi(ix,k+1) - IPD_Data(nb)%Statein%prsi(ix,k)
          endif
          qwat(1:nq_adv) = q0*IPD_Data(nb)%Stateout%gq0(ix,k,1:nq_adv)
-        !  debug_qwat(i,j,k1,1:nq_adv) = qwat(1:nq_adv)
+
 ! **********************************************************************************************************
 ! Dry mass: the following way of updating delp is key to mass conservation with hybrid 32-64 bit computation
 ! **********************************************************************************************************
@@ -1725,9 +1723,7 @@ contains
          q0 = Atm(n)%delp(i,j,k1)*(1.-sum(Atm(n)%q(i,j,k1,1:max(nwat,num_gas)))) + sum(qwat(1:max(nwat,num_gas)))
 #else
          qt = sum(qwat(1:nwat))
-        !  debug_qt(i,j,k1) = qt
          q0 = Atm(n)%delp(i,j,k1)*(1.-sum(Atm(n)%q(i,j,k1,1:nwat))) + qt 
-        !  debug_sumq(i,j,k1) = sum(Atm(n)%q(i,j,k1,1:nwat))
 #endif
          Atm(n)%delp(i,j,k1) = q0
          Atm(n)%q(i,j,k1,1:nq_adv) = qwat(1:nq_adv) / q0
@@ -1804,8 +1800,6 @@ contains
     !$ser data u_srf=Atm(n)%u_srf v_srf=Atm(n)%v_srf
     !$ser data pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr)  
     !$ser data ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con 
-    !$ser data es=Atm(n)%gridstruct%es ew=Atm(n)%gridstruct%ew vlon=Atm(n)%gridstruct%vlon vlat=Atm(n)%gridstruct%vlat
-    !$ser data edge_vect_w=Atm(n)%gridstruct%edge_vect_w edge_vect_e=Atm(n)%gridstruct%edge_vect_e edge_vect_s=Atm(n)%gridstruct%edge_vect_s edge_vect_n=Atm(n)%gridstruct%edge_vect_n
     call fv_update_phys( dt_atmos, isc, iec, jsc, jec, isd, ied, jsd, jed, Atm(n)%ng, nt_dyn, &
                          Atm(n)%u,  Atm(n)%v,   Atm(n)%w,  Atm(n)%delp, Atm(n)%pt,         &
                          Atm(n)%q,  Atm(n)%qdiag,                                          &
