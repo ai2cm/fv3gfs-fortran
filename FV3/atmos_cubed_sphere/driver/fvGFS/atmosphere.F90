@@ -816,7 +816,6 @@ contains
      !$ser verbatim if (sgs_tke > 0) then
        !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
      !$ser verbatim endif
-    
       call timing_off('fv_dynamics')
 
       if (ngrids > 1 .and. (psc < p_split .or. p_split < 0)) then

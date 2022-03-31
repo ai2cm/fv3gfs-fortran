@@ -1684,7 +1684,7 @@ module module_physics_driver
 !     if (lprnt) write(0,*)' tsfc=',Sfcprop%tsfc(ipr),' tsurf=',tsurf(ipr),'iter=', &
 !           iter ,'wet=',wet(ipr),'dry=',dry(ipr),' icy=',icy(ipr)
 
-         call sfc_diff                                                   &
+        call sfc_diff                                                   &
 !  ---  inputs:
           (im, Statein%pgr,                                             &
            Statein%tgrs(:,1), Statein%qgrs(:,1,1), Diag%zlvl, wind,     &
@@ -1702,7 +1702,7 @@ module module_physics_driver
 !
 !  --- ...  lu: update flag_guess
 
-         do i=1,im
+        do i=1,im
           if (iter == 1 .and. wind(i) < 2.0) then
             flag_guess(i) = .true.
           endif
@@ -1795,16 +1795,16 @@ module module_physics_driver
 
 !  --- ...  surface energy balance over ocean
 
-           call sfc_ocean                                                &
+          call sfc_ocean                                                &
 !  ---  inputs:
            (im, Statein%pgr,                                            &
             Statein%tgrs(:,1), Statein%qgrs(:,1,1), tsfc3(:,3),         &
             cd3(:,3), cdq3(:,3), Statein%prsl(:,1), work3, wet,         &
             wind, flag_iter,                                            &
 !  ---  outputs:
-
             qss3(:,3), cmm3(:,3), chh3(:,3), gflx3(:,3), evap3(:,3),    &
             hflx3(:,3), ep1d3(:,3))
+
         endif       ! if nstf_name(1) > 0
 
 !       if (lprnt) write(0,*)' sfalb=',Radtend%sfalb(ipr),' ipr=',ipr   &
@@ -1820,7 +1820,7 @@ module module_physics_driver
 !     ,' stsoil0=',stsoil(ipr,:)
 !    &,' pgr=',pgr(ipr),' sfcemis=',sfcemis(ipr)
 
-           call sfc_drv                                                   &
+          call sfc_drv                                                   &
 !  ---  inputs:
            (im, lsoil, Statein%pgr,                                      &
             Statein%tgrs(:,1), Statein%qgrs(:,1,1), soiltyp, vegtype,    &
@@ -1841,6 +1841,7 @@ module module_physics_driver
             hflx3(:,1), ep1d3(:,1), runof,                               &
             cmm3(:,1),  chh3(:,1), evbs, evcw, sbsno, snowc, Diag%soilm, &
             snohf, Diag%smcwlt2, Diag%smcref2, Diag%wet1)
+
 !     if (lprnt) write(0,*)' tseae=',tseal(ipr),' tsurf=',tsurf(ipr),iter&
 !                         ,' phy_f2d=',phy_f2d(ipr,num_p2d)
 
@@ -2665,9 +2666,9 @@ module module_physics_driver
 !
         if (ntke > 0) then
           do k=1,levs
-             do i=1,im
+            do i=1,im
 #ifdef SUBSET_PHYSICS
-               dqdt(i,k,ntke)  = 0. ! dvdftra(i,k,ntkev) !TODO[EW]: changed to 0
+               dqdt(i,k,ntke)  = 0.
 #else
                dqdt(i,k,ntke)  = dvdftra(i,k,ntkev)
 #endif
@@ -3133,19 +3134,18 @@ module module_physics_driver
 !
 
       do k=1,levs
-         do i=1,im
+        do i=1,im
 #ifdef SUBSET_PHYSICS
-        Stateout%gt0(i,k)  = Statein%tgrs(i,k) ! + dtdt(i,k) * dtp [EW]: override this since we can't turn off moninq
-        Stateout%gu0(i,k)  = Statein%ugrs(i,k) ! + dudt(i,k) * dtp
-        Stateout%gv0(i,k)  = Statein%vgrs(i,k) ! + dvdt(i,k) * dtp    
+        Stateout%gt0(i,k)  = Statein%tgrs(i,k)
+        Stateout%gu0(i,k)  = Statein%ugrs(i,k)
+        Stateout%gv0(i,k)  = Statein%vgrs(i,k)
 #else 
         Stateout%gt0(i,k)  = Statein%tgrs(i,k) + dtdt(i,k) * dtp 
         Stateout%gu0(i,k)  = Statein%ugrs(i,k) + dudt(i,k) * dtp
         Stateout%gv0(i,k)  = Statein%vgrs(i,k) + dvdt(i,k) * dtp
-
 #endif
         enddo
-     enddo
+      enddo
 #ifdef SUBSET_PHYSICS
       Stateout%gq0(1:im,:,:) = Statein%qgrs(1:im,:,:) ! + dqdt(1:im,:,:) * dtp
 #else

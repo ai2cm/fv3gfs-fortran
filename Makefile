@@ -11,7 +11,7 @@ ENVIRONMENT_TARGET ?= fv3gfs-environment
 CUDA ?= n
 OTHER_MOUNTS ?= 
 
-# base images w/ or w/o CUDA 
+# base images w/ or w/o CUDA
 ifeq ($(CUDA),n)
 	BASE_IMAGE ?=ubuntu:18.04
 	DEP_TAG_NAME ?=gnu7-mpich314-nocuda
