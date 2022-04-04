@@ -3147,7 +3147,7 @@ module module_physics_driver
         enddo
       enddo
 #ifdef SUBSET_PHYSICS
-      Stateout%gq0(1:im,:,:) = Statein%qgrs(1:im,:,:) ! + dqdt(1:im,:,:) * dtp
+      Stateout%gq0(1:im,:,:) = Statein%qgrs(1:im,:,:)
 #else
       Stateout%gq0(1:im,:,:) = Statein%qgrs(1:im,:,:) + dqdt(1:im,:,:) * dtp
 #endif

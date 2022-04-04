@@ -92,3 +92,5 @@ for exp_file in ${EXPERIMENTS} ; do
   echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   echo ""
 done
+
+exit 0
