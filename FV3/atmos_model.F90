@@ -348,7 +348,7 @@ subroutine update_atmos_radiation_physics (Atmos)
       endif
 
       call mpp_clock_end(setupClock)
-#ifndef SUBSET_PHYSICS
+#ifndef AI2_SUBSET_PHYSICS
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "radiation driver"
 
 !--- execute the IPD atmospheric radiation subcomponent (RRTM)
@@ -410,7 +410,7 @@ subroutine update_atmos_radiation_physics (Atmos)
       call mpp_clock_end(otherClock)
 
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "stochastic physics driver"
-#ifndef SUBSET_PHYSICS
+#ifndef AI2_SUBSET_PHYSICS
 !--- execute the IPD atmospheric physics step2 subcomponent (stochastic physics driver)
 
       call mpp_clock_begin(physClock)

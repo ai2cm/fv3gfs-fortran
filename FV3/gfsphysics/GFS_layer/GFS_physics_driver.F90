@@ -1422,7 +1422,7 @@ module module_physics_driver
 !           faster model time steps.
 !      sw:  using cos of zenith angle as scaling factor
 !      lw:  using surface air skin temperature as scaling factor
-#ifndef SUBSET_PHYSICS
+#ifndef AI2_SUBSET_PHYSICS
       if (Model%pre_rad) then
         call dcyc2t3_pre_rad                                                &
 !  ---  inputs:
@@ -2400,7 +2400,7 @@ module module_physics_driver
           !      stop
           !  end if
           elseif (.not. Model%old_monin) then
-#ifndef SUBSET_PHYSICS
+#ifndef AI2_SUBSET_PHYSICS
             call moninq(ix, im, levs, nvdiff, ntcw, dvdt, dudt, dtdt, dqdt,         &
                         Statein%ugrs, Statein%vgrs, Statein%tgrs, Statein%qgrs,     &
                         Radtend%htrsw, Radtend%htrlw, xmu, Statein%prsik(1,1), rb,  &
@@ -2667,7 +2667,7 @@ module module_physics_driver
         if (ntke > 0) then
           do k=1,levs
             do i=1,im
-#ifdef SUBSET_PHYSICS
+#ifdef AI2_SUBSET_PHYSICS
                dqdt(i,k,ntke)  = 0.
 #else
                dqdt(i,k,ntke)  = dvdftra(i,k,ntkev)
@@ -3135,7 +3135,7 @@ module module_physics_driver
 
       do k=1,levs
         do i=1,im
-#ifdef SUBSET_PHYSICS
+#ifdef AI2_SUBSET_PHYSICS
         Stateout%gt0(i,k)  = Statein%tgrs(i,k)
         Stateout%gu0(i,k)  = Statein%ugrs(i,k)
         Stateout%gv0(i,k)  = Statein%vgrs(i,k)
@@ -3146,7 +3146,7 @@ module module_physics_driver
 #endif
         enddo
       enddo
-#ifdef SUBSET_PHYSICS
+#ifdef AI2_SUBSET_PHYSICS
       Stateout%gq0(1:im,:,:) = Statein%qgrs(1:im,:,:)
 #else
       Stateout%gq0(1:im,:,:) = Statein%qgrs(1:im,:,:) + dqdt(1:im,:,:) * dtp
@@ -3194,7 +3194,7 @@ module module_physics_driver
 !            enddo
 !          endif
         else
-#ifndef SUBSET_PHYSICS
+#ifndef AI2_SUBSET_PHYSICS
           call ozphys (ix, im, levs, levozp, dtp,                 &
                        Stateout%gq0(1,1,ntoz),                    &
                        Stateout%gq0(1,1,ntoz),                    &
