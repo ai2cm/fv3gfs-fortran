@@ -303,6 +303,7 @@ contains
          call error_mesg ('program coupler',  &
               'no namelist value for current_date', FATAL)
     else
+         date_init = current_date
          date      = current_date
     endif
 
@@ -353,11 +354,6 @@ contains
 !------ initialize diagnostics manager ------
 
     call diag_manager_init (TIME_INIT=date)
-
-!----- always override initial/base date with diag_manager value -----
-
-    call get_base_date ( date_init(1), date_init(2), date_init(3), &
-                         date_init(4), date_init(5), date_init(6)  )
 
 !----- use current date if no base date ------
 
