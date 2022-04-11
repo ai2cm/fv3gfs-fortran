@@ -7,15 +7,12 @@ from distutils.extension import Extension
 from Cython.Distutils import build_ext
 from Cython.Build import cythonize
 
-import pkgconfig
 
 # This line only needed if building with NumPy in Cython file.
 from numpy import get_include
 
 PACKAGE_VERSION = "0.6.0"
 
-fv3gfs_build_path_environ_name = "FV3GFS_BUILD_DIR"
-make_command = os.environ.get("MAKE", "make")
 package_dir = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -34,21 +31,9 @@ wrapper_build_filenames = []
 for relative_filename in relative_wrapper_build_filenames:
     wrapper_build_filenames.append(os.path.join(package_dir, relative_filename))
 
-# order of library link args matters
-# dependencies must be to the right of dependees
-# https://stackoverflow.com/questions/45135/why-does-the-order-in-which-libraries-are-linked-sometimes-cause-errors-in-gcc
-library_link_args = []
-library_link_args.extend(wrapper_build_filenames)
-library_link_args += pkgconfig.libs("fv3").split()
-
-mpi_flavor = os.environ.get("MPI", "openmpi")
-if mpi_flavor == "openmpi":
-    library_link_args += pkgconfig.libs("ompi-fort").split()
-else:
-    library_link_args += ["-lmpich", "-lmpifort", "-lmpichcxx"]
-
 # need to include math and c library
-library_link_args += ["-lmvec", "-lc"]
+library_link_args = os.environ['SETUP_PY_LIBS'].split()
+print(library_link_args)
 
 requirements = [
     "mpi4py>=3.0.3",
@@ -68,11 +53,6 @@ with open("README.md") as readme_file:
 with open("HISTORY.md", "r", encoding="utf-8") as history_file:
     history = history_file.read()
 
-if fv3gfs_build_path_environ_name in os.environ:
-    fv3gfs_build_path = os.environ(fv3gfs_build_path_environ_name)
-else:
-    fv3gfs_build_path = os.path.join(package_dir, "lib/external/FV3/")
-
 
 ext_modules = [
     Extension(  # module name:
@@ -80,8 +60,7 @@ ext_modules = [
         # source file:
         ["lib/_wrapper.pyx"],
         include_dirs=[get_include()],
-        extra_link_args=library_link_args,
-        depends=wrapper_build_filenames,
+        extra_link_args=wrapper_build_filenames + library_link_args,
     )
 ]
 

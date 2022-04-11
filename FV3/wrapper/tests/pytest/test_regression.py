@@ -15,7 +15,7 @@ config_filenames = os.listdir(CONFIG_DIR)
 def config(request):
     config_filename = os.path.join(CONFIG_DIR, request.param)
     with open(config_filename, "r") as config_file:
-        return yaml.safe_load(config_file)
+        return fv3config.load(config_file)
 
 
 def md5_from_dir(dir_):

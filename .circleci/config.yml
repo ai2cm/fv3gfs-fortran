@@ -62,6 +62,9 @@ jobs:
       - run:
           name: Test
           command: nix-shell --run "pytest --native tests/pytest"
+      - run:
+          name: Test wrapper
+          command: nix-shell --run "make test_wrapper"
   build_default:
     machine:
       docker_layer_caching: true

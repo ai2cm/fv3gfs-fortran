@@ -23,9 +23,11 @@ PPSER_FLAGS = --verbose --ignore-identical -m utils_ppser_kbuff
 
 FV3_EXE  = fv3.exe
 FV3CAP_LIB  = libfv3cap.a
+ifeq ($(AI2_WRAPPER),Y)
+	MAYBE_WRAPPER_TARGET = wrapper_build
+endif
 
-all: libs fms_check
-	$(MAKE) $(FV3_EXE) $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
+all: libs fms_check $(FV3_EXE) $(MAYBE_WRAPPER_TARGET)
 
 nems: libs fms_check
 	$(MAKE) $(FV3CAP_LIB) $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
@@ -55,16 +57,14 @@ libs_no_dycore: fms_check
 	$(MAKE) -C ipd                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 	$(MAKE) -C io                    $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 
-FV3_LIBS = ccpp/driver/libccppdriver.a atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a coarse_graining/libfv3coarse_graining.a
+FV3_LIBS = libfv3.a ccpp/driver/libccppdriver.a atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a coarse_graining/libfv3coarse_graining.a
 $(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o $(FV3_LIBS)
 	$(LD) -o $@ $^ $(NCEPLIBS) $(LDFLAGS)
 
-install: $(FV3_EXE) $(FV3_LIBS) libfv3.a
-	mkdir -p $(PREFIX)/bin $(PREFIX)/lib $(PREFIX)/include $(PREFIX)/lib/pkgconfig
+install: $(FV3_EXE) $(FV3_LIBS) $(FV3GFS_WRAPPER_WHEEL)
+	mkdir -p $(PREFIX)/bin $(PREFIX)/lib $(PREFIX)/share
 	install -t $(PREFIX)/bin/ $(FV3_EXE)
-	install -t $(PREFIX)/lib/ $(FV3_LIBS) libfv3.a
-	install -t $(PREFIX)/include *.mod ccpp/driver/*.mod gfsphysics/*.mod ipd/*.mod cpl/*.mod io/*.mod atmos_cubed_sphere/*.mod ../stochastic_physics/*.mod
-	bash write_pkg_config.sh $(PREFIX) "-lfv3 $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS)" "$(CPPDEFS) $(CPPFLAGS) $(FPPFLAGS) $(FFLAGS) $(OTHERFLAGS) $(OTHER_FFLAGS) $(ESMF_INC)" > $(PREFIX)/lib/pkgconfig/fv3.pc
+	install -t $(PREFIX)/share $(FV3GFS_WRAPPER_WHEEL)
 
 else
 libs: fms_check
@@ -83,20 +83,38 @@ libs_no_dycore: fms_check
 	$(MAKE) -C ipd                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 	$(MAKE) -C io                    $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 
+PWD :=$(shell pwd)
+
 FV3_LIBS = atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a coarse_graining/libfv3coarse_graining.a
-FV3_LIB_FLAGS = -lfv3core -lfv3io -lipd -lgfsphys -lstochastic_physics -lfv3cpl -lfv3coarse_graining -Latmos_cubed_sphere -Lio -Lipd -Lgfsphysics -L../stochastic_physics -Lcpl -Lcoarse_graining
+FV3_LIB_FLAGS = -lfv3core -lfv3io -lipd -lgfsphys -lstochastic_physics -lfv3cpl -lfv3coarse_graining -L$(PWD)/atmos_cubed_sphere -L$(PWD)/io -L$(PWD)/ipd -L$(PWD)/gfsphysics -L$(PWD)/../stochastic_physics -L$(PWD)/cpl -L$(PWD)/coarse_graining
 
 $(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o $(FV3_LIBS)
 	$(LD)  -o $@  atmos_model.o coupler_main.o module_fv3_config.o $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) 
 
-install: $(FV3_EXE) $(FV3_LIBS) libfv3.a
-	mkdir -p $(PREFIX)/bin $(PREFIX)/lib $(PREFIX)/include $(PREFIX)/lib/pkgconfig
+install: $(FV3_EXE) $(FV3_LIBS) $(FV3GFS_WRAPPER_WHEEL)
+	mkdir -p $(PREFIX)/bin $(PREFIX)/lib $(PREFIX)/share
 	install -t $(PREFIX)/bin/ $(FV3_EXE)
 	install -t $(PREFIX)/lib/ $(FV3_LIBS) libfv3.a
 	install -t $(PREFIX)/include *.mod gfsphysics/*.mod ipd/*.mod cpl/*.mod io/*.mod atmos_cubed_sphere/*.mod ../stochastic_physics/*.mod
 	bash write_pkg_config.sh $(PREFIX) "-lfv3 $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS)" "$(CPPDEFS) $(CPPFLAGS) $(FPPFLAGS) $(FFLAGS) $(OTHERFLAGS) $(OTHER_FFLAGS) $(ESMF_INC)" > $(PREFIX)/lib/pkgconfig/fv3.pc
 
 endif
+
+
+
+
+# wrapper related makefile targets
+wrapper_build:
+	MAKE_INCLUDE=$(shell pwd)/conf/configure.fv3 \
+	 OTHER_FFLAGS="-I$(shell pwd)  -I$(shell pwd)/atmos_cubed_sphere" \
+	 SETUP_PY_LIBS="-lfv3 -L$(PWD) $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) -lfmpich -lmpich -lmvec -lm" \
+		$(MAKE) -C wrapper build
+
+wrapper_test: wrapper_build
+	$(MAKE) -C wrapper test
+
+wrapper_docs: 
+	$(MAKE) -C wrapper docs
 
 libfv3.a: atmos_model.o module_fv3_config.o
 	ar crs $@ $^
@@ -209,7 +227,7 @@ pp_ser_calls: serialize_outdir_check
 	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/atmos_cubed_sphere/tools $(CWD)/atmos_cubed_sphere/tools/test_cases.F90
 
 .PHONY: clean cleanall serialize serialize_preprocess fms_check serialize_outdir_check
-clean:
+clean: wrapper_clean
 	@echo "Cleaning ... "
 	@echo
 	(cd gfsphysics            && make clean)

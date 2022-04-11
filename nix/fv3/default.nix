@@ -19,6 +19,35 @@ let
   src = builtins.fetchGit {
     url = ../..;
   };
+  fetchPypi = call_py_fort.pypkgs.fetchPypi;
+  pace-util = with call_py_fort.pypkgs ; buildPythonPackage rec {
+    pname = "pace-util";
+    version = "0.7.0";
+    src = fetchPypi {
+      inherit pname version;
+      sha256 = "sha256-GBfdbryL0ylSDFefoJCobpFFJc1tfAaQ1gjeK0+BOvg=";
+    };
+    propagatedBuildInputs = [
+      zarr
+      xarray
+      cftime
+      numpy
+      fsspec
+      typing-extensions
+    ];
+    # doesn't find pytest, not sure why, disabling tests for now.
+    doCheck = false;
+  };
+  fv3config = let version ="0.8.0";
+  in
+  call_py_fort.pypkgs.fv3config.overridePythonAttrs (attrs :{
+    version = version;
+    src = fetchPypi {
+      version = version;
+      pname = attrs.pname;
+      sha256 = "sha256-MCS97yjMlW1RgmxrbwKnqM5jpWbblOchH2x0cekyDD4=";
+    };
+  });
 in
 stdenv.mkDerivation {
   name = "fv3";
@@ -26,12 +55,21 @@ stdenv.mkDerivation {
   buildInputs = [
       call_py_fort
       call_py_fort.pypkgs.black
-      call_py_fort.pypkgs.fv3config
       call_py_fort.pypkgs.numpy
       call_py_fort.pypkgs.pytest
       call_py_fort.pypkgs.pytest-regtest
       call_py_fort.pypkgs.pyyaml
       call_py_fort.pypkgs.xarray
+      call_py_fort.pypkgs.cython
+      call_py_fort.pypkgs.mpi4py
+      call_py_fort.pypkgs.wheel
+      # read he docs
+      call_py_fort.pypkgs.sphinx
+      call_py_fort.pypkgs.sphinx_rtd_theme
+      fv3config
+      pace-util
+      # avoids linking agains static libgfortran
+      gfortran.cc.lib
       fms
       esmf
       nceplibs
@@ -86,6 +124,7 @@ config = ./configure.fv3;
 configurePhase = ''
   cd FV3
   cp $config conf/configure.fv3
+
   # ./configure gnu_docker
   cd ..
 '';
@@ -109,7 +148,8 @@ installPhase = ''
   CALLPYFORT="${call_py_fort}";
 
   shellHook = ''
-    export PYTHONPATH=$(pwd)/tests/emulation:$PYTHONPATH
+    export PYTHONPATH=$(pwd)/tests/emulation:$(pwd)/FV3/wrapper:$PYTHONPATH
+    export AI2_WRAPPER=Y
   '';
 }
 
