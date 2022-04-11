@@ -38,6 +38,10 @@ ifndef FMS_DIR
 	$(error ERROR: FMS_DIR variable is unset)
 endif
 
+install: $(FV3_EXE) $(FV3_LIBS)
+	mkdir -p $(PREFIX)/bin $(PREFIX)/lib
+	install -t $(PREFIX)/bin/ $(FV3_EXE)
+
 ifneq (,$(findstring CCPP,$(CPPDEFS)))
 libs: fms_check
 	$(MAKE) -C coarse_graining       $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
@@ -61,10 +65,6 @@ FV3_LIBS = libfv3.a ccpp/driver/libccppdriver.a atmos_cubed_sphere/libfv3core.a 
 $(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o $(FV3_LIBS)
 	$(LD) -o $@ $^ $(NCEPLIBS) $(LDFLAGS)
 
-install: $(FV3_EXE) $(FV3_LIBS) $(FV3GFS_WRAPPER_WHEEL)
-	mkdir -p $(PREFIX)/bin $(PREFIX)/lib $(PREFIX)/share
-	install -t $(PREFIX)/bin/ $(FV3_EXE)
-	install -t $(PREFIX)/share $(FV3GFS_WRAPPER_WHEEL)
 
 else
 libs: fms_check
@@ -90,14 +90,6 @@ FV3_LIB_FLAGS = -lfv3core -lfv3io -lipd -lgfsphys -lstochastic_physics -lfv3cpl 
 
 $(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o $(FV3_LIBS)
 	$(LD)  -o $@  atmos_model.o coupler_main.o module_fv3_config.o $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) 
-
-install: $(FV3_EXE) $(FV3_LIBS) $(FV3GFS_WRAPPER_WHEEL)
-	mkdir -p $(PREFIX)/bin $(PREFIX)/lib $(PREFIX)/share
-	install -t $(PREFIX)/bin/ $(FV3_EXE)
-	install -t $(PREFIX)/lib/ $(FV3_LIBS) libfv3.a
-	install -t $(PREFIX)/include *.mod gfsphysics/*.mod ipd/*.mod cpl/*.mod io/*.mod atmos_cubed_sphere/*.mod ../stochastic_physics/*.mod
-	bash write_pkg_config.sh $(PREFIX) "-lfv3 $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS)" "$(CPPDEFS) $(CPPFLAGS) $(FPPFLAGS) $(FFLAGS) $(OTHERFLAGS) $(OTHER_FFLAGS) $(ESMF_INC)" > $(PREFIX)/lib/pkgconfig/fv3.pc
-
 endif
 
 
