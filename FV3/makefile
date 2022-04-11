@@ -61,7 +61,7 @@ libs_no_dycore: fms_check
 	$(MAKE) -C ipd                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 	$(MAKE) -C io                    $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 
-FV3_LIBS = libfv3.a ccpp/driver/libccppdriver.a atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a coarse_graining/libfv3coarse_graining.a
+FV3_LIBS = ccpp/driver/libccppdriver.a atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a coarse_graining/libfv3coarse_graining.a
 $(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o $(FV3_LIBS)
 	$(LD) -o $@ $^ $(NCEPLIBS) $(LDFLAGS)
 
@@ -96,10 +96,10 @@ endif
 
 
 # wrapper related makefile targets
-wrapper_build:
+wrapper_build: atmos_model.o coupler_main.o module_fv3_config.o $(FV3_LIBS)
 	MAKE_INCLUDE=$(shell pwd)/conf/configure.fv3 \
 	 OTHER_FFLAGS="-I$(shell pwd)  -I$(shell pwd)/atmos_cubed_sphere" \
-	 SETUP_PY_LIBS="-lfv3 -L$(PWD) $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) -lfmpich -lmpich -lmvec -lm" \
+	 SETUP_PY_LIBS="-L$(PWD) $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) -lfmpich -lmpich -lmvec -lm" \
 		$(MAKE) -C wrapper build
 
 wrapper_test: wrapper_build
@@ -107,9 +107,6 @@ wrapper_test: wrapper_build
 
 wrapper_docs: 
 	$(MAKE) -C wrapper docs
-
-libfv3.a: atmos_model.o module_fv3_config.o
-	ar crs $@ $^
 
 $(FV3CAP_LIB): atmos_model.o module_fv3_config.o module_fcst_grid_comp.o time_utils.o fv3_cap.o
 	ar rv $(FV3CAP_LIB) $?
