@@ -124,10 +124,18 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
 ! ----- local variables -----
    character(len=32) :: timestamp
    logical :: intrm_rst
-   !$ser verbatim integer :: mpi_rank,ier
-   
+   !$ser verbatim integer :: mpi_rank,ier, timestep_len, timestep_status, save_timestep
+   !$ser verbatim logical :: serialize_physics
+   !$ser verbatim character(len=256) :: ser_env, save_timestep_str
 !#######################################################################
-
+   !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+   !$ser verbatim serialize_physics = (index(ser_env, "physics") /= 0)
+   !$ser verbatim call get_environment_variable("SAVE_TIMESTEP", save_timestep_str, timestep_len, timestep_status)
+   !$ser verbatim if (timestep_status .eq. 0 .and. timestep_len .gt. 0) then
+     !$ser verbatim read (save_timestep_str,*) save_timestep
+   !$ser verbatim else
+     !$ser verbatim save_timestep = 1
+   !$ser verbatim endif
  call fms_init()
  call mpp_init()
  initClock = mpp_clock_id( '1-Initialization' )
@@ -169,9 +177,18 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
     end if
 
     Time_atmos = Time_atmos + Time_step_atmos
-
+    !$ser verbatim if (nc == save_timestep) then
+      !$ser on
+    !$ser verbatim else
+      !$ser off
+    !$ser verbatim endif
     call update_atmos_model_dynamics (Atm)
 
+    !$ser verbatim if (nc == save_timestep .and. serialize_physics) then
+      !$ser on
+    !$ser verbatim else
+      !$ser off
+    !$ser verbatim endif
     call update_atmos_radiation_physics (Atm)
 
     call update_atmos_model_state (Atm)

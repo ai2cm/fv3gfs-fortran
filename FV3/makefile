@@ -192,6 +192,7 @@ serialize_preprocess: serialize_outdir_check
 	@echo "preprocessing for serialization"
 	@mkdir -p $(SERIALBOX_OUTDIR)/atmos_cubed_sphere/model
 	@mkdir -p $(SERIALBOX_OUTDIR)/atmos_cubed_sphere/driver/fvGFS
+	@mkdir -p $(SERIALBOX_OUTDIR)/gfsphysics/GFS_layer
 	@mkdir -p $(SERIALBOX_OUTDIR)/atmos_cubed_sphere/tools
 	@make pp_ser_calls
 	@cp -r -u  $(CWD)/* $(SERIALBOX_OUTDIR)
@@ -202,6 +203,7 @@ pp_ser_calls: serialize_outdir_check
 	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/ $(CWD)/*.F90
 	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/atmos_cubed_sphere/model $(CWD)/atmos_cubed_sphere/model/*.F90
 	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/atmos_cubed_sphere/driver/fvGFS $(CWD)/atmos_cubed_sphere/driver/fvGFS/*.F90
+	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/gfsphysics/GFS_layer $(CWD)/gfsphysics/GFS_layer/*.F90
 	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/atmos_cubed_sphere/tools $(CWD)/atmos_cubed_sphere/tools/fv_grid_tools.F90
 	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/atmos_cubed_sphere/tools $(CWD)/atmos_cubed_sphere/tools/fv_restart.F90
 	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/atmos_cubed_sphere/tools $(CWD)/atmos_cubed_sphere/tools/test_cases.F90

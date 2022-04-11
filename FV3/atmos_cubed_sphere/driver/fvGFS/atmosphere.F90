@@ -256,8 +256,10 @@ character(len=20)   :: mod_name = 'fvGFS/atmosphere_mod'
   !$ser verbatim integer::cld_amt
 #endif
   !$ser verbatim integer :: o3mr, sgs_tke
-  !$ser verbatim character(len=256) :: ser_env
-  !$ser verbatim logical :: serialize_only_driver
+  !$ser verbatim character(len=256) :: ser_env, ser_input_only_str
+  !$ser verbatim logical :: serialize_only_driver_input, serialize_driver, serialize_dycore, serialize_physics, serialize_init, save_step, ser_input_only
+  !$ser verbatim integer, save :: driver_savepoints_saved = 0
+ 
   integer :: mytile  = 1
   integer :: p_split = 1
   integer, allocatable :: pelist(:)
@@ -320,6 +322,14 @@ contains
    integer :: nthreads
    integer :: ierr
 #endif
+  !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+  !$ser verbatim call get_environment_variable("SER_INPUT_ONLY", ser_input_only_str)
+  !$ser verbatim serialize_only_driver_input = (index(ser_input_only_str, "true") /= 0)
+  !$ser verbatim serialize_driver = (index(ser_env, "driver") /= 0)
+  !$ser verbatim serialize_dycore = (index(ser_env, "dycore") /= 0)
+  !$ser verbatim serialize_physics = (index(ser_env, "physics") /= 0)
+  !$ser verbatim serialize_init = (index(ser_env, "init") /= 0)
+  !$ser verbatim save_step = .false.
 
    current_time_in_seconds = time_type_to_real( Time - Time_init )
    if (mpp_pe() == 0) write(*,"('atmosphere_init: current_time_seconds = ',f9.1)")current_time_in_seconds
@@ -339,8 +349,9 @@ contains
 !----- initialize FV dynamical core -----
    !NOTE do we still need the second file_exist call?
    cold_start = (.not.file_exist('INPUT/fv_core.res.nc') .and. .not.file_exist('INPUT/fv_core.res.tile1.nc'))
-
-   !$ser on
+   !$ser verbatim if (serialize_init) then
+     !$ser on
+   !$ser verbatim endif
    call fv_init( Atm, dt_atmos, grids_on_this_pe, p_split )  ! allocates Atm components
    !$ser off
 
@@ -395,9 +406,7 @@ contains
    graupel = get_tracer_index (MODEL_ATMOS, 'graupel' )
   !$ser verbatim o3mr = get_tracer_index (MODEL_ATMOS, 'o3mr')
   !$ser verbatim sgs_tke = get_tracer_index (MODEL_ATMOS, 'sgs_tke')
-  !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
-  !$ser verbatim serialize_only_driver = (index(ser_env, "ONLY_DRIVER") /= 0)
-
+ 
 #ifdef CCPP
    cld_amt = get_tracer_index (MODEL_ATMOS, 'cld_amt')
 #else
@@ -448,8 +457,11 @@ contains
    allocate(pref(npz+1,2), dum1d(npz+1))
 
    call set_domain ( Atm(mytile)%domain )
+   !$ser verbatim if (serialize_dycore .or. serialize_init) then
+   !$ser on
+   !$ser verbatim endif
    call fv_restart(Atm(mytile)%domain, Atm, dt_atmos, seconds, days, cold_start, Atm(mytile)%gridstruct%grid_type, grids_on_this_pe)
-
+   !$ser off
    fv_time = Time
 
 !----- initialize atmos_axes and fv_dynamics diagnostics
@@ -697,28 +709,80 @@ contains
    call mpp_clock_end(id_dynam_other)
 
    call mpp_clock_begin(id_dynam)
-
+   !$ser verbatim save_step=fs_is_serialization_on()
    do psc=1,abs(p_split)
-     !$ser verbatim if ((psc == abs(p_split)) .and. (a_step == 1)) then
+      !$ser verbatim if ((psc == abs(p_split)) .and. save_step) then
+       !$ser verbatim save_step = .true.
        !$ser on
        !$ser savepoint Grid-Info
-       !$ser data is_=Atm(n)%bd%is ie=Atm(n)%bd%ie isd=Atm(n)%bd%isd ied=Atm(n)%bd%ied js=Atm(n)%bd%js je=Atm(n)%bd%je jsd=Atm(n)%bd%jsd jed=Atm(n)%bd%jed npx=npx npy=npy npz=npz nested=Atm(n)%gridstruct%nested grid_type=Atm(n)%gridstruct%grid_type dya=Atm(n)%gridstruct%dya  dxa=Atm(n)%gridstruct%dxa dxc=Atm(n)%gridstruct%dxc dyc=Atm(n)%gridstruct%dyc rdxc=Atm(n)%gridstruct%rdxc rdx=Atm(n)%gridstruct%rdx rdyc=Atm(n)%gridstruct%rdyc  rdxa=Atm(n)%gridstruct%rdxa  rdya=Atm(n)%gridstruct%rdya rdy=Atm(n)%gridstruct%rdy cosa_u=Atm(n)%gridstruct%cosa_u cosa_v=Atm(n)%gridstruct%cosa_v  cosa_s=Atm(n)%gridstruct%cosa_s sina_v=Atm(n)%gridstruct%sina_v  sina_u=Atm(n)%gridstruct%sina_u rsin_u=Atm(n)%gridstruct%rsin_u rsin_v=Atm(n)%gridstruct%rsin_v rsin2=Atm(n)%gridstruct%rsin2 sin_sg=Atm(n)%gridstruct%sin_sg cos_sg=Atm(n)%gridstruct%cos_sg area=Atm(n)%gridstruct%area dy=Atm(n)%gridstruct%dy rarea=Atm(n)%gridstruct%rarea  rarea_c=Atm(n)%gridstruct%rarea_c area_64=Atm(n)%gridstruct%area_64 rsina=Atm(n)%gridstruct%rsina cosa=Atm(n)%gridstruct%cosa  dx=Atm(n)%gridstruct%dx fC=Atm(n)%gridstruct%fC da_min=Atm(n)%gridstruct%da_min da_min_c=Atm(n)%gridstruct%da_min_c del6_u=Atm(n)%gridstruct%del6_u del6_v=Atm(n)%gridstruct%del6_v f0=Atm(n)%gridstruct%f0 divg_u=Atm(n)%gridstruct%divg_u divg_v=Atm(n)%gridstruct%divg_v stretched_grid=Atm(n)%gridstruct%stretched_grid agrid1=Atm(n)%gridstruct%agrid(:,:,1) agrid2=Atm(n)%gridstruct%agrid(:,:,2) bgrid1=Atm(n)%gridstruct%grid(:,:,1) bgrid2=Atm(n)%gridstruct%grid(:,:,2) edge_w=Atm(n)%gridstruct%edge_w(jsc:jec+1) edge_e=Atm(n)%gridstruct%edge_e(jsc:jec+1) edge_s=Atm(n)%gridstruct%edge_s(isc:iec+1) edge_n=Atm(n)%gridstruct%edge_n(isc:iec+1) a11=Atm(n)%gridstruct%a11  a12=Atm(n)%gridstruct%a12  a21=Atm(n)%gridstruct%a21  a22=Atm(n)%gridstruct%a22 
+       !$ser data is_=Atm(n)%bd%is ie=Atm(n)%bd%ie isd=Atm(n)%bd%isd ied=Atm(n)%bd%ied js=Atm(n)%bd%js je=Atm(n)%bd%je jsd=Atm(n)%bd%jsd jed=Atm(n)%bd%jed
+       !$ser data npx=npx npy=npy npz=npz nested=Atm(n)%gridstruct%nested grid_type=Atm(n)%gridstruct%grid_type dya=Atm(n)%gridstruct%dya
+       !$ser data dxa=Atm(n)%gridstruct%dxa dxc=Atm(n)%gridstruct%dxc dyc=Atm(n)%gridstruct%dyc rdxc=Atm(n)%gridstruct%rdxc rdx=Atm(n)%gridstruct%rdx
+       !$ser data rdyc=Atm(n)%gridstruct%rdyc  rdxa=Atm(n)%gridstruct%rdxa  rdya=Atm(n)%gridstruct%rdya rdy=Atm(n)%gridstruct%rdy
+       !$ser data cosa_u=Atm(n)%gridstruct%cosa_u cosa_v=Atm(n)%gridstruct%cosa_v  cosa_s=Atm(n)%gridstruct%cosa_s sina_v=Atm(n)%gridstruct%sina_v
+       !$ser data sina_u=Atm(n)%gridstruct%sina_u rsin_u=Atm(n)%gridstruct%rsin_u rsin_v=Atm(n)%gridstruct%rsin_v rsin2=Atm(n)%gridstruct%rsin2
+       !$ser data sin_sg=Atm(n)%gridstruct%sin_sg cos_sg=Atm(n)%gridstruct%cos_sg area=Atm(n)%gridstruct%area dy=Atm(n)%gridstruct%dy
+       !$ser data rarea=Atm(n)%gridstruct%rarea  rarea_c=Atm(n)%gridstruct%rarea_c area_64=Atm(n)%gridstruct%area_64 rsina=Atm(n)%gridstruct%rsina
+       !$ser data cosa=Atm(n)%gridstruct%cosa  dx=Atm(n)%gridstruct%dx fC=Atm(n)%gridstruct%fC da_min=Atm(n)%gridstruct%da_min
+       !$ser data da_min_c=Atm(n)%gridstruct%da_min_c del6_u=Atm(n)%gridstruct%del6_u del6_v=Atm(n)%gridstruct%del6_v f0=Atm(n)%gridstruct%f0
+       !$ser data divg_u=Atm(n)%gridstruct%divg_u divg_v=Atm(n)%gridstruct%divg_v stretched_grid=Atm(n)%gridstruct%stretched_grid
+       !$ser data agrid1=Atm(n)%gridstruct%agrid(:,:,1) agrid2=Atm(n)%gridstruct%agrid(:,:,2) bgrid1=Atm(n)%gridstruct%grid(:,:,1)
+       !$ser data bgrid2=Atm(n)%gridstruct%grid(:,:,2) edge_w=Atm(n)%gridstruct%edge_w(jsc:jec+1) edge_e=Atm(n)%gridstruct%edge_e(jsc:jec+1)
+       !$ser data edge_s=Atm(n)%gridstruct%edge_s(isc:iec+1) edge_n=Atm(n)%gridstruct%edge_n(isc:iec+1) a11=Atm(n)%gridstruct%a11
+       !$ser data a12=Atm(n)%gridstruct%a12  a21=Atm(n)%gridstruct%a21  a22=Atm(n)%gridstruct%a22 ak=Atm(n)%ak bk=Atm(n)%bk ptop=Atm(n)%ptop ks=Atm(n)%ks
+       !$ser data ee1=Atm(n)%gridstruct%ee1 ee2=Atm(n)%gridstruct%ee2 ew1=Atm(n)%gridstruct%ew(:,:,:,1) ew2=Atm(n)%gridstruct%ew(:,:,:,2)
+       !$ser data  es1=Atm(n)%gridstruct%es(:,:,:,1) es2=Atm(n)%gridstruct%es(:,:,:,2)
+       !$ser data vlon=Atm(n)%gridstruct%vlon vlat=Atm(n)%gridstruct%vlat
+       !$ser data edge_vect_w=Atm(n)%gridstruct%edge_vect_w edge_vect_e=Atm(n)%gridstruct%edge_vect_e edge_vect_s=Atm(n)%gridstruct%edge_vect_s edge_vect_n=Atm(n)%gridstruct%edge_vect_n
        !$ser verbatim call set_nz(npz)
-     !$ser verbatim else
+       !$ser verbatim if (serialize_init) then
+           !$ser verbatim if (mpp_pe() == 0) write(*,*) "Stopping after saving fv_init and grid"
+           !$ser verbatim call mp_stop(); call exit(0)
+       !$ser verbatim endif
+      !$ser verbatim else
+         !$ser verbatim save_step = .false.
        !$ser off
-     !$ser verbatim endif
+      !$ser verbatim endif
+
+     
      p_step = psc
                     call timing_on('fv_dynamics')
 !uc/vc only need be same on coarse grid? However BCs do need to be the same
-     !$ser savepoint FVDynamics-In
+     !$ser verbatim if (driver_savepoints_saved == 1) then
+       !$ser verbatim driver_savepoints_saved = 2
+     !$ser verbatim endif
+     !$ser verbatim if (serialize_driver .or.  serialize_only_driver_input) then
+         !$ser verbatim if (driver_savepoints_saved == 2) then
+               !$ser on
+               !$ser savepoint Driver-Out
+         !$ser verbatim else               
+            !$ser savepoint Driver-In
+         !$ser verbatim endif            
+     !$ser verbatim else if (serialize_dycore) then
+          !$ser savepoint FVDynamics-In
+     !$ser verbatim else
+          !$ser off
+     !$ser verbatim endif
+    
      !$ser verbatim bdt=dt_atmos/real(abs(p_split))
      !$ser data bdt=bdt nq_tot=nq zvir=zvir ptop=Atm(n)%ptop ks=Atm(n)%ks ncnst=nq n_split=n_split_loc u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp  qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr)  ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc ak=Atm(n)%ak bk=Atm(n)%bk mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est consv_te=Atm(n)%flagstruct%consv_te do_adiabatic_init=do_adiabatic_init
      !$ser verbatim if (sgs_tke > 0) then
        !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
      !$ser verbatim endif
-     !$ser verbatim if (serialize_only_driver) then
+                    
+     !$ser verbatim if (save_step) then
+       !$ser verbatim  driver_savepoints_saved =  1
+     !$ser verbatim endif               
+     !$ser verbatim if (serialize_only_driver_input .and. save_step) then
        !$ser verbatim if (mpp_pe() == 0) write(*,*) "Stopping after serialization of fv_dynamics() input"
        !$ser verbatim call mp_stop(); call exit(0)
+     !$ser verbatim endif
+     !$ser verbatim if ((serialize_driver .or. serialize_dycore .or. serialize_physics) .and. driver_savepoints_saved == 2) then
+         !$ser verbatim if (mpp_pe() == 0) write(*,*) "Stopping after saving serialization of one saved timestep"
+         !$ser verbatim call mp_stop(); call exit(0)           
+     !$ser verbatim endif
+     !$ser verbatim if (serialize_driver) then
+         !$ser off
      !$ser verbatim endif
      call fv_dynamics(npx, npy, npz, nq, Atm(n)%ng, dt_atmos/real(abs(p_split)),&
                        Atm(n)%flagstruct%consv_te, Atm(n)%flagstruct%fill,       &
@@ -739,7 +803,15 @@ contains
                        Atm(n)%neststruct,  Atm(n)%idiag, Atm(n)%bd,              &
                        Atm(n)%parent_grid, Atm(n)%domain,Atm(n)%diss_est,        &
                        Atm(n)%lagrangian_tendency_of_hydrostatic_pressure)
-     !$ser savepoint FVDynamics-Out
+     !$ser verbatim if (serialize_physics .and. save_step) then
+     ! NOTE: this is added here for convenience. In a future iteration
+     ! you may want to save this after fv_subgridz, so that physics tests
+     ! don't depend on a driver function
+       !$ser on
+       !$ser savepoint GFSPhysicsDriver-In
+     !$ser verbatim else
+       !$ser savepoint FVDynamics-Out
+     !$ser verbatim endif
      !$ser data u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w delz=Atm(n)%delz pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va uc=Atm(n)%uc vc=Atm(n)%vc mfxd=Atm(n)%mfx mfyd=Atm(n)%mfy cxd=Atm(n)%cx cyd=Atm(n)%cy diss_estd=Atm(n)%diss_est
      !$ser verbatim if (sgs_tke > 0) then
        !$ser data qsgs_tke=Atm(n)%q(:,:,:,sgs_tke)
@@ -769,7 +841,12 @@ contains
       nt_dyn = nq
       if ( w_diff /= NO_TRACER ) then
         nt_dyn = nq - 1
-      endif
+     endif
+     !$ser verbatim if ((serialize_driver  .or. serialize_dycore) .and. save_step) then
+       !$ser on
+     !$ser verbatim else
+       !$ser off
+     !$ser verbatim endif
       !$ser savepoint FVSubgridZ-In
       !$ser data nq=nt_dyn dt=dt_atmos delp=Atm(n)%delp pe=Atm(n)%pe peln=Atm(n)%peln pkz=Atm(n)%pkz pt=Atm(n)%pt  qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr) ua=Atm(n)%ua va=Atm(n)%va w=Atm(n)%w delz=Atm(n)%delz u_dt=u_dt v_dt=v_dt t_dt=t_dt
       !$ser verbatim if (sgs_tke > 0) then
@@ -1573,7 +1650,12 @@ contains
    call timing_on('GFS_TENDENCIES')
 
    call atmos_phys_qdt_diag(Atm(n)%q, Atm(n)%physics_tendency_diag, nt_dyn, dt_atmos, .true.)
-
+   !$ser verbatim if (serialize_physics .and. save_step) then
+     !$ser on
+   !$ser verbatim else
+     !$ser off
+   !$ser verbatim endif
+   
 !--- put u/v tendencies into haloed arrays u_dt and v_dt
 !$OMP parallel do default (none) & 
 !$OMP              shared (rdt, n, nq, dnats, npz, ncnst, nwat, mytile, u_dt, v_dt, t_dt,&
@@ -1588,8 +1670,23 @@ contains
 !SJL: perform vertical filling to fix the negative humidity if the SAS convection scheme is used
 !     This call may be commented out if RAS or other positivity-preserving CPS is used.
      blen = Atm_block%blksz(nb)
+     !$ser savepoint FillGFS-In
+     !$ser data IPD_gq0=IPD_Data(nb)%Stateout%gq0 nb=nb IPD_prsi=IPD_Data(nb)%Statein%prsi
      call fill_gfs(blen, npz, IPD_Data(nb)%Statein%prsi, IPD_Data(nb)%Stateout%gq0, 1.e-9_kind_phys)
-
+     !$ser savepoint FillGFS-Out
+     !$ser data IPD_gq0=IPD_Data(nb)%Stateout%gq0 IPD_delp=Atm(n)%delp IPD_qvapor=IPD_Data(nb)%Stateout%gq0(:,:,1)
+     !$ser savepoint PhysUpdateTracers-In
+     !$ser data u_dt=u_dt v_dt=v_dt t_dt=t_dt
+     !$ser data u_t1=IPD_Data(nb)%Stateout%gu0 u_t0=IPD_Data(nb)%Statein%ugrs
+     !$ser data v_t1=IPD_Data(nb)%Stateout%gv0 v_t0=IPD_Data(nb)%Statein%vgrs
+     !$ser data pt_t1=IPD_Data(nb)%Stateout%gt0 pt_t0=IPD_Data(nb)%Statein%tgrs
+     !$ser data IPD_prsi=IPD_Data(nb)%Statein%prsi rdt=rdt IPD_delp=Atm(n)%delp
+     !$ser data qvapor_t1=IPD_Data(nb)%Stateout%gq0(:,:,1) qvapor_t0=Atm(n)%q(:,:,:,1)
+     !$ser data qliquid_t1=IPD_Data(nb)%Stateout%gq0(:,:,2) qliquid_t0=Atm(n)%q(:,:,:,2)
+     !$ser data qrain_t1=IPD_Data(nb)%Stateout%gq0(:,:,3) qrain_t0=Atm(n)%q(:,:,:,3)
+     !$ser data qice_t1=IPD_Data(nb)%Stateout%gq0(:,:,4) qice_t0=Atm(n)%q(:,:,:,4)
+     !$ser data qsnow_t1=IPD_Data(nb)%Stateout%gq0(:,:,5) qsnow_t0=Atm(n)%q(:,:,:,5)
+     !$ser data qgraupel_t1=IPD_Data(nb)%Stateout%gq0(:,:,6) qgraupel_t0=Atm(n)%q(:,:,:,6)
      do k = 1, npz
            if(flip_vc) then
              k1 = npz+1-k !reverse the k direction 
@@ -1615,6 +1712,7 @@ contains
            q0 = IPD_Data(nb)%Statein%prsi(ix,k+1) - IPD_Data(nb)%Statein%prsi(ix,k)
          endif
          qwat(1:nq_adv) = q0*IPD_Data(nb)%Stateout%gq0(ix,k,1:nq_adv)
+
 ! **********************************************************************************************************
 ! Dry mass: the following way of updating delp is key to mass conservation with hybrid 32-64 bit computation
 ! **********************************************************************************************************
@@ -1631,6 +1729,15 @@ contains
 !        if (dnats .gt. 0) Atm(n)%q(i,j,k1,nq_adv+1:nq) = IPD_Data(nb)%Stateout%gq0(ix,k,nq_adv+1:nq)
        enddo
      enddo
+     !$ser savepoint PhysUpdateTracers-Out
+     !$ser data u_dt=u_dt v_dt=v_dt t_dt=t_dt
+     !$ser data delp=Atm(n)%delp 
+     !$ser data qvapor_t0=Atm(n)%q(:,:,:,1)
+     !$ser data qliquid_t0=Atm(n)%q(:,:,:,2)
+     !$ser data qrain_t0=Atm(n)%q(:,:,:,3)
+     !$ser data qice_t0=Atm(n)%q(:,:,:,4)
+     !$ser data qsnow_t0=Atm(n)%q(:,:,:,5)
+     !$ser data qgraupel_t0=Atm(n)%q(:,:,:,6)
 
      !--- diagnostic tracers are assumed to be updated in-place
      !--- SHOULD THESE DIAGNOSTIC TRACERS BE MASS ADJUSTED???
@@ -1686,6 +1793,12 @@ contains
 
    call mpp_clock_begin(id_update)
        call timing_on('FV_UPDATE_PHYS')
+    !$ser savepoint FVUpdatePhys-In
+    !$ser data u_dt=u_dt v_dt=v_dt t_dt=t_dt
+    !$ser data u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va
+    !$ser data u_srf=Atm(n)%u_srf v_srf=Atm(n)%v_srf
+    !$ser data pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr)  
+    !$ser data ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con 
     call fv_update_phys( dt_atmos, isc, iec, jsc, jec, isd, ied, jsd, jed, Atm(n)%ng, nt_dyn, &
                          Atm(n)%u,  Atm(n)%v,   Atm(n)%w,  Atm(n)%delp, Atm(n)%pt,         &
                          Atm(n)%q,  Atm(n)%qdiag,                                          &
@@ -1699,7 +1812,12 @@ contains
                          Atm(n)%neststruct, Atm(n)%bd, Atm(n)%domain, Atm(n)%ptop,         &
                          Atm(n)%nudge_diag, Atm(n)%physics_tendency_diag,                  &
                          Atm(n)%column_moistening_implied_by_nudging)
-
+    
+    !$ser savepoint FVUpdatePhys-Out
+    !$ser data u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w omga=Atm(n)%omga ua=Atm(n)%ua va=Atm(n)%va
+    !$ser data pt=Atm(n)%pt delp=Atm(n)%delp qvapor=Atm(n)%q(:,:,:,sphum) qliquid=Atm(n)%q(:,:,:,liq_wat) qice=Atm(n)%q(:,:,:,ice_wat) qrain=Atm(n)%q(:,:,:,rainwat) qsnow=Atm(n)%q(:,:,:,snowwat) qgraupel=Atm(n)%q(:,:,:,graupel) qcld=Atm(n)%q(:,:,:,cld_amt) qo3mr=Atm(n)%q(:,:,:,o3mr)  
+    !$ser data ps=Atm(n)%ps pe=Atm(n)%pe pk=Atm(n)%pk peln=Atm(n)%peln pkz=Atm(n)%pkz phis=Atm(n)%phis q_con=Atm(n)%q_con
+    
        call timing_off('FV_UPDATE_PHYS')
    call mpp_clock_end(id_update)
 
@@ -2044,6 +2162,15 @@ contains
    real(kind=kind_phys) :: rTv, dm, qgrs_rad
    integer :: nb, blen, npz, i, j, k, ix, k1, kz, dnats, nq_adv
 
+  !$ser savepoint AtmosPhysDriverStatein-In
+  !$ser data IPD_prsik=IPD_Data(1)%Statein%prsik IPD_phii=IPD_Data(1)%Statein%phii IPD_atm_ts=IPD_Data(1)%Statein%atm_ts
+  !$ser data IPD_tgrs=IPD_Data(1)%Statein%tgrs IPD_ugrs=IPD_Data(1)%Statein%ugrs IPD_vgrs=IPD_Data(1)%Statein%vgrs
+  !$ser data IPD_vvl=IPD_Data(1)%Statein%vvl IPD_prsl=IPD_Data(1)%Statein%prsl IPD_diss_est=IPD_Data(1)%Statein%diss_est
+  !$ser data IPD_qgrs=IPD_Data(1)%Statein%qgrs IPD_prsi=IPD_Data(1)%Statein%prsi IPD_pgr=IPD_Data(1)%Statein%pgr
+  !$ser data IPD_prslk=IPD_Data(1)%Statein%prslk IPD_phil=IPD_Data(1)%Statein%phil IPD_dycore_hydrostatic=IPD_Data(1)%Statein%dycore_hydrostatic
+  !$ser data IPD_nwat=IPD_Data(1)%Statein%nwat
+  !$ser data delz=Atm(mytile)%delz pt=Atm(mytile)%pt delp=Atm(mytile)%delp qvapor=Atm(mytile)%q(:,:,:,sphum) qliquid=Atm(mytile)%q(:,:,:,liq_wat) qice=Atm(mytile)%q(:,:,:,ice_wat) qrain=Atm(mytile)%q(:,:,:,rainwat) qsnow=Atm(mytile)%q(:,:,:,snowwat) qgraupel=Atm(mytile)%q(:,:,:,graupel) qcld=Atm(mytile)%q(:,:,:,cld_amt) qo3mr=Atm(mytile)%q(:,:,:,o3mr)
+
 !!! NOTES: lmh 6nov15
 !!! - "Layer" means "layer mean", ie. the average value in a layer
 !!! - "Level" means "level interface", ie the point values at the top or bottom of a layer
@@ -2228,6 +2355,12 @@ contains
     IPD_Data(nb)%Statein%dycore_hydrostatic = Atm(mytile)%flagstruct%hydrostatic
     IPD_Data(nb)%Statein%nwat = Atm(mytile)%flagstruct%nwat
   enddo
+  !$ser savepoint AtmosPhysDriverStatein-Out
+  !$ser data IPD_prsik=IPD_Data(1)%Statein%prsik IPD_phii=IPD_Data(1)%Statein%phii IPD_atm_ts=IPD_Data(1)%Statein%atm_ts
+  !$ser data IPD_tgrs=IPD_Data(1)%Statein%tgrs IPD_ugrs=IPD_Data(1)%Statein%ugrs IPD_vgrs=IPD_Data(1)%Statein%vgrs
+  !$ser data IPD_vvl=IPD_Data(1)%Statein%vvl IPD_prsl=IPD_Data(1)%Statein%prsl IPD_diss_est=IPD_Data(1)%Statein%diss_est
+  !$ser data IPD_qgrs=IPD_Data(1)%Statein%qgrs IPD_prsi=IPD_Data(1)%Statein%prsi IPD_pgr=IPD_Data(1)%Statein%pgr
+  !$ser data IPD_prslk=IPD_Data(1)%Statein%prslk IPD_phil=IPD_Data(1)%Statein%phil IPD_dycore_hydrostatic=IPD_Data(1)%Statein%dycore_hydrostatic
 
  end subroutine atmos_phys_driver_statein
 

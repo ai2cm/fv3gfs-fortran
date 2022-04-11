@@ -5,23 +5,23 @@ EXPERIMENT_DIR = $(CWD)/configs
 EXPERIMENT ?= c12_6ranks_standard
 # base images w/ or w/o CUDA
 CUDA ?=y
-SER_ENV ?= ALL
+SER_ENV ?= dycore
 # version number or tag (determines image tag and destination directory in cloud storage)
 # -convention: <tag>-<some large conceptual version change>.<serialization statement change>.<hotfix>
 # -version number should be increased when serialization data is expected to change
 # -omit tag (e.g. 7.1.1) for "operational" serialization data, use tag for experimental serialization data
-FORTRAN_VERSION ?= 7.2.7
+FORTRAN_VERSION ?= 8.0.2
 # docker container image setup (used for running model, see ../../README.md)
 GCR_URL = us.gcr.io/vcm-ml
-COMPILED_IMAGE = $(GCR_URL)/fv3gfs-compiled:$(FORTRAN_VERSION)-serialize-gt4pydev
+COMPILED_IMAGE = $(GCR_URL)/fv3gfs-compiled:gnu7-mpich314-nocuda-serialize
 RUN_DIR_CONTAINER = /rundir
 DATA_DIR_CONTAINER = /data
 
 # local host setup
 CWD=$(shell pwd)
 FORTRAN_DIR = $(CWD)/../../
-RUN_DIR_HOST = $(CWD)/rundir/$(EXPERIMENT)
-DATA_DIR_HOST = $(CWD)/data/$(EXPERIMENT)
+RUN_DIR_HOST = $(CWD)/rundir/$(EXPERIMENT)/$(SER_ENV)
+DATA_DIR_HOST = $(CWD)/data/$(EXPERIMENT)/$(SER_ENV)
 TARFILE_HOST = $(DATA_DIR_HOST)/dat_files.tar.gz
 TARFILE_INDEX_HOST = $(DATA_DIR_HOST)/tarfile_index.txt
 USER_ID_HOST = $(shell id -u)
@@ -29,7 +29,7 @@ GROUP_ID_HOST = $(shell id -g)
 
 # cloud storage location for pushing generated data
 STORAGE_BUCKET = gs://vcm-fv3gfs-serialized-regression-data
-DATA_DIR_BUCKET = $(STORAGE_BUCKET)/$(FORTRAN_VERSION)/$(EXPERIMENT)
+DATA_DIR_BUCKET = $(STORAGE_BUCKET)/$(FORTRAN_VERSION)/$(EXPERIMENT)/$(SER_ENV)
 
 help:
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -40,7 +40,7 @@ build_model: ## build Docker image with compiled model code for serialization
 	cd $(FORTRAN_DIR) && \
 		BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
 		COMPILED_IMAGE=$(COMPILED_IMAGE) \
-		COMPILE_OPTION="GT4PY_DEV=Y" \
+		COMPILE_OPTION="GT4PY_DEV=Y\\\nSUBSET_PHYSICS=Y" \
 		$(MAKE) build_compiled
 
 setup_rundir: ## create run directory on local host using fv3config
@@ -72,7 +72,7 @@ run_model: ## run model using Docker image to generate serialized data
 	fi
 	mkdir -p $(DATA_DIR_HOST)
 	docker run -e USER_ID_HOST=$(USER_ID_HOST) -e GROUP_ID_HOST=$(GROUP_ID_HOST) \
-		-e SER_ENV=$(SER_ENV) \
+		-e SER_ENV=$(SER_ENV) -e SAVE_TIMESTEP=$(SAVE_TIMESTEP) \
 		--network host --rm -v $(RUN_DIR_HOST):$(RUN_DIR_CONTAINER) \
 		-v $(DATA_DIR_HOST):$(DATA_DIR_CONTAINER) \
                 --mount type=tmpfs,destination=$(RUN_DIR_CONTAINER)/test_data \

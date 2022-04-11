@@ -46,28 +46,51 @@ if [ -z "${EXPERIMENTS}" ] ; then
     exit 1
 fi
 
+
 # loop over experiments
 for exp_file in ${EXPERIMENTS} ; do
   exp_name=`basename ${exp_file} .yml`
   echo ""
   echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-  echo "> Generating data for ${exp_name} ..."
+  echo "> Generating driver data for ${exp_name} ..."
   npx=`cat ${exp_file} | grep npx | sed s/npx://g | sed 's/^ *//g'`
-  if [ ${npx} -gt 49 ] ; then
-      export SER_ENV="ONLY_DRIVER"
-  else
-      export SER_ENV="ALL"
+  seconds=`cat ${exp_file} | grep seconds | sed s/seconds://g | sed 's/^ *//g'`
+  dt_atmos=`cat ${exp_file} | grep dt_atmos | sed s/dt_atmos://g | sed 's/^ *//g'`
+  dycore_only=`cat ${exp_file} | grep dycore_only | sed s/dycore_only://g | sed 's/^ *//g'`
+  envs=("init" "driver")
+  export SER_INPUT_ONLY="true"
+  export SAVE_TIMESTEP=1
+  if [ ${seconds} -gt 100 ] ; then
+      export SAVE_TIMESTEP=$((${seconds}/${dt_atmos} - 1))
+      echo  "saving timstep $SAVE_TIMESTEP"
   fi
-  make distclean
-  if [ "${VALIDATE_ONLY}" == "true" ] ; then
-      EXPERIMENT=${exp_name} make generate_data validate_data
-  else
-      EXPERIMENT=${exp_name} make generate_data pack_data push_data
+  if [ ${npx} -lt 200 ] ; then
+      export SER_INPUT_ONLY="false"
+
+     if [ ${npx} -lt 50 ] ; then
+       if [ "${dycore_only}" == "true" ] ; then
+	  envs=("init" "driver" "dycore")
+       else
+	  envs=("init" "driver" "dycore" "physics")
+       fi
+     fi
   fi
-  make distclean
+  if [ ! -z "${ENVS_OVERRIDE}" ] ; then
+      envs=${ENVS_OVERRIDE}
+  fi 
+  echo "For npx ${npx} running savepoint configurations ${envs[*]}"
+  for env in ${envs[*]}; do
+      export SER_ENV=${env}
+      echo "RUNNING savepoint configuration ${env}"
+      make distclean
+      if [ "${VALIDATE_ONLY}" == "true" ] ; then
+      	  EXPERIMENT=${exp_name} make generate_data validate_data
+      else
+	  EXPERIMENT=${exp_name} make generate_data pack_data push_data
+      fi
+  done
   echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++"
   echo ""
 done
 
 exit 0
-

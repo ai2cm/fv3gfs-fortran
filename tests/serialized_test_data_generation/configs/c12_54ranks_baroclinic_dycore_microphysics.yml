@@ -1,10 +1,10 @@
 data_table: default
-diag_table: default
-field_table: gs://vcm-fv3config/config/field_table/TKE-EDMF/v1.0/field_table
-experiment_name: c12_6ranks_standard
+diag_table: gs://vcm-fv3config/config/diag_table/baroclinic_test/v1.0/diag_table
+field_table: gs://vcm-fv3config/config/field_table/baroclinic_test/v1.0/field_table
+experiment_name: c12_6ranks_baroclinic_dycore_microph
 forcing: gs://vcm-fv3config/data/base_forcing/v1.1/
 orographic_forcing: gs://vcm-fv3config/data/orographic_data/v1.0
-initial_conditions: gs://vcm-fv3config/data/initial_conditions/gfs_c12_example/v1.0 
+initial_conditions:  gs://vcm-fv3config/data/initial_conditions/c12_baroclinic_restart_day_10/v1.0
 namelist:
   amip_interp_nml:
     data_set: hurrell
@@ -21,7 +21,7 @@ namelist:
     blocksize: -1
     chksum_debug: false
     dycore_only: false
-    fdiag: 0.25
+    fdiag: 1.0
   cires_ugwp_nml:
     knob_ugwp_azdir:
     - 2
@@ -76,11 +76,11 @@ namelist:
     dt_ocean: 225
     hours: 0
     memuse_verbose: false
-    minutes: 7 
+    minutes: 7
     months: 0
     ncores_per_node: 32
     seconds: 30
-    use_hyper_thread: false
+    use_hyper_thread: true
   diag_manager_nml:
     max_axes: 240
     max_files: 106
@@ -118,11 +118,11 @@ namelist:
     do_sat_adj: true
     do_vort_damp: true
     dwind_2d: false
-    external_ic: true
+    external_ic: false
     fill: true
     fill_dp: false
     fv_debug: false
-    fv_sg_adj: 600
+    fv_sg_adj: 0
     gfs_phil: false
     hord_dp: 6
     hord_mt: 6
@@ -140,15 +140,15 @@ namelist:
     kord_tr: 9
     kord_wz: 9
     layout:
-    - 1
-    - 1
+    - 3
+    - 3
     make_nh: true
     mountain: false
     n_split: 1
     n_sponge: 48
-    na_init: 1
+    na_init: 0
     ncep_ic: false
-    nggps_ic: true
+    nggps_ic: false
     nord: 3
     npx: 13
     npy: 13
@@ -168,7 +168,7 @@ namelist:
     tau_h2o: 0.0
     use_hydro_pressure: false
     vtdm4: 0.06
-    warm_start: false
+    warm_start: true
     z_tracer: true
   fv_grid_nml: {}
   gfdl_cloud_microphysics_nml:
@@ -233,8 +233,9 @@ namelist:
     cnvcld: false
     cnvgwd: false
     debug: false
+    do_ocean: false
     do_deep: false
-    dspheat: true
+    dspheat: false
     fhcyc: 24.0
     fhlwr: 1800.0
     fhswr: 1800.0
@@ -245,27 +246,28 @@ namelist:
     ico2: 2
     iems: 1
     imfdeepcnv: 2
-    imfshalcnv: 2
+    imfshalcnv: -1
     imp_physics: 11
     isol: 2
     isot: 1
-    isubc_lw: 2
-    isubc_sw: 2
+    isubc_lw: 0
+    isubc_sw: 0
     ivegsrc: 1
-    ldiag3d: false
-    lwhtr: true
+    ldiag3d: true
+    lwhtr: false
     ncld: 5
-    nst_anl: true
+    nst_anl: false
     pdfcld: false
     pre_rad: false
     prslrd0: 0.0
     random_clds: false
-    redrag: true
-    satmedmf: true
-    shal_cnv: true
-    swhtr: true
-    trans_trac: true
-    use_ufo: true
+    redrag: false
+    sfc_override: true
+    satmedmf: false
+    shal_cnv: false
+    swhtr: false
+    trans_trac: false
+    use_ufo: false
     xkzm_h: 0.1
     xkzm_m: 0.01
     xkzminv: 0.0
@@ -275,6 +277,12 @@ namelist:
     lat_s: 96
     lon_s: 192
     ntrunc: 94
+  sfc_prop_override_nml:
+    ideal_sst: true
+    sst_max: 305
+    sst_profile: 1
+  test_case_nml:
+    test_case: 13
   namsfc:
     fabsl: 99999
     faisl: 99999
