@@ -89,7 +89,9 @@ FV3_LIBS = atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics
 FV3_LIB_FLAGS = -lfv3core -lfv3io -lipd -lgfsphys -lstochastic_physics -lfv3cpl -lfv3coarse_graining -L$(PWD)/atmos_cubed_sphere -L$(PWD)/io -L$(PWD)/ipd -L$(PWD)/gfsphysics -L$(PWD)/../stochastic_physics -L$(PWD)/cpl -L$(PWD)/coarse_graining
 
 
-TOP_LEVEL_OBJS = atmos_model.o coupler_main.o module_fv3_config.o
+TOP_LEVEL_OBJS_RELATIVE = atmos_model.o coupler_main.o module_fv3_config.o
+TOP_LEVEL_OBJS_ABSOLUTE = $(addprefix $(PWD)/, $(TOP_LEVEL_OBJS_RELATIVE))
+
 
 $(FV3_EXE): $(TOP_LEVEL_OBJS) $(FV3_LIBS)
 	$(LD)  -o $@ $(TOP_LEVEL_OBJS) $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) 
@@ -102,7 +104,7 @@ endif
 wrapper_build: $(TOP_LEVEL_OBJS) libs
 	MAKE_INCLUDE=$(shell pwd)/conf/configure.fv3 \
 	 OTHER_FFLAGS="-I$(shell pwd)  -I$(shell pwd)/atmos_cubed_sphere" \
-	 SETUP_PY_LIBS="$(TOP_LEVEL_OBJS) -L$(PWD) $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) -lfmpich -lmpich -lmvec -lm" \
+	 SETUP_PY_LIBS="$(TOP_LEVEL_OBJS_ABSOLUTE) -L$(PWD) $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) -lfmpich -lmpich -lmvec -lm" \
 		$(MAKE) -C wrapper build
 
 wrapper_test: wrapper_build
