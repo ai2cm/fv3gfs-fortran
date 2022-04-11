@@ -99,7 +99,7 @@ endif
 
 
 # wrapper related makefile targets
-wrapper_build: $(TOP_LEVEL_OBJS) $(FV3_LIBS)
+wrapper_build: $(TOP_LEVEL_OBJS) libs
 	MAKE_INCLUDE=$(shell pwd)/conf/configure.fv3 \
 	 OTHER_FFLAGS="-I$(shell pwd)  -I$(shell pwd)/atmos_cubed_sphere" \
 	 SETUP_PY_LIBS="$(TOP_LEVEL_OBJS) -L$(PWD) $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) -lfmpich -lmpich -lmvec -lm" \
