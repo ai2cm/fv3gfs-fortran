@@ -4,14 +4,6 @@ orbs:
   gcp-gcr: circleci/gcp-gcr@0.6.1
 jobs:
 
-  lint:
-    docker:
-    - image: circleci/python:3.7
-    steps:
-      - checkout
-      - run: sudo pip3 install black==19.10b0 flake8==3.7.8 click==8.0.4
-      - run: make lint
-
   build_default:
     machine:
       docker_layer_caching: true
@@ -55,15 +47,6 @@ jobs:
           keys:
             - v1-fv3config-cache
       - gcp-gcr/gcr-auth
-      - run: 
-          name: "Compile model and perform model tests"
-          command: |
-            echo "$ENCODED_GCR_KEY" | base64 --decode | docker login --username _json_key --password-stdin https://us.gcr.io
-            DOCKER_BUILDKIT=1 BUILDKIT_PROGRESS=plain BUILD_FROM_INTERMEDIATE=y make test-docker
-      - save_cache:
-          paths:
-            - /home/circleci/.cache/fv3gfs/fv3config-cache
-          key: v1-fv3config-cache
       - run:
           name: "Run example runfiles"
           command: |
@@ -72,28 +55,6 @@ jobs:
           name: "Build documentation"
           command: |
             make docs-docker
-      - run: |
-          echo "$ENCODED_GCR_KEY" | base64 --decode | docker login --username _json_key --password-stdin https://gcr.io
-          if [[ "$CIRCLE_BRANCH" == "master" ]]
-          then
-              echo "pushing untagged image $GCR_IMAGE"
-              docker push $GCR_IMAGE
-              echo "pushing image $GCR_IMAGE-$CIRCLE_SHA1"
-              docker tag $GCR_IMAGE $GCR_IMAGE-$CIRCLE_SHA1
-              docker push $GCR_IMAGE-$CIRCLE_SHA1
-          fi
-          if [[ ! -z "$CIRCLE_TAG" ]]
-          then
-              echo "pushing tagged image $GCR_IMAGE-$CIRCLE_TAG"
-              docker tag $GCR_IMAGE $GCR_IMAGE-$CIRCLE_TAG
-              docker push $GCR_IMAGE-$CIRCLE_TAG
-          fi
-      - run:
-          name: "Delete data files"
-          command: |
-            rm ./tests/pytest/output/*/INPUT/*.nc
-            rm ./tests/pytest/output/*/grb/*.grb
-          when: on_fail
       - store_artifacts:
           path: ./tests/pytest/output
       - persist_to_workspace:
