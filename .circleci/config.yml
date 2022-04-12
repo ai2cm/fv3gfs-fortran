@@ -138,4 +138,5 @@ workflows:
     jobs:
       - build_default
       - nix
+      - lint
 #      - nix-mac
