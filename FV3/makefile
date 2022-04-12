@@ -23,6 +23,10 @@ PPSER_FLAGS = --verbose --ignore-identical -m utils_ppser_kbuff
 
 FV3_EXE  = fv3.exe
 FV3CAP_LIB  = libfv3cap.a
+
+TOP_LEVEL_OBJS_RELATIVE = atmos_model.o module_fv3_config.o
+TOP_LEVEL_OBJS_ABSOLUTE = $(addprefix $(PWD)/, $(TOP_LEVEL_OBJS_RELATIVE))
+
 ifeq ($(AI2_WRAPPER),Y)
 	MAYBE_WRAPPER_TARGET = wrapper_build
 endif
@@ -38,9 +42,12 @@ ifndef FMS_DIR
 	$(error ERROR: FMS_DIR variable is unset)
 endif
 
-install: $(FV3_EXE) $(FV3_LIBS)
+install: libs $(FV3_EXE)
 	mkdir -p $(PREFIX)/bin $(PREFIX)/lib
 	install -t $(PREFIX)/bin/ $(FV3_EXE)
+
+
+
 
 ifneq (,$(findstring CCPP,$(CPPDEFS)))
 libs: fms_check
@@ -61,8 +68,7 @@ libs_no_dycore: fms_check
 	$(MAKE) -C ipd                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 	$(MAKE) -C io                    $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 
-FV3_LIBS = ccpp/driver/libccppdriver.a atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a coarse_graining/libfv3coarse_graining.a
-$(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o $(FV3_LIBS)
+$(FV3_EXE): libs atmos_model.o coupler_main.o module_fv3_config.o 
 	$(LD) -o $@ $^ $(NCEPLIBS) $(LDFLAGS)
 
 
@@ -85,23 +91,18 @@ libs_no_dycore: fms_check
 
 PWD :=$(shell pwd)
 
-FV3_LIBS = atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a coarse_graining/libfv3coarse_graining.a
 FV3_LIB_FLAGS = -lfv3core -lfv3io -lipd -lgfsphys -lstochastic_physics -lfv3cpl -lfv3coarse_graining -L$(PWD)/atmos_cubed_sphere -L$(PWD)/io -L$(PWD)/ipd -L$(PWD)/gfsphysics -L$(PWD)/../stochastic_physics -L$(PWD)/cpl -L$(PWD)/coarse_graining
 
 
-TOP_LEVEL_OBJS_RELATIVE = atmos_model.o coupler_main.o module_fv3_config.o
-TOP_LEVEL_OBJS_ABSOLUTE = $(addprefix $(PWD)/, $(TOP_LEVEL_OBJS_RELATIVE))
-
-
-$(FV3_EXE): $(TOP_LEVEL_OBJS) $(FV3_LIBS)
-	$(LD)  -o $@ $(TOP_LEVEL_OBJS) $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) 
+$(FV3_EXE): $(TOP_LEVEL_OBJS_ABSOLUTE) coupler_main.o libs
+	$(LD) -o $@ $(TOP_LEVEL_OBJS_ABSOLUTE) coupler_main.o $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) 
 endif
 
 
 
 
 # wrapper related makefile targets
-wrapper_build: $(TOP_LEVEL_OBJS) libs
+wrapper_build: libs $(TOP_LEVEL_OBJS_ABSOLUTE)
 	MAKE_INCLUDE=$(shell pwd)/conf/configure.fv3 \
 	 OTHER_FFLAGS="-I$(shell pwd)  -I$(shell pwd)/atmos_cubed_sphere" \
 	 SETUP_PY_LIBS="$(TOP_LEVEL_OBJS_ABSOLUTE) -L$(PWD) $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) -lfmpich -lmpich -lmvec -lm" \
