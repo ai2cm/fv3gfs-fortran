@@ -24,6 +24,7 @@ PPSER_FLAGS = --verbose --ignore-identical -m utils_ppser_kbuff
 FV3_EXE  = fv3.exe
 FV3CAP_LIB  = libfv3cap.a
 
+PWD :=$(shell pwd)
 TOP_LEVEL_OBJS_RELATIVE = atmos_model.o module_fv3_config.o
 TOP_LEVEL_OBJS_ABSOLUTE = $(addprefix $(PWD)/, $(TOP_LEVEL_OBJS_RELATIVE))
 
@@ -32,6 +33,8 @@ ifeq ($(AI2_WRAPPER),Y)
 endif
 
 all: libs fms_check
+	#  need to use this recursive makefile call to ensure that the libs are
+	#  built first
 	$(MAKE) $(FV3_EXE) $(MAYBE_WRAPPER_TARGET) $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 
 
@@ -51,6 +54,11 @@ wrapper_docs:
 wrapper_clean: 
 	$(MAKE) -C wrapper clean
 
+install: libs $(FV3_EXE)
+	mkdir -p $(PREFIX)/bin $(PREFIX)/lib
+	install -t $(PREFIX)/bin/ $(FV3_EXE)
+
+
 nems: libs fms_check
 	$(MAKE) $(FV3CAP_LIB) $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) esmf_make_fragment FMS_DIR=$(FMS_DIR)
@@ -60,33 +68,28 @@ ifndef FMS_DIR
 	$(error ERROR: FMS_DIR variable is unset)
 endif
 
-install: libs $(FV3_EXE)
-	mkdir -p $(PREFIX)/bin $(PREFIX)/lib
-	install -t $(PREFIX)/bin/ $(FV3_EXE)
-
-
 ifneq (,$(findstring CCPP,$(CPPDEFS)))
 libs: fms_check
+	$(MAKE) -C coarse_graining       $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C cpl                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C gfsphysics            $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  DYN32=$(DYN32) # force gfs physics to 64bit, flag to CCPP build for 32bit dynamics
 	$(MAKE) -C ccpp/driver           $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  DYN32=$(DYN32) # force gfs physics to 64bit, flag to CCPP build for 32bit dynamics
 	$(MAKE) -C ipd                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 	$(MAKE) -C io                    $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C atmos_cubed_sphere    $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
-	$(MAKE) -C coarse_graining       $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C ../stochastic_physics $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 
 libs_no_dycore: fms_check
+	$(MAKE) -C coarse_graining       $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C cpl                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C gfsphysics            $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  DYN32=$(DYN32) # force gfs physics to 64bit, flag to CCPP build for 32bit dynamics
 	$(MAKE) -C ccpp/driver           $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  DYN32=$(DYN32) # force gfs physics to 64bit, flag to CCPP build for 32bit dynamics
 	$(MAKE) -C ipd                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 	$(MAKE) -C io                    $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
-	$(MAKE) -C coarse_graining       $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 
-$(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o 
+FV3_LIBS = ccpp/driver/libccppdriver.a atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a coarse_graining/libfv3coarse_graining.a
+$(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o $(FV3_LIBS)
 	$(LD) -o $@ $^ $(NCEPLIBS) $(LDFLAGS)
-
 
 else
 libs: fms_check
@@ -105,13 +108,12 @@ libs_no_dycore: fms_check
 	$(MAKE) -C ipd                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 	$(MAKE) -C io                    $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 
-PWD :=$(shell pwd)
+FV3_LIBS = atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a coarse_graining/libfv3coarse_graining.a
+FV3_LIB_FLAGS = -lfv3core -lfv3io -lipd -lgfsphys -lstochastic_physics -lfv3cpl -lfv3coarse_graining -Latmos_cubed_sphere -Lio -Lipd -Lgfsphysics -L../stochastic_physics -Lcpl -Lcoarse_graining
 
-FV3_LIB_FLAGS = -lfv3core -lfv3io -lipd -lgfsphys -lstochastic_physics -lfv3cpl -lfv3coarse_graining -L$(PWD)/atmos_cubed_sphere -L$(PWD)/io -L$(PWD)/ipd -L$(PWD)/gfsphysics -L$(PWD)/../stochastic_physics -L$(PWD)/cpl -L$(PWD)/coarse_graining
+$(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o $(FV3_LIBS)
+	$(LD)  -o $@  atmos_model.o coupler_main.o module_fv3_config.o $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) 
 
-
-$(FV3_EXE): $(TOP_LEVEL_OBJS_ABSOLUTE) coupler_main.o
-	$(LD) -o $@ $(TOP_LEVEL_OBJS_ABSOLUTE) coupler_main.o $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) 
 endif
 
 
