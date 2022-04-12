@@ -31,7 +31,25 @@ ifeq ($(AI2_WRAPPER),Y)
 	MAYBE_WRAPPER_TARGET = wrapper_build
 endif
 
-all: libs fms_check $(FV3_EXE) $(MAYBE_WRAPPER_TARGET)
+all: libs fms_check
+	$(MAKE) $(FV3_EXE) $(MAYBE_WRAPPER_TARGET) $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
+
+
+# wrapper related makefile targets
+wrapper_build: $(TOP_LEVEL_OBJS_ABSOLUTE)
+	MAKE_INCLUDE=$(shell pwd)/conf/configure.fv3 \
+	 OTHER_FFLAGS="-I$(shell pwd)  -I$(shell pwd)/atmos_cubed_sphere" \
+	 SETUP_PY_LIBS="$(TOP_LEVEL_OBJS_ABSOLUTE) -L$(PWD) $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) -lfmpich -lmpich -lmvec -lm" \
+		$(MAKE) -C wrapper build
+
+wrapper_test: wrapper_build
+	$(MAKE) -C wrapper test
+
+wrapper_docs: 
+	$(MAKE) -C wrapper docs
+
+wrapper_clean: 
+	$(MAKE) -C wrapper clean
 
 nems: libs fms_check
 	$(MAKE) $(FV3CAP_LIB) $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
@@ -47,28 +65,26 @@ install: libs $(FV3_EXE)
 	install -t $(PREFIX)/bin/ $(FV3_EXE)
 
 
-
-
 ifneq (,$(findstring CCPP,$(CPPDEFS)))
 libs: fms_check
-	$(MAKE) -C coarse_graining       $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C cpl                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C gfsphysics            $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  DYN32=$(DYN32) # force gfs physics to 64bit, flag to CCPP build for 32bit dynamics
 	$(MAKE) -C ccpp/driver           $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  DYN32=$(DYN32) # force gfs physics to 64bit, flag to CCPP build for 32bit dynamics
 	$(MAKE) -C ipd                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 	$(MAKE) -C io                    $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C atmos_cubed_sphere    $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
+	$(MAKE) -C coarse_graining       $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C ../stochastic_physics $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 
 libs_no_dycore: fms_check
-	$(MAKE) -C coarse_graining       $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C cpl                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 	$(MAKE) -C gfsphysics            $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  DYN32=$(DYN32) # force gfs physics to 64bit, flag to CCPP build for 32bit dynamics
 	$(MAKE) -C ccpp/driver           $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  DYN32=$(DYN32) # force gfs physics to 64bit, flag to CCPP build for 32bit dynamics
 	$(MAKE) -C ipd                   $(MAKE_OPTS) FMS_DIR=$(FMS_DIR) 32BIT=N  # force gfs physics to 64bit
 	$(MAKE) -C io                    $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
+	$(MAKE) -C coarse_graining       $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 
-$(FV3_EXE): libs atmos_model.o coupler_main.o module_fv3_config.o 
+$(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o 
 	$(LD) -o $@ $^ $(NCEPLIBS) $(LDFLAGS)
 
 
@@ -94,28 +110,10 @@ PWD :=$(shell pwd)
 FV3_LIB_FLAGS = -lfv3core -lfv3io -lipd -lgfsphys -lstochastic_physics -lfv3cpl -lfv3coarse_graining -L$(PWD)/atmos_cubed_sphere -L$(PWD)/io -L$(PWD)/ipd -L$(PWD)/gfsphysics -L$(PWD)/../stochastic_physics -L$(PWD)/cpl -L$(PWD)/coarse_graining
 
 
-$(FV3_EXE): $(TOP_LEVEL_OBJS_ABSOLUTE) coupler_main.o libs
+$(FV3_EXE): $(TOP_LEVEL_OBJS_ABSOLUTE) coupler_main.o
 	$(LD) -o $@ $(TOP_LEVEL_OBJS_ABSOLUTE) coupler_main.o $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) 
 endif
 
-
-
-
-# wrapper related makefile targets
-wrapper_build: libs $(TOP_LEVEL_OBJS_ABSOLUTE)
-	MAKE_INCLUDE=$(shell pwd)/conf/configure.fv3 \
-	 OTHER_FFLAGS="-I$(shell pwd)  -I$(shell pwd)/atmos_cubed_sphere" \
-	 SETUP_PY_LIBS="$(TOP_LEVEL_OBJS_ABSOLUTE) -L$(PWD) $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) -lfmpich -lmpich -lmvec -lm" \
-		$(MAKE) -C wrapper build
-
-wrapper_test: wrapper_build
-	$(MAKE) -C wrapper test
-
-wrapper_docs: 
-	$(MAKE) -C wrapper docs
-
-wrapper_clean: 
-	$(MAKE) -C wrapper clean
 
 $(FV3CAP_LIB): atmos_model.o module_fv3_config.o module_fcst_grid_comp.o time_utils.o fv3_cap.o
 	ar rv $(FV3CAP_LIB) $?
