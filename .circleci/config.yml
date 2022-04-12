@@ -65,6 +65,13 @@ jobs:
       - run:
           name: Test wrapper
           command: nix-shell --run "make test_wrapper"
+  lint:
+  - image: circleci/python:3.7
+    steps:
+      - checkout
+      - run: sudo pip3 install pre-commit==2.15.0
+      - run: pre-commit
+
   build_default:
     machine:
       docker_layer_caching: true

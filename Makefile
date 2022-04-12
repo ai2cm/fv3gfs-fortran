@@ -114,6 +114,12 @@ test_native: ## run native tests (all tools and build dependencies are assumed t
 test_wrapper:
 	$(MAKE) -C FV3/wrapper/ test
 
+lint:
+	pre-commit run flake8 --all-files
+
+reformat:
+	pre-commit run --all-files
+
 clean: ## cleanup source tree and test output
 	(cd FV3 && make clean)
 	$(RM) -f inputdata

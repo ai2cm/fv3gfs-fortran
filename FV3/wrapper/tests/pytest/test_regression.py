@@ -1,5 +1,4 @@
 import os
-import yaml
 import subprocess
 import pytest
 import fv3config
@@ -81,7 +80,8 @@ def test_fv3_wrapper_regression(regtest, tmpdir, config):
 def run_fv3(config, run_dir):
     fv3config.write_run_directory(config, str(run_dir))
     subprocess.check_call(
-        ["mpirun", "-n", "6", "fv3.exe"], cwd=run_dir,
+        ["mpirun", "-n", "6", "fv3.exe"],
+        cwd=run_dir,
     )
 
 

@@ -32,7 +32,7 @@ for relative_filename in relative_wrapper_build_filenames:
     wrapper_build_filenames.append(os.path.join(package_dir, relative_filename))
 
 # need to include math and c library
-library_link_args = os.environ['SETUP_PY_LIBS'].split()
+library_link_args = os.environ["SETUP_PY_LIBS"].split()
 print(library_link_args)
 
 requirements = [
