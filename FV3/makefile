@@ -28,6 +28,11 @@ PWD :=$(shell pwd)
 TOP_LEVEL_OBJS_RELATIVE = atmos_model.o module_fv3_config.o
 TOP_LEVEL_OBJS_ABSOLUTE = $(addprefix $(PWD)/, $(TOP_LEVEL_OBJS_RELATIVE))
 
+# Linking flags
+FV3_LIB_DIRS = atmos_cubed_sphere io ipd gfsphysics  ../stochastic_physics cpl coarse_graining
+FV3_LIBS_ABS = $(addprefix -L$(PWD)/, $(FV3_LIB_DIRS))
+FV3_LIB_FLAGS = -lfv3core -lfv3io -lipd -lgfsphys -lstochastic_physics -lfv3cpl -lfv3coarse_graining $(FV3_LIBS_ABS)
+
 ifeq ($(AI2_WRAPPER),Y)
 	MAYBE_WRAPPER_TARGET = wrapper_build
 endif
@@ -109,7 +114,6 @@ libs_no_dycore: fms_check
 	$(MAKE) -C io                    $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 
 FV3_LIBS = atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a coarse_graining/libfv3coarse_graining.a
-FV3_LIB_FLAGS = -lfv3core -lfv3io -lipd -lgfsphys -lstochastic_physics -lfv3cpl -lfv3coarse_graining -Latmos_cubed_sphere -Lio -Lipd -Lgfsphysics -L../stochastic_physics -Lcpl -Lcoarse_graining
 
 $(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o $(FV3_LIBS)
 	$(LD)  -o $@  atmos_model.o coupler_main.o module_fv3_config.o $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) 
