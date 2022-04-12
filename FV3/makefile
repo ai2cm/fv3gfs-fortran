@@ -39,7 +39,7 @@ all: libs fms_check
 
 
 # wrapper related makefile targets
-wrapper_build: $(TOP_LEVEL_OBJS_ABSOLUTE)
+wrapper_build: $(TOP_LEVEL_OBJS_RELATIVE)
 	MAKE_INCLUDE=$(shell pwd)/conf/configure.fv3 \
 	 OTHER_FFLAGS="-I$(shell pwd)  -I$(shell pwd)/atmos_cubed_sphere" \
 	 SETUP_PY_LIBS="$(TOP_LEVEL_OBJS_ABSOLUTE) -L$(PWD) $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) -lfmpich -lmpich -lmvec -lm" \
