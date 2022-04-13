@@ -124,7 +124,9 @@ def test_regression_native(run_native, config_filename: str, tmpdir, system_regt
 
 
 @pytest.mark.xfail(reason="https://github.com/ai2cm/fv3config/issues/147")
-@pytest.mark.parametrize("config_filename", ["default.yml", "emulation.yml"])
+@pytest.mark.parametrize(
+    "config_filename", ["default.yml", "emulation.yml", "restart.yml"]
+)
 def test_restart_reproducibility(run_native, config_filename, tmpdir):
     config_template = get_config(config_filename)
     config_template["diag_table"] = "no_output"
