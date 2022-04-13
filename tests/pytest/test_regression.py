@@ -131,25 +131,23 @@ def test_restart_reproducibility(run_native, config_filename, tmpdir):
     config_template["namelist"]["gfs_physics_nml"]["fhswr"] = 900
     config_template["namelist"]["gfs_physics_nml"]["fhlwr"] = 900
 
-    segment_1_config = copy.deepcopy(config_template)
-    segment_2_config = copy.deepcopy(config_template)
+    segmented_config = copy.deepcopy(config_template)
     continuous_config = copy.deepcopy(config_template)
 
     duration = datetime.timedelta(minutes=30)
-    segment_1_config = fv3config.set_run_duration(segment_1_config, duration // 2)
-    segment_2_config = fv3config.set_run_duration(segment_2_config, duration // 2)
+    segmented_config = fv3config.set_run_duration(segmented_config, duration // 2)
     continuous_config = fv3config.set_run_duration(continuous_config, duration)
 
     segment_1_rundir = str(tmpdir.join("segment-1"))
     segment_2_rundir = str(tmpdir.join("segment-2"))
     continuous_rundir = str(tmpdir.join("continuous"))
 
-    run_native(segment_1_config, segment_1_rundir)
+    run_native(segmented_config, segment_1_rundir)
     run_native(continuous_config, continuous_rundir)
 
     segment_1_restarts = os.path.join(segment_1_rundir, "RESTART")
-    segment_2_config = fv3config.enable_restart(segment_2_config, segment_1_restarts)
-    run_native(segment_2_config, segment_2_rundir)
+    segmented_config = fv3config.enable_restart(segmented_config, segment_1_restarts)
+    run_native(segmented_config, segment_2_rundir)
 
     continuous_checksums = _checksum_restart_files(continuous_rundir)
     segmented_checksums = _checksum_restart_files(segment_2_rundir)
