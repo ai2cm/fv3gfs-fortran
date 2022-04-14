@@ -11,6 +11,7 @@ jobs:
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
       MPIR_CVAR_OFI_SKIP_IPV6: "1"
       FSSPEC_GS_REQUESTER_PAYS: True
+      GOOGLE_CLOUD_PROJECT: vcm-ml
     steps:
       - run: |
           curl -L -O https://nixos.org/nix/install
@@ -43,6 +44,7 @@ jobs:
       FV3CONFIG_CACHE_DIR: /tmp/.fv3config
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
       FSSPEC_GS_REQUESTER_PAYS: True
+      GOOGLE_CLOUD_PROJECT: vcm-ml
     steps:
       - run: nix-env -i git openssh google-cloud-sdk
       - checkout
