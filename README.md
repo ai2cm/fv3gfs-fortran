@@ -299,7 +299,7 @@ HPC/DOCKER these builds dependencies will need to be manually installed.
 Once the dependencies are installed the wrapper and fv3.exe can be built like
 this
 
-    AI2_WRAPPER=Y make -C FV3
+    make -C FV3 wrapper_build
 
 To test the wrapper
 

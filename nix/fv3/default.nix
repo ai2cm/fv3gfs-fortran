@@ -154,7 +154,6 @@ installPhase = ''
     export PYTHONPATH=$(pwd)/tests/emulation:$(pwd)/FV3/wrapper:$PYTHONPATH
     # path to fv3.exe
     export PATH=$(pwd)/FV3:$PATH
-    export AI2_WRAPPER=Y
   '';
 }
 

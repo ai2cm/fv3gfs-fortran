@@ -60,6 +60,9 @@ jobs:
           nix-build -j 4 -A fms | cachix push vulcanclimatemodeling
           nix-shell --run "cp -f nix/fv3/configure.fv3 FV3/conf && make -j 4 -C FV3"
       - run:
+          name: Build wrapper
+          command: nix-shell --run "make -j 4 -C FV3 wrapper_build"
+      - run:
           name: Test
           command: nix-shell --run "pytest --native tests/pytest"
       - run:

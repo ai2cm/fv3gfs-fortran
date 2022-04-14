@@ -33,18 +33,16 @@ FV3_LIB_DIRS = atmos_cubed_sphere io ipd gfsphysics  ../stochastic_physics cpl c
 FV3_LIBS_ABS = $(addprefix -L$(PWD)/, $(FV3_LIB_DIRS))
 FV3_LIB_FLAGS = -lfv3core -lfv3io -lipd -lgfsphys -lstochastic_physics -lfv3cpl -lfv3coarse_graining $(FV3_LIBS_ABS)
 
-ifeq ($(AI2_WRAPPER),Y)
-	MAYBE_WRAPPER_TARGET = wrapper_build
-endif
-
 all: libs fms_check
 	#  need to use this recursive makefile call to ensure that the libs are
 	#  built first
-	$(MAKE) $(FV3_EXE) $(MAYBE_WRAPPER_TARGET) $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
+	$(MAKE) $(FV3_EXE) $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 
 
-# wrapper related makefile targets
-wrapper_build: $(TOP_LEVEL_OBJS_RELATIVE)
+# wrapper_build depends on "all" so that the libs are built before trying to
+# build the wrapper.  Works around a bug below where module_fv3_config.o etc do
+# not depend on the `libs` target
+wrapper_build: all
 	MAKE_INCLUDE=$(shell pwd)/conf/configure.fv3 \
 	 OTHER_FFLAGS="-I$(shell pwd)  -I$(shell pwd)/atmos_cubed_sphere" \
 	 SETUP_PY_LIBS="$(TOP_LEVEL_OBJS_ABSOLUTE) -L$(PWD) $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) -lfmpich -lmpich -lmvec -lm" \
