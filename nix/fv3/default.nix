@@ -65,7 +65,7 @@ stdenv.mkDerivation {
       call_py_fort.pypkgs.wheel
       # dev tooling
       call_py_fort.pypkgs.pre-commit
-      # read he docs
+      # read the docs
       call_py_fort.pypkgs.sphinx
       call_py_fort.pypkgs.sphinx_rtd_theme
       # fof
