@@ -36,8 +36,6 @@ jobs:
           name: Test
           command: nix-shell --run "pytest --native tests/pytest"
   nix:
-    # https://circleci.com/docs/2.0/configuration-reference/#resourceclass
-    resource_class: xlarge
     docker:
       - image: nixos/nix
     environment:
