@@ -33,7 +33,7 @@ for relative_filename in relative_wrapper_build_filenames:
 
 # need to include math and c library
 library_link_args = os.environ["SETUP_PY_LIBS"].split()
-print(library_link_args)
+print(f"library_link_args: {library_link_args}")
 
 requirements = [
     "mpi4py>=3.0.3",
