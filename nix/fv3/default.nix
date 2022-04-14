@@ -19,6 +19,17 @@ let
   src = builtins.fetchGit {
     url = ../..;
   };
+  fetchPypi = call_py_fort.pypkgs.fetchPypi;
+  fv3config = let version ="0.9.0";
+  in
+  call_py_fort.pypkgs.fv3config.overridePythonAttrs (attrs :{
+    version = version;
+    src = fetchPypi {
+      version = version;
+      pname = attrs.pname;
+      sha256 = "sha256-iqJdIXQChmiM3hDVcJpV8gc+SoAOSaPGJ6OWuSdzQ0Y=";
+    };
+  });
 in
 stdenv.mkDerivation {
   name = "fv3";
@@ -26,12 +37,12 @@ stdenv.mkDerivation {
   buildInputs = [
       call_py_fort
       call_py_fort.pypkgs.black
-      call_py_fort.pypkgs.fv3config
       call_py_fort.pypkgs.numpy
       call_py_fort.pypkgs.pytest
       call_py_fort.pypkgs.pytest-regtest
       call_py_fort.pypkgs.pyyaml
       call_py_fort.pypkgs.xarray
+      fv3config
       fms
       esmf
       nceplibs
