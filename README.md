@@ -301,18 +301,18 @@ this
 
     make -C FV3 wrapper_build
 
-To test the wrapper
-
-    # needed to import `fv3gfs-wrapper`
-    export PYTHONPATH=$(pwd)/FV3/wrapper:$PYTHONPATH
-
-    make test_wrapper
-
 To install the wrapper in some python environment, you can use the wheel built
 above
 
     pip install FV3/wrapper/dist/fv3gfs_wrapper*.whl
 
+To test the wrapper
+
+    # if you want to test FV3/wrapper in-place uncomment the line below
+    # otherwise it will use the version installed in the python environment
+    # export PYTHONPATH=$(pwd)/FV3/wrapper:$PYTHONPATH
+
+    make test_wrapper
 
 # Docker BuildKit
 
