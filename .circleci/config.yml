@@ -10,6 +10,7 @@ jobs:
       FV3CONFIG_CACHE_DIR: /tmp/.fv3config
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
       MPIR_CVAR_OFI_SKIP_IPV6: "1"
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
     steps:
       - run: |
           curl -L -O https://nixos.org/nix/install
@@ -41,6 +42,7 @@ jobs:
     environment:
       FV3CONFIG_CACHE_DIR: /tmp/.fv3config
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
     steps:
       - run: nix-env -i git openssh google-cloud-sdk
       - checkout
@@ -69,6 +71,7 @@ jobs:
     environment:
       FV3CONFIG_CACHE_DIR: /tmp/.fv3config
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
     steps:
       - gcp-cli/install:
         version: 323.0.0
@@ -97,13 +100,13 @@ jobs:
           name: "Install Python test dependencies"
           command: |
             pyenv versions
-            [ -d /opt/circleci/.pyenv/versions/3.6.2 ] || pyenv install 3.6.2
-            pyenv global 3.6.2
+            [ -d /opt/circleci/.pyenv/versions/3.7.0 ] || pyenv install 3.7.0
+            pyenv global 3.7.0
             pip install -r requirements.txt
       - save_cache:
           paths:
             - $FV3CONFIG_CACHE_DIR
-            - /opt/circleci/.pyenv/versions/3.6.2
+            - /opt/circleci/.pyenv/versions/3.7.0
           key: v1.4-{{ checksum "requirements.txt"}}
       # tests
       - run: 
