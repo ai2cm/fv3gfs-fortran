@@ -123,7 +123,6 @@ def test_regression_native(run_native, config_filename: str, tmpdir, system_regt
     _checksum_rundir(str(rundir), file=system_regtest)
 
 
-# @pytest.mark.xfail(reason="https://github.com/ai2cm/fv3config/issues/147")
 @pytest.mark.parametrize(
     "config_filename", ["default.yml", "emulation.yml", "restart.yml"]
 )
