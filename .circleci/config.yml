@@ -71,6 +71,7 @@ jobs:
     environment:
       FV3CONFIG_CACHE_DIR: /tmp/.fv3config
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
     steps:
       - gcp-cli/install:
         version: 323.0.0
