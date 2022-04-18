@@ -53,7 +53,7 @@ module fv_arrays_mod
   type fv_diag_type
 
 
- integer ::id_ps, id_slp, id_ua, id_va, id_pt, id_omga, id_vort,  &
+ integer ::id_ps, id_slp, id_ua, id_va, id_ud, id_vd, id_pt, id_omga, id_vort,  &
            id_tm, id_pv, id_zsurf, id_oro, id_sgh, id_divg, id_w, &
            id_ke, id_te, id_zs, id_ze, id_mq, id_vorts, id_us, id_vs,    &
            id_tq, id_rh, id_c15, id_c25, id_c35, id_c45,          &

@@ -716,6 +716,10 @@ contains
                'zonal wind', 'm/sec', missing_value=missing_value, range=vrange )
           idiag%id_va = register_diag_field ( trim(field), 'vcomp', axes(1:3), Time,        &
                'meridional wind', 'm/sec', missing_value=missing_value, range=vrange)
+          idiag%id_ud = register_diag_field ( trim(field), 'u_dgrid', (/id_xt,id_y,id_pfull/), Time,        &
+               'zonal wind', 'm/sec', missing_value=missing_value, range=vrange )
+          idiag%id_vd = register_diag_field ( trim(field), 'v_dgrid', (/id_x,id_yt,id_pfull/), Time,        &
+               'meridional wind', 'm/sec', missing_value=missing_value, range=vrange)
           if ( .not. Atm(n)%flagstruct%hydrostatic )                                        &
                idiag%id_w = register_diag_field ( trim(field), 'w', axes(1:3), Time,        &
                'vertical wind', 'm/sec', missing_value=missing_value, range=wrange )
@@ -2638,6 +2642,8 @@ contains
 
        if(idiag%id_ua > 0) used=send_data(idiag%id_ua, Atm(n)%ua(isc:iec,jsc:jec,:), Time)
        if(idiag%id_va > 0) used=send_data(idiag%id_va, Atm(n)%va(isc:iec,jsc:jec,:), Time)
+       if(idiag%id_ud > 0) used=send_data(idiag%id_ud, Atm(n)%u(isd:ied  ,jsd:jed,:), Time)
+       if(idiag%id_vd > 0) used=send_data(idiag%id_vd, Atm(n)%v(isd:ied,jsd:jed,:), Time)
 
        if(idiag%id_ke > 0) then
           a2(:,:) = 0.
