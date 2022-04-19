@@ -70,7 +70,7 @@ libs_no_dycore: fms_check
 	$(MAKE) -C io                    $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
 
 FV3_LIBS = ccpp/driver/libccppdriver.a atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a coarse_graining/libfv3coarse_graining.a
-$(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o $(FV3_LIBS)
+$(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o
 	$(LD) -o $@ $^ $(NCEPLIBS) $(LDFLAGS)
 
 else
@@ -92,8 +92,8 @@ libs_no_dycore: fms_check
 
 FV3_LIBS = atmos_cubed_sphere/libfv3core.a io/libfv3io.a ipd/libipd.a gfsphysics/libgfsphys.a ../stochastic_physics/libstochastic_physics.a cpl/libfv3cpl.a coarse_graining/libfv3coarse_graining.a
 
-$(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o $(FV3_LIBS)
-	$(LD)  -o $@  atmos_model.o coupler_main.o module_fv3_config.o $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) 
+$(FV3_EXE): atmos_model.o coupler_main.o module_fv3_config.o
+	$(LD)  -o $@  $^ $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS)
 
 endif
 
