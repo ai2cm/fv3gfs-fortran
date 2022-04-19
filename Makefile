@@ -114,6 +114,9 @@ test_native: ## run native tests (all tools and build dependencies are assumed t
 test_wrapper:
 	$(MAKE) -C FV3/wrapper/ test
 
+docs_wrapper:
+	$(MAKE) -C FV3/wrapper/ docs
+
 lint:
 	pre-commit run flake8 --all-files
 
@@ -127,12 +130,3 @@ clean: ## cleanup source tree and test output
 
 setup-hooks:
 	pre-commit install
-
-# TODO 32bit options don't currently build, fix these when issue #4 is fixed.
-#test_32bit:
-#	COMPILED_TAG_NAME=32bit $(MAKE) test
-#
-#build_32bit: build_environment
-#	COMPILED_TAG_NAME=32bit COMPILE_OPTION=32BIT=Y $(MAKE) build
-#
-

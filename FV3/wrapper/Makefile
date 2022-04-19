@@ -90,18 +90,5 @@ servedocs: docs ## compile the docs watching for changes
 release: dist ## package and upload a release
 	twine upload dist/*
 
-build:  ## build the wrapper shared object file
-	$(MAKE) -C lib
-	export MPI=$(MPI)
-	CC=$(CC) python3 setup.py build_ext --inplace
-	CC=$(CC) python3 setup.py bdist_wheel
-
-dist: clean ## builds source and wheel package
-	$(MAKE) -C lib
-	python3 setup.py build_ext --inplace
-	python3 setup.py sdist
-	python3 setup.py bdist_wheel
-	ls -l dist
-
 install: clean ## install the package to the active Python's site-packages
 	python3 setup.py install

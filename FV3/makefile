@@ -33,29 +33,8 @@ FV3_LIB_DIRS = atmos_cubed_sphere io ipd gfsphysics  ../stochastic_physics cpl c
 FV3_LIBS_ABS = $(addprefix -L$(PWD)/, $(FV3_LIB_DIRS))
 FV3_LIB_FLAGS = -lfv3core -lfv3io -lipd -lgfsphys -lstochastic_physics -lfv3cpl -lfv3coarse_graining $(FV3_LIBS_ABS)
 
-all: libs fms_check
-	#  need to use this recursive makefile call to ensure that the libs are
-	#  built first
-	$(MAKE) $(FV3_EXE) $(MAKE_OPTS) FMS_DIR=$(FMS_DIR)
+all: $(FV3_EXE)
 
-
-# wrapper_build depends on "all" so that the libs are built before trying to
-# build the wrapper.  Works around a bug below where module_fv3_config.o etc do
-# not depend on the `libs` target
-wrapper_build: all
-	MAKE_INCLUDE=$(shell pwd)/conf/configure.fv3 \
-	 OTHER_FFLAGS="-I$(shell pwd)  -I$(shell pwd)/atmos_cubed_sphere" \
-	 SETUP_PY_LIBS="$(TOP_LEVEL_OBJS_ABSOLUTE) -L$(PWD) $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) -lfmpich -lmpich -lmvec -lm" \
-		$(MAKE) -C wrapper build
-
-wrapper_test: wrapper_build
-	$(MAKE) -C wrapper test
-
-wrapper_docs: 
-	$(MAKE) -C wrapper docs
-
-wrapper_clean: 
-	$(MAKE) -C wrapper clean
 
 install: libs $(FV3_EXE)
 	mkdir -p $(PREFIX)/bin $(PREFIX)/lib
@@ -122,18 +101,8 @@ endif
 $(FV3CAP_LIB): atmos_model.o module_fv3_config.o module_fcst_grid_comp.o time_utils.o fv3_cap.o
 	ar rv $(FV3CAP_LIB) $?
 
-atmos_model.o : atmos_model.F90 module_fv3_config.o
-	$(FC) $(CPPDEFS) $(CPPFLAGS) $(FPPFLAGS) $(FFLAGS) $(OTHERFLAGS) $(OTHER_FFLAGS) $(ESMF_INC) -c atmos_model.F90
-
-module_fv3_config.o: module_fv3_config.F90
-	$(FC) $(CPPDEFS) $(CPPFLAGS) $(FPPFLAGS) $(FFLAGS) $(OTHERFLAGS) $(OTHER_FFLAGS) $(ESMF_INC) -c module_fv3_config.F90
-module_fcst_grid_comp.o: module_fcst_grid_comp.F90
-	$(FC) $(CPPDEFS) $(CPPFLAGS) $(FPPFLAGS) $(FFLAGS) $(OTHERFLAGS) $(OTHER_FFLAGS) $(ESMF_INC) -c module_fcst_grid_comp.F90
-time_utils.o: time_utils.F90
-	$(FC) $(CPPDEFS) $(CPPFLAGS) $(FPPFLAGS) $(FFLAGS) $(OTHERFLAGS) $(OTHER_FFLAGS) $(ESMF_INC) -c time_utils.F90
-fv3_cap.o: fv3_cap.F90
-	$(FC) $(CPPDEFS) $(CPPFLAGS) $(FPPFLAGS) $(FFLAGS) $(OTHERFLAGS) $(OTHER_FFLAGS) $(ESMF_INC) -c fv3_cap.F90
-
+# add "libs" as dependency to all .o files
+MKDEPENDS = ./mkDepends.pl -d libs
 DEPEND_FILES = time_utils.F90 module_fv3_config.F90 atmos_model.F90 module_fcst_grid_comp.F90 fv3_cap.F90 coupler_main.F90
 
 # For CCPP, check if SIONlib is used and set linker flags accordingly
@@ -226,7 +195,8 @@ pp_ser_calls: serialize_outdir_check
 	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/atmos_cubed_sphere/tools $(CWD)/atmos_cubed_sphere/tools/fv_restart.F90
 	@python3 $(PPSER_PY) $(PPSER_FLAGS)  --output-dir=$(SERIALBOX_OUTDIR)/atmos_cubed_sphere/tools $(CWD)/atmos_cubed_sphere/tools/test_cases.F90
 
-.PHONY: clean cleanall serialize serialize_preprocess fms_check serialize_outdir_check
+.PHONY: clean cleanall serialize serialize_preprocess fms_check serialize_outdir_check libs
+
 clean: wrapper_clean
 	@echo "Cleaning ... "
 	@echo
@@ -258,11 +228,42 @@ cleanall: clean
 	$(RM) -f conf/configure.fv3
 	$(RM) -rf $(SERIALBOX_OUTDIR)
 
-MKDEPENDS = ./mkDepends.pl
-include conf/make.rules
 
 # do not include 'depend' file if the target contains string 'clean'
 ifneq (clean,$(findstring clean,$(MAKECMDGOALS)))
     -include depend
 endif
 
+# Wrapper related build rules
+TEMPLATES_RELATIVE =  dynamics_data.F90 flagstruct_data.F90 physics_data.F90 _wrapper.pyx
+TEMPLATES_IN = $(addprefix wrapper/templates/,$(TEMPLATES_RELATIVE))
+TEMPLATES_OUT = $(addprefix wrapper/lib/,$(TEMPLATES_RELATIVE))
+WRAPPER_OBJECTS=$(TEMPLATES_OUT:.F90=.o) wrapper/lib/coupler_lib.o
+PROPERTIES_FILES = wrapper/fv3gfs/wrapper/dynamics_properties.json \
+	wrapper/fv3gfs/wrapper/flagstruct_properties.json \
+	wrapper/fv3gfs/wrapper/physics_properties.json
+SETUP_PY_LIBS="$(TOP_LEVEL_OBJS_ABSOLUTE) -L$(PWD) $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) -lfmpich -lmpich -lmvec -lm"
+
+wrapper_clean:
+	cd wrapper/lib && rm -f *.o *.mod *.lst *.c depend $(TEMPLATES_RELATIVE)
+
+wrapper_build:$(WRAPPER_OBJECTS)
+	echo $(WRAPPER_OBJECTS)
+	cd wrapper && SETUP_PY_LIBS=$(SETUP_PY_LIBS) python3 setup.py build_ext --inplace
+	cd wrapper && SETUP_PY_LIBS=$(SETUP_PY_LIBS) python3 setup.py bdist_wheel
+
+$(TEMPLATES_OUT): $(TEMPLATES_IN) $(PROPERTIES_FILES)
+	# fill_templates.py needs to be run in the same directory as the outputs
+	cd wrapper/lib && python3 ../fill_templates.py $(TEMPLATES_RELATIVE)
+
+# Specify dependency structure of the wrapper object files. Would be easier to
+# include in the DEPEND_FILES macro above so that mkDepends.pl could generate
+# the dependency graph. This would however, setup a chicken or egg problem where
+# wrapper/fill_templates.py would need to be run before generating running
+# mkDepends.pl. And we don't want to do that for non-wrapper builds.
+wrapper/lib/physics_data.o: wrapper/lib/physics_data.F90 wrapper/lib/dynamics_data.o  atmos_model.o
+wrapper/lib/coupler_lib.o: wrapper/lib/coupler_lib.F90 wrapper/lib/dynamics_data.o atmos_model.o
+wrapper/lib/flagstruct_data.o: wrapper/lib/flagstruct_data.F90 atmos_model.o
+wrapper/lib/dynamics_data.o: wrapper/lib/dynamics_data.F90 atmos_model.o
+
+include conf/make.rules
