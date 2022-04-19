@@ -125,6 +125,9 @@ clean: ## cleanup source tree and test output
 	$(RM) -f inputdata
 	$(RM) -rf tests/pytest/output/*
 
+setup-hooks:
+	pre-commit install
+
 # TODO 32bit options don't currently build, fix these when issue #4 is fixed.
 #test_32bit:
 #	COMPILED_TAG_NAME=32bit $(MAKE) test
