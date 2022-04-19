@@ -4,8 +4,7 @@ include conf/configure.fv3
 
 FMS_DIR?=
 fms_exist=$(wildcard $(FMS_DIR))
-
-FFLAGS   += -I$(FMS_DIR) -Icoarse_graining -Igfsphysics -Iipd -Icpl -Iio -Iatmos_cubed_sphere -Iccpp/driver -I../stochastic_physics
+FFLAGS   += -I$(FMS_DIR) -Icoarse_graining -Igfsphysics -Iipd -Icpl -Iio -Iatmos_cubed_sphere -Iccpp/driver -I../stochastic_physics $(ESMF_INC)
 CPPDEFS  += -DESMF_VERSION_MAJOR=$(ESMF_VERSION_MAJOR)
 
 # Flag to CCPP build for 32bit dynamics
