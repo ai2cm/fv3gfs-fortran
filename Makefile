@@ -106,20 +106,27 @@ test_native: DIR=coverage_$(shell date -Is)
 test_native: ## run native tests (all tools and build dependencies are assumed to be available in the environment)
 	find FV3 -type f -name '*.gcda' -delete
 	pytest --native tests/pytest
+	pytest FV3/wrapper/tests/
 	mkdir -p $(DIR) && \
 		cd $(DIR)  && \
 		gcovr -d -r ../FV3 --html --html-details -o index.html
+
+test_wrapper:
+	$(MAKE) -C FV3/wrapper/ test
+
+docs_wrapper:
+	$(MAKE) -C FV3/wrapper/ docs
+
+lint:
+	pre-commit run flake8 --all-files
+
+reformat:
+	pre-commit run --all-files
 
 clean: ## cleanup source tree and test output
 	(cd FV3 && make clean)
 	$(RM) -f inputdata
 	$(RM) -rf tests/pytest/output/*
 
-# TODO 32bit options don't currently build, fix these when issue #4 is fixed.
-#test_32bit:
-#	COMPILED_TAG_NAME=32bit $(MAKE) test
-#
-#build_32bit: build_environment
-#	COMPILED_TAG_NAME=32bit COMPILE_OPTION=32BIT=Y $(MAKE) build
-#
-
+setup-hooks:
+	pre-commit install

@@ -277,6 +277,43 @@ it is not possible to contain a bind-mounted subdirectory in a separately bind-m
 directory. You could see these sources by setting `SERIALBOX_OUTDIR` to a different
 directory (it is `/FV3` by default) that you have bind-mounted in to the container.
 
+# The Python wrapper
+
+The `FV3/wrapper` subdirectory contains a python wrappper that can be used to
+call the fortran model for interactive ML. It's usage docs can be seen [here](TODO/add/path).
+
+To build the wrapper some additional python requirements must be available in the environment:
+- fv3config
+- pace-util
+- numpy
+- pyyaml
+- xarray
+- cython
+- mpi4py
+
+The [nix environment][#developing] is setup automatically with these
+dependencies, and is the recommend development environment for iterative
+development (edit/build/test) of the wrapper. In other environments, e.g.
+HPC/DOCKER these builds dependencies will need to be manually installed.
+
+Once the dependencies are installed the wrapper and fv3.exe can be built like
+this
+
+    make -C FV3 wrapper_build
+
+To install the wrapper in some python environment, you can use the wheel built
+above
+
+    pip install FV3/wrapper/dist/fv3gfs_wrapper*.whl
+
+To test the wrapper
+
+    # if you want to test FV3/wrapper in-place uncomment the line below
+    # otherwise it will use the version installed in the python environment
+    # export PYTHONPATH=$(pwd)/FV3/wrapper:$PYTHONPATH
+
+    make test_wrapper
+
 # Docker BuildKit
 
 If you are using a version of docker that supports it, you can enable buildkit by

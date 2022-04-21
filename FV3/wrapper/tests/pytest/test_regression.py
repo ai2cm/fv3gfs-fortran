@@ -1,5 +1,4 @@
 import os
-import yaml
 import subprocess
 import pytest
 import fv3config
@@ -15,7 +14,7 @@ config_filenames = os.listdir(CONFIG_DIR)
 def config(request):
     config_filename = os.path.join(CONFIG_DIR, request.param)
     with open(config_filename, "r") as config_file:
-        return yaml.safe_load(config_file)
+        return fv3config.load(config_file)
 
 
 def md5_from_dir(dir_):
@@ -81,7 +80,8 @@ def test_fv3_wrapper_regression(regtest, tmpdir, config):
 def run_fv3(config, run_dir):
     fv3config.write_run_directory(config, str(run_dir))
     subprocess.check_call(
-        ["mpirun", "-n", "6", "fv3.exe"], cwd=run_dir,
+        ["mpirun", "-n", "6", "fv3.exe"],
+        cwd=run_dir,
     )
 
 
