@@ -38,14 +38,14 @@ let
     # doesn't find pytest, not sure why, disabling tests for now.
     doCheck = false;
   };
-  fv3config = let version ="0.8.0";
+  fv3config = let version ="0.9.0";
   in
   call_py_fort.pypkgs.fv3config.overridePythonAttrs (attrs :{
     version = version;
     src = fetchPypi {
       version = version;
       pname = attrs.pname;
-      sha256 = "sha256-MCS97yjMlW1RgmxrbwKnqM5jpWbblOchH2x0cekyDD4=";
+      sha256 = "sha256-iqJdIXQChmiM3hDVcJpV8gc+SoAOSaPGJ6OWuSdzQ0Y=";
     };
   });
 in
