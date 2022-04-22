@@ -191,10 +191,9 @@ To develop the model, you can use the environment specified in `shell.nix` by ru
 
     nix-shell
 
-Then copy the nix build configuration file to the magic location harcoded in
-the FV3 makefiles:
+Then configure the build to use nix
 
-    cp -f nix/fv3/configure.fv3 FV3/conf/
+    cd FV3 && ./configure nix
 
 And build the model (with coverage outputs)
 
