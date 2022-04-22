@@ -122,11 +122,9 @@ patchShebangs FV3/configure
 '';
 
 
-config = ./configure.fv3;
-
 configurePhase = ''
   cd FV3
-  cp $config conf/configure.fv3
+  ./configure nix
 
   # ./configure gnu_docker
   cd ..
