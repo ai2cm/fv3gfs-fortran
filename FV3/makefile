@@ -241,15 +241,21 @@ WRAPPER_OBJECTS=$(TEMPLATES_OUT:.F90=.o) wrapper/lib/coupler_lib.o
 PROPERTIES_FILES = wrapper/fv3gfs/wrapper/dynamics_properties.json \
 	wrapper/fv3gfs/wrapper/flagstruct_properties.json \
 	wrapper/fv3gfs/wrapper/physics_properties.json
-SETUP_PY_LIBS="$(TOP_LEVEL_OBJS_ABSOLUTE) -L$(PWD) $(FV3_LIB_FLAGS) $(NCEPLIBS) $(LDFLAGS) -lfmpich -lmpich -lmvec -lm"
+SETUP_PY_LIBS := $(TOP_LEVEL_OBJS_ABSOLUTE) \
+			  -L$(PWD) \
+			  $(FV3_LIB_FLAGS) \
+			  $(NCEPLIBS) \
+			  $(LDFLAGS) \
+			  $(shell bash conf/detect_mpi_links_args.sh) \
+			  -lmvec \
+			  -lm
 
 wrapper_clean:
 	cd wrapper/lib && rm -f *.o *.mod *.lst *.c depend $(TEMPLATES_RELATIVE)
 
 wrapper_build:$(WRAPPER_OBJECTS)
-	echo $(WRAPPER_OBJECTS)
-	cd wrapper && SETUP_PY_LIBS=$(SETUP_PY_LIBS) python3 setup.py build_ext --inplace
-	cd wrapper && SETUP_PY_LIBS=$(SETUP_PY_LIBS) python3 setup.py bdist_wheel
+	cd wrapper && SETUP_PY_LIBS="$(SETUP_PY_LIBS)" python3 setup.py build_ext --inplace
+	cd wrapper && SETUP_PY_LIBS="$(SETUP_PY_LIBS)" python3 setup.py bdist_wheel
 
 $(TEMPLATES_OUT): $(TEMPLATES_IN) $(PROPERTIES_FILES)
 	# fill_templates.py needs to be run in the same directory as the outputs
