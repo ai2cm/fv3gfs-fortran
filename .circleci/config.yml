@@ -29,7 +29,7 @@ jobs:
             git submodule update
       - run: |
           nix-build -j 4 -A fms | cachix push vulcanclimatemodeling
-          nix-shell --run "cd FV3 && ./configure nix && make -j 4"
+          nix-shell --run "cd FV3 && bash configure nix && make -j 4"
           # additional changes to the DNS settings are needed for mac
           # https://stackoverflow.com/questions/23112515/mpich2-gethostbyname-failed
           echo "127.0.0.1 $HOSTNAME" | sudo tee -a /etc/hosts
@@ -60,7 +60,7 @@ jobs:
           cachix use vulcanclimatemodeling
       - run: |
           nix-build -j 4 -A fms | cachix push vulcanclimatemodeling
-          nix-shell --run "cd FV3 && ./configure nix && make -j 4"
+          nix-shell --run "cd FV3 && bash configure nix && make -j 4"
       - run:
           name: Build wrapper
           command: nix-shell --run "make -j 4 -C FV3 wrapper_build"
