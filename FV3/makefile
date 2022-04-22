@@ -241,12 +241,12 @@ WRAPPER_OBJECTS=$(TEMPLATES_OUT:.F90=.o) wrapper/lib/coupler_lib.o
 PROPERTIES_FILES = wrapper/fv3gfs/wrapper/dynamics_properties.json \
 	wrapper/fv3gfs/wrapper/flagstruct_properties.json \
 	wrapper/fv3gfs/wrapper/physics_properties.json
-SETUP_PY_LIBS := $(TOP_LEVEL_OBJS_ABSOLUTE) \
+SETUP_PY_LIBS = $(TOP_LEVEL_OBJS_ABSOLUTE) \
 			  -L$(PWD) \
 			  $(FV3_LIB_FLAGS) \
 			  $(NCEPLIBS) \
 			  $(LDFLAGS) \
-			  $(shell bash conf/detect_mpi_links_args.sh) \
+			  $(MPI_LDFLAGS) \
 			  -lmvec \
 			  -lm
 
