@@ -134,7 +134,7 @@ fi
 cd -
 
 # build venv for fv3config
-module load cray-python/3.8.5.0
+module load cray-python/3.9.4.1
 python3 -m venv ${rootdir}/venv
 source venv/bin/activate
 pip install -r ${rootdir}/requirements.txt
