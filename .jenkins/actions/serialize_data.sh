@@ -105,6 +105,7 @@ make pull_deps
 echo ""
 echo "========================================="
 echo "> Running ./make_all_datasets.sh in ./tests/serialize_test_data_generation"
+export FSSPEC_GS_REQUESTER_PAYS=vcm-ml
 cd tests/serialized_test_data_generation
 ./make_all_datasets.sh
 cd -
