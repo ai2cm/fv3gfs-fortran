@@ -25,7 +25,6 @@ RUN wget -q http://www.mpich.org/static/downloads/3.1.4/mpich-3.1.4.tar.gz && \
 FROM $MPI_IMAGE AS mpi_image
 
 FROM $BASE_IMAGE AS fv3gfs-environment
-
 RUN apt-get update && apt-get install -y \
     wget \
     gcc \

@@ -1,0 +1,28 @@
+repos:
+-   repo: https://github.com/psf/black
+    rev: 19.10b0
+    hooks:
+    - id: black
+      additional_dependencies: ["click==8.0.4"]
+-   repo: https://gitlab.com/pycqa/flake8
+    rev: 3.7.8
+    hooks:
+    - id: flake8
+      name: flake8
+      language_version: python3
+      exclude: "__init__.py"
+      args: [ --config, FV3/wrapper/setup.cfg]
+    - id: flake8
+      name: flake8 __init__.py files
+      files: "__init__.py"
+      # ignore unused import error in __init__.py files
+      args: ["--ignore=F401,E203", --config, FV3/wrapper/setup.cfg]
+files: |
+  (?x)^(
+    FV3/wrapper/.*
+  )$
+exclude: 
+  (?x)^(
+    FV3/wrapper/docs/.*|
+    .*/ipcluster_config.py
+  )$

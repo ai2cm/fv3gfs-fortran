@@ -348,7 +348,7 @@ subroutine update_atmos_radiation_physics (Atmos)
       endif
 
       call mpp_clock_end(setupClock)
-
+#ifndef AI2_SUBSET_PHYSICS
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "radiation driver"
 
 !--- execute the IPD atmospheric radiation subcomponent (RRTM)
@@ -371,7 +371,7 @@ subroutine update_atmos_radiation_physics (Atmos)
       enddo
 #endif
       call mpp_clock_end(radClock)
-
+#endif
       call mpp_clock_begin(otherClock)
       if (chksum_debug) then
         if (mpp_pe() == mpp_root_pe()) print *,'RADIATION STEP  ', IPD_Control%kdt, IPD_Control%fhour
@@ -396,6 +396,9 @@ subroutine update_atmos_radiation_physics (Atmos)
       do nb = 1,Atm_block%nblks
         call IPD_step (IPD_Control, IPD_Data(nb:nb), IPD_Diag, IPD_Restart, IPD_func0d=Func0d)
       enddo
+      !$ser savepoint GFSPhysicsDriver-Out
+      !$ser data IPD_gt0=IPD_Data(1)%Stateout%gt0 IPD_gu0=IPD_Data(1)%Stateout%gu0 IPD_gv0=IPD_Data(1)%Stateout%gv0 IPD_gq0=IPD_Data(1)%Stateout%gq0 
+      !$ser data IPD_qvapor=IPD_Data(1)%Stateout%gq0(:,:,1) IPD_qliquid=IPD_Data(1)%Stateout%gq0(:,:,2) IPD_rain=IPD_Data(1)%Stateout%gq0(:,:,3) IPD_qice=IPD_Data(1)%Stateout%gq0(:,:,4) IPD_snow=IPD_Data(1)%Stateout%gq0(:,:,5) IPD_qgraupel=IPD_Data(1)%Stateout%gq0(:,:,6) IPD_qcld=IPD_Data(1)%Stateout%gq0(:,:,9)  
 #endif
       call mpp_clock_end(physClock)
 
@@ -407,7 +410,7 @@ subroutine update_atmos_radiation_physics (Atmos)
       call mpp_clock_end(otherClock)
 
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "stochastic physics driver"
-
+#ifndef AI2_SUBSET_PHYSICS
 !--- execute the IPD atmospheric physics step2 subcomponent (stochastic physics driver)
 
       call mpp_clock_begin(physClock)
@@ -425,7 +428,7 @@ subroutine update_atmos_radiation_physics (Atmos)
       enddo
 #endif
       call mpp_clock_end(physClock)
-
+#endif
       call mpp_clock_begin(otherClock)
       if (chksum_debug) then
         if (mpp_pe() == mpp_root_pe()) print *,'PHYSICS STEP2   ', IPD_Control%kdt, IPD_Control%fhour

@@ -1,3 +1,5 @@
+import copy
+import datetime
 import glob
 import os
 from os.path import join
@@ -7,6 +9,7 @@ import fv3config
 import numpy as np
 import xarray
 import subprocess
+import typing
 import hashlib
 
 import re
@@ -120,6 +123,39 @@ def test_regression_native(run_native, config_filename: str, tmpdir, system_regt
     _checksum_rundir(str(rundir), file=system_regtest)
 
 
+@pytest.mark.parametrize(
+    "config_filename", ["default.yml", "emulation.yml", "restart.yml"]
+)
+def test_restart_reproducibility(run_native, config_filename, tmpdir):
+    config_template = get_config(config_filename)
+    config_template["diag_table"] = "no_output"
+    config_template["namelist"]["gfs_physics_nml"]["fhswr"] = 900
+    config_template["namelist"]["gfs_physics_nml"]["fhlwr"] = 900
+
+    segmented_config = copy.deepcopy(config_template)
+    continuous_config = copy.deepcopy(config_template)
+
+    duration = datetime.timedelta(minutes=30)
+    segmented_config = fv3config.set_run_duration(segmented_config, duration // 2)
+    continuous_config = fv3config.set_run_duration(continuous_config, duration)
+
+    segment_1_rundir = str(tmpdir.join("segment-1"))
+    segment_2_rundir = str(tmpdir.join("segment-2"))
+    continuous_rundir = str(tmpdir.join("continuous"))
+
+    run_native(segmented_config, segment_1_rundir)
+    run_native(continuous_config, continuous_rundir)
+
+    segment_1_restarts = os.path.join(segment_1_rundir, "RESTART")
+    segmented_config = fv3config.enable_restart(segmented_config, segment_1_restarts)
+    run_native(segmented_config, segment_2_rundir)
+
+    continuous_checksums = _checksum_restart_files(continuous_rundir)
+    segmented_checksums = _checksum_restart_files(segment_2_rundir)
+
+    assert segmented_checksums == continuous_checksums
+
+
 @pytest.fixture(scope="session")
 def emulation_run(run_native, tmpdir_factory):
     config = get_config("emulation.yml")
@@ -193,6 +229,11 @@ def checksum_file(path: str) -> str:
                 break
             sum.update(buf)
     return sum.hexdigest()
+
+
+def _checksum_restart_files(rundir: str) -> typing.Dict[str, str]:
+    restart_files = sorted(glob.glob(os.path.join(rundir, "RESTART", "*.nc")))
+    return {os.path.basename(file): checksum_file(file) for file in restart_files}
 
 
 def _checksum_rundir(rundir: str, file):

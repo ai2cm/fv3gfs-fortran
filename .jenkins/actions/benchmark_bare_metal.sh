@@ -121,6 +121,8 @@ echo "====================="
 
 # create venv for the two Python tools below
 # note: can't use vcm_1.0 since we want to keep the module environment clean
+module load cray-python/3.9.4.1
+export FSSPEC_GS_REQUESTER_PAYS=vcm-ml
 python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip wheel

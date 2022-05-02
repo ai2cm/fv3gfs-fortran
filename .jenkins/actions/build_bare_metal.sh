@@ -134,6 +134,8 @@ fi
 cd -
 
 # build venv for fv3config
+module load cray-python/3.9.4.1
+export FSSPEC_GS_REQUESTER_PAYS=vcm-ml
 python3 -m venv ${rootdir}/venv
 source venv/bin/activate
 pip install -r ${rootdir}/requirements.txt

@@ -1,0 +1,105 @@
+version: 2.1
+orbs:
+  gcp-cli: circleci/gcp-cli@2.1.0
+  gcp-gcr: circleci/gcp-gcr@0.6.1
+jobs:
+
+  build_default:
+    machine:
+      docker_layer_caching: true
+      image: ubuntu-1604:201903-01
+    environment:
+      GCR_IMAGE: us.gcr.io/vcm-ml/fv3gfs-wrapper:gnu7-mpich314-nocuda
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+    steps:
+      - gcp-cli/install:
+        version: 323.0.0
+      - checkout
+      - run:
+          name: "save gcloud key for gcsfs"
+          command: |
+            echo $ENCODED_GCR_KEY | base64 -d > $GOOGLE_APPLICATION_CREDENTIALS
+      - add_ssh_keys:
+          fingerprints:
+            - "dd:76:98:a1:2c:ec:29:0d:7e:3e:fd:57:c5:4e:a2:8f"  # github user key
+      - run:
+          name: "Pull submodules"
+          command: |
+            git submodule update --init --recursive
+      - restore_cache:
+          keys:
+            - v1-build-dependencies-{{ checksum "requirements.txt" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-build-dependencies-
+      - run: 
+          name: "Install Python test dependencies"
+          command: |
+            pyenv versions
+            [ -d /opt/circleci/.pyenv/versions/3.6.2 ] || pyenv install 3.6.2
+            pyenv global 3.6.2
+            pip install --upgrade pip setuptools
+            pip install -r tests/pytest/requirements.txt
+      - save_cache:
+          paths:
+            - /opt/circleci/.pyenv/versions/3.6.2
+          key: v1-build-dependencies-{{ checksum "requirements.txt" }}
+      - restore_cache:
+          keys:
+            - v1-fv3config-cache
+      - gcp-gcr/gcr-auth
+      - run:
+          name: "Run example runfiles"
+          command: |
+            make public_examples
+      - run:
+          name: "Build documentation"
+          command: |
+            make docs-docker
+      - store_artifacts:
+          path: ./tests/pytest/output
+      - persist_to_workspace:
+          root: docs/_build
+          paths: html
+
+  docs_deploy:
+    docker:
+      - image: node:8.10.0
+    steps:
+      - checkout
+      - attach_workspace:
+          at: docs/_build
+      - add_ssh_keys:
+          fingerprints:
+            - "77:dc:f8:08:f2:17:8d:0f:c3:b0:e8:93:0e:d0:89:e7"  # push fv3gfs-wrapper
+      - run:
+          name: Install and configure dependencies
+          command: |
+            npm install -g --silent gh-pages@2.0.1
+            git config user.email "ci-build@vulcan.com"
+            git config user.name "ci-build"
+      - run:
+          name: Deploy docs to gh-pages branch
+          command: |
+            mv docs/_build/html upload
+            touch upload/.nojekyll
+            gh-pages --dotfiles --dist upload
+workflows:
+  version: 2
+  tagged-build:
+    jobs:
+      - lint:
+          filters:
+            tags:
+              only: /^v.*/
+      - build_default:
+          requires:
+            - lint
+          filters:
+            tags:
+              only: /^v.*/
+      - docs_deploy:
+          requires:
+            - build_default
+          filters:
+            branches:
+              only: master

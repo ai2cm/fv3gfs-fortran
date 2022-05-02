@@ -3780,14 +3780,21 @@ real function wqs1 (ta, den)
     real :: es, ap1, tmin
     
     integer :: it
+
+#ifdef GT4PY_DEV
+    wqs1 = (e00 * exp((dc_vap * log(ta / t_ice) + lv0 * (ta - t_ice) / (ta * t_ice)) / rvgas)) / ( rvgas * ta * den )
     
+#else
+
     tmin = table_ice - 160.
     ap1 = 10. * dim (ta, tmin) + 1.
     ap1 = min (2621., ap1)
     it = ap1
     es = tablew (it) + (ap1 - it) * desw (it)
     wqs1 = es / (rvgas * ta * den)
-    
+
+#endif
+
 end function wqs1
 
 ! =======================================================================
@@ -3807,7 +3814,14 @@ real function wqs2 (ta, den, dqdt)
     real, intent (in) :: ta, den
     
     real, intent (out) :: dqdt
+
+#ifdef GT4PY_DEV
     
+    wqs2 = wqs1(ta, den)
+    dqdt = wqs2 * (dc_vap + lv0 / ta) / (rvgas * ta)
+
+#else
+
     real :: es, ap1, tmin
     
     integer :: it
@@ -3824,7 +3838,9 @@ real function wqs2 (ta, den, dqdt)
     it = ap1 - 0.5
     ! finite diff, del_t = 0.1:
     dqdt = 10. * (desw (it) + (ap1 - it) * (desw (it + 1) - desw (it))) / (rvgas * ta * den)
-    
+
+#endif
+
 end function wqs2
 
 ! =======================================================================
@@ -3868,7 +3884,25 @@ real function iqs1 (ta, den)
     !> input "den" can be either dry or moist air density
     
     real, intent (in) :: ta, den
-    
+
+#ifdef GT4PY_DEV
+    if (ta < t_ice) then
+        ! Over ice between -160 degrees Celsius and 0 degrees Celsius
+        if (ta >= t_ice - 160.) then
+            iqs1 = (e00 * exp((d2ice * log(ta / t_ice) + li2 * (ta - t_ice) / (ta * t_ice)) / rvgas)) / ( rvgas * ta * den )
+        else
+            iqs1 = (e00 * exp((d2ice * log(1. - 160. / t_ice) - li2 * 160. / ((t_ice - 160.) * t_ice)) / rvgas)) / ( rvgas * (t_ice - 160.) * den )
+        endif
+    else
+        ! Over water between 0 degrees Celsius and 102 degrees Celsius
+        if (ta <= t_ice + 102.) then
+            iqs1 = wqs1(ta, den)
+        else
+            iqs1 = wqs1(t_ice + 102., den)
+        endif
+    endif
+#else
+
     real :: es, ap1, tmin
     
     integer :: it
@@ -3879,7 +3913,9 @@ real function iqs1 (ta, den)
     it = ap1
     es = table2 (it) + (ap1 - it) * des2 (it)
     iqs1 = es / (rvgas * ta * den)
-    
+
+#endif
+
 end function iqs1
 
 ! =======================================================================
@@ -3897,7 +3933,28 @@ real function iqs2 (ta, den, dqdt)
     real, intent (in) :: ta, den
     
     real, intent (out) :: dqdt
+
+#ifdef GT4PY_DEV
+    iqs2 = iqs1(ta, den)
     
+    if (ta < t_ice) then
+        ! Over ice between -160 degrees Celsius and 0 degrees Celsius
+        if (ta >= t_ice - 160.) then
+            dqdt = iqs2 * (d2ice + li2 / ta) / (rvgas * ta)
+        else
+            dqdt = iqs2 * (d2ice + li2 / (t_ice - 160.)) / (rvgas * (t_ice - 160.))
+        endif
+    else
+        ! Over water between 0 degrees Celsius and 102 degrees Celsius
+        if (ta <= t_ice + 102.) then
+            dqdt = iqs2 * (dc_vap + lv0 / ta) / (rvgas * ta)
+        else
+            dqdt = iqs2 * (dc_vap + lv0 / (t_ice + 102.)) / (rvgas * (t_ice + 102.))
+        endif
+    endif
+    
+#else  
+
     real :: es, ap1, tmin
     
     integer :: it
@@ -3910,7 +3967,9 @@ real function iqs2 (ta, den, dqdt)
     iqs2 = es / (rvgas * ta * den)
     it = ap1 - 0.5
     dqdt = 10. * (des2 (it) + (ap1 - it) * (des2 (it + 1) - des2 (it))) / (rvgas * ta * den)
-    
+
+#endif
+
 end function iqs2
 
 ! =======================================================================

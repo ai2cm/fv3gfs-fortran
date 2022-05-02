@@ -1034,7 +1034,9 @@ subroutine qs_init (kmp)
     integer, parameter :: length = 2621
     
     integer :: i
-    !$ser verbatim logical :: ser_on
+    !$ser verbatim logical :: ser_on, serialize_dycore
+    !$ser verbatim character(len=256) :: ser_env
+  
     if (mp_initialized) return
     
     if (is_master ()) write (*, *) 'top layer for gfdl_mp = ', kmp
@@ -1046,8 +1048,12 @@ subroutine qs_init (kmp)
     allocate (tablew (length))
     allocate (des2 (length))
     allocate (desw (length))
+    !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
+    !$ser verbatim serialize_dycore = (index(ser_env, "dycore") /= 0)
     !$ser verbatim ser_on=fs_is_serialization_on()
-    !$ser on
+    !$ser verbatim if (serialize_dycore) then
+     !$ser on
+    !$ser verbatim endif
     !$ser verbatim table(:)=0.0
     !$ser verbatim tablew(:)=0.0
     !$ser verbatim table2(:)=0.0

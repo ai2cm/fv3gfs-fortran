@@ -50,6 +50,10 @@ ifeq ($(GT4PY_DEV),Y)
 CPPDEFS += -DGT4PY_DEV
 endif
 
+ifeq ($(AI2_SUBSET_PHYSICS),Y)
+CPPDEFS += -DAI2_SUBSET_PHYSICS
+endif
+
 ifeq ($(HYDRO),Y)
 CPPDEFS += 
 else

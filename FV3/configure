@@ -74,6 +74,10 @@ copy_diff_files "$CONFIGURE_FILE" conf/configure.fv3
 
 [[ -f "$MODULES_FILE" ]] && copy_diff_files "$MODULES_FILE" conf/modules.fv3
 
+
+echo "Detecting MPI Flags. Found:"
+echo "MPI_LDFLAGS = $(bash conf/detect_mpi_links_args.sh)" | tee -a conf/configure.fv3
+
 echo
 echo "The FV3 is now configured on $CONFIGURATION"
 echo
