@@ -1509,8 +1509,7 @@
          enddo
       endif
       !$ser savepoint DelPCPUpdate-In
-      !$ser data_kbuff k=k k_size=nz
-      !$ser data vort=vort ptc=ptc
+      !$ser data_kbuff k=k k_size=nz vort=vort ptc=ptc
       do j=js,je+1
          do i=is,ie+1
             delpc(i,j) = vort(i,j-1) - vort(i,j) + ptc(i-1,j) - ptc(i,j)
@@ -1533,8 +1532,7 @@
          enddo
       enddo
       !$ser savepoint DelPCPUpdate-Out
-      !$ser data_kbuff k=k k_size=nz
-      !$ser data vort=vort ptc=ptc
+      !$ser data_kbuff k=k k_size=nz vort=vort ptc=ptc
    else
 !--------------------------
 ! Higher order divg damping
