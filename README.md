@@ -251,7 +251,7 @@ for serialization using the command
 make enter_serialize
 ```
 
-Make sure to set the GT4PY\_DEV flag for compilation. The original FV3 sources will be mounted to `/FV3/original`. To compile the model for serialization inside the container, you can use the commands
+Make sure to set the GT4PY\_DEV flag to `Y' for compilation. This will alter a subset of the code to be more suitable for gt4py in the python port. When we have all the features we need on the python side and are confident in the robustness of the new model, we should be able to remove these.  The original FV3 sources will be mounted to `/FV3/original`. To compile the model for serialization inside the container, you can use the commands
 
 ```bash
 cd /FV3
