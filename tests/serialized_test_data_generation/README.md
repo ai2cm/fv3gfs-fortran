@@ -39,7 +39,11 @@ you increase the `FORTRAN_VERSION` number in the `Makefile`. You can also use `e
 
 4. Use `export EXPERIMENT=<experiment>` to set the experiment file you want to work with. The file `configs/<experiment>.yml` must exist for the following steps to work.
 
-5. You can now simply type `make generate_and_push_data` which will run the model, ensure that the model run has been successful and data has been generated, pack the data and push the data to the cloud storage bucket. Alternatively, you can execute the individual steps...
+5. pick the category of savepoints you want to save, from options of 'dycore', 'physics', 'init', 'driver'. These change which savepoints are written out in the runtime. Set your choice with `export ENVS_OVERRIDE=( 'dycore' )` for example. This must be a list with no commas. If you don't set this, by default make_all_datasets will choose what set to run cased on the resolution of the experiment. 
+
+6. By default if a dataset is < c200, all the datapoints will be saved, and if larger SER_INPUT_ONLY="true", the model should exit after writing "Driver-In" or "FVDynamics-In", but in practice this may not work as expected yet. If you are not getting the behavior you expect, change the SER_INPUT_ONLY setting in the make_all_datasets.sh script. 
+
+7. You can now simply type `make generate_and_push_data` which will run the model, ensure that the model run has been successful and data has been generated, pack the data and push the data to the cloud storage bucket. Alternatively, you can execute the individual steps...
    - Type `make setup_rundir` to creates a run directory from the experiment file using `fv3config` which contains all input data to execute a FV3GFS model run.
    - Type `make run_model` to run the Docker container with the model using the run directory you have just created. A `data/<experiment>` directory will be populated with the serialized data and some diagnostic output.
    - Type `make pack_data` to pack the `*.dat` files into a single `*.tar.gz` to reduce the number of files that have to be stored on the cloud.
