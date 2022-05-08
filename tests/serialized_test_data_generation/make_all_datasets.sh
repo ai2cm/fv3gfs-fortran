@@ -69,7 +69,7 @@ for exp_file in ${EXPERIMENTS} ; do
 
      if [ ${npx} -lt 50 ] ; then
        if [ "${dycore_only}" == "true" ] ; then
-	  envs=("init" "driver" "dycore")
+	  envs=("dycore" "init" "driver" )
        else
 	  envs=("init" "driver" "dycore" "physics")
        fi
