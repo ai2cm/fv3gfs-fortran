@@ -57,23 +57,12 @@ for exp_file in ${EXPERIMENTS} ; do
   seconds=`cat ${exp_file} | grep seconds | sed s/seconds://g | sed 's/^ *//g'`
   dt_atmos=`cat ${exp_file} | grep dt_atmos | sed s/dt_atmos://g | sed 's/^ *//g'`
   dycore_only=`cat ${exp_file} | grep dycore_only | sed s/dycore_only://g | sed 's/^ *//g'`
-  envs=("init" "driver")
-  export SER_INPUT_ONLY="true"
+  envs=("dycore")
+  export SER_INPUT_ONLY="false"
   export SAVE_TIMESTEP=1
   if [ ${seconds} -gt 100 ] ; then
       export SAVE_TIMESTEP=$((${seconds}/${dt_atmos} - 1))
       echo  "saving timstep $SAVE_TIMESTEP"
-  fi
-  if [ ${npx} -lt 200 ] ; then
-      export SER_INPUT_ONLY="false"
-
-     if [ ${npx} -lt 50 ] ; then
-       if [ "${dycore_only}" == "true" ] ; then
-	  envs=("dycore" "init" "driver" )
-       else
-	  envs=("init" "driver" "dycore" "physics")
-       fi
-     fi
   fi
   if [ ! -z "${ENVS_OVERRIDE}" ] ; then
       envs=${ENVS_OVERRIDE}
