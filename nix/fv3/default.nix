@@ -38,6 +38,19 @@ let
     # doesn't find pytest, not sure why, disabling tests for now.
     doCheck = false;
   };
+  fortls = with call_py_fort.pypkgs ; buildPythonApplication rec {
+    pname = "fortls";
+    version = "2.5.0";
+    src = fetchPypi {
+      inherit pname version;
+      sha256 = "sha256-LLal4WwEFfvfhscJf0IHMCQ7l0LRiSGnxua5lsi9NtM=";
+    };
+    propagatedBuildInputs = [
+      packaging
+    ];
+    # doesn't find pytest, not sure why, disabling tests for now.
+    doCheck = false;
+  };
   fv3config = let version ="0.9.0";
   in
   call_py_fort.pypkgs.fv3config.overridePythonAttrs (attrs :{
@@ -71,6 +84,7 @@ stdenv.mkDerivation {
       # fof
       fv3config
       pace-util
+      fortls
       # avoids linking agains static libgfortran
       gfortran.cc.lib
       fms
