@@ -4615,6 +4615,9 @@ module module_physics_driver
               Diag%zhao_carr_physics%humidity = (Stateout%gq0(1:im,1:levs, 1) - dqdt(:,:,1)) / dtp
               Diag%zhao_carr_physics%cloud_water = (Stateout%gq0(1:im,1:levs,ntcw) - dqdt(:,:,ntcw)) / dtp
               Diag%zhao_carr_physics%temperature = (Stateout%gt0(1:im,1:levs) - dtdt) / dtp
+              if (Model%emulate_gscond_only) then
+                call adjust_zhao_carr_physics_diags_gscond_only(Diag)
+              end if
             end if
             ! rain1 has units m, and represents surface precip over dtp
             Diag%zhao_carr_physics%surface_precipitation = rain1 / dtp * rhowater
@@ -6083,6 +6086,38 @@ module module_physics_driver
       end subroutine compute_updated_delp_following_dynamics_definition
 
 #ifdef ENABLE_CALLPYFORT
+
+      subroutine adjust_zhao_carr_physics_diags_gscond_only(Diag)
+        type (GFS_diag_type), intent(inout) :: Diag
+
+        call adjust_total_physics_tendency_gscond_only(&
+          Diag%zhao_carr_physics%humidity,&
+          Diag%gscond_physics%humidity,&
+          Diag%gscond_emulator%humidity&
+        )
+
+        call adjust_total_physics_tendency_gscond_only(&
+          Diag%zhao_carr_physics%temperature,&
+          Diag%gscond_physics%temperature,&
+          Diag%gscond_emulator%temperature&
+        )
+
+        call adjust_total_physics_tendency_gscond_only(&
+          Diag%zhao_carr_physics%cloud_water,&
+          Diag%gscond_physics%cloud_water,&
+          Diag%gscond_emulator%cloud_water&
+        )
+      end subroutine
+
+      !> Adjust the total physics tendency in the gscond-only case
+      !> The total tendency is defined as gscond_physics + precpd_physics
+      subroutine adjust_total_physics_tendency_gscond_only(total, gscond_physics, gscond_emulator)
+        real(kind=kind_phys), intent(inout) :: total(:, :)
+        real(kind_phys), intent(in), dimension(:, :) :: gscond_physics, gscond_emulator
+        ! have g_emu + p_phys, g_emu, and g_phys
+        ! want g_phys + p_phys = (g_emu + p_phys) - g_emu + g_phys
+        total = total - gscond_emulator + gscond_physics
+      end subroutine
 
       subroutine apply_python_gscond_updates_to_tbd(Tbd)
         type(GFS_tbd_type), intent(inout) :: Tbd
