@@ -1430,10 +1430,10 @@ module fv_arrays_mod
   integer :: atmos_axes(4)
 
   type(nudge_diag_type) :: nudge_diag
-  
-  type(fv_sat_adj_tendency_diag_type) :: fv_sat_adj_tendency_diag
 
   type(physics_tendency_diag_type) :: physics_tendency_diag
+  
+  type(fv_sat_adj_tendency_diag_type) :: fv_sat_adj_tendency_diag
 
   type(fv_coarse_graining_type) :: coarse_graining
 

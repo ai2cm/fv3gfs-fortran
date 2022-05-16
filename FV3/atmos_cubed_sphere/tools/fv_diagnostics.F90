@@ -3350,6 +3350,21 @@ contains
         used = send_data(idiag%id_qg_dt_phys, Atm(n)%physics_tendency_diag%qg_dt(isc:iec,jsc:jec,1:npz), Time)
      endif
 
+     if (idiag%id_fv_sat_adj_t_dt > 0) then
+        used = send_data(idiag%id_fv_sat_adj_t_dt, Atm(n)%fv_sat_adj_tendency_diag%fv_sat_adj_t_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+     if (idiag%id_fv_sat_adj_qv_dt > 0) then
+        used = send_data(idiag%id_fv_sat_adj_qv_dt, Atm(n)%fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+     if (idiag%id_column_fv_sat_adj_heating > 0) then
+        used = send_data(idiag%id_column_fv_sat_adj_heating, &
+                         Atm(n)%fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(isc:iec,jsc:jec), Time)
+     endif
+     if (idiag%id_column_fv_sat_adj_moistening > 0) then
+        used = send_data(idiag%id_column_fv_sat_adj_moistening, &
+                         Atm(n)%fv_sat_adj_tendency_diag%column_fv_sat_adj_moistening(isc:iec,jsc:jec), Time)
+     endif
+
    ! enddo  ! end ntileMe do-loop
 
     deallocate ( a2 )

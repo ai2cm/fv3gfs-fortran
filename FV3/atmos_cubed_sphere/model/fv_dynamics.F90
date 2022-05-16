@@ -144,7 +144,8 @@ module fv_dynamics_mod
    use fv_regional_mod,     only: a_step, p_step, k_step
    use fv_regional_mod,     only: current_time_in_seconds
    use boundary_mod,        only: nested_grid_BC_apply_intT
-   use fv_arrays_mod,       only: fv_grid_type, fv_flags_type, fv_atmos_type, fv_nest_type, fv_diag_type, fv_grid_bounds_type
+   use fv_arrays_mod,       only: fv_grid_type, fv_flags_type, fv_atmos_type, fv_nest_type, & 
+                                  fv_diag_type, fv_grid_bounds_type, fv_sat_adj_tendency_diag_type
    use fv_nwp_nudge_mod,    only: do_adiabatic_init
 #ifdef MULTI_GASES
    use multi_gases_mod,     only:  virq, virqd, vicpqd
@@ -180,7 +181,9 @@ contains
                         ps, pe, pk, peln, pkz, phis, q_con, omga, ua, va, uc, vc,     &
                         ak, bk, mfx, mfy, cx, cy, ze0, hybrid_z,                      &
                         gridstruct, flagstruct, neststruct, idiag, bd,                &
-                        parent_grid, domain, diss_est, lagrangian_tendency_of_hydrostatic_pressure, time_total)
+                        parent_grid, domain, diss_est,                                &
+                        lagrangian_tendency_of_hydrostatic_pressure,                  &
+                        fv_sat_adj_tendency_diag, time_total)
 
 #ifdef CCPP
     use mpp_mod,   only: FATAL, mpp_error
@@ -256,6 +259,8 @@ contains
     type(domain2d),      intent(INOUT) :: domain
     type(fv_atmos_type), pointer, intent(IN) :: parent_grid
     type(fv_diag_type),  intent(IN)    :: idiag
+    
+    type(fv_sat_adj_tendency_diag_type), intent(inout), optional :: fv_sat_adj_tendency_diag
 
 ! Local Arrays
       real :: ws(bd%is:bd%ie,bd%js:bd%je)
@@ -670,6 +675,14 @@ contains
   call mpp_clock_end(id_other)
 
                                                   call timing_on('FV_DYN_LOOP')
+                                                  
+  if (allocated(fv_sat_adj_tendency_diag%fv_sat_adj_t_dt)) then
+     fv_sat_adj_tendency_diag%fv_sat_adj_t_dt = 0.0
+  endif
+  if (allocated(fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt)) then
+     fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt = 0.0
+  endif
+                                                  
   do n_map=1, k_split   ! first level of time-split
      call mpp_clock_begin(id_dyn_core)
      !$ser verbatim n_map_step=n_map
@@ -829,7 +842,7 @@ contains
                      kord_tracer, flagstruct%kord_tm, peln, te_2d,                      &
                      ng, ua, va, omga, dp1, ws, fill, reproduce_sum,                    &
                      idiag%id_mdt>0, dtdt_m, ptop, ak, bk, pfull, gridstruct, domain,   &
-                     flagstruct%do_sat_adj, hydrostatic, hybrid_z, do_omega,            &
+                     flagstruct%do_sat_adj, fv_sat_adj_tendency_diag, hydrostatic, hybrid_z, do_omega,            &
                      flagstruct%adiabatic, do_adiabatic_init, lagrangian_tendency_of_hydrostatic_pressure)
          !$ser savepoint Remapping-Out
          !$ser data te_2d=te_2d pk=pk tracers=q delp=delp pe=pe ps=ps u=u v=v w=w pt=pt delz=delz q_con=q_con cappa=cappa ua=ua va=va omga=omga peln=peln pkz=pkz dp1=dp1
@@ -881,6 +894,14 @@ contains
 
 #endif
   enddo    ! n_map loop
+  
+  if (allocated(fv_sat_adj_tendency_diag%fv_sat_adj_t_dt)) then
+     fv_sat_adj_tendency_diag%fv_sat_adj_t_dt = fv_sat_adj_tendency_diag%fv_sat_adj_t_dt / bdt
+  endif
+  if (allocated(fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt)) then
+     fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt = fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt / bdt
+  endif
+                                                  
                                                   call timing_off('FV_DYN_LOOP')
 
   call mpp_clock_begin(id_other)

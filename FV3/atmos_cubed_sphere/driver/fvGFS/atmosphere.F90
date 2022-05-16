@@ -802,7 +802,8 @@ contains
                        Atm(n)%gridstruct,  Atm(n)%flagstruct,                    &
                        Atm(n)%neststruct,  Atm(n)%idiag, Atm(n)%bd,              &
                        Atm(n)%parent_grid, Atm(n)%domain,Atm(n)%diss_est,        &
-                       Atm(n)%lagrangian_tendency_of_hydrostatic_pressure)
+                       Atm(n)%lagrangian_tendency_of_hydrostatic_pressure,       &
+                       fv_sat_adj_tendency_diag=Atm(n)%fv_sat_adj_tendency_diag)
      !$ser verbatim if (serialize_physics .and. save_step) then
      ! NOTE: this is added here for convenience. In a future iteration
      ! you may want to save this after fv_subgridz, so that physics tests
