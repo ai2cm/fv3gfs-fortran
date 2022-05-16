@@ -962,7 +962,9 @@ endif        ! end last_step check
 !$ser data dpln=dpln peln=peln mdt=mdt r_vir=r_vir fast_mp_consv=fast_mp_consv te=te  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel)  qcld=q(:,:,:,cld_amt)  hs=hs delz=delz pt=pt delp=delp q_con=q_con cappa=cappa  out_dt=out_dt last_step=last_step  pkz=pkz rrg=rrg akap=akap kmp=kmp pfull=pfull
 
     if (allocated(fv_sat_adj_tendency_diag%fv_sat_adj_t_dt)) then
-       fv_sat_adj_tendency_diag%fv_sat_adj_t_dt = fv_sat_adj_tendency_diag%fv_sat_adj_t_dt - pt(isd:ied,jsd:jed,:)
+       ! convert to temperature from virtual temperature for tendency computation
+       fv_sat_adj_tendency_diag%fv_sat_adj_t_dt = fv_sat_adj_tendency_diag%fv_sat_adj_t_dt - &
+                                                  (pt(isd:ied,jsd:jed,:) / (1 + r_vir * q(isd:ied,jsd:jed,:,sphum)))
     endif
     if (allocated(fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt)) then
        fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt = fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt - q(isd:ied,jsd:jed,:,sphum)
@@ -1010,7 +1012,9 @@ endif        ! end last_step check
            enddo    ! OpenMP k-loop
 
     if (allocated(fv_sat_adj_tendency_diag%fv_sat_adj_t_dt)) then
-       fv_sat_adj_tendency_diag%fv_sat_adj_t_dt = fv_sat_adj_tendency_diag%fv_sat_adj_t_dt + pt(isd:ied,jsd:jed,:)
+       ! convert to temperature from virtual temperature for tendency computation
+       fv_sat_adj_tendency_diag%fv_sat_adj_t_dt = fv_sat_adj_tendency_diag%fv_sat_adj_t_dt + &
+                                                  (pt(isd:ied,jsd:jed,:) / (1 + r_vir * q(isd:ied,jsd:jed,:,sphum)))
     endif
     if (allocated(fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt)) then
        fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt = fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt + q(isd:ied,jsd:jed,:,sphum)
