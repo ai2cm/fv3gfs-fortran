@@ -278,7 +278,7 @@ contains
 #ifdef MULTI_GASES
       real, allocatable :: kapad(:,:,:)
 #endif
-      real:: akap, rdg, ph1, ph2, mdt, gam, amdt, u0
+      real:: akap, rdg, ph1, ph2, mdt, gam, amdt, u0, cv_air
       real:: recip_k_split,reg_bc_update_time
       integer :: kord_tracer(ncnst)
       integer :: i,j,k, n, iq, n_map, nq, nwat, k_split
@@ -330,7 +330,7 @@ contains
       jed = bd%jed
 
 
-!     cv_air =  cp_air - rdgas
+      cv_air =  cp_air - rdgas
       agrav   = 1. / grav
         dt2   = 0.5*bdt
       k_split = flagstruct%k_split
@@ -897,9 +897,29 @@ contains
   
   if (allocated(fv_sat_adj_tendency_diag%fv_sat_adj_t_dt)) then
      fv_sat_adj_tendency_diag%fv_sat_adj_t_dt = fv_sat_adj_tendency_diag%fv_sat_adj_t_dt / bdt
+     if (allocated(fv_sat_adj_tendency_diag%column_fv_sat_adj_heating)) then
+        call compute_column_integral(fv_sat_adj_tendency_diag%fv_sat_adj_t_dt, &
+           delp(isd:ied,jsd:jed,1:npz), &
+           isd, ied, jsd, jed, npz, &
+           fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(isd:ied,jsd:jed))
+        if (hydrostatic) then
+           fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(isd:ied,jsd:jed) = &
+              cp_air * fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(isd:ied,jsd:jed)
+        else
+           fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(isd:ied,jsd:jed) = &
+              cv_air * fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(isd:ied,jsd:jed)
+        endif
+     endif
   endif
+  
   if (allocated(fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt)) then
      fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt = fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt / bdt
+     if (allocated(fv_sat_adj_tendency_diag%column_fv_sat_adj_moistening)) then
+        call compute_column_integral(fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt, &
+           delp(isd:ied,jsd:jed,1:npz), &
+           isd, ied, jsd, jed, npz, &
+           fv_sat_adj_tendency_diag%column_fv_sat_adj_moistening(isd:ied,jsd:jed))
+     endif
   endif
                                                   
                                                   call timing_off('FV_DYN_LOOP')
@@ -1581,5 +1601,14 @@ contains
   enddo
 
  end subroutine compute_aam
+ 
+
+ subroutine compute_column_integral(integrand, delp, isd, ied, jsd, jed, npz, column_integral)
+    integer, intent(in) :: isd, ied, jsd, jed, npz
+    real, intent(in), dimension(isd:ied,jsd:jed,1:npz) :: integrand, delp
+    real, intent(out) :: column_integral(isd:ied,jsd:jed)
+
+  column_integral = sum(integrand * delp, 3) / grav
+ end subroutine compute_column_integral
 
 end module fv_dynamics_mod
