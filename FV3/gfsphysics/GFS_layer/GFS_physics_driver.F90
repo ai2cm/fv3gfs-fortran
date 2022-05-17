@@ -6085,8 +6085,6 @@ module module_physics_driver
         delp = initial_mass_of_dry_air_plus_vapor * dry_air_plus_hydrometeor_mass_fraction_after_physics
       end subroutine compute_updated_delp_following_dynamics_definition
 
-#ifdef ENABLE_CALLPYFORT
-
       subroutine adjust_zhao_carr_physics_diags_gscond_only(Diag)
         type (GFS_diag_type), intent(inout) :: Diag
 
@@ -6119,6 +6117,7 @@ module module_physics_driver
         total = total - gscond_emulator + gscond_physics
       end subroutine
 
+#ifdef ENABLE_CALLPYFORT
       subroutine apply_python_gscond_updates_to_tbd(Tbd)
         type(GFS_tbd_type), intent(inout) :: Tbd
         call get_state("air_temperature_after_gscond", Tbd%phy_f3d(:, :, 1))
@@ -6175,7 +6174,6 @@ module module_physics_driver
         Diag%gscond_emulator%temperature = (tp_cpf(1:im,1:levs) - t_before_gscond) / timestep
 
       end subroutine
-
 #endif
 
 !> @}
