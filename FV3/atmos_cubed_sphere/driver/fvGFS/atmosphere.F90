@@ -1978,7 +1978,9 @@ contains
                         Atm(mytile)%cx, Atm(mytile)%cy, Atm(mytile)%ze0, Atm(mytile)%flagstruct%hybrid_z,         &
                         Atm(mytile)%gridstruct, Atm(mytile)%flagstruct,                                           &
                         Atm(mytile)%neststruct, Atm(mytile)%idiag, Atm(mytile)%bd, Atm(mytile)%parent_grid,       &
-                        Atm(mytile)%domain,Atm(mytile)%diss_est, Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure)
+                        Atm(mytile)%domain,Atm(mytile)%diss_est,                                                  &
+                        Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure,                                  &
+                        fv_sat_adj_tendency_diag=Atm(mytile)%fv_sat_adj_tendency_diag)
 ! Backward
        call fv_dynamics(Atm(mytile)%npx, Atm(mytile)%npy, npz,  nq, Atm(mytile)%ng, -dt_atmos, 0.,                &
                         Atm(mytile)%flagstruct%fill, Atm(mytile)%flagstruct%reproduce_sum, kappa, cp_air, zvir,   &
@@ -1993,7 +1995,9 @@ contains
                         Atm(mytile)%cx,    Atm(mytile)%cy,   Atm(mytile)%ze0, Atm(mytile)%flagstruct%hybrid_z,    &
                         Atm(mytile)%gridstruct, Atm(mytile)%flagstruct,                                           &
                         Atm(mytile)%neststruct, Atm(mytile)%idiag, Atm(mytile)%bd, Atm(mytile)%parent_grid,       &
-                        Atm(mytile)%domain,Atm(mytile)%diss_est, Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure)
+                        Atm(mytile)%domain,Atm(mytile)%diss_est,                                                  &
+                        Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure,                                  &
+                        fv_sat_adj_tendency_diag=Atm(mytile)%fv_sat_adj_tendency_diag)
 !Nudging back to IC
 !$omp parallel do default (none) &
 !$omp              shared (pref, npz, jsc, jec, isc, iec, n, sphum, Atm, u0, v0, t0, dp0, xt, zvir, mytile, nudge_dz, dz0) &
@@ -2070,7 +2074,9 @@ contains
                         Atm(mytile)%cx, Atm(mytile)%cy, Atm(mytile)%ze0, Atm(mytile)%flagstruct%hybrid_z,         &
                         Atm(mytile)%gridstruct, Atm(mytile)%flagstruct,                                           &
                         Atm(mytile)%neststruct, Atm(mytile)%idiag, Atm(mytile)%bd, Atm(mytile)%parent_grid,       &
-                        Atm(mytile)%domain,Atm(mytile)%diss_est, Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure)
+                        Atm(mytile)%domain,Atm(mytile)%diss_est,                                                  &
+                        Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure,                                  &
+                        fv_sat_adj_tendency_diag=Atm(mytile)%fv_sat_adj_tendency_diag)
 ! Forward call
        call fv_dynamics(Atm(mytile)%npx, Atm(mytile)%npy, npz,  nq, Atm(mytile)%ng, dt_atmos, 0.,                 &
                         Atm(mytile)%flagstruct%fill, Atm(mytile)%flagstruct%reproduce_sum, kappa, cp_air, zvir,   &
@@ -2085,7 +2091,9 @@ contains
                         Atm(mytile)%cx, Atm(mytile)%cy, Atm(mytile)%ze0, Atm(mytile)%flagstruct%hybrid_z,         &
                         Atm(mytile)%gridstruct, Atm(mytile)%flagstruct,                                           &
                         Atm(mytile)%neststruct, Atm(mytile)%idiag, Atm(mytile)%bd, Atm(mytile)%parent_grid,       &
-                        Atm(mytile)%domain,Atm(mytile)%diss_est, Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure)
+                        Atm(mytile)%domain,Atm(mytile)%diss_est,                                                  &
+                        Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure,                                  &
+                        fv_sat_adj_tendency_diag=Atm(mytile)%fv_sat_adj_tendency_diag)
 ! Nudging back to IC
 !$omp parallel do default (none) &
 !$omp              shared (nudge_dz,npz, jsc, jec, isc, iec, n, sphum, Atm, u0, v0, t0, dz0, dp0, xt, zvir, mytile) &

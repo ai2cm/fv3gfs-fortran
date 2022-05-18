@@ -897,11 +897,13 @@ contains
   
   if (allocated(fv_sat_adj_tendency_diag%fv_sat_adj_t_dt)) then
      fv_sat_adj_tendency_diag%fv_sat_adj_t_dt = fv_sat_adj_tendency_diag%fv_sat_adj_t_dt / bdt
+
      if (allocated(fv_sat_adj_tendency_diag%column_fv_sat_adj_heating)) then
         call compute_column_integral(fv_sat_adj_tendency_diag%fv_sat_adj_t_dt, &
            delp(isd:ied,jsd:jed,1:npz), &
            isd, ied, jsd, jed, npz, &
            fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(isd:ied,jsd:jed))
+
         if (hydrostatic) then
            fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(isd:ied,jsd:jed) = &
               cp_air * fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(isd:ied,jsd:jed)
@@ -914,6 +916,7 @@ contains
   
   if (allocated(fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt)) then
      fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt = fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt / bdt
+
      if (allocated(fv_sat_adj_tendency_diag%column_fv_sat_adj_moistening)) then
         call compute_column_integral(fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt, &
            delp(isd:ied,jsd:jed,1:npz), &
