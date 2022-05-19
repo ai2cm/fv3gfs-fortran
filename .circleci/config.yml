@@ -1,7 +1,6 @@
 version: 2.1
 orbs:
-  gcp-cli: circleci/gcp-cli@2.1.0
-  gcp-gcr: circleci/gcp-gcr@0.6.1
+  gcp-gcr: circleci/gcp-gcr@0.15.0
 jobs:
   nix-mac:
     macos:
@@ -72,7 +71,7 @@ jobs:
           command: nix-shell --run "make test_wrapper"
   lint:
     docker:
-      - image: circleci/python:3.7
+      - image: circleci/python:3.9
     steps:
       - checkout
       - run: sudo pip3 install pre-commit==2.15.0
@@ -81,14 +80,12 @@ jobs:
   build_default:
     machine:
       docker_layer_caching: true
-      image: ubuntu-1604:201903-01
+      image: ubuntu-2004:202111-02
     environment:
       FV3CONFIG_CACHE_DIR: /tmp/.fv3config
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
       FSSPEC_GS_REQUESTER_PAYS: vcm-ml
     steps:
-      - gcp-cli/install:
-        version: 323.0.0
       - checkout
       - run:
           name: "gcloud auth"
@@ -114,13 +111,13 @@ jobs:
           name: "Install Python test dependencies"
           command: |
             pyenv versions
-            [ -d /opt/circleci/.pyenv/versions/3.7.0 ] || pyenv install 3.7.0
-            pyenv global 3.7.0
+            [ -d /opt/circleci/.pyenv/versions/3.9.7 ] || pyenv install 3.9.7
+            pyenv global 3.9.7
             pip install -r requirements.txt
       - save_cache:
           paths:
             - $FV3CONFIG_CACHE_DIR
-            - /opt/circleci/.pyenv/versions/3.7.0
+            - /opt/circleci/.pyenv/versions/3.9.7
           key: v1.4-{{ checksum "requirements.txt"}}
       # tests
       - run: 
