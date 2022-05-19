@@ -10,7 +10,7 @@ SER_ENV ?= dycore
 # -convention: <tag>-<some large conceptual version change>.<serialization statement change>.<hotfix>
 # -version number should be increased when serialization data is expected to change
 # -omit tag (e.g. 7.1.1) for "operational" serialization data, use tag for experimental serialization data
-FORTRAN_VERSION ?= 8.0.4
+FORTRAN_VERSION ?= 8.0.5
 # docker container image setup (used for running model, see ../../README.md)
 GCR_URL = us.gcr.io/vcm-ml
 COMPILED_IMAGE = $(GCR_URL)/fv3gfs-compiled:gnu7-mpich314-nocuda-serialize
@@ -40,7 +40,7 @@ build_model: ## build Docker image with compiled model code for serialization
 	cd $(FORTRAN_DIR) && \
 		BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
 		COMPILED_IMAGE=$(COMPILED_IMAGE) \
-		COMPILE_OPTION="GT4PY_DEV=Y\\\nSUBSET_PHYSICS=Y" \
+		COMPILE_OPTION="GT4PY_DEV=Y\\\nAI2_SUBSET_PHYSICS=Y" \
 		$(MAKE) build_compiled
 
 setup_rundir: ## create run directory on local host using fv3config
