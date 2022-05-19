@@ -964,10 +964,10 @@ endif        ! end last_step check
     if (allocated(fv_sat_adj_tendency_diag%fv_sat_adj_t_dt)) then
        ! convert to temperature from virtual temperature for tendency computation
        fv_sat_adj_tendency_diag%fv_sat_adj_t_dt = fv_sat_adj_tendency_diag%fv_sat_adj_t_dt - &
-                                                  (pt(isd:ied,jsd:jed,:) / (1 + r_vir * q(isd:ied,jsd:jed,:,sphum)))
+                                                  (pt(is:ie,js:je,:) / (1 + r_vir * q(is:ie,js:je,:,sphum)))
     endif
     if (allocated(fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt)) then
-       fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt = fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt - q(isd:ied,jsd:jed,:,sphum)
+       fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt = fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt - q(is:ie,js:je,:,sphum)
     endif
 
 !$OMP do
@@ -1014,10 +1014,10 @@ endif        ! end last_step check
     if (allocated(fv_sat_adj_tendency_diag%fv_sat_adj_t_dt)) then
        ! convert to temperature from virtual temperature for tendency computation
        fv_sat_adj_tendency_diag%fv_sat_adj_t_dt = fv_sat_adj_tendency_diag%fv_sat_adj_t_dt + &
-                                                  (pt(isd:ied,jsd:jed,:) / (1 + r_vir * q(isd:ied,jsd:jed,:,sphum)))
+                                                  (pt(is:ie,js:je,:) / (1 + r_vir * q(is:ie,js:je,:,sphum)))
     endif
     if (allocated(fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt)) then
-       fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt = fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt + q(isd:ied,jsd:jed,:,sphum)
+       fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt = fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt + q(is:ie,js:je,:,sphum)
     endif
 
 !$ser savepoint SatAdjust3d-Out
