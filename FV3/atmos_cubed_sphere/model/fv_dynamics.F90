@@ -900,16 +900,15 @@ contains
 
      if (allocated(fv_sat_adj_tendency_diag%column_fv_sat_adj_heating)) then
         call compute_column_integral(fv_sat_adj_tendency_diag%fv_sat_adj_t_dt, &
-           delp(isd:ied,jsd:jed,1:npz), &
-           isd, ied, jsd, jed, npz, &
-           fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(isd:ied,jsd:jed))
+           delp(is:ie,js:je,1:npz), &
+           fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(is:ie,js:je))
 
         if (hydrostatic) then
-           fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(isd:ied,jsd:jed) = &
-              cp_air * fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(isd:ied,jsd:jed)
+           fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(is:ie,js:je) = &
+              cp_air * fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(is:ie,js:je)
         else
-           fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(isd:ied,jsd:jed) = &
-              cv_air * fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(isd:ied,jsd:jed)
+           fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(is:ie,js:je) = &
+              cv_air * fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(is:ie,js:je)
         endif
      endif
   endif
@@ -919,9 +918,8 @@ contains
 
      if (allocated(fv_sat_adj_tendency_diag%column_fv_sat_adj_moistening)) then
         call compute_column_integral(fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt, &
-           delp(isd:ied,jsd:jed,1:npz), &
-           isd, ied, jsd, jed, npz, &
-           fv_sat_adj_tendency_diag%column_fv_sat_adj_moistening(isd:ied,jsd:jed))
+           delp(is:ie,js:je,1:npz), &
+           fv_sat_adj_tendency_diag%column_fv_sat_adj_moistening(is:ie,js:je))
      endif
   endif
                                                   
@@ -1605,13 +1603,12 @@ contains
 
  end subroutine compute_aam
  
-
- subroutine compute_column_integral(integrand, delp, isd, ied, jsd, jed, npz, column_integral)
-    integer, intent(in) :: isd, ied, jsd, jed, npz
-    real, intent(in), dimension(isd:ied,jsd:jed,1:npz) :: integrand, delp
-    real, intent(out) :: column_integral(isd:ied,jsd:jed)
-
+ subroutine compute_column_integral(integrand, delp, column_integral)
+    real, intent(in), dimension(:,:,:) :: integrand, delp
+    real, intent(out) :: column_integral(:,:)
+    
   column_integral = sum(integrand * delp, 3) / grav
+  
  end subroutine compute_column_integral
 
 end module fv_dynamics_mod
