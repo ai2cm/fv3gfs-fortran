@@ -147,6 +147,7 @@ module fv_dynamics_mod
    use fv_arrays_mod,       only: fv_grid_type, fv_flags_type, fv_atmos_type, fv_nest_type, & 
                                   fv_diag_type, fv_grid_bounds_type, fv_sat_adj_tendency_diag_type
    use fv_nwp_nudge_mod,    only: do_adiabatic_init
+   use fv_update_phys_mod,  only: compute_column_integral
 #ifdef MULTI_GASES
    use multi_gases_mod,     only:  virq, virqd, vicpqd
 #endif
@@ -901,6 +902,7 @@ contains
      if (allocated(fv_sat_adj_tendency_diag%column_fv_sat_adj_heating)) then
         call compute_column_integral(fv_sat_adj_tendency_diag%fv_sat_adj_t_dt, &
            delp(is:ie,js:je,1:npz), &
+           is, ie, js, je, npz, &
            fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(is:ie,js:je))
 
         if (hydrostatic) then
@@ -919,6 +921,7 @@ contains
      if (allocated(fv_sat_adj_tendency_diag%column_fv_sat_adj_moistening)) then
         call compute_column_integral(fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt, &
            delp(is:ie,js:je,1:npz), &
+           is, ie, js, je, npz, &
            fv_sat_adj_tendency_diag%column_fv_sat_adj_moistening(is:ie,js:je))
      endif
   endif
@@ -1602,13 +1605,5 @@ contains
   enddo
 
  end subroutine compute_aam
- 
- subroutine compute_column_integral(integrand, delp, column_integral)
-    real, intent(in), dimension(:,:,:) :: integrand, delp
-    real, intent(out) :: column_integral(:,:)
-    
-  column_integral = sum(integrand * delp, 3) / grav
-  
- end subroutine compute_column_integral
 
 end module fv_dynamics_mod
