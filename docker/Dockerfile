@@ -235,8 +235,10 @@ RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip && \
     ln -s /bin/python3 /bin/python && \
-    ln -s /bin/pip3 /bin/pip && \
-    pip3 install --no-cache-dir pyyaml
+    ln -s /bin/pip3 /bin/pip
+# install python packages needed to convert to netcdf data
+RUN pip3 install --upgrade setuptools pip && \
+    pip3 install --no-cache-dir pyyaml xarray==0.16.2 f90nml==1.1.0 netCDF4
 
 # run model
 CMD ["bash", "/rundir/submit_job.sh"]

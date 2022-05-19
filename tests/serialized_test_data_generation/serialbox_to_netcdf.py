@@ -77,13 +77,19 @@ def main(data_path: str, output_path: str):
         n_savepoints = len(savepoints)  # checking from last rank is fine
         data_vars = {}
         if n_savepoints > 0:
+            encoding = {}
             for varname in set(names_list).difference(["rank"]):
                 data_shape = list(rank_list[0][varname][0].shape)
                 data_vars[varname] = get_data(
                     data_shape, total_ranks, n_savepoints, rank_list, varname
                 )
+                if len(data_shape) > 2:
+                    encoding[varname] = {"zlib": True, "complevel": 1}
             dataset = xr.Dataset(data_vars=data_vars)
-            dataset.to_netcdf(os.path.join(output_path, f"{savepoint_name}.nc"))
+            dataset.to_netcdf(
+                os.path.join(output_path, f"{savepoint_name}.nc"),
+                encoding=encoding
+            )
 
 
 def get_data(data_shape, total_ranks, n_savepoints, output_list, varname):
