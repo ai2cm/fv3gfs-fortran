@@ -1,7 +1,6 @@
 version: 2.1
 orbs:
-  gcp-cli: circleci/gcp-cli@2.1.0
-  gcp-gcr: circleci/gcp-gcr@0.6.1
+  gcp-gcr: circleci/gcp-gcr@0.15.0
 jobs:
   nix-mac:
     macos:
@@ -87,8 +86,6 @@ jobs:
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
       FSSPEC_GS_REQUESTER_PAYS: vcm-ml
     steps:
-      - gcp-cli/install:
-        version: 323.0.0
       - checkout
       - run:
           name: "gcloud auth"
