@@ -89,7 +89,7 @@ module fv_mapz_mod
   use fv_fill_mod,       only: fillz
   use mpp_domains_mod,   only: mpp_update_domains, domain2d
   use mpp_mod,           only: NOTE, FATAL, mpp_error, get_unit, mpp_root_pe, mpp_pe
-  use fv_arrays_mod,     only: fv_grid_type
+  use fv_arrays_mod,     only: fv_grid_type, fv_sat_adj_tendency_diag_type
   use fv_timing_mod,     only: timing_on, timing_off
   use fv_mp_mod,         only: is_master
 #ifndef CCPP
@@ -140,7 +140,7 @@ contains
                       nq, nwat, sphum, q_con, u, v, w, delz, pt, q, hs, r_vir, cp,  &
                       akap, cappa, kord_mt, kord_wz, kord_tr, kord_tm,  peln, te0_2d,        &
                       ng, ua, va, omga, te, ws, fill, reproduce_sum, out_dt, dtdt,      &
-                      ptop, ak, bk, pfull, gridstruct, domain, do_sat_adj, &
+                      ptop, ak, bk, pfull, gridstruct, domain, do_sat_adj, fv_sat_adj_tendency_diag, &
                       hydrostatic, hybrid_z, do_omega, adiabatic, do_adiabatic_init, lagrangian_tendency_of_hydrostatic_pressure)
   logical, intent(in):: last_step
   real,    intent(in):: mdt                    !< remap time step
@@ -203,6 +203,7 @@ contains
   real, intent(out)::    pkz(is:ie,js:je,km)       !< layer-mean pk for converting t to pt
   real, intent(out)::     te(isd:ied,jsd:jed,km)
   
+  type(fv_sat_adj_tendency_diag_type), intent(inout) :: fv_sat_adj_tendency_diag
 
 ! !DESCRIPTION:
 !
@@ -787,7 +788,7 @@ if (allocated(lagrangian_tendency_of_hydrostatic_pressure)) allocate(vulcan_pe3(
 !$OMP                               do_adiabatic_init,zsum1,zsum0,te0_2d,domain,               &
 !$OMP                               ng,gridstruct,E_Flux,pdt,dtmp,reproduce_sum,q,             &
 !$OMP                               mdt,cld_amt,cappa,dtdt,out_dt,rrg,akap,do_sat_adj,         &
-!$OMP                               fast_mp_consv,kord_tm)                                     &
+!$OMP                               fast_mp_consv,kord_tm, fv_sat_adj_tendency_diag)           &
 #ifdef MULTI_GASES
 !$OMP                        shared(num_gas)                                                   &
 #endif
@@ -955,9 +956,20 @@ endif        ! end last_step check
       call mpp_error (FATAL, 'Lagrangian_to_Eulerian: can not call CCPP fast physics because cdata not initialized')
     endif
 #else
+
     
 !$ser savepoint SatAdjust3d-In
 !$ser data dpln=dpln peln=peln mdt=mdt r_vir=r_vir fast_mp_consv=fast_mp_consv te=te  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel)  qcld=q(:,:,:,cld_amt)  hs=hs delz=delz pt=pt delp=delp q_con=q_con cappa=cappa  out_dt=out_dt last_step=last_step  pkz=pkz rrg=rrg akap=akap kmp=kmp pfull=pfull
+
+    if (allocated(fv_sat_adj_tendency_diag%fv_sat_adj_t_dt)) then
+       ! convert to temperature from virtual temperature for tendency computation
+       fv_sat_adj_tendency_diag%fv_sat_adj_t_dt = fv_sat_adj_tendency_diag%fv_sat_adj_t_dt - &
+                                                  (pt(is:ie,js:je,:) / (1 + r_vir * q(is:ie,js:je,:,sphum)))
+    endif
+    if (allocated(fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt)) then
+       fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt = fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt - q(is:ie,js:je,:,sphum)
+    endif
+
 !$OMP do
            do k=kmp,km
               do j=js,je
@@ -998,6 +1010,16 @@ endif        ! end last_step check
                  enddo
               endif
            enddo    ! OpenMP k-loop
+
+    if (allocated(fv_sat_adj_tendency_diag%fv_sat_adj_t_dt)) then
+       ! convert to temperature from virtual temperature for tendency computation
+       fv_sat_adj_tendency_diag%fv_sat_adj_t_dt = fv_sat_adj_tendency_diag%fv_sat_adj_t_dt + &
+                                                  (pt(is:ie,js:je,:) / (1 + r_vir * q(is:ie,js:je,:,sphum)))
+    endif
+    if (allocated(fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt)) then
+       fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt = fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt + q(is:ie,js:je,:,sphum)
+    endif
+
 !$ser savepoint SatAdjust3d-Out
 !$ser data dpln=dpln peln=peln te=te  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel)  qcld=q(:,:,:,cld_amt)  delz=delz pt=pt delp=delp q_con=q_con cappa=cappa   pkz=pkz
 

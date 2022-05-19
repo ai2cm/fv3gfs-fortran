@@ -1233,7 +1233,49 @@ contains
          allocate(Atm(n)%physics_tendency_diag%qg_dt(isc:iec,jsc:jec,npz))
          Atm(n)%physics_tendency_diag%qg_dt = 0.0
     endif
-
+    
+    
+    !---------------------------------------
+    ! fast saturation adjustment diagnostics
+    !---------------------------------------
+    
+    idiag%id_fv_sat_adj_t_dt = register_diag_field('dynamics', &
+          'fv_sat_adj_t_dt', axes(1:3), Time, &
+          'temperature tendency from dynamics fast saturation adjustment', 'K/s', &
+          missing_value=missing_value)
+    if (idiag%id_fv_sat_adj_t_dt > 0) then
+         allocate(Atm(n)%fv_sat_adj_tendency_diag%fv_sat_adj_t_dt(isc:iec,jsc:jec,npz))
+         Atm(n)%fv_sat_adj_tendency_diag%fv_sat_adj_t_dt = 0.0
+    endif
+    
+    idiag%id_fv_sat_adj_qv_dt = register_diag_field('dynamics', &
+          'fv_sat_adj_qv_dt', axes(1:3), Time, &
+          'specific humidity tendency from dynamics fast saturation adjustment', 'kg/kg/s', &
+          missing_value=missing_value)
+    if (idiag%id_fv_sat_adj_qv_dt > 0) then
+         allocate(Atm(n)%fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt(isc:iec,jsc:jec,npz))
+         Atm(n)%fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt = 0.0
+    endif
+    
+    idiag%id_column_fv_sat_adj_heating = register_diag_field('dynamics', &
+          'column_fv_sat_adj_heating', axes(1:2), Time, &
+          'column integrated heating from dynamics fast saturation adjustment', 'W/m**2', &
+          missing_value=missing_value)
+    if (idiag%id_column_fv_sat_adj_heating > 0) then
+         allocate(Atm(n)%fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(isc:iec,jsc:jec))
+         Atm(n)%fv_sat_adj_tendency_diag%column_fv_sat_adj_heating = 0.0
+    endif
+    
+    idiag%id_column_fv_sat_adj_moistening = register_diag_field('dynamics', &
+          'column_fv_sat_adj_moistening', axes(1:2), Time, &
+          'column integrated moistening from dynamics fast saturation adjustment', 'mm/s', &
+          missing_value=missing_value)
+    if (idiag%id_column_fv_sat_adj_moistening > 0) then
+         allocate(Atm(n)%fv_sat_adj_tendency_diag%column_fv_sat_adj_moistening(isc:iec,jsc:jec))
+         Atm(n)%fv_sat_adj_tendency_diag%column_fv_sat_adj_moistening = 0.0
+    endif
+    
+    
     do tracer_index = 1, ncnst
       call get_tracer_names (MODEL_ATMOS, tracer_index, tname, tlongname, tunits)
       idiag%id_vertically_integrated_tracers(tracer_index) = register_diag_field (field, &
@@ -3306,6 +3348,21 @@ contains
      endif
      if (idiag%id_qg_dt_phys > 0) then
         used = send_data(idiag%id_qg_dt_phys, Atm(n)%physics_tendency_diag%qg_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+
+     if (idiag%id_fv_sat_adj_t_dt > 0) then
+        used = send_data(idiag%id_fv_sat_adj_t_dt, Atm(n)%fv_sat_adj_tendency_diag%fv_sat_adj_t_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+     if (idiag%id_fv_sat_adj_qv_dt > 0) then
+        used = send_data(idiag%id_fv_sat_adj_qv_dt, Atm(n)%fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt(isc:iec,jsc:jec,1:npz), Time)
+     endif
+     if (idiag%id_column_fv_sat_adj_heating > 0) then
+        used = send_data(idiag%id_column_fv_sat_adj_heating, &
+                         Atm(n)%fv_sat_adj_tendency_diag%column_fv_sat_adj_heating(isc:iec,jsc:jec), Time)
+     endif
+     if (idiag%id_column_fv_sat_adj_moistening > 0) then
+        used = send_data(idiag%id_column_fv_sat_adj_moistening, &
+                         Atm(n)%fv_sat_adj_tendency_diag%column_fv_sat_adj_moistening(isc:iec,jsc:jec), Time)
      endif
 
    ! enddo  ! end ntileMe do-loop
