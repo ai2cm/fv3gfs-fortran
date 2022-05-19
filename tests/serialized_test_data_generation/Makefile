@@ -84,18 +84,19 @@ run_model: ## run model using Docker image to generate serialized data
 	cp $(EXPERIMENT_DIR)/$(EXPERIMENT).yml $(DATA_DIR_HOST)
 	cp $(EXPERIMENT_DIR)/$(EXPERIMENT).yml $(DATA_DIR_HOST)/input.yml
 
-pack_data: ## pack *.dat files into a *.tar.gz and delete them
+pack_data: ## convert to netcdf files, pack *.dat files into a *.tar.gz and delete them
 	@echo ""
 	@echo ">> Packing data in $(DATA_DIR_HOST) to $(TARFILE_HOST)"
 	@if [ -f $(TARFILE_HOST) ] ; then \
 		echo "Error: Tar file $(TARFILE_HOST) already exists. Already packed?" ; \
 		exit 1 ; \
 	fi
+	docker run --mount type=bind,source=$(shell pwd)/serialbox_to_netcdf.py,target=/root/serialbox_to_netcdf.py -v $(DATA_DIR_HOST):/data -it $(COMPILED_IMAGE) bash -c "pip3 install xarray==0.16.2 f90nml==1.1.0 scipy==1.5.4 && python3 /root/serialbox_to_netcdf.py /data /data"
 	cd $(DATA_DIR_HOST) && \
 		tar -cvzf $(TARFILE_HOST) *.dat > $(TARFILE_INDEX_HOST) && \
 		rm -f *.dat ; \
 
-unpack_data: ## unack *.dat files from a *.tar.gz and remove tar-file
+unpack_data: ## unpack *.dat files from a *.tar.gz and remove tar-file
 	@echo ""
 	@echo ">> Unpacking data from $(TARFILE_HOST) to $(DATA_DIR_HOST)"
 	@if [ ! -f $(TARFILE_HOST) ] ; then \
@@ -141,6 +142,10 @@ push_data: ## push packed data to cloud storage bucket
 		fi ; \
 	fi
 	gsutil -m rsync -d -r $(DATA_DIR_HOST) $(DATA_DIR_BUCKET)
+
+pull_data: ## pull packed data from cloud storage bucket
+	mkdir -p $(DATA_DIR_HOST)
+	gsutil -m rsync -d -r $(DATA_DIR_BUCKET) $(DATA_DIR_HOST)
 
 clean: ## remove artifacts for current experiment
 	@echo ""
