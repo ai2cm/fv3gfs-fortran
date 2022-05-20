@@ -91,7 +91,7 @@ pack_data: ## convert to netcdf files, pack *.dat files into a *.tar.gz and dele
 		echo "Error: Tar file $(TARFILE_HOST) already exists. Already packed?" ; \
 		exit 1 ; \
 	fi
-	docker run --mount type=bind,source=$(shell pwd)/serialbox_to_netcdf.py,target=/root/serialbox_to_netcdf.py -v $(DATA_DIR_HOST):/data -it $(COMPILED_IMAGE) bash -c "python3 /root/serialbox_to_netcdf.py /data /data"
+	docker run --mount type=bind,source=$(shell pwd)/serialbox_to_netcdf.py,target=/root/serialbox_to_netcdf.py -v $(DATA_DIR_HOST):/data $(COMPILED_IMAGE) bash -c "python3 /root/serialbox_to_netcdf.py /data /data"
 	cd $(DATA_DIR_HOST) && \
 		tar -cvzf $(TARFILE_HOST) *.dat > $(TARFILE_INDEX_HOST) && \
 		rm -f *.dat ; \
