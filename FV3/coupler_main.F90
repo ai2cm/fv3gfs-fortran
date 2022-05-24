@@ -177,20 +177,11 @@ character(len=128) :: tag = '$Name: ulm_201505 $'
     end if
 
     Time_atmos = Time_atmos + Time_step_atmos
-    !$ser verbatim if (nc == save_timestep) then
-      !$ser on
-    !$ser verbatim else
-      !$ser off
-    !$ser verbatim endif
+    !$ser on
     call update_atmos_model_dynamics (Atm)
-
-    !$ser verbatim if (nc == save_timestep .and. serialize_physics) then
-      !$ser on
-    !$ser verbatim else
-      !$ser off
-    !$ser verbatim endif
+    !$ser on
     call update_atmos_radiation_physics (Atm)
-
+    !$ser on
     call update_atmos_model_state (Atm)
 
 !--- intermediate restart

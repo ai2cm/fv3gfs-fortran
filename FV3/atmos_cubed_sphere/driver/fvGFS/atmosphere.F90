@@ -735,10 +735,7 @@ contains
        !$ser data vlon=Atm(n)%gridstruct%vlon vlat=Atm(n)%gridstruct%vlat
        !$ser data edge_vect_w=Atm(n)%gridstruct%edge_vect_w edge_vect_e=Atm(n)%gridstruct%edge_vect_e edge_vect_s=Atm(n)%gridstruct%edge_vect_s edge_vect_n=Atm(n)%gridstruct%edge_vect_n
        !$ser verbatim call set_nz(npz)
-       !$ser verbatim if (serialize_init) then
-           !$ser verbatim if (mpp_pe() == 0) write(*,*) "Stopping after saving fv_init and grid"
-           !$ser verbatim call mp_stop(); call exit(0)
-       !$ser verbatim endif
+
       !$ser verbatim else
          !$ser verbatim save_step = .false.
        !$ser off
@@ -773,10 +770,7 @@ contains
      !$ser verbatim if (save_step) then
        !$ser verbatim  driver_savepoints_saved =  1
      !$ser verbatim endif               
-     !$ser verbatim if (serialize_only_driver_input .and. save_step) then
-       !$ser verbatim if (mpp_pe() == 0) write(*,*) "Stopping after serialization of fv_dynamics() input"
-       !$ser verbatim call mp_stop(); call exit(0)
-     !$ser verbatim endif
+
 
      !$ser verbatim if (serialize_driver) then
          !$ser off
