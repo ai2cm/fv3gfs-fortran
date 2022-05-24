@@ -777,10 +777,7 @@ contains
        !$ser verbatim if (mpp_pe() == 0) write(*,*) "Stopping after serialization of fv_dynamics() input"
        !$ser verbatim call mp_stop(); call exit(0)
      !$ser verbatim endif
-     !$ser verbatim if ((serialize_driver .or. serialize_dycore .or. serialize_physics) .and. driver_savepoints_saved == 2) then
-         !$ser verbatim if (mpp_pe() == 0) write(*,*) "Stopping after saving serialization of one saved timestep"
-         !$ser verbatim call mp_stop(); call exit(0)           
-     !$ser verbatim endif
+
      !$ser verbatim if (serialize_driver) then
          !$ser off
      !$ser verbatim endif
