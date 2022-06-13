@@ -65,7 +65,7 @@ jobs:
           command: nix-shell --run "make -j 4 -C FV3 wrapper_build"
       - run:
           name: Test
-          command: nix-shell --run "pytest --native tests/pytest"
+          command: nix-shell --run "pytest --native tests/pytest -v"
       - run:
           name: Test wrapper
           command: nix-shell --run "make test_wrapper"
