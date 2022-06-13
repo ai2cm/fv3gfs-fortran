@@ -910,6 +910,7 @@ subroutine update_atmos_model_state (Atmos)
   integer :: rc
   real(kind=IPD_kind_phys) :: time_int, time_intfull
   integer :: is, ie, js, je, nk
+  logical :: is_diagnostics_time
 !
     call mpp_clock_begin(otherClock)
     call set_atmosphere_pelist()
@@ -940,7 +941,9 @@ subroutine update_atmos_model_state (Atmos)
       Atm(mytile)%coarse_graining%write_coarse_diagnostics, &
       IPD_Diag_coarse, Atm(mytile)%delp(is:ie,js:je,:), &
       Atmos%coarsening_strategy, Atm(mytile)%ptop)
-    if (((.not. output_physics_diagnostics_indefinitely) .and. (ANY(nint(fdiag(:)*3600.0) == seconds))) .or. (output_physics_diagnostics_indefinitely .and. (mod(seconds, nint(fhout * 3600.0)) == 0)) .or. (IPD_Control%kdt == first_kdt) .or. nsout > 0) then
+    is_diagnostics_time = ((.not. output_physics_diagnostics_indefinitely) .and. (ANY(nint(fdiag(:)*3600.0) == seconds))) .or. &
+                          (output_physics_diagnostics_indefinitely .and. (mod(seconds, nint(fhout * 3600.0)) == 0))
+    if (is_diagnostics_time .or. (IPD_Control%kdt == first_kdt) .or. nsout > 0) then
       if (mpp_pe() == mpp_root_pe()) write(6,*) "---isec,seconds",isec,seconds
       time_int = real(isec)
       if(Atmos%iau_offset > zero) then
