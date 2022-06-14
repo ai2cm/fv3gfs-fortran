@@ -39,6 +39,7 @@ add_library(
     atmos_cubed_sphere/model/tp_core.F90
     atmos_cubed_sphere/model/nh_core.F90
     atmos_cubed_sphere/model/nh_utils.F90
+    atmos_cubed_sphere/model/gfdl_mp.F90
     atmos_cubed_sphere/tools/external_ic.F90
     atmos_cubed_sphere/tools/external_sst.F90
     atmos_cubed_sphere/tools/fv_diagnostics.F90

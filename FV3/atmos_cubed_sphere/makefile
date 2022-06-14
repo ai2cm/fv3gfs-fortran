@@ -53,6 +53,7 @@ SRCS_F90 = \
 		   ./model/tp_core.F90                            \
 		   ./model/nh_core.F90                            \
 		   ./model/nh_utils.F90                           \
+		   ./model/gfdl_mp.F90                           \
 		   ./tools/external_ic.F90                        \
 		   ./tools/external_sst.F90                       \
                    ./tools/coarse_grained_diagnostics.F90         \

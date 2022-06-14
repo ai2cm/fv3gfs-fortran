@@ -71,7 +71,7 @@ module init_hydro_mod
       implicit none
       private
 
-      public :: p_var, hydro_eq
+      public :: p_var, p_var_new, hydro_eq
 
 contains
 
@@ -241,7 +241,157 @@ contains
 
  end subroutine p_var
 
+ subroutine p_var_new(km, ifirst, ilast, jfirst, jlast, ptop, ptop_min,    &
+                  delp, delz, pt, ps,  pe, peln, pk, pkz, cappa, q, ng, nq, area,   &
+                  dry_mass, adjust_dry_mass, mountain, moist_phys,      &
+                  hydrostatic, nwat, domain, adiabatic, make_nh)
 
+! Given (ptop, delp) computes (ps, pk, pe, peln, pkz)
+! Input:
+   integer,  intent(in):: km
+   integer,  intent(in):: ifirst, ilast            ! Longitude strip
+   integer,  intent(in):: jfirst, jlast            ! Latitude strip
+   integer,  intent(in):: nq, nwat
+   integer,  intent(in):: ng
+   logical, intent(in):: adjust_dry_mass, mountain, moist_phys, hydrostatic, adiabatic
+   real, intent(in):: dry_mass, cappa, ptop, ptop_min
+   real, intent(in   )::   pt(ifirst-ng:ilast+ng,jfirst-ng:jlast+ng, km)
+   real, intent(inout):: delz(ifirst:ilast,jfirst:jlast, km)
+   real, intent(inout):: delp(ifirst-ng:ilast+ng,jfirst-ng:jlast+ng, km)
+   real, intent(inout)::    q(ifirst-ng:ilast+ng,jfirst-ng:jlast+ng, km, nq)
+   real(kind=R_GRID), intent(IN)   :: area(ifirst-ng:ilast+ng,jfirst-ng:jlast+ng)
+   logical, optional:: make_nh
+! Output:
+   real, intent(out) ::   ps(ifirst-ng:ilast+ng, jfirst-ng:jlast+ng)
+   real, intent(out) ::   pk(ifirst:ilast, jfirst:jlast, km+1)
+   real, intent(out) ::   pe(ifirst-1:ilast+1,km+1,jfirst-1:jlast+1) ! Ghosted Edge pressure
+   real, intent(out) :: peln(ifirst:ilast, km+1, jfirst:jlast)    ! Edge pressure
+   real, intent(out) ::  pkz(ifirst:ilast, jfirst:jlast, km)
+   type(domain2d), intent(IN) :: domain
+
+! Local
+   integer  sphum, liq_wat, ice_wat
+   integer  rainwat, snowwat, graupel          ! GFDL Cloud Microphysics
+   real ratio(ifirst:ilast)
+   real pek, lnp, ak1, rdg, dpd, zvir
+   integer i, j, k
+
+! Check dry air mass & compute the adjustment amount:
+   if ( adjust_dry_mass )      &
+   call drymadj(km, ifirst, ilast,  jfirst,  jlast, ng, cappa, ptop, ps, &
+                delp, q, nq, area, nwat, dry_mass, adjust_dry_mass, moist_phys, dpd, domain)
+
+   pek = ptop ** cappa
+
+!$OMP parallel do default(none) shared(ifirst,ilast,jfirst,jlast,km,ptop,pek,pe,pk, &
+!$OMP                                  ps,adjust_dry_mass,dpd,delp,peln,cappa,      &
+!$OMP                                  ptop_min,hydrostatic,pkz )                   &
+!$OMP                          private(ratio, ak1, lnp)
+   do j=jfirst,jlast
+      do i=ifirst,ilast
+         pe(i,1,j) = ptop
+         pk(i,j,1) = pek
+      enddo
+
+      if ( adjust_dry_mass ) then
+         do i=ifirst,ilast
+            ratio(i) = 1. + dpd/(ps(i,j)-ptop)
+         enddo
+         do k=1,km
+            do i=ifirst,ilast
+               delp(i,j,k) = delp(i,j,k) * ratio(i)
+            enddo
+         enddo
+      endif
+
+      do k=2,km+1
+         do i=ifirst,ilast
+            pe(i,k,j) = pe(i,k-1,j) + delp(i,j,k-1)
+            peln(i,k,j) = log(pe(i,k,j))
+            pk(i,j,k) = exp( cappa*peln(i,k,j) )
+         enddo
+      enddo
+
+      do i=ifirst,ilast
+         ps(i,j) = pe(i,km+1,j)
+      enddo
+
+      if( ptop < ptop_min ) then
+!---- small ptop modification -------------
+          ak1 = (cappa + 1.) / cappa
+          do i=ifirst,ilast
+             peln(i,1,j) = peln(i,2,j) - ak1
+          enddo
+      else
+             lnp = log( ptop )
+          do i=ifirst,ilast
+             peln(i,1,j) = lnp
+          enddo
+      endif
+
+      if ( hydrostatic ) then
+         do k=1,km
+            do i=ifirst,ilast
+               pkz(i,j,k) = (pk(i,j,k+1)-pk(i,j,k))/(cappa*(peln(i,k+1,j)-peln(i,k,j)))
+            enddo
+         enddo
+      endif
+   enddo
+
+   if ( adiabatic  ) then
+      zvir = 0.
+   else
+      zvir = rvgas/rdgas - 1.
+   endif
+   sphum   = get_tracer_index (MODEL_ATMOS, 'sphum')
+
+   if ( .not.hydrostatic ) then
+
+      rdg = -rdgas / grav
+      if ( present(make_nh) ) then
+          if ( make_nh ) then
+             delz = 1.e25
+!$OMP parallel do default(none) shared(ifirst,ilast,jfirst,jlast,km,delz,rdg,pt,peln,zvir,sphum,q)
+             do k=1,km
+                do j=jfirst,jlast
+                   do i=ifirst,ilast
+                      delz(i,j,k) = rdg*pt(i,j,k)*(1.+zvir*q(i,j,k,sphum))*(peln(i,k+1,j)-peln(i,k,j))
+                   enddo
+                enddo
+             enddo
+             if(is_master()) write(*,*) 'delz computed from hydrostatic state'
+          endif
+      endif
+
+     if ( moist_phys ) then
+!------------------------------------------------------------------
+! The following form is the same as in "fv_update_phys.F90"
+!------------------------------------------------------------------
+!$OMP parallel do default(none) shared(ifirst,ilast,jfirst,jlast,km,pkz,cappa,rdg, &
+!$OMP                                  delp,pt,zvir,q,sphum,delz)
+       do k=1,km
+          do j=jfirst,jlast
+             do i=ifirst,ilast
+                pkz(i,j,k) = exp( cappa*log(rdg*delp(i,j,k)*pt(i,j,k)*    &
+                                (1.+zvir*q(i,j,k,sphum))/delz(i,j,k)) )
+             enddo
+          enddo
+       enddo
+     else
+!$OMP parallel do default(none) shared(ifirst,ilast,jfirst,jlast,km,pkz,cappa,rdg, &
+!$OMP                                  delp,pt,delz)
+       do k=1,km
+          do j=jfirst,jlast
+             do i=ifirst,ilast
+                pkz(i,j,k) = exp( cappa*log(rdg*delp(i,j,k)*pt(i,j,k)/delz(i,j,k)) )
+             enddo
+          enddo
+       enddo
+     endif
+
+   endif
+
+ end subroutine p_var_new
 
  subroutine drymadj(km,  ifirst, ilast, jfirst,  jlast,  ng, &  
                     cappa,   ptop, ps, delp, q,  nq, area,  nwat,  &
