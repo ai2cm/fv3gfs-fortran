@@ -184,21 +184,20 @@ integer, parameter     :: maxhr = 65536
 real, dimension(maxhr) :: fdiag = 0.
 real                   :: fhmax=384.0, fhmaxhf=120.0, fhout=3.0, fhouthf=1.0,avg_max_length=3600.
 
-! By default, if fdiag is provided as a scalar value and fhouthf < 0, the
-! physics diagnostics will be output on regular intervals of length fhout hours
-! for a finite number of total simulated hours, governed by fhmax. See
-! https://github.com/ai2cm/fv3gfs-fortran/issues/301 for more details.
+! By default, as of https://github.com/ai2cm/fv3gfs-fortran/issues/302, the
+! physics diagnostics will be configured to be output indefinitely at a regular
+! interval of fhout hours, ignoring any values set for fdiag, fhmax, fhmaxhf, or
+! fhouthf.
 !
-! To override this behavior, and output physics diagnostics on a regular
-! interval of fhout hours indefinitely, set the
-! output_physics_diagnostics_indefinitely flag to .true. Naturally this will
-! ignore any values set for fdiag, fhmax, fhmaxhf, or fhouthf.
-logical :: output_physics_diagnostics_indefinitely = .false.  
+! To restore previous behavior and output diagnostics following what is
+! prescribed by the fdiag, fhmax, fhmaxhf, fhout, and fhouthf parameters, set
+! the use_fdiag flag to .true.
+logical :: use_fdiag = .false.  
 
 #ifdef CCPP
-namelist /atmos_model_nml/ blocksize, chksum_debug, dycore_only, debug, sync, fdiag, fhmax, fhmaxhf, fhout, fhouthf, disable_phys_restart_write, ccpp_suite, avg_max_length, output_physics_diagnostics_indefinitely
+namelist /atmos_model_nml/ blocksize, chksum_debug, dycore_only, debug, sync, fdiag, fhmax, fhmaxhf, fhout, fhouthf, disable_phys_restart_write, ccpp_suite, avg_max_length, use_fdiag
 #else
-namelist /atmos_model_nml/ blocksize, chksum_debug, dycore_only, debug, sync, fdiag, fhmax, fhmaxhf, fhout, fhouthf, disable_phys_restart_write, avg_max_length, output_physics_diagnostics_indefinitely
+namelist /atmos_model_nml/ blocksize, chksum_debug, dycore_only, debug, sync, fdiag, fhmax, fhmaxhf, fhout, fhouthf, disable_phys_restart_write, avg_max_length, use_fdiag
 #endif
 
 type (time_type) :: diag_time, diag_time_fhzero
@@ -941,8 +940,8 @@ subroutine update_atmos_model_state (Atmos)
       Atm(mytile)%coarse_graining%write_coarse_diagnostics, &
       IPD_Diag_coarse, Atm(mytile)%delp(is:ie,js:je,:), &
       Atmos%coarsening_strategy, Atm(mytile)%ptop)
-    is_diagnostics_time = ((.not. output_physics_diagnostics_indefinitely) .and. (ANY(nint(fdiag(:)*3600.0) == seconds))) .or. &
-                          (output_physics_diagnostics_indefinitely .and. (mod(seconds, nint(fhout * 3600.0)) == 0))
+    is_diagnostics_time = (use_fdiag .and. (ANY(nint(fdiag(:)*3600.0) == seconds))) .or. &
+                          ((.not. use_fdiag) .and. (mod(seconds, nint(fhout * 3600.0)) == 0))
     if (is_diagnostics_time .or. (IPD_Control%kdt == first_kdt) .or. nsout > 0) then
       if (mpp_pe() == mpp_root_pe()) write(6,*) "---isec,seconds",isec,seconds
       time_int = real(isec)

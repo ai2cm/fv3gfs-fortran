@@ -156,29 +156,31 @@ def test_restart_reproducibility(run_native, config_filename, tmpdir):
     assert segmented_checksums == continuous_checksums
 
 
-def test_output_physics_diagnostics_indefinitely_flag(run_native, tmpdir):
+def test_indefinite_physics_diagnostics(run_native, tmpdir):
     config_template = get_config("default.yml")
 
-    default = copy.deepcopy(config_template)
-    default["namelist"]["atmos_model_nml"]["fhout"] = 0.5
+    fdiag = copy.deepcopy(config_template)
+    fdiag["namelist"]["atmos_model_nml"]["fhout"] = 0.5
+    # We have made the choice to set use_fdiag to .false. by default, since we
+    # prefer to output physics diagnostics indefinitely; therefore to restore
+    # the original behavior, we must set use_fdiag to .true.
+    fdiag["namelist"]["atmos_model_nml"]["use_fdiag"] = True
 
     indefinite = copy.deepcopy(config_template)
     indefinite["namelist"]["atmos_model_nml"]["fhout"] = 0.5
-    indefinite["namelist"]["atmos_model_nml"]["output_physics_diagnostics_indefinitely"] = True
     # No change is required to the fhmax parameter here, but this is just to
-    # demonstrate that with the output_physics_diagnostics_indefinitely = .true.
-    # option, the value of fhmax is ignored and physics diagnostics are output
-    # indefinitely.
+    # demonstrate that with the use_fdiag = .false. option, the value of fhmax is
+    # ignored and physics diagnostics are output indefinitely.
     indefinite["namelist"]["atmos_model_nml"]["fhmax"] = 0.0
 
-    default_rundir = str(tmpdir.join("default"))
+    fdiag_rundir = str(tmpdir.join("fdiag"))
     indefinite_rundir = str(tmpdir.join("indefinite"))
-    run_native(default, default_rundir)
+    run_native(fdiag, fdiag_rundir)
     run_native(indefinite, indefinite_rundir)
 
-    default_checksums =  _checksum_diagnostics(default_rundir)
+    fdiag_checksums =  _checksum_diagnostics(fdiag_rundir)
     indefinite_checksums = _checksum_diagnostics(indefinite_rundir)
-    assert default_checksums == indefinite_checksums
+    assert fdiag_checksums == indefinite_checksums
 
 
 @pytest.fixture(scope="session")
