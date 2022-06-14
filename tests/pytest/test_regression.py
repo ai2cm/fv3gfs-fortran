@@ -161,9 +161,6 @@ def test_indefinite_physics_diagnostics(run_native, tmpdir):
 
     fdiag = copy.deepcopy(config_template)
     fdiag["namelist"]["atmos_model_nml"]["fhout"] = 0.5
-    # We have made the choice to set use_fdiag to .false. by default, since we
-    # prefer to output physics diagnostics indefinitely; therefore to restore
-    # the original behavior, we must set use_fdiag to .true.
     fdiag["namelist"]["atmos_model_nml"]["use_fdiag"] = True
 
     indefinite = copy.deepcopy(config_template)

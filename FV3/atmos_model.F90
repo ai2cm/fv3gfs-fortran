@@ -184,11 +184,6 @@ integer, parameter     :: maxhr = 65536
 real, dimension(maxhr) :: fdiag = 0.
 real                   :: fhmax=384.0, fhmaxhf=120.0, fhout=3.0, fhouthf=1.0,avg_max_length=3600.
 
-! By default, as of https://github.com/ai2cm/fv3gfs-fortran/issues/302, the
-! physics diagnostics will be configured to be output indefinitely at a regular
-! interval of fhout hours, ignoring any values set for fdiag, fhmax, fhmaxhf, or
-! fhouthf.
-!
 ! To restore previous behavior and output diagnostics following what is
 ! prescribed by the fdiag, fhmax, fhmaxhf, fhout, and fhouthf parameters, set
 ! the use_fdiag flag to .true.
