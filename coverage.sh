@@ -33,7 +33,7 @@ if [ -d ${coverage_dir} ] ; then
 fi
 
 # build docker container with model compiled for coverage
-COMPILED_TAG_NAME=gcov COMPILED_IMAGE=${gcr_url}:gcov COMPILE_OPTION="OPENMP=\\\nREPRO=\\\nDEBUG=Y\\\nGCOV=Y\\\nGT4PY_DEV=Y\\\nSUBSET_PHYSICS=Y" make -C "${base_dir}" build
+COMPILED_TAG_NAME=gcov COMPILED_IMAGE=${gcr_url}:gcov COMPILE_OPTION="OPENMP=\\\nREPRO=\\\nDEBUG=Y\\\nGCOV=Y\\\nGT4PY_DEV=Y\\\nAI2_SUBSET_PHYSICS=Y" make -C "${base_dir}" build
 
 # setup run directory
 \rm -rf "${rundir}"

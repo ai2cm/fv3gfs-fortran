@@ -1,0 +1,247 @@
+data_table: default
+diag_table: vcm-fv3config/config/diag_table/supercell_test/v1.0/supercell_diag_table
+field_table: gs://vcm-fv3config/config/field_table/baroclinic_test/v1.0/field_table
+experiment_name: c96_9ranks_supercell
+forcing: gs://vcm-fv3config/data/base_forcing/v1.1/
+orographic_forcing: []
+initial_conditions:  []
+namelist:
+  atmos_model_nml:
+    blocksize: 32
+    chksum_debug: false
+    dycore_only: false
+    fdiag: 1.0
+  coupler_nml:
+    atmos_nthreads: 1
+    calendar: julian
+    current_date:
+    - 2016
+    - 8
+    - 1
+    - 0
+    - 0
+    - 0
+    days: 0
+    dt_atmos: 15
+    dt_ocean: 15
+    hours: 0
+    memuse_verbose: false
+    minutes: 0
+    months: 0
+    ncores_per_node: 8
+    seconds: 30
+    use_hyper_thread: true
+  diag_manager_nml:
+    max_axes: 240
+    max_files: 106
+    max_num_axis_sets: 100
+    prepend_date: false
+  fms_io_nml:
+    checksum_required: false
+    max_files_r: 100
+    max_files_w: 100
+  fms_nml:
+    clock_grain: ROUTINE
+    domains_stack_size: 10000000
+    print_memory_usage: false
+  fv_core_nml:
+    layout: 
+      - 2
+      - 2
+    io_layout: 
+      - 1
+      - 1
+    npx: 97
+    npy: 97
+    ntiles: 1
+    npz: 63
+    grid_type: 4
+    dx_const: 2000.
+    dy_const: 2000.
+    deglat: 0.
+    k_split: 1
+    n_split: 6
+    z_tracer: true
+    hydrostatic: false
+    nwat: 6
+    dnats: 1
+    hord_mt:  5
+    hord_vt:  5
+    hord_tm:  5
+    hord_dp:  5
+    hord_tr: -5
+    kord_tm: -11
+    kord_mt:  11
+    kord_wz:  11
+    kord_tr:  11
+    make_nh: true
+    na_init: 0
+    nudge_qv: true
+    external_ic: false
+    add_noise: 0.1
+    mountain: false
+    nord:  2
+    d4_bg: 0.12
+    do_vort_damp: true
+    vtdm4: 0.06
+    delt_max: 0.01
+    d_con: 1.
+    dddmp: 0.2
+    d_ext: 0.0
+    n_sponge: 4
+    fv_sg_adj: 900
+    tau:  1.0
+    rf_cutoff: 2000.0
+    d2_bg_k1: 0.2
+    d2_bg_k2: 0.1
+    consv_te: 0.
+    do_sat_adj: false
+    fill: true
+    phys_hydrostatic: false
+    print_freq: -15
+    warm_start: false
+    no_dycore: false
+    fv_debug: false
+    range_warn: false
+  fv_grid_nml: {}
+  gfdl_cloud_microphysics_nml:
+    sedi_transport: true
+    do_sedi_heat: true
+    rad_snow: true
+    rad_graupel: true
+    rad_rain: true
+    const_vi: false
+    const_vs: false
+    const_vg: false
+    const_vr: false
+    vi_fac: 1.
+    vs_fac: 1.
+    vg_fac: 1.
+    vr_fac: 1.
+    vi_max: 1.
+    vs_max: 2.
+    vg_max: 12.
+    vr_max: 12.
+    prog_ccn: false
+    tau_l2v: 180.
+    tau_v2l:  90.
+    tau_g2v: 900.
+    rthresh: 10.e-6
+    dw_land : 0.16
+    dw_ocean: 0.10
+    ql_gen: 1.0e-3
+    ql_mlt: 1.0e-3
+    qi0_crt: 8.0E-5
+    qs0_crt: 1.0e-3
+    tau_i2s: 1000.
+    c_psaci: 0.05
+    c_pgacs: 0.01
+    rh_inc: 0.30
+    rh_inr: 0.30
+    rh_ins: 0.30
+    ccn_l: 300.
+    ccn_o: 200.
+    c_paut: 0.5
+    c_cracw: 0.8
+    use_ppm: false
+    use_ccn: true
+    mono_prof: true
+    z_slope_liq : true
+    z_slope_ice : true
+    fix_negative: true
+    icloud_f: 0
+    mp_time: 15.0
+  gfs_physics_nml:
+    c0s_shal: 0.01
+    c1_shal: 0.005
+    cal_pre: false
+    cdmbgwd:
+    - 0.0
+    - 0.0
+    - 0.0
+    - 0.0
+    cnvcld: false
+    cnvgwd: false
+    debug: false
+    do_ocean: false
+    do_deep: false
+    dspheat: false
+    fhcyc: 24.0
+    fhlwr: 1800.0
+    fhswr: 1800.0
+    fhzero: 0.25
+    hybedmf: false
+    iaer: 111
+    ialb: 1
+    ico2: 2
+    iems: 1
+    imfdeepcnv: 2
+    imfshalcnv: -1
+    imp_physics: 11
+    isol: 2
+    isot: 1
+    isubc_lw: 0
+    isubc_sw: 0
+    ivegsrc: 1
+    ldiag3d: true
+    lwhtr: false
+    ncld: 5
+    nst_anl: false
+    pdfcld: false
+    pre_rad: false
+    prslrd0: 0.0
+    random_clds: false
+    redrag: false
+    sfc_override: true
+    satmedmf: false
+    shal_cnv: false
+    swhtr: false
+    trans_trac: false
+    use_ufo: false
+    xkzm_h: 0.1
+    xkzm_m: 0.01
+    xkzminv: 0.0
+  test_case_nml:
+    test_case: 17
+    bubble_do: true
+  namsfc:
+    fabsl: 99999
+    faisl: 99999
+    faiss: 99999
+    fnabsc: grb/global_mxsnoalb.uariz.t1534.3072.1536.rg.grb
+    fnacna: ''
+    fnaisc: grb/CFSR.SEAICE.1982.2012.monthly.clim.grb
+    fnalbc: grb/global_snowfree_albedo.bosu.t1534.3072.1536.rg.grb
+    fnalbc2: grb/global_albedo4.1x1.grb
+    fnglac: grb/global_glacier.2x2.grb
+    fnmskh: grb/seaice_newland.grb
+    fnmxic: grb/global_maxice.2x2.grb
+    fnslpc: grb/global_slope.1x1.grb
+    fnsmcc: grb/global_soilmgldas.t1534.3072.1536.grb
+    fnsnoa: ''
+    fnsnoc: grb/global_snoclim.1.875.grb
+    fnsotc: grb/global_soiltype.statsgo.t1534.3072.1536.rg.grb
+    fntg3c: grb/global_tg3clim.2.6x1.5.grb
+    fntsfa: ''
+    fntsfc: grb/RTGSST.1982.2012.monthly.clim.grb
+    fnvegc: grb/global_vegfrac.0.144.decpercent.grb
+    fnvetc: grb/global_vegtype.igbp.t1534.3072.1536.rg.grb
+    fnvmnc: grb/global_shdmin.0.144x0.144.grb
+    fnvmxc: grb/global_shdmax.0.144x0.144.grb
+    fnzorc: igbp
+    fsicl: 99999
+    fsics: 99999
+    fslpl: 99999
+    fsmcl:
+    - 99999
+    - 99999
+    - 99999
+    fsnol: 99999
+    fsnos: 99999
+    fsotl: 99999
+    ftsfl: 99999
+    ftsfs: 90
+    fvetl: 99999
+    fvmnl: 99999
+    fvmxl: 99999
+    ldebug: false
