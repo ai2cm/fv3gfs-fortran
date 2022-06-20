@@ -118,7 +118,8 @@ use FV3GFS_io_mod,      only: FV3GFS_restart_read, FV3GFS_restart_write, &
                               FV3GFS_diag_register, FV3GFS_diag_output,  &
                               DIAG_SIZE, FV3GFS_restart_write_coarse,    &
                               FV3GFS_diag_register_coarse, &
-                              send_diag_manager_controlled_diagnostic_data
+                              send_diag_manager_controlled_diagnostic_data, &
+                              sfc_data_override
 use fv_iau_mod,         only: iau_external_data_type,getiauforcing,iau_initialize
 use module_fv3_config,  only: output_1st_tstep_rst, first_kdt, nsout
 !-----------------------------------------------------------------------
@@ -171,7 +172,7 @@ public Atm_block, IPD_Data, IPD_Control
                                                          ! to calculate gradient on cubic sphere grid.
 !</PUBLICTYPE >
 
-integer :: fv3Clock, getClock, updClock, setupClock, radClock, physClock, diagClock, otherClock
+integer :: fv3Clock, getClock, overrideClock, updClock, setupClock, radClock, physClock, diagClock, otherClock
 
 !-----------------------------------------------------------------------
 integer :: blocksize    = 1
@@ -295,6 +296,11 @@ subroutine update_atmos_radiation_physics (Atmos)
     call mpp_clock_begin(getClock)
     call atmos_phys_driver_statein (IPD_data, Atm_block, flip_vc)
     call mpp_clock_end(getClock)
+
+    ! Get prescribed sea surface temperatures and sea ice (if using)
+    call mpp_clock_begin(overrideClock)
+    call sfc_data_override(Atmos%Time, IPD_data, Atm_block, IPD_Control)
+    call mpp_clock_end(overrideClock)
 
 !--- if dycore only run, set up the dummy physics output state as the input state
     if (dycore_only) then
@@ -790,6 +796,7 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
    diagClock  = mpp_clock_id( ' 3.7-Diagnostics', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    ! 3.8-Write-restart is timed on the coupler_main.F90 level
    otherClock = mpp_clock_id( ' 3.9-Other', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+   overrideClock = mpp_clock_id(' 3.10-sfc_data_override', flags=clock_flag_default, grain=CLOCK_COMPONENT )
 
 #ifdef CCPP
    ! Set flag for first time step of time integration

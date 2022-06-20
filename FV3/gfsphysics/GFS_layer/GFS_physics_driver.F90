@@ -2135,6 +2135,40 @@ module module_physics_driver
         enddo
       endif
 
+      ! Prescribe sea ice from a file.  Ported from the GFDL SHiELD_physics repository:
+      ! https://github.com/NOAA-GFDL/SHiELD_physics/blob/main/GFS_layer/GFS_physics_driver.F90
+      if (Model%use_prescribed_sst) then
+        do i= 1, im
+          if (Statein%prescribed_ci(i) > -1. .and. Statein%prescribed_ci(i) < 2.) then !Avoid bad values
+            if (Statein%prescribed_ci(i) >= 0.15 .and. nint(Sfcprop%slmsk(i)) == 0) then !create sea ice
+                Sfcprop%fice(i) = Statein%prescribed_ci(i)
+                Sfcprop%slmsk(i) = 2
+                Sfcprop%hice(i) = 0.1 !minimum value
+            elseif (nint(Sfcprop%slmsk(i)) == 2) then
+                if (Statein%prescribed_ci(i) < 0.15) then !remove sea ice
+                  Sfcprop%slmsk(i) = 0
+                  Sfcprop%fice(i) = 0.0
+                  Sfcprop%hice(i) = 0.0
+                else
+                  Sfcprop%fice(i) = Statein%prescribed_ci(i)
+                endif
+            endif
+          endif
+        enddo
+      endif
+
+      ! Prescribe sea surface temperature from a file.  Ported from the GFDL SHiELD_physics repository:
+      ! https://github.com/NOAA-GFDL/SHiELD_physics/blob/main/GFS_layer/GFS_physics_driver.F90
+      if (Model%use_prescribed_sst) then
+        do i = 1, im 
+           if (islmsk(i) == 0 ) then
+             Sfcprop%tsfc(i) = Statein%prescribed_sst(i) + Model%sst_perturbation
+             Sfcprop%tsfco(i) = Statein%prescribed_sst(i) + Model%sst_perturbation
+             tsfc3(i,3) = Statein%prescribed_sst(i) + Model%sst_perturbation
+           endif
+        enddo
+      endif
+
       do i=1,im
         Diag%epi(i)     = ep1d(i)
         Diag%dlwsfci(i) = adjsfcdlw_for_lsm(i)

@@ -13,6 +13,7 @@ import typing
 import hashlib
 
 import re
+import prescribed_ssts
 
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -178,6 +179,31 @@ def test_indefinite_physics_diagnostics(run_native, tmpdir):
     fdiag_checksums =  _checksum_diagnostics(fdiag_rundir)
     indefinite_checksums = _checksum_diagnostics(indefinite_rundir)
     assert fdiag_checksums == indefinite_checksums
+
+
+def open_tiles(prefix):
+    files = [f"{prefix}.tile{tile}.nc" for tile in range(1, 7)]
+    datasets = []
+    for file in files:
+        ds = xarray.open_dataset(file)
+        datasets.append(ds)
+    return xarray.concat(datasets, dim="tile")
+
+
+def test_use_prescribed_sst(run_native, tmpdir):
+    config = get_config("default.yml")
+
+    prescribed_ssts.create_prescribed_sst_dataset(tmpdir)
+    patch_files = prescribed_ssts.get_patch_files(tmpdir)
+    config["patch_files"] = patch_files
+    config["namelist"]["gfs_physics_nml"]["use_prescribed_sst"] = True
+    config["namelist"]["fv_grid_nml"]["grid_file"] = "INPUT/grid_spec.nc"
+
+    rundir = os.path.join(str(tmpdir), "rundir")
+    run_native(config, rundir)
+
+    results = open_tiles(os.path.join(rundir, "sfc_dt_atmos"))
+    prescribed_ssts.validate_ssts(results)
 
 
 @pytest.fixture(scope="session")

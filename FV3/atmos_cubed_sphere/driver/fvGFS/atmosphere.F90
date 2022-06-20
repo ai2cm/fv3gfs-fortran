@@ -198,6 +198,7 @@ use mpp_domains_mod,    only:  mpp_get_data_domain, mpp_get_compute_domain
 use coarse_graining_mod, only: coarse_graining_init
 use coarse_grained_diagnostics_mod, only: fv_coarse_diag_init, fv_coarse_diag
 use coarse_grained_restart_files_mod, only: fv_coarse_restart_init
+use data_override_mod, only: data_override_init
 !$ser verbatim use k_checkpoint, only: set_nz
 
 implicit none
@@ -605,6 +606,9 @@ contains
    n = mytile
    call switch_current_Atm(Atm(n)) 
       
+   if ( trim(Atm(mytile)%flagstruct%grid_file) .NE. "Inline" .and. trim(Atm(mytile)%flagstruct%grid_file) .NE. "") then
+     call data_override_init(Atm_domain_in = Atm(mytile)%domain)
+   endif
  end subroutine atmosphere_init
 
 
