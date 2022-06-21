@@ -94,7 +94,7 @@ def create_prescribed_sst_dataset(tmpdir):
     lat = xr.DataArray(lat, coords=[lat], dims=["lat"], name="lat")
 
     base_sst = aquaplanet_sst_pattern(lat)
-    base_sst, _,  = xr.broadcast(base_sst, lon)
+    base_sst, _, = xr.broadcast(base_sst, lon)
     sst = xr.concat([base_sst, base_sst + 2, base_sst + 4, base_sst + 6], dim=time)
 
     # Order dimensions in the manner that FMS prefers.
@@ -125,7 +125,7 @@ def validate_ssts(ds):
     xr.testing.assert_allclose(
         result.where(ocean).transpose("time", "tile", "grid_xt", "grid_yt"),
         expected.where(ocean).transpose("time", "tile", "grid_xt", "grid_yt"),
-        atol=0.01
+        atol=0.01,
     )
 
 
@@ -144,7 +144,7 @@ def grid_file_assets(resolution):
 
 
 def prescribed_sst_data_table():
-    data_table = b"\"ATM\", \"sst\", \"sst\", \"INPUT/sst.nc\", \"bilinear\", 1.0"
+    data_table = b'"ATM", "sst", "sst", "INPUT/sst.nc", "bilinear", 1.0'
     return fv3config.get_bytes_asset_dict(data_table, ".", "data_table")
 
 
