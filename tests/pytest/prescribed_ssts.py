@@ -8,17 +8,17 @@ time-varying SST pattern on a latitude-longitude grid, it is able to interpolate
 values onto the model grid at the appropriate time using the interpolation
 method specified in the data_table.  There are a few gotchas, however:
 
+- FMS prefers the order of the dimensions of the SST variable be time, latitude,
+  longitude.
+
 - In the SST file, the time, latitude, and longitude must include the
   appropriate "axis" attributes; this is how FMS determines which axes
   correspond to the time, latitude and longitude dimensions without relying on
   hard-coded names.
 
 - When writing a dataset using xarray, we must override the _FillValue encoding
-  attribute of each of the variables.  Otherwise the horizontal interpolation
-  routine of FMS will return nonsense. 
-
-- FMS prefers the order of the dimensions of the SST variable be time, latitude,
-  longitude.
+  attribute of the SST variable.  Otherwise the horizontal interpolation routine
+  of FMS will return nonsense. 
 
 - When writing the dataset using xarray, we must also ensure that the time
   variable is encoded as a float.  FMS will raise an error if it is encoded as
@@ -36,8 +36,8 @@ following:
 
 "ATM", "sst", "sst", "INPUT/sst.nc", "bilinear", 1.0
 
-and setting the gfs_physics_nml.use_prescribed_sst namelist parameter to True.  In
-addition, the data_override functionality in FMS requires that grid files be
+and setting the gfs_physics_nml.use_prescribed_sst namelist parameter to True.
+In addition, the data_override functionality in FMS requires that grid files be
 provided to model.  These can be generated using the make_hgrid tool in the
 FRE_NCTOOLS library and must have twice the resolution of the target model. Note
 that running with a grid specified in this manner produces results that are NOT
@@ -87,7 +87,7 @@ def assign_encoding(da, **kwargs):
 def create_prescribed_sst_dataset(tmpdir):
     lat = np.arange(-89.5, 90, 1)
     lon = np.arange(0.5, 360, 1)
-    times = xr.cftime_range("2016-08-01", periods=4, freq="30T")
+    times = xr.cftime_range("2016-08-01", periods=4, freq="30T", calendar="julian")
 
     time = xr.DataArray(times, coords=[times], dims=["time"], name="time")
     lon = xr.DataArray(lon, coords=[lon], dims=["lon"], name="lon")
@@ -96,17 +96,17 @@ def create_prescribed_sst_dataset(tmpdir):
     base_sst = aquaplanet_sst_pattern(lat)
     base_sst, _,  = xr.broadcast(base_sst, lon)
     sst = xr.concat([base_sst, base_sst + 2, base_sst + 4, base_sst + 6], dim=time)
-    sst = sst.transpose("time", "lat", "lon")
-    sst = assign_encoding(sst, _FillValue=FILL_VALUE)
 
-    sst["lat"] = assign_encoding(sst.lat, _FillValue=FILL_VALUE).assign_attrs(axis="Y")
-    sst["lon"] = assign_encoding(sst.lon, _FillValue=FILL_VALUE).assign_attrs(axis="X")
-    sst["time"] = assign_encoding(
-        sst.time,
-        _FillValue=FILL_VALUE,
-        units="minutes since 2016-08-01",
-        dtype=float
-    ).assign_attrs(axis="T")
+    # Order dimensions in the manner that FMS prefers.
+    sst = sst.transpose("time", "lat", "lon")
+
+    # Assign required encoding attributes for FMS.
+    sst = assign_encoding(sst, _FillValue=FILL_VALUE)
+    sst["lat"] = sst.lat.assign_attrs(axis="Y")
+    sst["lon"] = sst.lon.assign_attrs(axis="X")
+    sst["time"] = assign_encoding(sst.time, dtype=float).assign_attrs(axis="T")
+
+    # Write out dataset to a file, ensuring "time" is a record dimension.
     ds = sst.to_dataset()
     path = os.path.join(str(tmpdir), "sst.nc")
     ds.to_netcdf(path, unlimited_dims=["time"])
@@ -125,7 +125,7 @@ def validate_ssts(ds):
     xr.testing.assert_allclose(
         result.where(ocean).transpose("time", "tile", "grid_xt", "grid_yt"),
         expected.where(ocean).transpose("time", "tile", "grid_xt", "grid_yt"),
-        atol=0.1
+        atol=0.01
     )
 
 
@@ -144,8 +144,8 @@ def grid_file_assets(resolution):
 
 
 def prescribed_sst_data_table():
-    DATA_TABLE = b"\"ATM\", \"sst\", \"sst\", \"INPUT/sst.nc\", \"bilinear\", 1.0"
-    return fv3config.get_bytes_asset_dict(DATA_TABLE, ".", "data_table")
+    data_table = b"\"ATM\", \"sst\", \"sst\", \"INPUT/sst.nc\", \"bilinear\", 1.0"
+    return fv3config.get_bytes_asset_dict(data_table, ".", "data_table")
 
 
 def prescribed_sst_file(root):
