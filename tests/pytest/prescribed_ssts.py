@@ -79,7 +79,7 @@ def aquaplanet_sst_pattern(lat):
 
 
 def assign_encoding(da, **kwargs):
-    da = da.copy(deep=True)
+    da = da.copy(deep=False)
     da.encoding.update(kwargs)
     return da
 
@@ -119,14 +119,9 @@ def compute_expected_ssts(lat):
 
 def validate_ssts(ds):
     ocean = ds.SLMSKsfc == 0
-    expected = compute_expected_ssts(ds.lat)
-    result = ds.TMPsfc
-
-    xr.testing.assert_allclose(
-        result.where(ocean).transpose("time", "tile", "grid_xt", "grid_yt"),
-        expected.where(ocean).transpose("time", "tile", "grid_xt", "grid_yt"),
-        atol=0.01,
-    )
+    result = ds.TMPsfc.where(ocean)
+    expected = compute_expected_ssts(ds.lat).transpose(*result.dims).where(ocean)
+    xr.testing.assert_allclose(result, expected, atol=0.01)
 
 
 def grid_file_assets(resolution):
