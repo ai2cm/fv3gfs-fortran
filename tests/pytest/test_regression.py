@@ -215,8 +215,8 @@ PRESCRIBED_SST_ERRORS = {
 
 @pytest.mark.parametrize(
     ("message", "patch_files"),
-    PRESCRIBED_SST_ERRORS.items(),
-    ids=PRESCRIBED_SST_ERRORS.keys(),
+    list(PRESCRIBED_SST_ERRORS.items()),
+    ids=list(PRESCRIBED_SST_ERRORS.keys()),
 )
 def test_use_prescribed_sst_error(run_native, tmpdir, message, patch_files):
     config = get_config("default.yml")
