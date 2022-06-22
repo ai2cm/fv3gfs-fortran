@@ -143,7 +143,7 @@ module fv_control_mod
    use fv_mp_mod,           only: ng, switch_current_Atm
    use fv_mp_mod,           only: broadcast_domains, mp_barrier, is_master, setup_master
 !!! CLEANUP: should be replaced by a getter function?
-   use test_cases_mod,      only: test_case, bubble_do, alpha, nsolitons, soliton_Umax, soliton_size
+   use test_cases_mod,      only: test_case, bubble_do, alpha, nsolitons, soliton_Umax, soliton_size, q0_baroclinic
    use fv_timing_mod,       only: timing_on, timing_off, timing_init, timing_prt
    use mpp_domains_mod,     only: domain2D
    use mpp_domains_mod,     only: mpp_define_nest_domains, nest_domain_type, mpp_get_global_domain
@@ -696,7 +696,7 @@ module fv_control_mod
                          restart_from_agrid_winds, write_optional_dgrid_vel_rst, &
                          write_coarse_dgrid_vel_rst, write_coarse_agrid_vel_rst
 
-   namelist /test_case_nml/test_case, bubble_do, alpha, nsolitons, soliton_Umax, soliton_size
+   namelist /test_case_nml/test_case, bubble_do, alpha, nsolitons, soliton_Umax, soliton_size, q0_baroclinic
 #ifdef MULTI_GASES
    namelist /multi_gases_nml/ rilist,cpilist
 #endif
@@ -708,6 +708,7 @@ module fv_control_mod
    alpha = 0.
    bubble_do = .false.
    test_case = 11   ! (USGS terrain)
+   q0_baroclinic = 0.021
 
 #ifdef INTERNAL_FILE_NML
 ! Read Main namelist

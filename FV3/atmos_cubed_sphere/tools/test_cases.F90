@@ -175,6 +175,7 @@
       real    :: alpha
       integer :: Nsolitons
       real    :: soliton_size = 750.e3, soliton_Umax = 50.
+      real    :: q0_baroclinic
 
 ! Case 0 parameters
       real :: p0_c0 = 3.0
@@ -223,7 +224,7 @@
      integer, parameter :: interpOrder = 1
 
       public :: pz0, zz0
-      public :: test_case, bubble_do, alpha, tracer_test, wind_field, nsolitons, soliton_Umax, soliton_size
+      public :: test_case, bubble_do, alpha, tracer_test, wind_field, nsolitons, soliton_Umax, soliton_size, q0_baroclinic
       public :: init_case, get_stats, check_courant_numbers
 #ifdef NCDF_OUTPUT
       public :: output, output_ncdf
@@ -1755,7 +1756,7 @@
          sphum = get_tracer_index (MODEL_ATMOS, 'sphum')
          pcen(1) = PI/9.
          pcen(2) = 2.0*PI/9. 
-!$OMP parallel do default(none) shared(sphum,is,ie,js,je,npz,pe,q,agrid,pcen,delp,peln) &
+!$OMP parallel do default(none) shared(sphum,is,ie,js,je,npz,pe,q,agrid,pcen,delp,peln,q0_baroclinic) &
 !$OMP                          private(ptmp) 
          do k=1,npz
          do j=js,je
@@ -1764,7 +1765,7 @@
             !ptmp = 0.5*(pe(i,k,j)+pe(i,k+1,j)) - 100000.
             !q(i,j,k,1) = 0.021*exp(-(agrid(i,j,2)/pcen(2))**4.)*exp(-(ptmp/34000.)**2.)
             ptmp = delp(i,j,k)/(peln(i,k+1,j)-peln(i,k,j)) - 100000.
-            q(i,j,k,sphum) = 0.021*exp(-(agrid(i,j,2)/pcen(2))**4.)*exp(-(ptmp/34000.)**2.)
+            q(i,j,k,sphum) = q0_baroclinic*exp(-(agrid(i,j,2)/pcen(2))**4.)*exp(-(ptmp/34000.)**2.)
 ! SJL:
 !           q(i,j,k,sphum) = max(1.e-25, q(i,j,k,sphum))
          enddo
