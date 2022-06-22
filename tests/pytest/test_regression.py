@@ -193,7 +193,7 @@ def open_tiles(prefix):
 def test_use_prescribed_sst(run_native, tmpdir):
     config = get_config("default.yml")
 
-    prescribed_ssts.create_prescribed_sst_dataset(tmpdir)
+    prescribed_ssts.create_sst_dataset(tmpdir)
     patch_files = prescribed_ssts.get_patch_files(tmpdir)
     config["patch_files"] = patch_files
     config["namelist"]["gfs_physics_nml"]["use_prescribed_sst"] = True
@@ -204,6 +204,28 @@ def test_use_prescribed_sst(run_native, tmpdir):
 
     results = open_tiles(os.path.join(rundir, "sfc_dt_atmos"))
     prescribed_ssts.validate_ssts(results)
+
+
+PRESCRIBED_SST_ERRORS = {
+    "MPP_OPEN:INPUT/sst.nc does not exist.": prescribed_ssts.grid_file_assets("C12")
+    + [prescribed_ssts.data_table_asset()],
+    "SST dataset not specified in data_table.": prescribed_ssts.grid_file_assets("C12"),
+}
+
+
+@pytest.mark.parametrize(
+    ("message", "patch_files"),
+    PRESCRIBED_SST_ERRORS.items(),
+    ids=PRESCRIBED_SST_ERRORS.keys(),
+)
+def test_use_prescribed_sst_error(run_native, tmpdir, message, patch_files):
+    config = get_config("default.yml")
+    config["patch_files"] = patch_files
+    config["namelist"]["gfs_physics_nml"]["use_prescribed_sst"] = True
+    config["namelist"]["fv_grid_nml"]["grid_file"] = "INPUT/grid_spec.nc"
+    rundir = os.path.join(str(tmpdir), "rundir")
+    result = run_native(config, rundir, error_expected=True)
+    assert message in result.stderr.decode()
 
 
 @pytest.fixture(scope="session")

@@ -62,6 +62,7 @@ Neale, R. B., & Hoskins, B. J. (2000). A standard test for AGCMs including their
 physical parametrizations: I: the proposal. Atmospheric Science Letters, 1(2),
 101–107. https://doi.org/10.1006/asle.2000.0022
 """
+import copy
 import os
 
 import fv3config
@@ -84,7 +85,7 @@ def assign_encoding(da, **kwargs):
     return da
 
 
-def create_prescribed_sst_dataset(tmpdir):
+def create_sst_dataset(tmpdir):
     lat = np.arange(-89.5, 90, 1)
     lon = np.arange(0.5, 360, 1)
     times = xr.cftime_range("2016-08-01", periods=4, freq="30T", calendar="julian")
@@ -138,17 +139,17 @@ def grid_file_assets(resolution):
     return files
 
 
-def prescribed_sst_data_table():
+def data_table_asset():
     data_table = b'"ATM", "sst", "sst", "INPUT/sst.nc", "bilinear", 1.0'
     return fv3config.get_bytes_asset_dict(data_table, ".", "data_table")
 
 
-def prescribed_sst_file(root):
+def sst_file_asset(root):
     return fv3config.get_asset_dict(root, "sst.nc", "INPUT/", "sst.nc")
 
 
 def get_patch_files(tmpdir):
     grid_files = grid_file_assets("C12")
-    sst_file = prescribed_sst_file(str(tmpdir))
-    data_table = prescribed_sst_data_table()
+    sst_file = sst_file_asset(str(tmpdir))
+    data_table = data_table_asset()
     return grid_files + [sst_file, data_table]
