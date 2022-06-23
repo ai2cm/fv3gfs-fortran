@@ -260,15 +260,8 @@
            enddo
 #endif
         else
-           !$ser savepoint Fill4Corners-In
-           !$ser data_kbuff k=k k_size=nz q4c=w
-           !$ser verbatim if (k == nz) then 
-           !$ser data dir=dir
-           !$ser verbatim endif
            if (flagstruct%grid_type < 3)   &
                 call fill_4corners(w, 1, bd, npx, npy, sw_corner, se_corner, ne_corner, nw_corner)
-           !$ser savepoint Fill4Corners-Out
-           !$ser data_kbuff k=k k_size=nz q4c=w
            do j=js-1,je+1
               do i=is-1,ie+2      
                  if ( ut(i,j) > 0. ) then
@@ -323,14 +316,7 @@
               enddo
            enddo
       else
-           !$ser savepoint Fill4Corners-In
-           !$ser data_kbuff k=k k_size=nz q4c=w
-           !$ser verbatim if (k == nz) then 
-           !$ser data dir=dir
-           !$ser verbatim endif
            if (flagstruct%grid_type < 3) call fill_4corners(w, 2, bd, npx, npy, sw_corner, se_corner, ne_corner, nw_corner)
-           !$ser savepoint Fill4Corners-Out
-           !$ser data_kbuff k=k k_size=nz q4c=w
            do j=js-1,je+2
               do i=is-1,ie+1      
                  if ( vt(i,j) > 0. ) then
