@@ -1299,8 +1299,6 @@ contains
 ! Prevent accumulation of rounding errors at overlapped domain edges:
        !$ser savepoint MPPBoundaryAdjust-In
        !$ser data u=u v=v ebuffer=ebuffer nbuffer=nbuffer
-       !$ser savepoint MPPGetBoundary-In
-       !$ser data u=u v=v ebuffer=ebuffer nbuffer=nbuffer
        call mpp_get_boundary(u, v, domain, ebuffery=ebuffer,  &
                              nbufferx=nbuffer, gridtype=DGRID_NE )
 !$OMP parallel do default(none) shared(is,ie,js,je,npz,u,nbuffer,v,ebuffer)

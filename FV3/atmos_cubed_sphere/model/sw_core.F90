@@ -218,20 +218,8 @@
 ! Transport delp:
 !----------------
 ! Xdir:
-      !$ser savepoint TransportDelp-In
-      !$ser data_kbuff k=k k_size=nz delp=delp pt=pt w=w utc=ut vtc=vt wc=wc
-      !$ser verbatim dir=1
-      !$ser verbatim if (flagstruct%grid_type < 3 .and. .not. (nested .or. regional)) then
-      !$ser savepoint Fill2_4Corners-In
-      !$ser data_kbuff k=k k_size=nz q1c=delp q2c=pt
-      !$ser verbatim if (k == nz) then 
-      !$ser data dir=dir
-      !$ser verbatim endif
       if (flagstruct%grid_type < 3 .and. .not. (nested .or. regional)) &
        call fill2_4corners(delp, pt, 1, bd, npx, npy, sw_corner, se_corner, ne_corner, nw_corner)
-      !$ser savepoint Fill2_4Corners-Out
-      !$ser data_kbuff k=k k_size=nz q1c=delp q2c=pt
-      !$ser verbatim endif
       if ( hydrostatic ) then
 #ifdef SW_DYNAMICS
            do j=js-1,jep1
