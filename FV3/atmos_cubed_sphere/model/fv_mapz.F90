@@ -271,8 +271,6 @@ if (allocated(lagrangian_tendency_of_hydrostatic_pressure)) allocate(vulcan_pe3(
             call qs_init(kmp)
 #endif
        endif
-!$ser savepoint Remapping_Part1-In
-       !$ser data pe=pe ptop=ptop pkz=pkz pk=pk akap=akap peln=peln pt=pt qtracers=q(:,:,:,1:nq) qcld=q(:,:,:,cld_amt) cappa=cappa delp=delp delz=delz q_con=q_con r_vir=r_vir te=te u=u v=v ps=ps last_step=last_step bk=bk ak=ak hs=hs w=w wsd=ws omga=omga rrg=rrg ua=ua gz1d=gz cvm=cvm nq=nq
  
 !$OMP parallel do default(none) shared(is,ie,js,je,km,pe,ptop,kord_tm,hydrostatic, &
 !$OMP                                  pt,pk,rg,peln,q,nwat,liq_wat,rainwat,ice_wat,snowwat,    &
@@ -741,10 +739,6 @@ if (allocated(lagrangian_tendency_of_hydrostatic_pressure)) allocate(vulcan_pe3(
      enddo
 
 1000  continue
-!$ser savepoint Remapping_Part1-Out
-!$ser data pe=pe ptop=ptop pkz=pkz pk=pk akap=akap peln=peln pt=pt qtracers=q(:,:,:,1:nq) qcld=q(:,:,:,cld_amt)  cappa=cappa delp=delp delz=delz q_con=q_con  te=te u=u v=v ps=ps w=w wsd=ws omga=omga  ua=ua gz1d=gz cvm=cvm
-!$ser savepoint Remapping_Part2-In
-!$ser data pe=pe ptop=ptop pkz=pkz pk=pk akap=akap peln=peln pt=pt  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) cappa=cappa delp=delp delz=delz q_con=q_con r_vir=r_vir te=te te_2d=te_2d u=u v=v last_step=last_step hs=hs w=w  rrg=rrg ua=ua consv=consv te0_2d=te0_2d zsum1=zsum1 zsum0=zsum0 pdt=pdt dtmp=dtmp mdt=mdt cld_amt=cld_amt out_dt=out_dt gz1d=gz cvm=cvm kmp=kmp do_adiabatic_init=do_adiabatic_init pfull=pfull
 #if defined(CCPP) && defined(__GFORTRAN__)
 !$OMP parallel default(none) shared(is,ie,js,je,km,ptop,u,v,pe,ua,isd,ied,jsd,jed,kord_mt,     &
 !$OMP                               te_2d,te,delp,hydrostatic,hs,rg,pt,peln, adiabatic,        &
@@ -1105,8 +1099,7 @@ endif        ! end last_step check
     endif
   endif
 !$OMP end parallel
-!$ser savepoint Remapping_Part2-Out
-!$ser data pe=pe pkz=pkz pk=pk akap=akap peln=peln pt=pt  qvapor=q(:,:,:,sphum) qliquid=q(:,:,:,liq_wat) qice=q(:,:,:,ice_wat) qrain=q(:,:,:,rainwat) qsnow=q(:,:,:,snowwat) qgraupel=q(:,:,:,graupel) qcld=q(:,:,:,cld_amt) cappa=cappa delp=delp delz=delz q_con=q_con  te=te te_2d=te_2d u=u v=v  hs=hs w=w   ua=ua te0_2d=te0_2d zsum1=zsum1 zsum0=zsum0 gz1d=gz cvm=cvm
+
 #ifdef CCPP
   end associate ccpp_associate
 #endif

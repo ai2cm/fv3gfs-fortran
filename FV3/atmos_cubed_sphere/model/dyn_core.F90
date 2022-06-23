@@ -683,11 +683,7 @@ contains
 
       endif   ! end hydro check
 
-      !$ser savepoint PGradC-In
-      !$ser data dt2=dt2 delpc=delpc pkc=pkc gz=gz uc=uc vc=vc
       call p_grad_c(dt2, npz, delpc, pkc, gz, uc, vc, bd, gridstruct%rdxc, gridstruct%rdyc, hydrostatic)
-      !$ser savepoint PGradC-Out
-      !$ser data uc=uc vc=vc
 
                                                                   call timing_on('COMM_TOTAL')
                                                    
@@ -1307,8 +1303,6 @@ contains
        !$ser data u=u v=v ebuffer=ebuffer nbuffer=nbuffer
        call mpp_get_boundary(u, v, domain, ebuffery=ebuffer,  &
                              nbufferx=nbuffer, gridtype=DGRID_NE )
-       !$ser savepoint MPPGetBoundary-Out
-       !$ser data ebuffer=ebuffer nbuffer=nbuffer
 !$OMP parallel do default(none) shared(is,ie,js,je,npz,u,nbuffer,v,ebuffer)
           do k=1,npz
              do i=is,ie
