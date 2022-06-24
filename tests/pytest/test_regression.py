@@ -13,6 +13,7 @@ import typing
 import hashlib
 
 import re
+import prescribed_ssts
 
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -178,6 +179,53 @@ def test_indefinite_physics_diagnostics(run_native, tmpdir):
     fdiag_checksums =  _checksum_diagnostics(fdiag_rundir)
     indefinite_checksums = _checksum_diagnostics(indefinite_rundir)
     assert fdiag_checksums == indefinite_checksums
+
+
+def open_tiles(prefix):
+    files = [f"{prefix}.tile{tile}.nc" for tile in range(1, 7)]
+    datasets = []
+    for file in files:
+        ds = xarray.open_dataset(file)
+        datasets.append(ds)
+    return xarray.concat(datasets, dim="tile")
+
+
+def test_use_prescribed_sea_surface_properties(run_native, tmpdir):
+    config = get_config("default.yml")
+
+    prescribed_ssts.create_sst_dataset(tmpdir)
+    patch_files = prescribed_ssts.get_patch_files(tmpdir)
+    config["patch_files"] = patch_files
+    config["namelist"]["gfs_physics_nml"]["use_prescribed_sea_surface_properties"] = True
+    config["namelist"]["fv_grid_nml"]["grid_file"] = "INPUT/grid_spec.nc"
+
+    rundir = os.path.join(str(tmpdir), "rundir")
+    run_native(config, rundir)
+
+    results = open_tiles(os.path.join(rundir, "sfc_dt_atmos"))
+    prescribed_ssts.validate_ssts(results)
+
+
+PRESCRIBED_SST_ERRORS = {
+    "MPP_OPEN:INPUT/sst.nc does not exist.": prescribed_ssts.grid_file_assets("C12")
+    + [prescribed_ssts.data_table_asset()],
+    "sea_surface_temperature dataset not specified in data_table.": prescribed_ssts.grid_file_assets("C12"),
+}
+
+
+@pytest.mark.parametrize(
+    ("message", "patch_files"),
+    list(PRESCRIBED_SST_ERRORS.items()),
+    ids=list(PRESCRIBED_SST_ERRORS.keys()),
+)
+def test_use_prescribed_sea_surface_properties_error(run_native, tmpdir, message, patch_files):
+    config = get_config("default.yml")
+    config["patch_files"] = patch_files
+    config["namelist"]["gfs_physics_nml"]["use_prescribed_sea_surface_properties"] = True
+    config["namelist"]["fv_grid_nml"]["grid_file"] = "INPUT/grid_spec.nc"
+    rundir = os.path.join(str(tmpdir), "rundir")
+    result = run_native(config, rundir, error_expected=True)
+    assert message in result.stderr.decode()
 
 
 @pytest.fixture(scope="session")

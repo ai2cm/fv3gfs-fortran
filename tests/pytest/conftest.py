@@ -62,14 +62,14 @@ def run_native(request):
     if not request.config.getoption("--native"):
         pytest.skip()
 
-    def run_native(config, run_dir: str):
+    def run_native(config, run_dir: str, error_expected=False):
         fv3config.write_run_directory(config, run_dir)
         completed_process = subprocess.run(
             ["mpirun", "-n", "6", exe.absolute().as_posix()],
             cwd=run_dir,
             capture_output=True,
         )
-        if completed_process.returncode != 0:
+        if completed_process.returncode != 0 and not error_expected:
             print("Tail of Stderr:")
             print(completed_process.stderr[-2000:].decode())
             print("Tail of Stdout:")

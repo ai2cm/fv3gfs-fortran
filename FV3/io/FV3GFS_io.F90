@@ -25,6 +25,7 @@ module FV3GFS_io_mod
                                 restore_state, save_restart
   use mpp_domains_mod,    only: domain1d, domain2d, domainUG, mpp_get_compute_domain
   use time_manager_mod,   only: time_type
+  use data_override_mod,  only: data_override
   use diag_manager_mod,   only: register_diag_field, send_data
   use diag_axis_mod,      only: get_axis_global_length, get_diag_axis, &
                                 get_diag_axis_name
@@ -82,6 +83,7 @@ module FV3GFS_io_mod
 #ifdef use_WRTCOMP
   public  fv_phys_bundle_setup
 #endif
+  public  sfc_data_override
 
   !--- GFDL filenames
   character(len=32)  :: fn_oro = 'oro_data.nc'
@@ -3744,6 +3746,70 @@ module FV3GFS_io_mod
     endif
     used = send_data(id, coarse, Time)
 end subroutine store_data3D_coarse_pressure_level
+
+subroutine sfc_data_override(Time, IPD_data, Atm_block, Model)
+  ! Ported from the GFDL SHiELD_physics repository.
+  ! https://github.com/NOAA-GFDL/SHiELD_physics/blob/main/FV3GFS/FV3GFS_io.F90
+  implicit none
+  type(time_type), intent(in) :: Time
+  type(IPD_data_type), intent(inout) :: IPD_data(:)
+  type(block_control_type), intent(in) :: Atm_block
+  type(IPD_control_type), intent(in) :: Model
+
+  integer :: i, j, ix, nb
+  integer :: isc, jsc, iec, jec
+  logical :: used
+  real, allocatable :: sea_surface_temperature(:,:), sea_ice_fraction(:,:)
+
+  isc = Atm_block%isc
+  iec = Atm_block%iec
+  jsc = Atm_block%jsc
+  jec = Atm_block%jec
+
+  if (Model%use_prescribed_sea_surface_properties) then
+    ! Here is a sample data_table that will enable reading in
+    ! external sea surface temperatures and sea ice fractions from an external file.
+    !
+    !"ATM", "sea_surface_temperature", "sea_surface_temperature", "INPUT/sst.nc", "bilinear", 1.0
+    !"ATM", "sea_ice_fraction", "sea_ice_fraction", "INPUT/sst.nc", "bilinear", 1.0
+
+    ! There are a few requirements for data files to be compatible with
+    ! data_override in FMS:
+    ! - FMS prefers the order of the dimensions of the data variables be time,
+    !   latitude, longitude.
+    ! - In the file, the time, latitude, and longitude must include the
+    !   appropriate "axis" attributes; this is how FMS determines which axes
+    !   correspond to the time ("T"), latitude ("Y") and longitude ("X")
+    !   dimensions without relying on hard-coded names.
+    ! - When writing a dataset the data variables must have a floating-point
+    !   value fill-value.
+    ! - In addition, the time variable must be encoded as a float.
+    ! - Finally, when writing the dataset, the time dimension must be encoded as
+    !   a "record" dimension (also known as an "unlimited" dimension).
+
+    allocate(sea_surface_temperature(isc:iec,jsc:jec))
+    allocate(sea_ice_fraction(isc:iec,jsc:jec))
+    call data_override('ATM', 'sea_surface_temperature', sea_surface_temperature, Time, override=used)
+    if (.not. used) then
+      call mpp_error(FATAL, " sea_surface_temperature dataset not specified in data_table.")
+    endif
+    call data_override('ATM', 'sea_ice_fraction', sea_ice_fraction, Time, override=used)
+    if (.not. used) then
+      call mpp_error(NOTE, " sea_ice_fraction dataset not specified in data_table. No override will occur.")
+      sea_ice_fraction(:,:) = -999.
+    endif
+    do nb = 1, Atm_block%nblks
+      do ix = 1, Atm_block%blksz(nb)
+        i = Atm_block%index(nb)%ii(ix)
+        j = Atm_block%index(nb)%jj(ix)
+        IPD_data(nb)%Statein%prescribed_sea_surface_temperature(ix) = sea_surface_temperature(i,j)
+        IPD_data(nb)%Statein%prescribed_sea_ice_fraction(ix) = sea_ice_fraction(i,j)
+      enddo
+    enddo
+    deallocate(sea_surface_temperature)
+    deallocate(sea_ice_fraction)
+  endif
+end subroutine sfc_data_override
 !
 !-------------------------------------------------------------------------
 !
