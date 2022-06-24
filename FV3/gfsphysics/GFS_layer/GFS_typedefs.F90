@@ -193,8 +193,8 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: adjsfcdlw_override(:) => null()  !< override to the downward longwave radiation flux at the surface
     real (kind=kind_phys), pointer :: adjsfcdsw_override(:) => null()  !< override to the downward shortwave radiation flux at the surface
     real (kind=kind_phys), pointer :: adjsfcnsw_override(:) => null()  !< override to the net shortwave radiation flux at the surface
-    real (kind=kind_phys), pointer :: prescribed_sst(:) => null()  !< sea surface temperature read in through data_table
-    real (kind=kind_phys), pointer :: prescribed_ci(:) => null()  !< sea ice read in through data_table
+    real (kind=kind_phys), pointer :: prescribed_sea_surface_temperature(:) => null()  !< sea surface temperature read in through data_table
+    real (kind=kind_phys), pointer :: prescribed_sea_ice_fraction(:) => null()  !< sea ice read in through data_table
     contains
       procedure :: create  => statein_create  !<   allocate array data
   end type GFS_statein_type
@@ -778,7 +778,7 @@ module GFS_typedefs
     logical              :: use_ufo         !< flag for gcycle surface option
     logical              :: use_analysis_sst ! whether to set physics SST to dynamical core ts, which is
                                              ! equal to analysis SST when nudging is active
-    logical              :: use_prescribed_sst  ! whether to use the SST and sea ice prescribed in the data_table.
+    logical              :: use_prescribed_sea_surface_properties  ! whether to use the SST and sea ice prescribed in the data_table.
 !--- tuning parameters for physical parameterizations
     logical              :: ras             !< flag for ras convection scheme
     logical              :: flipv           !< flag for vertical direction flip (ras)
@@ -2072,11 +2072,11 @@ module GFS_typedefs
       Statein%adjsfcnsw_override = 0.0
     endif
 
-    if (Model%use_prescribed_sst) then
-      allocate(Statein%prescribed_sst(IM))
-      allocate(Statein%prescribed_ci(IM))
-      Statein%prescribed_sst = 0.0
-      Statein%prescribed_ci = 0.0
+    if (Model%use_prescribed_sea_surface_properties) then
+      allocate(Statein%prescribed_sea_surface_temperature(IM))
+      allocate(Statein%prescribed_sea_ice_fraction(IM))
+      Statein%prescribed_sea_surface_temperature = 0.0
+      Statein%prescribed_sea_ice_fraction = 0.0
     endif
   end subroutine statein_create
 
@@ -2943,7 +2943,7 @@ module GFS_typedefs
     logical              :: use_ufo        = .false.         !< flag for gcycle surface option
     logical              :: use_analysis_sst = .false. ! whether to set physics SST to dynamical core ts
                                                        ! which is equal to analysis SST when nudging is active
-    logical              :: use_prescribed_sst = .false.  ! whether to use the sst and sea ice prescribed in input files
+    logical              :: use_prescribed_sea_surface_properties = .false.  ! whether to use the sst and sea ice prescribed in input files
 
 !--- tuning parameters for physical parameterizations
     logical              :: ras            = .false.                  !< flag for ras convection scheme
@@ -3216,7 +3216,7 @@ module GFS_typedefs
                                lsm, lsoil, nmtvr, ivegsrc, use_ufo,                         &
 #endif
                                use_analysis_sst,                                           &
-                               use_prescribed_sst,                                          &
+                               use_prescribed_sea_surface_properties,                                          &
                           !    Noah MP options
                                iopt_dveg,iopt_crs,iopt_btr,iopt_run,iopt_sfc, iopt_frz,     &
                                iopt_inf, iopt_rad,iopt_alb,iopt_snf,iopt_tbot,iopt_stc,     &
@@ -3534,7 +3534,7 @@ module GFS_typedefs
     Model%use_ufo          = use_ufo
 
     Model%use_analysis_sst = use_analysis_sst
-    Model%use_prescribed_sst = use_prescribed_sst
+    Model%use_prescribed_sea_surface_properties = use_prescribed_sea_surface_properties
 
 ! Noah MP options from namelist
 !
@@ -4066,7 +4066,7 @@ module GFS_typedefs
 
       print *,' nst_anl=',Model%nst_anl,' use_ufo=',Model%use_ufo,' frac_grid=',Model%frac_grid
       print *,' use_analysis_sst=',Model%use_analysis_sst
-      print *,' use_prescribed_sst=',Model%use_prescribed_sst
+      print *,' use_prescribed_sea_surface_properties=',Model%use_prescribed_sea_surface_properties
       print *,' min_lakeice=',Model%min_lakeice,' min_seaice=',Model%min_seaice
       if (Model%nstf_name(1) > 0 ) then
         print *,' NSSTM is active '
@@ -4582,7 +4582,7 @@ module GFS_typedefs
 
       print *, ' use_ufo           : ', Model%use_ufo
       print *, ' use_analysis_sst : ', Model%use_analysis_sst
-      print *, ' use_prescribed_sst: ', Model%use_prescribed_sst
+      print *, ' use_prescribed_sea_surface_properties: ', Model%use_prescribed_sea_surface_properties
       print *, ' '
       print *, 'tuning parameters for physical parameterizations'
       print *, ' ras               : ', Model%ras

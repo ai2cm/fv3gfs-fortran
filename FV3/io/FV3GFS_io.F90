@@ -3759,40 +3759,55 @@ subroutine sfc_data_override(Time, IPD_data, Atm_block, Model)
   integer :: i, j, ix, nb
   integer :: isc, jsc, iec, jec
   logical :: used
-  real, allocatable :: sst(:,:), ci(:,:)
+  real, allocatable :: sea_surface_temperature(:,:), sea_ice_fraction(:,:)
 
   isc = Atm_block%isc
   iec = Atm_block%iec
   jsc = Atm_block%jsc
   jec = Atm_block%jec
 
-  if (Model%use_prescribed_sst) then
+  if (Model%use_prescribed_sea_surface_properties) then
     ! Here is a sample data_table that will enable reading in
-    ! external SSTs and sea-ice from an external file.
+    ! external sea surface temperatures and sea ice fractions from an external file.
     !
-    !"ATM", "sst", "sst", "INPUT/ec_sst.nc", "bilinear", 1.0
-    !"ATM", "ci", "ci", "INPUT/ec_sst.nc", "bilinear", 1.0
-    allocate(sst(isc:iec,jsc:jec))
-    allocate(ci(isc:iec,jsc:jec))
-    call data_override('ATM', 'sst', sst, Time, override=used)
+    !"ATM", "sea_surface_temperature", "sea_surface_temperature", "INPUT/sst.nc", "bilinear", 1.0
+    !"ATM", "sea_ice_fraction", "sea_ice_fraction", "INPUT/sst.nc", "bilinear", 1.0
+
+    ! There are a few requirements for data files to be compatible with
+    ! data_override in FMS:
+    ! - FMS prefers the order of the dimensions of the data variables be time,
+    !   latitude, longitude.
+    ! - In the file, the time, latitude, and longitude must include the
+    !   appropriate "axis" attributes; this is how FMS determines which axes
+    !   correspond to the time ("T"), latitude ("Y") and longitude ("X")
+    !   dimensions without relying on hard-coded names.
+    ! - When writing a dataset the data variables must have a floating-point
+    !   value fill-value.
+    ! - In addition, the time variable must be encoded as a float.
+    ! - Finally, when writing the dataset, the time dimension must be encoded as
+    !   a "record" dimension (also known as an "unlimited" dimension).
+
+    allocate(sea_surface_temperature(isc:iec,jsc:jec))
+    allocate(sea_ice_fraction(isc:iec,jsc:jec))
+    call data_override('ATM', 'sea_surface_temperature', sea_surface_temperature, Time, override=used)
     if (.not. used) then
-      call mpp_error(FATAL, " SST dataset not specified in data_table.")
+      call mpp_error(FATAL, " sea_surface_temperature dataset not specified in data_table.")
     endif
-    call data_override('ATM', 'ci', ci, Time, override=used)
+    call data_override('ATM', 'sea_ice_fraction', sea_ice_fraction, Time, override=used)
     if (.not. used) then
-      call mpp_error(NOTE, " Sea ice fraction dataset not specified in data_table. No override will occur.")
-      ci(:,:) = -999.
+      call mpp_error(NOTE, " sea_ice_fraction dataset not specified in data_table. No override will occur.")
+      sea_ice_fraction(:,:) = -999.
     endif
     do nb = 1, Atm_block%nblks
       do ix = 1, Atm_block%blksz(nb)
         i = Atm_block%index(nb)%ii(ix)
         j = Atm_block%index(nb)%jj(ix)
-        IPD_data(nb)%Statein%prescribed_sst(ix) = sst(i,j)
-        IPD_data(nb)%Statein%prescribed_ci(ix) = ci(i,j)
+        IPD_data(nb)%Statein%prescribed_sea_surface_temperature(ix) = sea_surface_temperature(i,j)
+        IPD_data(nb)%Statein%prescribed_sea_ice_fraction(ix) = sea_ice_fraction(i,j)
       enddo
     enddo
-    deallocate(sst)
-    deallocate(ci)
+    deallocate(sea_surface_temperature)
+    deallocate(sea_ice_fraction)
   endif
 end subroutine sfc_data_override
 !

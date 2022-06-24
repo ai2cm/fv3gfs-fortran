@@ -76,7 +76,7 @@ FILL_VALUE = -99999.0
 
 def aquaplanet_sst_pattern(lat):
     sst = 273 + 27 * (1 - np.sin(3 * np.deg2rad(lat) / 2) ** 2)
-    return xr.where(np.abs(lat) < 60, sst, 273).rename("sst")
+    return xr.where(np.abs(lat) < 60, sst, 273).rename("sea_surface_temperature")
 
 
 def assign_encoding(da, **kwargs):
@@ -140,7 +140,7 @@ def grid_file_assets(resolution):
 
 
 def data_table_asset():
-    data_table = b'"ATM", "sst", "sst", "INPUT/sst.nc", "bilinear", 1.0'
+    data_table = b'"ATM", "sea_surface_temperature", "sea_surface_temperature", "INPUT/sst.nc", "bilinear", 1.0'
     return fv3config.get_bytes_asset_dict(data_table, ".", "data_table")
 
 
