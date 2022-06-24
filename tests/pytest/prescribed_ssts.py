@@ -34,15 +34,17 @@ Once a prescribed SST file has been created, one can configure a simulation to
 use those SSTs by adding a data_table to the model that looks like the
 following:
 
-"ATM", "sst", "sst", "INPUT/sst.nc", "bilinear", 1.0
+"ATM", "sea_surface_temperature", "sea_surface_temperature", "INPUT/sst.nc", "bilinear", 1.0
 
-and setting the gfs_physics_nml.use_prescribed_sst namelist parameter to True.
-In addition, the data_override functionality in FMS requires that grid files be
-provided to model.  These can be generated using the make_hgrid tool in the
-FRE_NCTOOLS library and must have twice the resolution of the target model. Note
-that running with a grid specified in this manner produces results that are NOT
-bit-for-bit identical with simulations that are run without a prescribed grid
-due to roundoff error (order 1e-14 degrees).
+and setting the gfs_physics_nml.use_prescribed_sea_surface_properties namelist
+parameter to True. 
+
+In addition, the data_override functionality in FMS requires
+that grid files be provided to model.  These can be generated using the
+make_hgrid tool in the FRE_NCTOOLS library and must have twice the resolution of
+the target model. Note that running with a grid specified in this manner
+produces results that are NOT bit-for-bit identical with simulations that are
+run without a prescribed grid due to roundoff error (order 1e-14 degrees).
 
 Description of the regression test
 ----------------------------------
