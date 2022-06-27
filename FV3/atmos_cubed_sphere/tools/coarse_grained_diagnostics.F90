@@ -874,7 +874,7 @@ contains
              remapped_omega)
     endif
     if ((trim(coarse_diag%reduction_method) .eq. AREA_WEIGHTED) .or. (trim(coarse_diag%reduction_method) .eq. MASS_WEIGHTED)) then
-      ! AREA_WEIGHTED and MASS_WEIGHTED are equivalent when pressure-level coarse-graining
+      ! area-weighted and mass-weighted are equivalent when pressure-level coarse-graining
       call weighted_block_average( &
         masked_area(is:ie,js:je,1:npz), &
         remapped_field(is:ie,js:je,1:npz), &
@@ -1049,17 +1049,14 @@ contains
   subroutine get_need_masked_area_array(need_masked_area_array)
     logical, intent(out) :: need_masked_area_array
 
-    logical :: valid_axes, valid_reduction_method, valid_id
+    logical :: valid_axes, valid_id
     integer :: index
 
     need_masked_area_array = .false.
     do index = 1, DIAG_SIZE
-      valid_reduction_method = &
-        trim(coarse_diagnostics(index)%reduction_method) .eq. AREA_WEIGHTED .or. &
-        trim(coarse_diagnostics(index)%reduction_method) .eq. EDDY_COVARIANCE
       valid_axes = coarse_diagnostics(index)%axes .eq. 3
       valid_id = coarse_diagnostics(index)%id .gt. 0
-      need_masked_area_array = valid_reduction_method .and. valid_axes .and. valid_id
+      need_masked_area_array = valid_axes .and. valid_id
       if (need_masked_area_array) exit
    enddo
  end subroutine get_need_masked_area_array
