@@ -3,7 +3,7 @@ module coarse_grained_restart_files_mod
   use coarse_graining_mod, only: compute_mass_weights, get_coarse_array_bounds,&
        get_fine_array_bounds, MODEL_LEVEL, PRESSURE_LEVEL, weighted_block_average, &
        weighted_block_edge_average_x, weighted_block_edge_average_y, &
-       mask_area_weights, mask_mass_weights, block_upsample, remap_edges_along_x, &
+       mask_area_weights, block_upsample, remap_edges_along_x, &
        remap_edges_along_y, vertically_remap_field
   use constants_mod, only: GRAV, RDGAS, RVGAS
   use field_manager_mod, only: MODEL_ATMOS
