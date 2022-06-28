@@ -59,7 +59,7 @@ module FV3GFS_io_mod
   use IPD_typedefs,       only: IPD_control_type, IPD_data_type, &
                                 IPD_restart_type, IPD_diag_type, &
                                 kind_phys => IPD_kind_phys
-  use coarse_graining_mod, only: get_coarse_array_bounds, weighted_block_average, mask_area_weights, mask_mass_weights
+  use coarse_graining_mod, only: get_coarse_array_bounds, weighted_block_average, mask_area_weights
   use coarse_graining_mod, only: MODEL_LEVEL, PRESSURE_LEVEL, vertical_remapping_requirements, vertically_remap_field
   !
 !--- GFS physics constants
@@ -2983,7 +2983,7 @@ module FV3GFS_io_mod
     character(len=64),         intent(in) :: coarsening_strategy
     real(kind=kind_phys),      intent(in) :: ptop
 
-    logical :: require_area, require_masked_area, require_mass, require_masked_mass, require_vertical_remapping
+    logical :: require_area, require_masked_area, require_mass, require_vertical_remapping
     real(kind=kind_phys), allocatable :: area(:,:)
     real(kind=kind_phys), allocatable :: mass(:,:,:), phalf(:,:,:), phalf_coarse_on_fine(:,:,:)
     real(kind=kind_phys), allocatable :: masked_area(:,:,:)
@@ -3111,7 +3111,7 @@ module FV3GFS_io_mod
     real(kind=kind_phys) :: rdt, rtime_int, rtime_intfull, lcnvfac
     real(kind=kind_phys) :: rtime_radsw, rtime_radlw
     logical :: used
-    logical :: require_area, require_masked_area, require_mass, require_masked_mass, require_vertical_remapping
+    logical :: require_area, require_masked_area, require_mass, require_vertical_remapping
     logical :: requested
     real(kind=kind_phys), allocatable :: area(:,:)
     real(kind=kind_phys), allocatable :: mass(:,:,:), phalf(:,:,:), phalf_coarse_on_fine(:,:,:)
@@ -3490,7 +3490,7 @@ module FV3GFS_io_mod
    logical, intent(out) :: require_area, require_masked_area, require_mass, require_vertical_remapping
 
    require_area = any(coarse_diag%id .gt. 0 .and. coarse_diag%coarse_graining_method .eq. AREA_WEIGHTED)
-   require_mass = any(coarse_diag%id .gt. 0 .and. coarse_diag%coarse_graining_method .eq. MASS_WEIGHTED)
+   require_mass = any(coarse_diag%id .gt. 0 .and. coarse_diag%coarse_graining_method .eq. MASS_WEIGHTED) .and. trim(coarsening_strategy) .eq. MODEL_LEVEL
 
    if (trim(coarsening_strategy) .eq. PRESSURE_LEVEL) then
      require_masked_area = any(coarse_diag%id .gt. 0 .and. coarse_diag%axes .eq. 3 .and. coarse_diag%coarse_graining_method .eq. AREA_WEIGHTED)
