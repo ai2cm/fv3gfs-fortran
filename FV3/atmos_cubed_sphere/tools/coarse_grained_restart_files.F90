@@ -473,13 +473,11 @@ contains
      real, intent(in), dimension(is:ie,js:je,1:npz) :: masked_area_weights
 
      real, allocatable :: remapped(:,:,:)
-     character(len=64) :: tracer_name
      integer :: n_tracer
  
      allocate(remapped(is:ie,js:je,1:npz))
 
      do n_tracer = 1, n_prognostic_tracers
-       call get_tracer_names(MODEL_ATMOS, n_tracer, tracer_name)
        call vertically_remap_field(phalf(is:ie,js:je,1:npz+1), &
          Atm%q(is:ie,js:je,1:npz,n_tracer), coarse_phalf_on_fine, Atm%ptop, remapped)
        call weighted_block_average(masked_area_weights, &
