@@ -302,6 +302,23 @@ contains
     coarse_diagnostics(index)%units = 'm/s/s'
     coarse_diagnostics(index)%reduction_method = MASS_WEIGHTED
     
+    ! fv_sat_adj diagnostics
+    index = index + 1
+    coarse_diagnostics(index)%axes = 3
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'fv_sat_adj_t_dt_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained temperature tendency from dynamics fast saturation adjustment'
+    coarse_diagnostics(index)%units = 'K/s'
+    coarse_diagnostics(index)%reduction_method = MASS_WEIGHTED
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 3
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'fv_sat_adj_qv_dt_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained specific humidity tendency from dynamics fast saturation adjustment'
+    coarse_diagnostics(index)%units = 'kg/kg/s'
+    coarse_diagnostics(index)%reduction_method = MASS_WEIGHTED
+
     ! Vertically integrated diagnostics
     index = index + 1
     coarse_diagnostics(index)%axes = 2
@@ -411,6 +428,24 @@ contains
     coarse_diagnostics(index)%vertically_integrated = .true.
     coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
     
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'int_fv_sat_adj_t_dt_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained vertically integrated temperature tendency from dynamics fast saturation adjustment'
+    coarse_diagnostics(index)%units = 'W/m**2'
+    coarse_diagnostics(index)%scaled_by_specific_heat_and_vertically_integrated = .true.
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'int_fv_sat_adj_qv_dt_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained vertically integrated specific humidity tendency from dynamics fast saturation adjustment'
+    coarse_diagnostics(index)%units = 'kg/m**2/s'
+    coarse_diagnostics(index)%vertically_integrated = .true.
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+
     ! iv =-1: winds
     ! iv = 0: positive definite scalars
     ! iv = 1: temperature
@@ -637,6 +672,18 @@ contains
              allocate(Atm(tile_count)%lagrangian_tendency_of_hydrostatic_pressure(isd:ied,jsd:jed,1:npz))
              Atm(tile_count)%lagrangian_tendency_of_hydrostatic_pressure = 0.0
           endif
+       elseif (ends_with(coarse_diagnostic%name, 'fv_sat_adj_t_dt_coarse')) then
+          if (.not. allocated(Atm(tile_count)%fv_sat_adj_tendency_diag%fv_sat_adj_t_dt)) then
+              allocate(Atm(tile_count)%fv_sat_adj_tendency_diag%fv_sat_adj_t_dt(is:ie,js:je,1:npz))
+              Atm(tile_count)%fv_sat_adj_tendency_diag%fv_sat_adj_t_dt(is:ie,js:je,1:npz) = 0.0
+          endif
+          coarse_diagnostic%data%var3 => Atm(tile_count)%fv_sat_adj_tendency_diag%fv_sat_adj_t_dt(is:ie,js:je,1:npz)
+       elseif (ends_with(coarse_diagnostic%name, 'fv_sat_adj_qv_dt_coarse')) then
+          if (.not. allocated(Atm(tile_count)%fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt)) then
+             allocate(Atm(tile_count)%fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt(is:ie,js:je,1:npz))
+             Atm(tile_count)%fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt(is:ie,js:je,1:npz) = 0.0
+          endif
+          coarse_diagnostic%data%var3 => Atm(tile_count)%fv_sat_adj_tendency_diag%fv_sat_adj_qv_dt(is:ie,js:je,1:npz)
        endif
     endif
   end subroutine maybe_allocate_reference_array
