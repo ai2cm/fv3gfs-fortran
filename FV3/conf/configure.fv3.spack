@@ -133,7 +133,7 @@ FFLAGS += $(FFLAGS_VERBOSE)
 LDFLAGS += $(LDFLAGS_VERBOSE)
 endif
 
-LIBS += -lnetcdf -lnetcdff
+LIBS += -lnetcdf -lnetcdff -lFMS -lhdf5_hl -lhdf5 -lz
 # ifneq ($(findstring netcdf/4,$(LOADEDMODULES)),)
 #   LIBS += -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
 # else
