@@ -5,7 +5,7 @@
 FC = ftn
 CC = cc
 CXX = CC
-LD = ftn
+LD = $(FC)
 
 #########
 # flags #
@@ -13,9 +13,9 @@ LD = ftn
 # default is 64-bit OpenMP non-hydrostatic build using AVX2
 DEBUG =
 REPRO = Y
-VERBOSE =
+VERBOSE = Y
 OPENMP = Y
-AVX2 = Y
+AVX2 = N
 HYDRO = N
 32BIT = N
 
@@ -139,5 +139,7 @@ LIBS += -lnetcdf -lnetcdff -lFMS -lhdf5_hl -lhdf5 -lz
 # else
 #   LIBS += -lnetcdf
 # endif
+
+LIBS += -L$(NETCDF_C_DIR)/lib -L$(NETCDF_FORTRAN_DIR)/lib
 
 LDFLAGS += $(LIBS)
