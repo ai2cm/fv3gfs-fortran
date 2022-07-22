@@ -2,7 +2,7 @@
 
 function mpichLDFlags {
     # -show prints includes as well as the exe...remove these
-    ftn -craype-verbose | sed 's/\(-I[^ ]*\|^[^ ]*\)//g'
+    ftn --cray-print-opts=all | sed 's/\(-I[^ ]*\|^[^ ]*\)//g'
 }
 
 function openmpiLDFlags {
