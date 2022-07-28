@@ -57,7 +57,7 @@ for exp_file in ${EXPERIMENTS} ; do
   seconds=`cat ${exp_file} | grep seconds | sed s/seconds://g | sed 's/^ *//g'`
   dt_atmos=`cat ${exp_file} | grep dt_atmos | sed s/dt_atmos://g | sed 's/^ *//g'`
   dycore_only=`cat ${exp_file} | grep dycore_only | sed s/dycore_only://g | sed 's/^ *//g'`
-  envs=("init" "driver")
+  envs=("init")
   export SER_INPUT_ONLY="true"
   export SAVE_TIMESTEP=1
   if [ ${seconds} -gt 100 ] ; then
@@ -69,9 +69,9 @@ for exp_file in ${EXPERIMENTS} ; do
 
      if [ ${npx} -lt 50 ] ; then
        if [ "${dycore_only}" == "true" ] ; then
-	  envs=("init" "driver" "dycore")
+	  envs=("init")
        else
-	  envs=("init" "driver" "dycore" "physics")
+	  envs=("init")
        fi
      fi
   fi
@@ -86,7 +86,7 @@ for exp_file in ${EXPERIMENTS} ; do
       if [ "${VALIDATE_ONLY}" == "true" ] ; then
       	  EXPERIMENT=${exp_name} make generate_data validate_data
       else
-	  EXPERIMENT=${exp_name} make generate_data pack_data push_data
+	  EXPERIMENT=${exp_name} make generate_data #pack_data push_data
       fi
   done
   echo "++++++++++++++++++++++++++++++++++++++++++++++++++++++"

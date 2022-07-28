@@ -1,0 +1,29 @@
+Here's what we tried to get test_case1 from fortran working.
+
+1. Compiled fv3gfs-fortran from root, with added compile flag SW_DYNAMICS.
+    Then tried running c12_6ranks_baroclinic.yml with npz=1 and test_case = 1. 
+    - did not work. Got errors saying that test_case1 was not defined. 
+    - Lucas suggested makefile doesn't always apply the SW_DYNAMICS flag as the reason.
+
+2. Went into test_cases.F90 and forced it to run only SW_DYNAMICS conditional compilation.
+    Commented out all #if ... SW_DYNAMICS and everything in #elseif/#else statements. 
+    Compiled - this part worked. 
+    Ran the model with the c12_6ranks_baroclinic namelist.
+    It ran (no more test_case not defined) errors, but crashed. 
+    Probably incompatible namelist options, but we don't know which ones work
+    - tried changing ntiles to 1, but it wouldn't run.
+
+3. At this point, we only want to look at the initial condition, so we tried running in 
+    tests>serialized_test_data_generation. 
+    For this to run, need to source pre_run.sh to export the right environment variables.
+    make build_model is successful.
+    Made modifications to make_all_datasets.sh so it doesn't upload data, just envs=("init"). 
+    This creates files, which is good. 
+    - We compared to jupyter notebook, pattern was correct, but with some differences in
+        magnitude. 
+    
+    Next: try adding ser statements to print out more data and figure out where the 
+    differences are coming from.
+
+
+
