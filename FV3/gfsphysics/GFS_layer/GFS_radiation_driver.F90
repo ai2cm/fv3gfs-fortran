@@ -1271,7 +1271,7 @@
       if (.not. (Model%lsswr .or. Model%lslwr )) return
 
 !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
-!$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+!$ser verbatim do_ser = (index(ser_env, "RADIATION") /= 0)
 !$ser verbatim if (do_ser) then
         !$ser verbatim print *, '>> serializing driver()', ser_count
         !$ser savepoint "driver-in-"//trim(ser_count_str)
@@ -1615,7 +1615,7 @@
 !check  print *,' in grrad : calling setaer '
 
 !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
-!$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+!$ser verbatim do_ser = (index(ser_env, "RADIATION") /= 0)
 !$ser verbatim if (do_ser) then
         !$ser verbatim print *, '>> serializing setaer_in()', ser_count
         !$ser savepoint "setaer-in-"//trim(ser_count_str)
@@ -1631,7 +1631,7 @@
                    faersw,faerlw,aerodp)                              !  ---  outputs
 
 !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
-!$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+!$ser verbatim do_ser = (index(ser_env, "RADIATION") /= 0)
 !$ser verbatim if (do_ser) then
         !$ser verbatim print *, '>> serializing setaer_out()', ser_count
         !$ser savepoint "setaer-out-"//trim(ser_count_str)
@@ -1858,7 +1858,7 @@
           if (.not.Model%lgfdlmprad) then
 
 !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
-!$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+!$ser verbatim do_ser = (index(ser_env, "RADIATION") /= 0)
 !$ser verbatim if (do_ser) then
         !$ser verbatim print *, '>> serializing progcld4_in()', ser_count
         !$ser savepoint "progcld4-in-"//trim(ser_count_str)
@@ -1876,7 +1876,7 @@
                            clouds, cldsa, mtopa, mbota, de_lgth)          !  ---  outputs
 
 !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
-!$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+!$ser verbatim do_ser = (index(ser_env, "RADIATION") /= 0)
 !$ser verbatim if (do_ser) then
         !$ser verbatim print *, '>> serializing progcld4_out()', ser_count
         !$ser savepoint "progcld4-out-"//trim(ser_count_str)
@@ -1959,7 +1959,7 @@
 !!  for SW radiation.
 
 !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
-!$ser verbatim do_ser = (index(ser_env, "RAD_SW") /= 0)
+!$ser verbatim do_ser = (index(ser_env, "RADIATION") /= 0)
 !$ser verbatim if (do_ser) then
         !$ser verbatim print *, '>> serializing setalbin()', ser_count
         !$ser savepoint "setalb-in-"//trim(ser_count_str)
@@ -1984,7 +1984,7 @@
                      sfcalb)                                           !  ---  outputs
 
 !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
-!$ser verbatim do_ser = (index(ser_env, "RAD_SW") /= 0)
+!$ser verbatim do_ser = (index(ser_env, "RADIATION") /= 0)
 !$ser verbatim if (do_ser) then
         !$ser verbatim print *, '>> serializing setalbout()', ser_count
         !$ser savepoint "setalb-out-"//trim(ser_count_str)
@@ -1995,7 +1995,7 @@
         Radtend%sfalb(:) = max(0.01, 0.5 * (sfcalb(:,2) + sfcalb(:,4)))
 
 !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
-!$ser verbatim do_ser = (index(ser_env, "RAD_SW") /= 0)
+!$ser verbatim do_ser = (index(ser_env, "RADIATION") /= 0)
 !$ser verbatim if (do_ser) then
         !$ser verbatim print *, '>> serializing swrad()', ser_count
         !$ser savepoint "swrad-in-"//trim(ser_count_str)
@@ -2139,7 +2139,7 @@
 !! emissivity for LW radiation.
 
 !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
-!$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+!$ser verbatim do_ser = (index(ser_env, "RADIATION") /= 0)
 !$ser verbatim if (do_ser) then
         !$ser verbatim print *, '>> serializing setemisin()', ser_count
         !$ser savepoint "setemis-in-"//trim(ser_count_str)
@@ -2157,7 +2157,7 @@
                       Radtend%semis)                                              !  ---  outputs
 
 !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
-!$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+!$ser verbatim do_ser = (index(ser_env, "RADIATION") /= 0)
 !$ser verbatim if (do_ser) then
         !$ser verbatim print *, '>> serializing setemisin()', ser_count
         !$ser savepoint "setemis-out-"//trim(ser_count_str)
@@ -2169,7 +2169,7 @@
 !     print *,' in grrad : calling lwrad'
 
 !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
-!$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+!$ser verbatim do_ser = (index(ser_env, "RADIATION") /= 0)
 !$ser verbatim if (do_ser) then
         !$ser verbatim print *, '>> serializing lwrad()', ser_count
         !$ser savepoint "lwrad-in-"//trim(ser_count_str)
@@ -2349,7 +2349,7 @@
       endif                                ! end_if_lssav
 !
 !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
-!$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+!$ser verbatim do_ser = (index(ser_env, "RADIATION") /= 0)
 !$ser verbatim if (do_ser) then
         !$ser verbatim print *, '>> serializing driver()', ser_count
         !$ser savepoint "driver-out-"//trim(ser_count_str)

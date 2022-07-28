@@ -320,7 +320,7 @@ module GFS_driver
          / (p_ref - Init_parm%ak(Model%levr+1))
 
     !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
-    !$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+    !$ser verbatim do_ser = (index(ser_env, "RADIATION") /= 0)
     !$ser verbatim if (do_ser) then
         !$ser verbatim print *, '>> serializing rad_initialize()'
         !$ser savepoint "rad-initialize"
@@ -855,7 +855,7 @@ module GFS_driver
     nblks = size(blksz,1)
 
     !$ser verbatim call get_environment_variable("SER_ENV", ser_env)
-    !$ser verbatim do_ser = (index(ser_env, "RAD_LW") /= 0)
+    !$ser verbatim do_ser = (index(ser_env, "RADIATION") /= 0)
     !$ser verbatim if (do_ser) then
         !$ser verbatim print *, '>> serializing rad_update()'
         !$ser savepoint "rad-update"

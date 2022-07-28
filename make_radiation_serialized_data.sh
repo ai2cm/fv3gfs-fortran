@@ -15,5 +15,5 @@ sed -i 's/seconds: 0/seconds: 900/g' fv3config.yml
 write_run_directory fv3config.yml rundir
 cp example/submit_job.sh rundir/
 cp example/clean.sh rundir/
-export SER_ENV=RAD_LW
+export SER_ENV=RADIATION
 ./phys_run.sh
