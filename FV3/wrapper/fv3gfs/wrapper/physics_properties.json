@@ -211,6 +211,14 @@
         "dims": ["y", "x"]
     },
     {
+        "name": "standard_deviation_of_subgrid_orography",
+        "fortran_name": "hprime",
+        "units": "m",
+        "description": "orographic metrics",
+        "container": "Sfcprop",
+        "dims": ["z", "y", "x"]
+    },
+    {
         "name": "ocean_surface_temperature",
         "fortran_name": "tsfco",
         "units": "degK",
