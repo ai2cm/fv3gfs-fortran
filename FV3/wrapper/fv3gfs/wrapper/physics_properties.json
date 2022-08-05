@@ -464,6 +464,14 @@
         "dims": ["z_soil", "y", "x"]
     },
     {
+        "name": "standard_deviation_of_subgrid_orography",
+        "fortran_name": "hprime",
+        "units": "m",
+        "description": "orographic metrics",
+        "container": "Sfcprop",
+        "dims": ["z", "y", "x"]
+    },
+    {
         "name": "override_for_time_adjusted_total_sky_downward_longwave_flux_at_surface",
         "fortran_name": "adjsfcdlw_override",
         "units": "W/m^2",
