@@ -49,6 +49,7 @@ cdef extern:
     void get_tracer_name(int *tracer_index, char *tracer_name_out, char *tracer_long_name_out, char *tracer_units_out)
     void get_num_cpld_calls(int *num_cpld_calls_out)
     void get_nz_soil_subroutine(int *nz_soil)
+    void get_n_topographic_variables(int *n_topo_variables)
 {% for item in physics_2d_properties %}
     void get_{{ item.fortran_name }}{% if "fortran_subname" in item %}_{{ item.fortran_subname }}{% endif %}(REAL_t *{{ item.fortran_name }}_out)
     void set_{{ item.fortran_name }}{% if "fortran_subname" in item %}_{{ item.fortran_subname }}{% endif %}(REAL_t *{{ item.fortran_name }}_in)
@@ -62,9 +63,10 @@ cdef extern:
 {% endfor %}
 
 cdef get_quantity_factory():
-    cdef int nx, ny, nz, nz_soil
+    cdef int nx, ny, nz, nz_soil, n_topo_variables
     get_centered_grid_dimensions(&nx, &ny, &nz)
     get_nz_soil_subroutine(&nz_soil)
+    get_n_topo_variables_subroutine(&n_topo_variables)
     sizer = pace.util.SubtileGridSizer(
         nx,
         ny,
@@ -72,6 +74,7 @@ cdef get_quantity_factory():
         n_halo=pace.util.N_HALO_DEFAULT,
         extra_dim_lengths={
             pace.util.Z_SOIL_DIM: nz_soil,
+            pace.util.N_TOPO_DIM:n_topo_variables,
         },
     )
     return pace.util.QuantityFactory(sizer, np)

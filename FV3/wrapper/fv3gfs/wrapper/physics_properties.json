@@ -469,7 +469,7 @@
         "units": "m",
         "description": "orographic metrics",
         "container": "Sfcprop",
-        "dims": ["z", "y", "x"]
+        "dims": ["nmtvr", "y", "x"]
     },
     {
         "name": "override_for_time_adjusted_total_sky_downward_longwave_flux_at_surface",
