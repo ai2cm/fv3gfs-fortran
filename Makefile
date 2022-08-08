@@ -107,7 +107,7 @@ test_native: ## run native tests (all tools and build dependencies are assumed t
 	find FV3 -type f -name '*.gcda' -delete
 	pytest --native tests/pytest
 	pytest -v FV3/wrapper/tests/pytest
-    pytest -v FV3/wrapper/tests/test_all_mpi_requiring.py
+	pytest -v FV3/wrapper/tests/test_all_mpi_requiring.py
 	mkdir -p $(DIR) && \
 		cd $(DIR)  && \
 		gcovr -d -r ../FV3 --html --html-details -o index.html
