@@ -49,7 +49,7 @@ cdef extern:
     void get_tracer_name(int *tracer_index, char *tracer_name_out, char *tracer_long_name_out, char *tracer_units_out)
     void get_num_cpld_calls(int *num_cpld_calls_out)
     void get_nz_soil_subroutine(int *nz_soil)
-    void get_n_topographic_variables(int *n_topo_variables)
+    void get_n_orographic_variables(int *n_topo_variables)
 {% for item in physics_2d_properties %}
     void get_{{ item.fortran_name }}{% if "fortran_subname" in item %}_{{ item.fortran_subname }}{% endif %}(REAL_t *{{ item.fortran_name }}_out)
     void set_{{ item.fortran_name }}{% if "fortran_subname" in item %}_{{ item.fortran_subname }}{% endif %}(REAL_t *{{ item.fortran_name }}_in)
