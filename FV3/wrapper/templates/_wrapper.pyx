@@ -74,7 +74,7 @@ cdef get_quantity_factory():
         n_halo=pace.util.N_HALO_DEFAULT,
         extra_dim_lengths={
             pace.util.Z_SOIL_DIM: nz_soil,
-            orographic_variable: n_topo_variables,
+            "orographic_variable": n_topo_variables,
         },
     )
     return pace.util.QuantityFactory(sizer, np)
