@@ -66,7 +66,7 @@ cdef get_quantity_factory():
     cdef int nx, ny, nz, nz_soil, n_topo_variables
     get_centered_grid_dimensions(&nx, &ny, &nz)
     get_nz_soil_subroutine(&nz_soil)
-    get_n_topo_variables_subroutine(&n_topo_variables)
+    get_n_orographic_variables(&n_topo_variables)
     sizer = pace.util.SubtileGridSizer(
         nx,
         ny,
@@ -74,7 +74,7 @@ cdef get_quantity_factory():
         n_halo=pace.util.N_HALO_DEFAULT,
         extra_dim_lengths={
             pace.util.Z_SOIL_DIM: nz_soil,
-            pace.util.N_TOPO_DIM:n_topo_variables,
+            orographic_variable: n_topo_variables,
         },
     )
     return pace.util.QuantityFactory(sizer, np)

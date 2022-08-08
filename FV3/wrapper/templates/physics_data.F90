@@ -16,10 +16,10 @@ contains
         nz_soil = IPD_Control%lsoil
     end subroutine get_nz_soil_subroutine
 
-    subroutine get_n_topographic_variables(n_topo_variables) bind(c)
+    subroutine get_n_orographic_variables(n_topo_variables) bind(c)
         integer(c_int), intent(out) :: n_topo_variables
         n_topo_variables = IPD_Control%nmtvr
-    end subroutine get_n_topo_variables_subroutine
+    end subroutine get_n_orographic_variables
 
 {% for item in physics_2d_properties %}
     subroutine set_{{ item.fortran_name }}{% if "fortran_subname" in item %}_{{ item.fortran_subname }}{% endif %}({{ item.fortran_name }}) bind(c)
