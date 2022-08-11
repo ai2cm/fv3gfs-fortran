@@ -499,6 +499,7 @@ contains
                            Atm(n)%ptop, Atm(n)%domain, Atm(n)%tile, Atm(n)%bd)
              !$ser savepoint InitCase-Out
              !$ser data u=Atm(n)%u v=Atm(n)%v w=Atm(n)%w pt=Atm(n)%pt delp=Atm(n)%delp q4d=Atm(n)%q phis=Atm(n)%phis ps=Atm(n)%ps pe=Atm(n)%pe peln=Atm(n)%peln pk=Atm(n)%pk pkz=Atm(n)%pkz uc=Atm(n)%uc vc=Atm(n)%vc ua=Atm(n)%ua va=Atm(n)%va ak=Atm(n)%ak bk=Atm(n)%bk ptop=Atm(n)%ptop delz=Atm(n)%delz ze0=Atm(n)%ze0 ks=Atm(n)%ks fC=Atm(n)%gridstruct%fC f0=Atm(n)%gridstruct%f0
+            write(*, *) 'Ajda'
             endif
            
          elseif (grid_type == 4) then

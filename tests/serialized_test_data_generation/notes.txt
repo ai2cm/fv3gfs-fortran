@@ -25,5 +25,18 @@ Here's what we tried to get test_case1 from fortran working.
     Next: try adding ser statements to print out more data and figure out where the 
     differences are coming from.
 
+4. Adding additional data output on restart so we can see where the problem is.
+    To test_cases.F90, I added: 
+    Line 343
+      ! $ser savepoint InitWinds-In
+      ! $ser data ubar_a=Ubar radius_a=radius agrid_a=agrid grid_a=grid uc_a=uc vc_a=vc
+    Line 525
+      ! $ser savepoint InitWinds-Out
+      ! $ser data ubar_a=Ubar radius_a=radius agrid_a=agrid grid_a=grid uc_a=uc vc_a=vc
+    Fails on recompile (make build_model)
+
+    Once I remove radius_a=radius, it compiles and runs.
+    Now adding psi_a=psi psi_ab=psi_b and dx_a=dx dy_a=dy to see if I can get output. 
+
 
 

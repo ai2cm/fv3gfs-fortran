@@ -3,7 +3,7 @@ GCR_URL ?= us.gcr.io/vcm-ml
 COMMIT_SHA := $(shell git rev-parse HEAD)
 DOCKERFILE ?= docker/Dockerfile
 ENVIRONMENT_TAG_NAME ?= latest
-COMPILE_OPTION ?=
+COMPILE_OPTION ?= 
 COMPILE_TARGET ?= fv3gfs-compiled
 BUILD_ARGS ?=
 BUILD_FROM_INTERMEDIATE ?= n
@@ -43,7 +43,9 @@ endif
 help:
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-build: build_compiled ## build default container image (production)
+build: 
+		COMPILE_OPTION="SW_DYNAMICS=Y" \
+		$(MAKE) build_compiled ## build default container image (production)
 
 build_environment: ## build environment container image
 	docker build -f $(DOCKERFILE) -t $(ENVIRONMENT_IMAGE) \
