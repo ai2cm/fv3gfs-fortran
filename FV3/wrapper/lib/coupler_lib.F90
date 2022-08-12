@@ -22,7 +22,10 @@ use  atmos_model_mod,  only: atmos_model_init, atmos_model_end,  &
                              update_atmos_model_dynamics,        &
                              update_atmos_radiation_physics,     &
                              update_atmos_model_state,           &
-                             atmos_data_type, atmos_model_restart
+                             atmos_data_type, atmos_model_restart,&
+                             update_atmos_pre_radiation,&
+                             update_atmos_radiation,&
+                             update_atmos_physics
 
 use constants_mod,     only: constants_init
 #ifdef INTERNAL_FILE_NML
@@ -142,6 +145,19 @@ contains
         Time_atmos = Time_atmos + Time_step_atmos
         call update_atmos_model_dynamics (Atm)
     end subroutine do_dynamics
+
+    ! substepped physics
+    subroutine do_pre_radiation() bind(c)
+        call update_atmos_pre_radiation (Atm)
+    end subroutine do_pre_radiation
+
+    subroutine do_radiation() bind(c)
+        call update_atmos_radiation (Atm)
+    end subroutine do_radiation
+
+    subroutine do_physics() bind(c)
+        call update_atmos_physics (Atm)
+    end subroutine do_physics
 
     subroutine compute_physics_subroutine() bind(c)
         call update_atmos_radiation_physics (Atm)
