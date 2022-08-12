@@ -21,6 +21,14 @@ cdef extern:
     void get_diagnostic_2d(int*, double *)
     void get_metadata_diagnostics(int* , int *, char*, char*, char*, char*)
     void get_diagnostics_count(int *)
+    void initialize_subroutine(int *comm)
+    void do_step_subroutine()
+    void cleanup_subroutine()
+    void do_dynamics()
+    void compute_physics_subroutine()
+    void apply_physics_subroutine()
+    void save_intermediate_restart_if_enabled_subroutine()
+    void save_intermediate_restart_subroutine()
     void initialize_time_subroutine(int *year, int *month, int *day, int *hour, int *minute, int *second)
     void get_time_subroutine(int *year, int *month, int *day, int *hour, int *minute, int *second, int *fms_calendar_type)
     void get_physics_timestep_subroutine(int *physics_timestep)
@@ -39,6 +47,7 @@ cdef extern:
     void get_tracer_breakdown(int *, int *, int *)
     void set_tracer(int *i_tracer, REAL_t *array_in)
     void get_tracer_name(int *tracer_index, char *tracer_name_out, char *tracer_long_name_out, char *tracer_units_out)
+    void get_num_cpld_calls(int *num_cpld_calls_out)
     void get_nz_soil_subroutine(int *nz_soil)
     void get_n_orographic(int *n_topo_variables)
 {% for item in physics_2d_properties %}
@@ -76,6 +85,14 @@ cpdef int get_n_ghost_cells():
     cdef int n_ghost
     get_n_ghost_cells_subroutine(&n_ghost)
     return n_ghost
+
+
+def get_step_count():
+    """Return the number of physics steps the Fortran model would like to complete
+    before exiting, based on its configuration."""
+    cdef int return_value
+    get_num_cpld_calls(&return_value)
+    return return_value
 
 
 def get_dimension_lengths():
@@ -394,6 +411,67 @@ class Flags:
 
 flags = Flags()
 
+def initialize():
+    """Call initialization routines for the Fortran model."""
+    cdef int comm
+    comm = MPI.COMM_WORLD.py2f()
+    initialize_subroutine(&comm)
+
+
+def step():
+    """Perform one dynamics-physics cycle of the Fortran model."""
+    step_dynamics()
+    step_physics()
+    save_intermediate_restart_if_enabled_subroutine()
+
+
+def step_dynamics():
+    """Perform one physics step worth of dynamics in the Fortran model.
+
+    Physics quantities are not updated by this routine."""
+    do_dynamics()
+
+
+def step_physics():
+    """Perform a physics step in the Fortran model.
+
+    Equivalent to calling compute_physics() and apply_physics() in that order."""
+    compute_physics_subroutine()
+    apply_physics_subroutine()
+
+
+def compute_physics():
+    """Call physics routines in the Fortran model and update physics prognostic state.
+
+    It is necessary to call apply_physics() after this to update the dynamical
+    prognostic state with the output from the routines called by this function."""
+    compute_physics_subroutine()
+
+
+def apply_physics():
+    """Update dynamical prognostic state with output from physics routines."""
+    apply_physics_subroutine()
+
+
+def save_intermediate_restart_if_enabled():
+    """If the Fortran model wants to do so on this timestep, write intermediate restart files.
+
+    This function is used at the end of the Fortran main loop to replicate the
+    intermediate restart behavior of the Fortran model.
+    """
+    save_intermediate_restart_if_enabled_subroutine()
+
+
+def save_fortran_restart():
+    """Trigger the Fortran model to write restart files."""
+    save_intermediate_restart_subroutine()
+
+
+def cleanup():
+    """Call the Fortran cleanup routines, which clear memory and write final restart files."""
+    cleanup_subroutine()
+
+
 
 DiagnosticInfo = namedtuple(
         'DiagnosticInfo', ['axes', 'module_name', 'name', 'description', 'unit'])
@@ -463,3 +541,23 @@ def _get_diagnostic_data(int idx):
     return pace.util.Quantity(array, dims, units=units)
 
 
+cdef extern:
+    void do_pre_radiation()
+    void do_radiation()
+    void do_physics()
+
+
+def step_pre_radiation():
+    """Do pre-radiation computations (e.g. time varying logic)"""
+    do_pre_radiation()
+
+
+def step_radiation():
+    """Compute Radiative transfer scheme"""
+    do_radiation()
+
+
+def step_post_radiation_physics():
+    """Compute Post-radiation physics (e.g. moist physics turbulence)"""
+    # TODO ensure that IPD_control.first_step is set in this routine
+    do_physics()

@@ -1,4 +1,3 @@
-from typing import List
 import os
 from setuptools import setup, find_namespace_packages
 from distutils.extension import Extension
@@ -55,21 +54,14 @@ with open("HISTORY.md", "r", encoding="utf-8") as history_file:
     history = history_file.read()
 
 
-def pyx_module(module: str, source: List[str]):
-    return Extension(
-        module,
-        source,
+ext_modules = [
+    Extension(  # module name:
+        "fv3gfs.wrapper._wrapper",
+        # source file:
+        ["lib/_wrapper.pyx"],
         include_dirs=[get_include()],
         extra_link_args=wrapper_build_filenames + library_link_args,
     )
-
-
-ext_modules = [
-    pyx_module("fv3gfs.wrapper._wrapper", ["lib/_wrapper.pyx"]),
-    pyx_module(
-        "fv3gfs.wrapper._control",
-        ["fv3gfs/wrapper/_control.pyx"],
-    ),
 ]
 
 setup(
