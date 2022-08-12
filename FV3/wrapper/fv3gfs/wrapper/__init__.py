@@ -1,23 +1,25 @@
 import pace.util
 from ._wrapper import (
-    initialize,
-    step,
-    step_dynamics,
-    step_physics,
-    save_intermediate_restart_if_enabled,
-    save_fortran_restart,
-    cleanup,
     get_state,
     set_state,
     get_n_ghost_cells,
-    get_step_count,
     get_tracer_metadata,
-    compute_physics,
-    apply_physics,
     _get_diagnostic_info,
     _get_diagnostic_data,
     flags,
     DiagnosticInfo,
+)
+from ._control import (
+    apply_physics,
+    cleanup,
+    compute_physics,
+    get_step_count,
+    initialize,
+    save_fortran_restart,
+    save_intermediate_restart_if_enabled,
+    step,
+    step_dynamics,
+    step_physics,
 )
 from ._restart import get_restart_names, open_restart
 from . import examples
