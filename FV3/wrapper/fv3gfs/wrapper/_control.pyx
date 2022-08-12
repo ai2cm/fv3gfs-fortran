@@ -16,6 +16,9 @@ cdef extern:
     void save_intermediate_restart_if_enabled_subroutine()
     void save_intermediate_restart_subroutine()
     void get_num_cpld_calls(int *num_cpld_calls_out)
+    void do_pre_radiation()
+    void do_radiation()
+    void do_physics()
 
 
 def get_step_count():
@@ -66,6 +69,22 @@ def compute_physics():
 def apply_physics():
     """Update dynamical prognostic state with output from physics routines."""
     apply_physics_subroutine()
+
+
+def step_pre_radiation():
+    """Do pre-radiation computations (e.g. time varying logic)"""
+    do_pre_radiation()
+
+
+def step_radiation():
+    """Compute Radiative transfer scheme"""
+    do_radiation()
+
+
+def step_post_radiation_physics():
+    """Compute Post-radiation physics (e.g. moist physics turbulence)"""
+    # TODO ensure that IPD_control.first_step is set in this routine
+    do_physics()
 
 
 def save_intermediate_restart_if_enabled():
