@@ -76,6 +76,8 @@ stdenv.mkDerivation {
       call_py_fort.pypkgs.cython
       call_py_fort.pypkgs.mpi4py
       call_py_fort.pypkgs.wheel
+      call_py_fort.pypkgs.netcdf4
+      call_py_fort.pypkgs.numba
       # dev tooling
       call_py_fort.pypkgs.pre-commit
       # read the docs

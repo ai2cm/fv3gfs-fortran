@@ -1,0 +1,62 @@
+rad_init:
+  imp_physics: 11
+  iemsflg: 1 # surface emissivity control flag
+  ioznflg: 7  # ozone data source control flag
+  ictmflg: 1  # data ic time/date control flag
+  isolar: 2 # solar constant control flag
+  ico2flg: 2  # co2 data source control flag
+  iaerflg: 111 # volcanic aerosols
+  ialbflg: 1  # surface albedo control flag
+  icldflg: 1
+  ivflip: 1  # vertical index direction control flag
+  iovrsw: 1  # cloud overlapping control flag for sw
+  iovrlw: 1  # cloud overlapping control flag for lw
+  isubcsw: 2  # sub-column cloud approx flag in sw radiation
+  isubclw: 2  # sub-column cloud approx flag in lw radiation
+  lcrick: false  # control flag for eliminating CRICK
+  lcnorm: false  # control flag for in-cld condensate
+  lnoprec: false  # precip effect on radiation flag (ferrier microphysics)
+  iswcliq: 1  # optical property for liquid clouds for sw
+
+model:
+  nfxr: 45
+  ntrac: 8
+  ntcw: 2
+  ntrw: 3
+  ntiw: 4
+  ntsw: 5
+  ntgl: 6
+  ntoz: 7
+  ntclamt: 8
+  ncld: 5
+  ncnd: 5
+  fhswr: 3600
+  fhlwr: 3600
+  solhr: 0.0
+  lsswr: true
+  lslwr: true
+  imp_physics: 11
+  lgfdlmprad: false
+  uni_cld: false
+  effr_in: false
+  indcld: -1
+  num_p3d: 1
+  npdf3d: 0
+  ncnvcld3d: 0
+  lmfdeep2: true
+  lmfshal: true
+  sup: 1.0
+  kdt: 1
+  do_sfcperts: false
+  pertalb:
+    - -999.0
+    - -999.0
+    - -999.0
+    - -999.0
+    - -999.0
+  do_only_clearsky_rad: false
+  swhtr: true
+  solcon: 1320.8872136343873
+  lprnt: false
+  lwhtr: true
+  lssav: true
