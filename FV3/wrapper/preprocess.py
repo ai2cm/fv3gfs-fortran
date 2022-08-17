@@ -185,12 +185,11 @@ def get_radiation_inputs(ds, columns_dict = ["y","x"]):
     np.random.seed(10)
     randomdict = {}
     # swrad ngptsw = 112
-    randomdict['sw_rand'] = np.random.rand(ncolumns,nz*112)
+    randomdict['sw_rand'] = np.zeros(ncolumns,nz*112) + 0.5#np.random.rand(ncolumns,nz*112)
     # lwrad ngptlw  = 140
-    randomdict['lw_rand'] = np.random.rand(ncolumns,nz*140)
+    randomdict['lw_rand'] = np.zeros(ncolumns,nz*112) + 0.5#np.random.rand(ncolumns,nz*140)
 
     return Statein, Grid, Sfcprop, sigma, randomdict 
-
 
 def rename_fields(Radtendout, Diagout):
     Radtendout_new = {}

@@ -149,6 +149,9 @@ if __name__ == "__main__":
                 solar_data,
                 gas_data)
 
+        print(' ############ Updatedict ##########')
+        print(updatedict)
+
         Radtendout, Diagout, Couplingout = driver._GFS_radiation_driver(Model, Statein, Sfcprop, Grid, randomdict, lwdict, swdict)
 
         valdict= preprocess.rename_fields(Radtendout, Diagout)
@@ -164,11 +167,10 @@ if __name__ == "__main__":
         
         for var in valdict:
             diff = np.nanmax(valdict[var] - outdict[var])
-            print('maximum difference for ' + var + '  =  ' + str(diff))
+            print('max difference for ' + var + '  =  ' + str(diff))
         
         #preprocess.compare_data(valdict, outdict)
         #fv3gfs.wrapper.step_post_radiation_physics()
-
     fv3gfs.wrapper.cleanup()
 
 

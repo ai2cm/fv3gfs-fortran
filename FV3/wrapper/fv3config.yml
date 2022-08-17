@@ -1315,9 +1315,9 @@ namelist:
     current_date:
     - 2016
     - 8
-    - 5
-    - 0
-    - 0
+    - 4
+    - 23
+    - 45
     - 0
     days: 0
     dt_atmos: 900
