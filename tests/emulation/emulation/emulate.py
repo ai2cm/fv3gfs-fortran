@@ -45,6 +45,7 @@ def assert_expected_variables_present(state):
         "surface_air_pressure",
         "tendency_of_rain_water_mixing_ratio_due_to_microphysics",
         "total_precipitation",
+        "rhc",
     }
 
     assert expected_fields == set(state), set(state)
