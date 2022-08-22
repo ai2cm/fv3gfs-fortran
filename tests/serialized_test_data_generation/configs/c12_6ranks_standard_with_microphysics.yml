@@ -118,11 +118,11 @@ namelist:
     do_sat_adj: true
     do_vort_damp: true
     dwind_2d: false
-    external_ic: false
+    external_ic: true
     fill: true
     fill_dp: false
     fv_debug: false
-    fv_sg_adj: 0
+    fv_sg_adj: 600
     gfs_phil: false
     hord_dp: 6
     hord_mt: 6
@@ -146,9 +146,9 @@ namelist:
     mountain: false
     n_split: 1
     n_sponge: 48
-    na_init: 0
+    na_init: 1
     ncep_ic: false
-    nggps_ic: false
+    nggps_ic: true
     nord: 3
     npx: 13
     npy: 13
@@ -168,7 +168,7 @@ namelist:
     tau_h2o: 0.0
     use_hydro_pressure: false
     vtdm4: 0.06
-    warm_start: true
+    warm_start: false
     z_tracer: true
   fv_grid_nml: {}
   gfdl_cloud_microphysics_nml:
@@ -233,7 +233,6 @@ namelist:
     cnvcld: false
     cnvgwd: false
     debug: false
-    do_ocean: false
     do_deep: false
     dspheat: false
     fhcyc: 24.0
@@ -277,12 +276,6 @@ namelist:
     lat_s: 96
     lon_s: 192
     ntrunc: 94
-  sfc_prop_override_nml:
-    ideal_sst: true
-    sst_max: 305
-    sst_profile: 1
-  test_case_nml:
-    test_case: 13
   namsfc:
     fabsl: 99999
     faisl: 99999
