@@ -7,6 +7,9 @@ import yaml
 import xarray as xr
 import numpy as np
 import preprocess 
+import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
+
 this_variables = preprocess.this_variables
 to_validate = preprocess.to_validate
 
@@ -52,12 +55,16 @@ if __name__ == "__main__":
         config = comm.bcast(None)
     
     fv3gfs.wrapper.initialize()
-    
     for i in range(fv3gfs.wrapper.get_step_count()):
         fv3gfs.wrapper.step_dynamics()
         fv3gfs.wrapper.step_pre_radiation()
 
         time  = fv3gfs.wrapper.get_state(names=['time'])
+        time_str = str(time['time'].year)+ '_'+ str(time['time'].month) +'_'+  str(time['time'].day) +'_'+  str(time['time'].hour) + '_'+ str(time['time'].minute)
+        print('#################################')
+        print(time)
+        print(time_str)
+        print('#################################')
 
         ## inputs needed for rad port
         ds_inputs = xr.Dataset()
@@ -65,14 +72,18 @@ if __name__ == "__main__":
             state = fv3gfs.wrapper.get_state(names=[varname])
             tmp   = state[varname].data_array.to_dataset(name=varname)
             ds_inputs = xr.combine_by_coords([ds_inputs, tmp],compat='override') 
-
+        #ds_inputs.to_netcdf('inputs_'+  str(rank) + '_' + time_str +'.nc')
+        
         Model['me']   =  i   
         Model['levs'] = ds_inputs['air_temperature'].z.size
         Model['levr'] = ds_inputs['air_temperature'].z.size
         nlay = ds_inputs['air_temperature'].z.size
 
         Statein, Grid, Sfcprop, sigma, randomdict  = preprocess.get_radiation_inputs(ds_inputs)
-       
+
+        #for name, var in Sfcprop.items():
+        #    np.savez(name + '_' + str(rank), var)
+
         if i == 0:
             ## Calling radiation 
             driver = RadiationDriver()
@@ -106,10 +117,10 @@ if __name__ == "__main__":
                 )
 
             updatedict= {}
-            updatedict['idat']   = np.array([time['time'].year, time['time'].month, time['time'].day, time['time'].hour, time['time'].minute, 0, 0 ,0])  
-            updatedict['jdat']   = np.array([time['time'].year, time['time'].month, time['time'].day, time['time'].hour, time['time'].minute, 0, 0 ,0])
-            updatedict['fhswr']  = np.array([config['namelist']['gfs_physics_nml']['fhswr']])
-            updatedict['dtf']    = np.array([config['namelist']['coupler_nml']['dt_atmos']])
+            updatedict['idat']   = np.array([time['time'].year, time['time'].month, time['time'].day, 0, time['time'].hour, time['time'].minute, 0 ,0])  
+            updatedict['jdat']   = np.array([time['time'].year, time['time'].month, time['time'].day, 0, time['time'].hour, time['time'].minute, 0 ,0])
+            updatedict['fhswr']  = np.array(float(config['namelist']['gfs_physics_nml']['fhswr']))
+            updatedict['dtf']   = np.array(float(config['namelist']['coupler_nml']['dt_atmos']))
             updatedict['lsswr']  = True
 
             slag, sdec, cdec, solcon = driver.radupdate(
@@ -125,14 +136,12 @@ if __name__ == "__main__":
                 aer_dict["cline"],
                 solar_data,
                 gas_data)
-
-
         else:
             updatedict= {}
             updatedict['idat']   = np.array([time['time'].year, time['time'].month, time['time'].day, time['time'].hour, time['time'].minute, 0, 0 ,0])  
             updatedict['jdat']   = np.array([time['time'].year, time['time'].month, time['time'].day, time['time'].hour, time['time'].minute, 0, 0 ,0])
-            updatedict['fhswr']  = np.array([config['namelist']['gfs_physics_nml']['fhswr']])
-            updatedict['dtf']    = np.array([config['namelist']['coupler_nml']['dt_atmos']])
+            updatedict['fhswr']  = np.array(float(config['namelist']['gfs_physics_nml']['fhswr']))
+            updatedict['dtf']   = np.array(float(config['namelist']['coupler_nml']['dt_atmos']))
             updatedict['lsswr']  = True
 
             slag, sdec, cdec, solcon = driver.radupdate(
@@ -150,15 +159,20 @@ if __name__ == "__main__":
                 gas_data)
 
         print(' ############ Updatedict ##########')
-        print(updatedict)
+        print(updatedict['idat'])
 
         Radtendout, Diagout, Couplingout = driver._GFS_radiation_driver(Model, Statein, Sfcprop, Grid, randomdict, lwdict, swdict)
+        valdict = preprocess.rename_fields(Radtendout, Diagout)
 
-        valdict= preprocess.rename_fields(Radtendout, Diagout)
-        
-        
+        # tmp = ds_inputs['surface_temperature'].stack(ncolumns=["y","x"])
+        # valdict = xr.Dataset()
+        # for var in valdict:
+        #      tmp_datarray  = xr.DataArray(var,coords={'ncolumns': tmp['ncolumns']}).rename(var.name)
+        #      valdict[var] = tmp_datarray.unstack()
+
         fv3gfs.wrapper.step_radiation()
         ds_outputs_post_radiation = xr.Dataset()
+        #outdict = {}
         for varname in to_validate:
             state = fv3gfs.wrapper.get_state(names=[varname])
             tmp   = state[varname].data_array.to_dataset(name=varname)
@@ -168,9 +182,9 @@ if __name__ == "__main__":
         for var in valdict:
             diff = np.nanmax(valdict[var] - outdict[var])
             print('max difference for ' + var + '  =  ' + str(diff))
-        
+
         #preprocess.compare_data(valdict, outdict)
-        #fv3gfs.wrapper.step_post_radiation_physics()
+        fv3gfs.wrapper.step_post_radiation_physics()
     fv3gfs.wrapper.cleanup()
 
 

@@ -705,11 +705,11 @@ diag_table:
   name: prognostic_run
 diagnostics:
 - chunks:
-    time: 16
+    time: 8
   name: state_after_timestep.zarr
   tensorboard: false
   times:
-    frequency: 5400
+    frequency: 10800
     includes_lower: false
     kind: interval
     times: null
@@ -753,6 +753,7 @@ diagnostics:
   - snow_mixing_ratio
   - graupel_mixing_ratio
   - cloud_amount
+  - orographic_variables
 - chunks:
     time: 16
   name: physics_tendencies.zarr
@@ -814,7 +815,6 @@ diagnostics:
   - y_wind_reference
   - pressure_thickness_of_atmospheric_layer_reference
 experiment_name: default_experiment
-field_table: gs://vcm-fv3config/config/field_table/TKE-EDMF/v1.0/field_table
 forcing: gs://vcm-fv3config/data/base_forcing/v1.1/
 fortran_diagnostics:
 - chunks:
@@ -1129,10 +1129,6 @@ fortran_diagnostics:
   - field_name: fv_sat_adj_t_dt
     module_name: dynamics
     output_name: fv_sat_adj_t_dt
-gfs_analysis_data:
-  copy_method: copy
-  filename_pattern: '%Y%m%d_%HZ_T85LR.nc'
-  url: gs://vcm-ml-raw-flexible-retention/2019-12-02-year-2016-T85-nudging-data
 initial_conditions:
 - copy_method: copy
   source_location: gs://vcm-ml-experiments/2020-06-02-fine-res/coarsen_restarts/20160805.000000
@@ -1268,7 +1264,7 @@ namelist:
     use_ncep_ice: false
     use_ncep_sst: true
   atmos_model_nml:
-    blocksize: 24
+    blocksize: 48
     chksum_debug: false
     dycore_only: false
     fdiag: 0.0
@@ -1315,9 +1311,9 @@ namelist:
     current_date:
     - 2016
     - 8
-    - 4
-    - 23
-    - 45
+    - 5
+    - 8
+    - 15
     - 0
     days: 0
     dt_atmos: 900
@@ -1505,7 +1501,7 @@ namelist:
     fhlwr: 1800.0
     fhswr: 1800.0
     fhzero: 0.25
-    hybedmf: false
+    hybedmf: true
     iaer: 111
     ialb: 1
     ico2: 2
@@ -1528,11 +1524,11 @@ namelist:
     prslrd0: 0.0
     random_clds: false
     redrag: true
-    satmedmf: true
+    satmedmf: False
     shal_cnv: true
     swhtr: true
     trans_trac: true
-    use_analysis_sst: true
+    use_analysis_sst: false
     use_ufo: true
   interpolator_nml:
     interp_method: conserve_great_circle
@@ -1597,6 +1593,7 @@ nudging:
     y_wind: 3
 online_emulator: null
 orographic_forcing: gs://vcm-fv3config/data/orographic_data/v1.0
+patch_files: []
 prephysics:
 - consolidated: true
   dataset_key: gs://vcm-ml-intermediate/2021-03-fine-res-surface-radiative-fluxes/C3072-surface-radiative-fluxes-precip.zarr

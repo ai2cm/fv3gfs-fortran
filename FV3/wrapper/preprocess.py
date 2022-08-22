@@ -6,7 +6,6 @@ import numpy as np
 
 # RadInit flags
 
-
 to_validate = [ 'clear_sky_downward_longwave_flux_at_surface',
                 'clear_sky_downward_shortwave_flux_at_surface',
                 'clear_sky_upward_longwave_flux_at_surface',
@@ -20,7 +19,8 @@ to_validate = [ 'clear_sky_downward_longwave_flux_at_surface',
                 'total_sky_upward_shortwave_flux_at_surface',
                 'total_sky_upward_shortwave_flux_at_top_of_atmosphere']
 
-this_variables = ['atmosphere_hybrid_a_coordinate',
+this_variables = ['pressure_thickness_of_atmospheric_layer',
+                'atmosphere_hybrid_a_coordinate',
                 'atmosphere_hybrid_b_coordinate',
                 'interface_pressure',
                 'air_temperature',
@@ -85,44 +85,50 @@ def compare_data(data, ref_data, explicit=True, blocking=True):
             print(f"Output data does not match reference data for field {wrong}!")
 
 
-def pressure_at_midpoint(pi, toa_pressure = 300, dim_center='z_interface', dim_outer='z_interface'):
+def pressure_at_midpoint_log(delp, toa_pressure = 300, dim = 'z'):
+    pi = pressure_at_interface(delp)
+    dlogp = np.log(pi).diff(dim)
+    output = delp / dlogp
+    # ensure that output chunks are the same
+    # pressure at interface adds a single chunk at the model surface
+    if delp.chunks:
+        original_chunk_size = delp.chunks[delp.get_axis_num(dim)]
+        output = output.chunk({dim: original_chunk_size})
 
-    """Compute pressure at layer midpoints by linear interpolation.
-    Copied from vcm.calc.thermo.vertically_dependent.pressure_at_midpoint
+    return output
 
-    Args:
-        pi: pressure at interface
-        toa_pressure (optional): pressure at the top of atmosphere.
-            Defaults to 300Pa.
-        dim (optional): name of vertical dimension for delp. Defaults to "pfull".
 
-    Returns:
-        atmospheric pressure at layer midpoints
-    """
-
+def pressure_at_midpoint(pi,dim_outer='z'):
     pi_mid = (pi.isel({dim_outer: slice(0, -1)}) + pi.isel({dim_outer: slice(1, None)})) / 2
-    return pi_mid.rename({dim_outer: dim_center})
+    return pi_mid
+
+def pressure_at_interface(delp,dim_center='z', toa_pressure=300):
+    top = xr.full_like(delp.isel({dim_center: [0]}), toa_pressure)#.variable
+    delp_with_top = xr.concat([top, delp], dim=dim_center)
+    pressure = delp_with_top.cumsum(dim_center)
+    return pressure
 
 def stack_ds(ds, columns_dict = ["y","x"]):
     ds_out = {}
     for var in ds: 
         ds_out[var] = ds[var].stack(ncolumns=columns_dict).values
-
     return ds_out
-
 
 def get_radiation_inputs(ds, columns_dict = ["y","x"]):
 
     ## Getting State inputs 
     ## Make sure ivflip (vertical index direction control flag)  == 1, and flip z dim 
     ## from surface to toa  
-
+    delp = ds['pressure_thickness_of_atmospheric_layer']
+    pi  = pressure_at_interface(delp)
+    pm  = pressure_at_midpoint_log(delp)
 
     ds_columns = ds.stack(ncolumns=columns_dict)
     nz = ds.z.size
-    p_midpoint  = pressure_at_midpoint(ds['interface_pressure']).stack(ncolumns=columns_dict)
-    p_interface = ds['interface_pressure'].stack(ncolumns=columns_dict)
     
+    p_interface = pi.stack(ncolumns=columns_dict)#ds['interface_pressure']
+    p_midpoint  = pm.stack(ncolumns=columns_dict)
+
     cp = 1004
     Rd = 287.05
     p_ref = 1.0e5
@@ -131,10 +137,9 @@ def get_radiation_inputs(ds, columns_dict = ["y","x"]):
 
     ncolumns = len(ds_columns['ncolumns'])
     
-
     tracer_names = [
         'specific_humidity', 'cloud_water_mixing_ratio','rain_mixing_ratio',  'cloud_ice_mixing_ratio',
-         'snow_mixing_ratio', 'graupel_mixing_ratio', 
+        'snow_mixing_ratio', 'graupel_mixing_ratio', 
         'ozone_mixing_ratio', 'cloud_amount']
 
     tracer_arrays = np.zeros((ncolumns, nz ,len(tracer_names)))
@@ -158,14 +163,13 @@ def get_radiation_inputs(ds, columns_dict = ["y","x"]):
     ## Getting Sfcprop 
     Sfcprop  ={}
 
-
     Sfcprop['tsfc']   = ds_columns['surface_temperature'].values
     Sfcprop['slmsk']  = ds_columns['land_sea_mask'].values
     Sfcprop['snowd']  = ds_columns['snow_depth_water_equivalent'].values
     Sfcprop['sncovr'] = ds_columns['snow_cover_in_fraction'].values
     Sfcprop['snoalb'] = ds_columns['maximum_snow_albedo_in_fraction'].values
     Sfcprop['zorl']   = ds_columns['surface_roughness'].values
-    Sfcprop['hprime'] = ds_columns[ 'orographic_variables'].isel(orographic_variable=0).values
+    Sfcprop['hprime'] = ds_columns['orographic_variables'].isel(orographic_variable=0).values
     Sfcprop['alvsf']  = ds_columns['mean_visible_albedo_with_strong_cosz_dependency'].values
     Sfcprop['alnsf']  = ds_columns['mean_near_infrared_albedo_with_strong_cosz_dependency'].values
     Sfcprop['alvwf']  = ds_columns['mean_visible_albedo_with_weak_cosz_dependency'].values
@@ -185,9 +189,9 @@ def get_radiation_inputs(ds, columns_dict = ["y","x"]):
     np.random.seed(10)
     randomdict = {}
     # swrad ngptsw = 112
-    randomdict['sw_rand'] = np.zeros(ncolumns,nz*112) + 0.5#np.random.rand(ncolumns,nz*112)
+    randomdict['sw_rand'] = np.random.rand(ncolumns,nz*112) 
     # lwrad ngptlw  = 140
-    randomdict['lw_rand'] = np.zeros(ncolumns,nz*112) + 0.5#np.random.rand(ncolumns,nz*140)
+    randomdict['lw_rand'] = np.random.rand(ncolumns,nz*140)
 
     return Statein, Grid, Sfcprop, sigma, randomdict 
 
