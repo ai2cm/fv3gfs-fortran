@@ -195,7 +195,7 @@ Then configure the build to use nix
 
     cd FV3 && ./configure nix
 
-And build the model (with coverage outputs, from the root directory)
+And build the model (from the root directory)
 
     make build_native
     
@@ -227,7 +227,8 @@ tests like this:
     # or manually
     pytest --native tests/pytest
     # and 
-    pytest FV3/wrapper/tests/
+	pytest -v FV3/wrapper/tests/pytest
+    pytest -v FV3/wrapper/tests/test_all_mpi_requiring.py
 
 When using the makefile target, code coverages reports will be saved to the
 folder `coverage_<timestamp>`.

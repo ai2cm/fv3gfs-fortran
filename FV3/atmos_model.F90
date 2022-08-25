@@ -130,6 +130,9 @@ private
 public update_atmos_radiation_physics
 public update_atmos_model_state
 public update_atmos_model_dynamics
+public update_atmos_pre_radiation
+public update_atmos_radiation
+public update_atmos_physics
 public atmos_model_init, atmos_model_end, atmos_data_type
 public atmos_model_exchange_phase_1, atmos_model_exchange_phase_2
 public atmos_model_restart
@@ -263,8 +266,24 @@ contains
 !   compute/exchange fluxes with other component models.  All fields in this
 !   variable type are allocated for the global grid (without halo regions).
 ! </INOUT>
+  subroutine update_atmos_radiation_physics(Atmos)
+    type (atmos_data_type), intent(in) :: Atmos
 
-subroutine update_atmos_radiation_physics (Atmos)
+    call update_atmos_pre_radiation(Atmos)
+
+    if (.not. dycore_only) then
+      call update_atmos_radiation(Atmos)
+      call update_atmos_physics(Atmos)
+    end if
+
+#ifdef CCPP
+    ! Update flag for first time step of time integration
+    IPD_Control%first_time_step = .false.
+#endif
+
+  end subroutine update_atmos_radiation_physics
+
+  subroutine update_atmos_pre_radiation (Atmos)
 #ifdef OPENMP
     use omp_lib
 #endif
@@ -272,7 +291,6 @@ subroutine update_atmos_radiation_physics (Atmos)
   type (atmos_data_type), intent(in) :: Atmos
 !--- local variables---
     integer :: nb, jdat(8), rc
-    procedure(IPD_func0d_proc), pointer :: Func0d => NULL()
     procedure(IPD_func1d_proc), pointer :: Func1d => NULL()
     integer :: nthrds
 #ifdef CCPP
@@ -360,6 +378,29 @@ subroutine update_atmos_radiation_physics (Atmos)
       endif
 
       call mpp_clock_end(setupClock)
+
+    end if
+  end subroutine update_atmos_pre_radiation
+
+  subroutine update_atmos_radiation (Atmos)
+#ifdef OPENMP
+    use omp_lib
+#endif
+!-----------------------------------------------------------------------
+  type (atmos_data_type), intent(in) :: Atmos
+!--- local variables---
+    integer :: nb, jdat(8), rc
+    procedure(IPD_func0d_proc), pointer :: Func0d => NULL()
+    integer :: nthrds
+#ifdef CCPP
+    integer :: ierr
+#endif
+
+#ifdef OPENMP
+    nthrds = omp_get_max_threads()
+#else
+    nthrds = 1
+#endif
 #ifndef AI2_SUBSET_PHYSICS
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "radiation driver"
 
@@ -390,6 +431,27 @@ subroutine update_atmos_radiation_physics (Atmos)
         call FV3GFS_IPD_checksum(IPD_Control, IPD_Data, Atm_block)
       endif
       call mpp_clock_end(otherClock)
+  end subroutine update_atmos_radiation
+
+  subroutine update_atmos_physics (Atmos)
+#ifdef OPENMP
+    use omp_lib
+#endif
+!-----------------------------------------------------------------------
+  type (atmos_data_type), intent(in) :: Atmos
+!--- local variables---
+    integer :: nb, jdat(8), rc
+    procedure(IPD_func0d_proc), pointer :: Func0d => NULL()
+    integer :: nthrds
+#ifdef CCPP
+    integer :: ierr
+#endif
+
+#ifdef OPENMP
+    nthrds = omp_get_max_threads()
+#else
+    nthrds = 1
+#endif
 
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "physics driver"
 
@@ -449,14 +511,9 @@ subroutine update_atmos_radiation_physics (Atmos)
       call getiauforcing(IPD_Control,IAU_data)
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "end of radiation and physics step"
       call mpp_clock_end(otherClock)
-    endif
 
-#ifdef CCPP
-    ! Update flag for first time step of time integration
-    IPD_Control%first_time_step = .false.
-#endif
 !-----------------------------------------------------------------------
- end subroutine update_atmos_radiation_physics
+ end subroutine update_atmos_physics
 ! </SUBROUTINE>
 
 
