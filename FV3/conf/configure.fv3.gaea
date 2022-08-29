@@ -137,6 +137,11 @@ FFLAGS += $(FFLAGS_VERBOSE)
 LDFLAGS += $(LDFLAGS_VERBOSE)
 endif
 
+ifneq ($(CALLPYFORT),)
+FFLAGS += -I$(CALLPYFORT)/include -DENABLE_CALLPYFORT
+LDFLAGS += -L$(CALLPYFORT)/lib -lcallpy 
+endif
+
 ifneq ($(findstring netcdf/4,$(LOADEDMODULES)),)
   LIBS += -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
 else
