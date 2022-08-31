@@ -138,8 +138,8 @@ LDFLAGS += $(LDFLAGS_VERBOSE)
 endif
 
 ifneq ($(CALLPYFORT),)
-FFLAGS += -I$(CALLPYFORT)/include -DENABLE_CALLPYFORT
-LDFLAGS += -L$(CALLPYFORT)/lib -lcallpy 
+FFLAGS += -I$(CALLPYFORT)/build/src -DENABLE_CALLPYFORT
+LDFLAGS += -L$(CALLPYFORT)/build/src -lcallpy 
 endif
 
 ifneq ($(findstring netcdf/4,$(LOADEDMODULES)),)
