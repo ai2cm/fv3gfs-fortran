@@ -192,6 +192,7 @@ def extract_dt(experiment: Dict[str, Any], output_file: str):
         for line in match.group().splitlines():
             time = string_to_numeric_value(line[21:])
     experiment["dt_atmos"] = time
+    return experiment
 
 
 def calculate_sypd(experiment: Dict[str, Any]) -> float:
@@ -203,6 +204,7 @@ def calculate_sypd(experiment: Dict[str, Any]) -> float:
     else:
         sypd = -999.0
     experiment["SYPD"] = sypd
+    return experiment
 
 
 def string_to_numeric_value(s):
