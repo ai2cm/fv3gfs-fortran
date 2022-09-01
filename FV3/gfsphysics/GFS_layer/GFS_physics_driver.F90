@@ -2135,6 +2135,40 @@ module module_physics_driver
         enddo
       endif
 
+      ! Prescribe sea ice from a file.  Ported from the GFDL SHiELD_physics repository:
+      ! https://github.com/NOAA-GFDL/SHiELD_physics/blob/main/GFS_layer/GFS_physics_driver.F90
+      if (Model%use_prescribed_sea_surface_properties) then
+        do i= 1, im
+          if (Statein%prescribed_sea_ice_fraction(i) > -1. .and. Statein%prescribed_sea_ice_fraction(i) < 2.) then !Avoid bad values
+            if (Statein%prescribed_sea_ice_fraction(i) >= 0.15 .and. islmsk(i) == 0) then !create sea ice
+                Sfcprop%fice(i) = Statein%prescribed_sea_ice_fraction(i)
+                Sfcprop%slmsk(i) = 2
+                Sfcprop%hice(i) = 0.1 !minimum value
+            elseif (islmsk(i) == 2) then
+                if (Statein%prescribed_sea_ice_fraction(i) < 0.15) then !remove sea ice
+                  Sfcprop%slmsk(i) = 0
+                  Sfcprop%fice(i) = 0.0
+                  Sfcprop%hice(i) = 0.0
+                else
+                  Sfcprop%fice(i) = Statein%prescribed_sea_ice_fraction(i)
+                endif
+            endif
+          endif
+        enddo
+      endif
+
+      ! Prescribe sea surface temperature from a file.  Ported from the GFDL SHiELD_physics repository:
+      ! https://github.com/NOAA-GFDL/SHiELD_physics/blob/main/GFS_layer/GFS_physics_driver.F90
+      if (Model%use_prescribed_sea_surface_properties) then
+        do i = 1, im 
+           if (islmsk(i) == 0 ) then
+             Sfcprop%tsfc(i) = Statein%prescribed_sea_surface_temperature(i) + Model%sst_perturbation
+             Sfcprop%tsfco(i) = Statein%prescribed_sea_surface_temperature(i) + Model%sst_perturbation
+             tsfc3(i,3) = Statein%prescribed_sea_surface_temperature(i) + Model%sst_perturbation
+           endif
+        enddo
+      endif
+
       do i=1,im
         Diag%epi(i)     = ep1d(i)
         Diag%dlwsfci(i) = adjsfcdlw_for_lsm(i)
@@ -4615,6 +4649,9 @@ module module_physics_driver
               Diag%zhao_carr_physics%humidity = (Stateout%gq0(1:im,1:levs, 1) - dqdt(:,:,1)) / dtp
               Diag%zhao_carr_physics%cloud_water = (Stateout%gq0(1:im,1:levs,ntcw) - dqdt(:,:,ntcw)) / dtp
               Diag%zhao_carr_physics%temperature = (Stateout%gt0(1:im,1:levs) - dtdt) / dtp
+              if (Model%emulate_gscond_only) then
+                call adjust_zhao_carr_physics_diags_gscond_only(Diag)
+              end if
             end if
             ! rain1 has units m, and represents surface precip over dtp
             Diag%zhao_carr_physics%surface_precipitation = rain1 / dtp * rhowater
@@ -6082,8 +6119,39 @@ module module_physics_driver
         delp = initial_mass_of_dry_air_plus_vapor * dry_air_plus_hydrometeor_mass_fraction_after_physics
       end subroutine compute_updated_delp_following_dynamics_definition
 
-#ifdef ENABLE_CALLPYFORT
+      subroutine adjust_zhao_carr_physics_diags_gscond_only(Diag)
+        type (GFS_diag_type), intent(inout) :: Diag
 
+        call adjust_total_physics_tendency_gscond_only(&
+          Diag%zhao_carr_physics%humidity,&
+          Diag%gscond_physics%humidity,&
+          Diag%gscond_emulator%humidity&
+        )
+
+        call adjust_total_physics_tendency_gscond_only(&
+          Diag%zhao_carr_physics%temperature,&
+          Diag%gscond_physics%temperature,&
+          Diag%gscond_emulator%temperature&
+        )
+
+        call adjust_total_physics_tendency_gscond_only(&
+          Diag%zhao_carr_physics%cloud_water,&
+          Diag%gscond_physics%cloud_water,&
+          Diag%gscond_emulator%cloud_water&
+        )
+      end subroutine
+
+      !> Adjust the total physics tendency in the gscond-only case
+      !> The total tendency is defined as gscond_physics + precpd_physics
+      subroutine adjust_total_physics_tendency_gscond_only(total, gscond_physics, gscond_emulator)
+        real(kind=kind_phys), intent(inout) :: total(:, :)
+        real(kind_phys), intent(in), dimension(:, :) :: gscond_physics, gscond_emulator
+        ! have g_emu + p_phys, g_emu, and g_phys
+        ! want g_phys + p_phys = (g_emu + p_phys) - g_emu + g_phys
+        total = total - gscond_emulator + gscond_physics
+      end subroutine
+
+#ifdef ENABLE_CALLPYFORT
       subroutine apply_python_gscond_updates_to_tbd(Tbd)
         type(GFS_tbd_type), intent(inout) :: Tbd
         call get_state("air_temperature_after_gscond", Tbd%phy_f3d(:, :, 1))
@@ -6140,7 +6208,6 @@ module module_physics_driver
         Diag%gscond_emulator%temperature = (tp_cpf(1:im,1:levs) - t_before_gscond) / timestep
 
       end subroutine
-
 #endif
 
 !> @}

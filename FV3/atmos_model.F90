@@ -118,7 +118,8 @@ use FV3GFS_io_mod,      only: FV3GFS_restart_read, FV3GFS_restart_write, &
                               FV3GFS_diag_register, FV3GFS_diag_output,  &
                               DIAG_SIZE, FV3GFS_restart_write_coarse,    &
                               FV3GFS_diag_register_coarse, &
-                              send_diag_manager_controlled_diagnostic_data
+                              send_diag_manager_controlled_diagnostic_data, &
+                              sfc_data_override
 use fv_iau_mod,         only: iau_external_data_type,getiauforcing,iau_initialize
 use module_fv3_config,  only: output_1st_tstep_rst, first_kdt, nsout
 !-----------------------------------------------------------------------
@@ -129,6 +130,9 @@ private
 public update_atmos_radiation_physics
 public update_atmos_model_state
 public update_atmos_model_dynamics
+public update_atmos_pre_radiation
+public update_atmos_radiation
+public update_atmos_physics
 public atmos_model_init, atmos_model_end, atmos_data_type
 public atmos_model_exchange_phase_1, atmos_model_exchange_phase_2
 public atmos_model_restart
@@ -171,7 +175,7 @@ public Atm_block, IPD_Data, IPD_Control
                                                          ! to calculate gradient on cubic sphere grid.
 !</PUBLICTYPE >
 
-integer :: fv3Clock, getClock, updClock, setupClock, radClock, physClock, diagClock, otherClock
+integer :: fv3Clock, getClock, overrideClock, updClock, setupClock, radClock, physClock, diagClock, otherClock
 
 !-----------------------------------------------------------------------
 integer :: blocksize    = 1
@@ -183,10 +187,16 @@ logical :: disable_phys_restart_write = .false.
 integer, parameter     :: maxhr = 65536
 real, dimension(maxhr) :: fdiag = 0.
 real                   :: fhmax=384.0, fhmaxhf=120.0, fhout=3.0, fhouthf=1.0,avg_max_length=3600.
+
+! To restore previous behavior and output diagnostics following what is
+! prescribed by the fdiag, fhmax, fhmaxhf, fhout, and fhouthf parameters, set
+! the use_fdiag flag to .true.
+logical :: use_fdiag = .false.  
+
 #ifdef CCPP
-namelist /atmos_model_nml/ blocksize, chksum_debug, dycore_only, debug, sync, fdiag, fhmax, fhmaxhf, fhout, fhouthf, disable_phys_restart_write, ccpp_suite, avg_max_length
+namelist /atmos_model_nml/ blocksize, chksum_debug, dycore_only, debug, sync, fdiag, fhmax, fhmaxhf, fhout, fhouthf, disable_phys_restart_write, ccpp_suite, avg_max_length, use_fdiag
 #else
-namelist /atmos_model_nml/ blocksize, chksum_debug, dycore_only, debug, sync, fdiag, fhmax, fhmaxhf, fhout, fhouthf, disable_phys_restart_write, avg_max_length
+namelist /atmos_model_nml/ blocksize, chksum_debug, dycore_only, debug, sync, fdiag, fhmax, fhmaxhf, fhout, fhouthf, disable_phys_restart_write, avg_max_length, use_fdiag
 #endif
 
 type (time_type) :: diag_time, diag_time_fhzero
@@ -256,8 +266,24 @@ contains
 !   compute/exchange fluxes with other component models.  All fields in this
 !   variable type are allocated for the global grid (without halo regions).
 ! </INOUT>
+  subroutine update_atmos_radiation_physics(Atmos)
+    type (atmos_data_type), intent(in) :: Atmos
 
-subroutine update_atmos_radiation_physics (Atmos)
+    call update_atmos_pre_radiation(Atmos)
+
+    if (.not. dycore_only) then
+      call update_atmos_radiation(Atmos)
+      call update_atmos_physics(Atmos)
+    end if
+
+#ifdef CCPP
+    ! Update flag for first time step of time integration
+    IPD_Control%first_time_step = .false.
+#endif
+
+  end subroutine update_atmos_radiation_physics
+
+  subroutine update_atmos_pre_radiation (Atmos)
 #ifdef OPENMP
     use omp_lib
 #endif
@@ -265,7 +291,6 @@ subroutine update_atmos_radiation_physics (Atmos)
   type (atmos_data_type), intent(in) :: Atmos
 !--- local variables---
     integer :: nb, jdat(8), rc
-    procedure(IPD_func0d_proc), pointer :: Func0d => NULL()
     procedure(IPD_func1d_proc), pointer :: Func1d => NULL()
     integer :: nthrds
 #ifdef CCPP
@@ -289,6 +314,11 @@ subroutine update_atmos_radiation_physics (Atmos)
     call mpp_clock_begin(getClock)
     call atmos_phys_driver_statein (IPD_data, Atm_block, flip_vc)
     call mpp_clock_end(getClock)
+
+    ! Get prescribed sea surface temperatures and sea ice (if using)
+    call mpp_clock_begin(overrideClock)
+    call sfc_data_override(Atmos%Time, IPD_data, Atm_block, IPD_Control)
+    call mpp_clock_end(overrideClock)
 
 !--- if dycore only run, set up the dummy physics output state as the input state
     if (dycore_only) then
@@ -348,6 +378,29 @@ subroutine update_atmos_radiation_physics (Atmos)
       endif
 
       call mpp_clock_end(setupClock)
+
+    end if
+  end subroutine update_atmos_pre_radiation
+
+  subroutine update_atmos_radiation (Atmos)
+#ifdef OPENMP
+    use omp_lib
+#endif
+!-----------------------------------------------------------------------
+  type (atmos_data_type), intent(in) :: Atmos
+!--- local variables---
+    integer :: nb, jdat(8), rc
+    procedure(IPD_func0d_proc), pointer :: Func0d => NULL()
+    integer :: nthrds
+#ifdef CCPP
+    integer :: ierr
+#endif
+
+#ifdef OPENMP
+    nthrds = omp_get_max_threads()
+#else
+    nthrds = 1
+#endif
 #ifndef AI2_SUBSET_PHYSICS
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "radiation driver"
 
@@ -378,6 +431,27 @@ subroutine update_atmos_radiation_physics (Atmos)
         call FV3GFS_IPD_checksum(IPD_Control, IPD_Data, Atm_block)
       endif
       call mpp_clock_end(otherClock)
+  end subroutine update_atmos_radiation
+
+  subroutine update_atmos_physics (Atmos)
+#ifdef OPENMP
+    use omp_lib
+#endif
+!-----------------------------------------------------------------------
+  type (atmos_data_type), intent(in) :: Atmos
+!--- local variables---
+    integer :: nb, jdat(8), rc
+    procedure(IPD_func0d_proc), pointer :: Func0d => NULL()
+    integer :: nthrds
+#ifdef CCPP
+    integer :: ierr
+#endif
+
+#ifdef OPENMP
+    nthrds = omp_get_max_threads()
+#else
+    nthrds = 1
+#endif
 
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "physics driver"
 
@@ -437,14 +511,9 @@ subroutine update_atmos_radiation_physics (Atmos)
       call getiauforcing(IPD_Control,IAU_data)
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "end of radiation and physics step"
       call mpp_clock_end(otherClock)
-    endif
 
-#ifdef CCPP
-    ! Update flag for first time step of time integration
-    IPD_Control%first_time_step = .false.
-#endif
 !-----------------------------------------------------------------------
- end subroutine update_atmos_radiation_physics
+ end subroutine update_atmos_physics
 ! </SUBROUTINE>
 
 
@@ -784,6 +853,7 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
    diagClock  = mpp_clock_id( ' 3.7-Diagnostics', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    ! 3.8-Write-restart is timed on the coupler_main.F90 level
    otherClock = mpp_clock_id( ' 3.9-Other', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+   overrideClock = mpp_clock_id(' 3.10-sfc_data_override', flags=clock_flag_default, grain=CLOCK_COMPONENT )
 
 #ifdef CCPP
    ! Set flag for first time step of time integration
@@ -898,6 +968,7 @@ subroutine update_atmos_model_state (Atmos)
   integer :: rc
   real(kind=IPD_kind_phys) :: time_int, time_intfull
   integer :: is, ie, js, je, nk
+  logical :: is_diagnostics_time
 !
     call mpp_clock_begin(otherClock)
     call set_atmosphere_pelist()
@@ -928,7 +999,9 @@ subroutine update_atmos_model_state (Atmos)
       Atm(mytile)%coarse_graining%write_coarse_diagnostics, &
       IPD_Diag_coarse, Atm(mytile)%delp(is:ie,js:je,:), &
       Atmos%coarsening_strategy, Atm(mytile)%ptop)
-    if (ANY(nint(fdiag(:)*3600.0) == seconds) .or. (IPD_Control%kdt == first_kdt) .or. nsout > 0) then
+    is_diagnostics_time = (use_fdiag .and. (ANY(nint(fdiag(:)*3600.0) == seconds))) .or. &
+                          ((.not. use_fdiag) .and. (mod(seconds, nint(fhout * 3600.0)) == 0))
+    if (is_diagnostics_time .or. (IPD_Control%kdt == first_kdt) .or. nsout > 0) then
       if (mpp_pe() == mpp_root_pe()) write(6,*) "---isec,seconds",isec,seconds
       time_int = real(isec)
       if(Atmos%iau_offset > zero) then

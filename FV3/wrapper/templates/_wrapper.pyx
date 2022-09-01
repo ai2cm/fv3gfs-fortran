@@ -49,6 +49,7 @@ cdef extern:
     void get_tracer_name(int *tracer_index, char *tracer_name_out, char *tracer_long_name_out, char *tracer_units_out)
     void get_num_cpld_calls(int *num_cpld_calls_out)
     void get_nz_soil_subroutine(int *nz_soil)
+    void get_n_orographic(int *n_topo_variables)
 {% for item in physics_2d_properties %}
     void get_{{ item.fortran_name }}{% if "fortran_subname" in item %}_{{ item.fortran_subname }}{% endif %}(REAL_t *{{ item.fortran_name }}_out)
     void set_{{ item.fortran_name }}{% if "fortran_subname" in item %}_{{ item.fortran_subname }}{% endif %}(REAL_t *{{ item.fortran_name }}_in)
@@ -62,9 +63,10 @@ cdef extern:
 {% endfor %}
 
 cdef get_quantity_factory():
-    cdef int nx, ny, nz, nz_soil
+    cdef int nx, ny, nz, nz_soil, n_topo_variables
     get_centered_grid_dimensions(&nx, &ny, &nz)
     get_nz_soil_subroutine(&nz_soil)
+    get_n_orographic(&n_topo_variables)
     sizer = pace.util.SubtileGridSizer(
         nx,
         ny,
@@ -72,6 +74,7 @@ cdef get_quantity_factory():
         n_halo=pace.util.N_HALO_DEFAULT,
         extra_dim_lengths={
             pace.util.Z_SOIL_DIM: nz_soil,
+            "orographic_variable": n_topo_variables,
         },
     )
     return pace.util.QuantityFactory(sizer, np)
@@ -538,3 +541,23 @@ def _get_diagnostic_data(int idx):
     return pace.util.Quantity(array, dims, units=units)
 
 
+cdef extern:
+    void do_pre_radiation()
+    void do_radiation()
+    void do_physics()
+
+
+def step_pre_radiation():
+    """Do pre-radiation computations (e.g. time varying logic)"""
+    do_pre_radiation()
+
+
+def step_radiation():
+    """Compute Radiative transfer scheme"""
+    do_radiation()
+
+
+def step_post_radiation_physics():
+    """Compute Post-radiation physics (e.g. moist physics turbulence)"""
+    # TODO ensure that IPD_control.first_step is set in this routine
+    do_physics()

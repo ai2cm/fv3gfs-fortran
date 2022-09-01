@@ -25,6 +25,7 @@ module FV3GFS_io_mod
                                 restore_state, save_restart
   use mpp_domains_mod,    only: domain1d, domain2d, domainUG, mpp_get_compute_domain
   use time_manager_mod,   only: time_type
+  use data_override_mod,  only: data_override
   use diag_manager_mod,   only: register_diag_field, send_data
   use diag_axis_mod,      only: get_axis_global_length, get_diag_axis, &
                                 get_diag_axis_name
@@ -58,7 +59,7 @@ module FV3GFS_io_mod
   use IPD_typedefs,       only: IPD_control_type, IPD_data_type, &
                                 IPD_restart_type, IPD_diag_type, &
                                 kind_phys => IPD_kind_phys
-  use coarse_graining_mod, only: get_coarse_array_bounds, weighted_block_average, mask_area_weights, mask_mass_weights
+  use coarse_graining_mod, only: get_coarse_array_bounds, weighted_block_average, mask_area_weights
   use coarse_graining_mod, only: MODEL_LEVEL, PRESSURE_LEVEL, vertical_remapping_requirements, vertically_remap_field
   !
 !--- GFS physics constants
@@ -82,6 +83,7 @@ module FV3GFS_io_mod
 #ifdef use_WRTCOMP
   public  fv_phys_bundle_setup
 #endif
+  public  sfc_data_override
 
   !--- GFDL filenames
   character(len=32)  :: fn_oro = 'oro_data.nc'
@@ -2981,7 +2983,7 @@ module FV3GFS_io_mod
     character(len=64),         intent(in) :: coarsening_strategy
     real(kind=kind_phys),      intent(in) :: ptop
 
-    logical :: require_area, require_masked_area, require_mass, require_masked_mass, require_vertical_remapping
+    logical :: require_area, require_masked_area, require_mass, require_vertical_remapping
     real(kind=kind_phys), allocatable :: area(:,:)
     real(kind=kind_phys), allocatable :: mass(:,:,:), phalf(:,:,:), phalf_coarse_on_fine(:,:,:)
     real(kind=kind_phys), allocatable :: masked_area(:,:,:)
@@ -3109,7 +3111,7 @@ module FV3GFS_io_mod
     real(kind=kind_phys) :: rdt, rtime_int, rtime_intfull, lcnvfac
     real(kind=kind_phys) :: rtime_radsw, rtime_radlw
     logical :: used
-    logical :: require_area, require_masked_area, require_mass, require_masked_mass, require_vertical_remapping
+    logical :: require_area, require_masked_area, require_mass, require_vertical_remapping
     logical :: requested
     real(kind=kind_phys), allocatable :: area(:,:)
     real(kind=kind_phys), allocatable :: mass(:,:,:), phalf(:,:,:), phalf_coarse_on_fine(:,:,:)
@@ -3488,7 +3490,7 @@ module FV3GFS_io_mod
    logical, intent(out) :: require_area, require_masked_area, require_mass, require_vertical_remapping
 
    require_area = any(coarse_diag%id .gt. 0 .and. coarse_diag%coarse_graining_method .eq. AREA_WEIGHTED)
-   require_mass = any(coarse_diag%id .gt. 0 .and. coarse_diag%coarse_graining_method .eq. MASS_WEIGHTED)
+   require_mass = any(coarse_diag%id .gt. 0 .and. coarse_diag%coarse_graining_method .eq. MASS_WEIGHTED) .and. trim(coarsening_strategy) .eq. MODEL_LEVEL
 
    if (trim(coarsening_strategy) .eq. PRESSURE_LEVEL) then
      require_masked_area = any(coarse_diag%id .gt. 0 .and. coarse_diag%axes .eq. 3 .and. coarse_diag%coarse_graining_method .eq. AREA_WEIGHTED)
@@ -3744,6 +3746,70 @@ module FV3GFS_io_mod
     endif
     used = send_data(id, coarse, Time)
 end subroutine store_data3D_coarse_pressure_level
+
+subroutine sfc_data_override(Time, IPD_data, Atm_block, Model)
+  ! Ported from the GFDL SHiELD_physics repository.
+  ! https://github.com/NOAA-GFDL/SHiELD_physics/blob/main/FV3GFS/FV3GFS_io.F90
+  implicit none
+  type(time_type), intent(in) :: Time
+  type(IPD_data_type), intent(inout) :: IPD_data(:)
+  type(block_control_type), intent(in) :: Atm_block
+  type(IPD_control_type), intent(in) :: Model
+
+  integer :: i, j, ix, nb
+  integer :: isc, jsc, iec, jec
+  logical :: used
+  real, allocatable :: sea_surface_temperature(:,:), sea_ice_fraction(:,:)
+
+  isc = Atm_block%isc
+  iec = Atm_block%iec
+  jsc = Atm_block%jsc
+  jec = Atm_block%jec
+
+  if (Model%use_prescribed_sea_surface_properties) then
+    ! Here is a sample data_table that will enable reading in
+    ! external sea surface temperatures and sea ice fractions from an external file.
+    !
+    !"ATM", "sea_surface_temperature", "sea_surface_temperature", "INPUT/sst.nc", "bilinear", 1.0
+    !"ATM", "sea_ice_fraction", "sea_ice_fraction", "INPUT/sst.nc", "bilinear", 1.0
+
+    ! There are a few requirements for data files to be compatible with
+    ! data_override in FMS:
+    ! - FMS prefers the order of the dimensions of the data variables be time,
+    !   latitude, longitude.
+    ! - In the file, the time, latitude, and longitude must include the
+    !   appropriate "axis" attributes; this is how FMS determines which axes
+    !   correspond to the time ("T"), latitude ("Y") and longitude ("X")
+    !   dimensions without relying on hard-coded names.
+    ! - When writing a dataset the data variables must have a floating-point
+    !   value fill-value.
+    ! - In addition, the time variable must be encoded as a float.
+    ! - Finally, when writing the dataset, the time dimension must be encoded as
+    !   a "record" dimension (also known as an "unlimited" dimension).
+
+    allocate(sea_surface_temperature(isc:iec,jsc:jec))
+    allocate(sea_ice_fraction(isc:iec,jsc:jec))
+    call data_override('ATM', 'sea_surface_temperature', sea_surface_temperature, Time, override=used)
+    if (.not. used) then
+      call mpp_error(FATAL, " sea_surface_temperature dataset not specified in data_table.")
+    endif
+    call data_override('ATM', 'sea_ice_fraction', sea_ice_fraction, Time, override=used)
+    if (.not. used) then
+      call mpp_error(NOTE, " sea_ice_fraction dataset not specified in data_table. No override will occur.")
+      sea_ice_fraction(:,:) = -999.
+    endif
+    do nb = 1, Atm_block%nblks
+      do ix = 1, Atm_block%blksz(nb)
+        i = Atm_block%index(nb)%ii(ix)
+        j = Atm_block%index(nb)%jj(ix)
+        IPD_data(nb)%Statein%prescribed_sea_surface_temperature(ix) = sea_surface_temperature(i,j)
+        IPD_data(nb)%Statein%prescribed_sea_ice_fraction(ix) = sea_ice_fraction(i,j)
+      enddo
+    enddo
+    deallocate(sea_surface_temperature)
+    deallocate(sea_ice_fraction)
+  endif
+end subroutine sfc_data_override
 !
 !-------------------------------------------------------------------------
 !

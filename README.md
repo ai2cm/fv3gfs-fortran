@@ -195,9 +195,13 @@ Then configure the build to use nix
 
     cd FV3 && ./configure nix
 
-And build the model (with coverage outputs)
+And build the model (from the root directory)
 
     make build_native
+    
+And the wrapper
+
+    make -C FV3 wrapper_build
 
 At this point you can run [the native tests](#native-tests).
 # Testing the model
@@ -222,6 +226,9 @@ tests like this:
     make test_native
     # or manually
     pytest --native tests/pytest
+    # and 
+	pytest -v FV3/wrapper/tests/pytest
+    pytest -v FV3/wrapper/tests/test_all_mpi_requiring.py
 
 When using the makefile target, code coverages reports will be saved to the
 folder `coverage_<timestamp>`.
@@ -251,7 +258,7 @@ for serialization using the command
 make enter_serialize
 ```
 
-Make sure to set the GT4PY\_DEV flag for compilation. The original FV3 sources will be mounted to `/FV3/original`. To compile the model for serialization inside the container, you can use the commands
+Make sure to set the GT4PY\_DEV flag to `Y' for compilation. This will alter a subset of the code to be more suitable for gt4py in the python port. When we have all the features we need on the python side and are confident in the robustness of the new model, we should be able to remove these.  The original FV3 sources will be mounted to `/FV3/original`. To compile the model for serialization inside the container, you can use the commands
 
 ```bash
 cd /FV3

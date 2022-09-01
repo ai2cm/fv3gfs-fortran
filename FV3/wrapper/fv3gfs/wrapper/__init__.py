@@ -18,6 +18,9 @@ from ._wrapper import (
     _get_diagnostic_data,
     flags,
     DiagnosticInfo,
+    step_pre_radiation,
+    step_radiation,
+    step_post_radiation_physics
 )
 from ._restart import get_restart_names, open_restart
 from . import examples

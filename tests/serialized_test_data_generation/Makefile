@@ -10,7 +10,7 @@ SER_ENV ?= dycore
 # -convention: <tag>-<some large conceptual version change>.<serialization statement change>.<hotfix>
 # -version number should be increased when serialization data is expected to change
 # -omit tag (e.g. 7.1.1) for "operational" serialization data, use tag for experimental serialization data
-FORTRAN_VERSION ?= 8.0.4
+FORTRAN_VERSION ?= 8.1.1
 # docker container image setup (used for running model, see ../../README.md)
 GCR_URL = us.gcr.io/vcm-ml
 COMPILED_IMAGE = $(GCR_URL)/fv3gfs-compiled:gnu7-mpich314-nocuda-serialize
@@ -40,7 +40,7 @@ build_model: ## build Docker image with compiled model code for serialization
 	cd $(FORTRAN_DIR) && \
 		BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
 		COMPILED_IMAGE=$(COMPILED_IMAGE) \
-		COMPILE_OPTION="GT4PY_DEV=Y\\\nSUBSET_PHYSICS=Y" \
+		COMPILE_OPTION="GT4PY_DEV=Y\\\nAI2_SUBSET_PHYSICS=Y" \
 		$(MAKE) build_compiled
 
 setup_rundir: ## create run directory on local host using fv3config
@@ -84,18 +84,19 @@ run_model: ## run model using Docker image to generate serialized data
 	cp $(EXPERIMENT_DIR)/$(EXPERIMENT).yml $(DATA_DIR_HOST)
 	cp $(EXPERIMENT_DIR)/$(EXPERIMENT).yml $(DATA_DIR_HOST)/input.yml
 
-pack_data: ## pack *.dat files into a *.tar.gz and delete them
+pack_data: ## convert to netcdf files, pack *.dat files into a *.tar.gz and delete them
 	@echo ""
 	@echo ">> Packing data in $(DATA_DIR_HOST) to $(TARFILE_HOST)"
 	@if [ -f $(TARFILE_HOST) ] ; then \
 		echo "Error: Tar file $(TARFILE_HOST) already exists. Already packed?" ; \
 		exit 1 ; \
 	fi
+	docker run --mount type=bind,source=$(shell pwd)/serialbox_to_netcdf.py,target=/root/serialbox_to_netcdf.py -v $(DATA_DIR_HOST):/data $(COMPILED_IMAGE) bash -c "python3 /root/serialbox_to_netcdf.py /data /data"
 	cd $(DATA_DIR_HOST) && \
 		tar -cvzf $(TARFILE_HOST) *.dat > $(TARFILE_INDEX_HOST) && \
 		rm -f *.dat ; \
 
-unpack_data: ## unack *.dat files from a *.tar.gz and remove tar-file
+unpack_data: ## unpack *.dat files from a *.tar.gz and remove tar-file
 	@echo ""
 	@echo ">> Unpacking data from $(TARFILE_HOST) to $(DATA_DIR_HOST)"
 	@if [ ! -f $(TARFILE_HOST) ] ; then \
@@ -141,6 +142,10 @@ push_data: ## push packed data to cloud storage bucket
 		fi ; \
 	fi
 	gsutil -m rsync -d -r $(DATA_DIR_HOST) $(DATA_DIR_BUCKET)
+
+pull_data: ## pull packed data from cloud storage bucket
+	mkdir -p $(DATA_DIR_HOST)
+	gsutil -m rsync -d -r $(DATA_DIR_BUCKET) $(DATA_DIR_HOST)
 
 clean: ## remove artifacts for current experiment
 	@echo ""

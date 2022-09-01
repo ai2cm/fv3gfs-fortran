@@ -198,6 +198,7 @@ use mpp_domains_mod,    only:  mpp_get_data_domain, mpp_get_compute_domain
 use coarse_graining_mod, only: coarse_graining_init
 use coarse_grained_diagnostics_mod, only: fv_coarse_diag_init, fv_coarse_diag
 use coarse_grained_restart_files_mod, only: fv_coarse_restart_init
+use data_override_mod, only: data_override_init
 !$ser verbatim use k_checkpoint, only: set_nz
 
 implicit none
@@ -605,6 +606,9 @@ contains
    n = mytile
    call switch_current_Atm(Atm(n)) 
       
+   if ( trim(Atm(mytile)%flagstruct%grid_file) .NE. "Inline" .and. trim(Atm(mytile)%flagstruct%grid_file) .NE. "") then
+     call data_override_init(Atm_domain_in = Atm(mytile)%domain)
+   endif
  end subroutine atmosphere_init
 
 
@@ -802,7 +806,8 @@ contains
                        Atm(n)%gridstruct,  Atm(n)%flagstruct,                    &
                        Atm(n)%neststruct,  Atm(n)%idiag, Atm(n)%bd,              &
                        Atm(n)%parent_grid, Atm(n)%domain,Atm(n)%diss_est,        &
-                       Atm(n)%lagrangian_tendency_of_hydrostatic_pressure)
+                       Atm(n)%lagrangian_tendency_of_hydrostatic_pressure,       &
+                       fv_sat_adj_tendency_diag=Atm(n)%fv_sat_adj_tendency_diag)
      !$ser verbatim if (serialize_physics .and. save_step) then
      ! NOTE: this is added here for convenience. In a future iteration
      ! you may want to save this after fv_subgridz, so that physics tests
@@ -1977,7 +1982,9 @@ contains
                         Atm(mytile)%cx, Atm(mytile)%cy, Atm(mytile)%ze0, Atm(mytile)%flagstruct%hybrid_z,         &
                         Atm(mytile)%gridstruct, Atm(mytile)%flagstruct,                                           &
                         Atm(mytile)%neststruct, Atm(mytile)%idiag, Atm(mytile)%bd, Atm(mytile)%parent_grid,       &
-                        Atm(mytile)%domain,Atm(mytile)%diss_est, Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure)
+                        Atm(mytile)%domain,Atm(mytile)%diss_est,                                                  &
+                        Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure,                                  &
+                        fv_sat_adj_tendency_diag=Atm(mytile)%fv_sat_adj_tendency_diag)
 ! Backward
        call fv_dynamics(Atm(mytile)%npx, Atm(mytile)%npy, npz,  nq, Atm(mytile)%ng, -dt_atmos, 0.,                &
                         Atm(mytile)%flagstruct%fill, Atm(mytile)%flagstruct%reproduce_sum, kappa, cp_air, zvir,   &
@@ -1992,7 +1999,9 @@ contains
                         Atm(mytile)%cx,    Atm(mytile)%cy,   Atm(mytile)%ze0, Atm(mytile)%flagstruct%hybrid_z,    &
                         Atm(mytile)%gridstruct, Atm(mytile)%flagstruct,                                           &
                         Atm(mytile)%neststruct, Atm(mytile)%idiag, Atm(mytile)%bd, Atm(mytile)%parent_grid,       &
-                        Atm(mytile)%domain,Atm(mytile)%diss_est, Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure)
+                        Atm(mytile)%domain,Atm(mytile)%diss_est,                                                  &
+                        Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure,                                  &
+                        fv_sat_adj_tendency_diag=Atm(mytile)%fv_sat_adj_tendency_diag)
 !Nudging back to IC
 !$omp parallel do default (none) &
 !$omp              shared (pref, npz, jsc, jec, isc, iec, n, sphum, Atm, u0, v0, t0, dp0, xt, zvir, mytile, nudge_dz, dz0) &
@@ -2069,7 +2078,9 @@ contains
                         Atm(mytile)%cx, Atm(mytile)%cy, Atm(mytile)%ze0, Atm(mytile)%flagstruct%hybrid_z,         &
                         Atm(mytile)%gridstruct, Atm(mytile)%flagstruct,                                           &
                         Atm(mytile)%neststruct, Atm(mytile)%idiag, Atm(mytile)%bd, Atm(mytile)%parent_grid,       &
-                        Atm(mytile)%domain,Atm(mytile)%diss_est, Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure)
+                        Atm(mytile)%domain,Atm(mytile)%diss_est,                                                  &
+                        Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure,                                  &
+                        fv_sat_adj_tendency_diag=Atm(mytile)%fv_sat_adj_tendency_diag)
 ! Forward call
        call fv_dynamics(Atm(mytile)%npx, Atm(mytile)%npy, npz,  nq, Atm(mytile)%ng, dt_atmos, 0.,                 &
                         Atm(mytile)%flagstruct%fill, Atm(mytile)%flagstruct%reproduce_sum, kappa, cp_air, zvir,   &
@@ -2084,7 +2095,9 @@ contains
                         Atm(mytile)%cx, Atm(mytile)%cy, Atm(mytile)%ze0, Atm(mytile)%flagstruct%hybrid_z,         &
                         Atm(mytile)%gridstruct, Atm(mytile)%flagstruct,                                           &
                         Atm(mytile)%neststruct, Atm(mytile)%idiag, Atm(mytile)%bd, Atm(mytile)%parent_grid,       &
-                        Atm(mytile)%domain,Atm(mytile)%diss_est, Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure)
+                        Atm(mytile)%domain,Atm(mytile)%diss_est,                                                  &
+                        Atm(mytile)%lagrangian_tendency_of_hydrostatic_pressure,                                  &
+                        fv_sat_adj_tendency_diag=Atm(mytile)%fv_sat_adj_tendency_diag)
 ! Nudging back to IC
 !$omp parallel do default (none) &
 !$omp              shared (nudge_dz,npz, jsc, jec, isc, iec, n, sphum, Atm, u0, v0, t0, dz0, dp0, xt, zvir, mytile) &

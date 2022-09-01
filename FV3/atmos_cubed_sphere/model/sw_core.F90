@@ -218,20 +218,8 @@
 ! Transport delp:
 !----------------
 ! Xdir:
-      !$ser savepoint TransportDelp-In
-      !$ser data_kbuff k=k k_size=nz delp=delp pt=pt w=w utc=ut vtc=vt wc=wc
-      !$ser verbatim dir=1
-      !$ser verbatim if (flagstruct%grid_type < 3 .and. .not. (nested .or. regional)) then
-      !$ser savepoint Fill2_4Corners-In
-      !$ser data_kbuff k=k k_size=nz q1c=delp q2c=pt
-      !$ser verbatim if (k == nz) then 
-      !$ser data dir=dir
-      !$ser verbatim endif
       if (flagstruct%grid_type < 3 .and. .not. (nested .or. regional)) &
        call fill2_4corners(delp, pt, 1, bd, npx, npy, sw_corner, se_corner, ne_corner, nw_corner)
-      !$ser savepoint Fill2_4Corners-Out
-      !$ser data_kbuff k=k k_size=nz q1c=delp q2c=pt
-      !$ser verbatim endif
       if ( hydrostatic ) then
 #ifdef SW_DYNAMICS
            do j=js-1,jep1
@@ -260,15 +248,8 @@
            enddo
 #endif
         else
-           !$ser savepoint Fill4Corners-In
-           !$ser data_kbuff k=k k_size=nz q4c=w
-           !$ser verbatim if (k == nz) then 
-           !$ser data dir=dir
-           !$ser verbatim endif
            if (flagstruct%grid_type < 3)   &
                 call fill_4corners(w, 1, bd, npx, npy, sw_corner, se_corner, ne_corner, nw_corner)
-           !$ser savepoint Fill4Corners-Out
-           !$ser data_kbuff k=k k_size=nz q4c=w
            do j=js-1,je+1
               do i=is-1,ie+2      
                  if ( ut(i,j) > 0. ) then
@@ -291,15 +272,11 @@
 ! Ydir:
       !$ser verbatim dir=2
       !$ser verbatim if (flagstruct%grid_type < 3 .and. .not. (nested .or. regional)) then
-      !$ser savepoint Fill2_4Corners-In
-      !$ser data_kbuff k=k k_size=nz q1c=delp q2c=pt
       !$ser verbatim if (k == nz) then 
       !$ser data dir=dir
       !$ser verbatim endif
       if (flagstruct%grid_type < 3 .and. .not. (nested .or. regional))  &
        call fill2_4corners(delp, pt, 2, bd, npx, npy, sw_corner, se_corner, ne_corner, nw_corner)
-       !$ser savepoint Fill2_4Corners-Out
-       !$ser data_kbuff k=k k_size=nz q1c=delp q2c=pt
        !$ser verbatim endif
       if ( hydrostatic ) then
            do j=js-1,jep1+1
@@ -327,14 +304,7 @@
               enddo
            enddo
       else
-           !$ser savepoint Fill4Corners-In
-           !$ser data_kbuff k=k k_size=nz q4c=w
-           !$ser verbatim if (k == nz) then 
-           !$ser data dir=dir
-           !$ser verbatim endif
            if (flagstruct%grid_type < 3) call fill_4corners(w, 2, bd, npx, npy, sw_corner, se_corner, ne_corner, nw_corner)
-           !$ser savepoint Fill4Corners-Out
-           !$ser data_kbuff k=k k_size=nz q4c=w
            do j=js-1,je+2
               do i=is-1,ie+1      
                  if ( vt(i,j) > 0. ) then
@@ -361,8 +331,6 @@
               enddo
            enddo
       endif
-      !$ser savepoint TransportDelp-Out
-      !$ser data_kbuff k=k k_size=nz delpc=delpc ptc=ptc wc=wc
 !------------
 ! Compute KE:
 !------------
@@ -372,11 +340,6 @@
 !!! TO DO:
 !!! Need separate versions for nesting/single-tile
 !!!   and for cubed-sphere
-      !$ser savepoint KE_C_SW-In
-      !$ser data_kbuff k=k k_size=nz uc=uc vc=vc u=u v=v ua=ua va=va
-      !$ser verbatim if (k == nz) then 
-      !$ser data dt2=dt2
-      !$ser verbatim endif
       if (nested .or. regional .or. flagstruct%grid_type >=3 ) then
          do j=js-1,jep1
          do i=is-1,iep1
@@ -447,8 +410,6 @@
             ke(i,j) = dt4*(ua(i,j)*ke(i,j) + va(i,j)*vort(i,j)) 
          enddo
       enddo
-      !$ser savepoint KE_C_SW-Out
-      !$ser data_kbuff k=k k_size=nz ke_c=ke vort_c=vort
 !------------------------------
 ! Compute circulation on C grid
 !------------------------------
@@ -1365,8 +1326,6 @@
                            (ut(1,j-1) - vt(1,  j)) * u(0,j  )  )
       endif
     end if
-    !$ser savepoint VorticityVolumeMean-In
-    !$ser data_kbuff k=k k_size=nz u=u v=v ut=ut vt=vt wk=wk
 ! Compute vorticity:
        do j=jsd,jed+1
           do i=isd,ied
@@ -1385,8 +1344,6 @@
              wk(i,j) = rarea(i,j)*(vt(i,j)-vt(i,j+1)-ut(i,j)+ut(i+1,j))
           enddo
        enddo
-       !$ser savepoint VorticityVolumeMean-Out
-       !$ser data_kbuff k=k k_size=nz wk=wk vt=vt ut=ut
      if ( .not. hydrostatic ) then
         if( flagstruct%do_f3d ) then
 #ifdef ROT3
