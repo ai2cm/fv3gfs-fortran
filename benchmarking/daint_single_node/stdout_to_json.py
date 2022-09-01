@@ -198,7 +198,7 @@ def extract_dt(experiment: Dict[str, Any], output_file: str):
 def calculate_sypd(experiment: Dict[str, Any]) -> float:
 
     if "mainloop" in experiment["times"]:
-        mainloop = np.mean(sum(experiment["times"]["mainloop"].times, []))
+        mainloop = np.mean(sum(experiment["times"]["mainloop"]["times"], []))
         speedup = experiment["dt_atmos"] / mainloop
         sypd = 1.0 / 365.0 * speedup
     else:
