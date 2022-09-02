@@ -4608,6 +4608,7 @@ module module_physics_driver
               call set_state("air_temperature_after_last_gscond", tp_cpf)
               call set_state("specific_humidity_after_last_gscond", humidity_tmp)
               call set_state("surface_air_pressure_after_last_gscond", psp_cpf)
+              call set_state("rhc", rhc)
 #endif
             
             call gscond (im, ix, levs, dtp, dtf, Statein%prsl, Statein%pgr,    &

@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -45,6 +46,8 @@ def assert_expected_variables_present(state):
         "surface_air_pressure",
         "tendency_of_rain_water_mixing_ratio_due_to_microphysics",
         "total_precipitation",
+        "rhc",
+        "rank"
     }
 
     assert expected_fields == set(state), set(state)

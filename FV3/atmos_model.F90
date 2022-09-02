@@ -109,6 +109,10 @@ use physics_abstraction_layer, only: time_vary_step, radiation_step1, physics_st
 
 #endif
 
+#ifdef ENABLE_CALLPYFORT
+  use callpy_mod
+#endif
+
 use stochastic_physics, only: init_stochastic_physics,         &
                               run_stochastic_physics
 use stochastic_physics_sfc, only: run_stochastic_physics_sfc
@@ -443,6 +447,7 @@ contains
     integer :: nb, jdat(8), rc
     procedure(IPD_func0d_proc), pointer :: Func0d => NULL()
     integer :: nthrds
+    integer rank(1)
 #ifdef CCPP
     integer :: ierr
 #endif
@@ -452,6 +457,12 @@ contains
 #else
     nthrds = 1
 #endif
+
+#ifdef ENABLE_CALLPYFORT
+    rank(1) = mpp_pe()
+    call set_state("rank", rank)
+#endif
+
 
       if (mpp_pe() == mpp_root_pe() .and. debug) write(6,*) "physics driver"
 

@@ -6,10 +6,19 @@
 
 # 2021/01/22 Oliver Fuhrer, Vulcan Inc, oliverf@vulcan.com
 # 2021/05/28 Tobias Wicky, Vulcan Inc, tobiasw@vulcan.com
+# 2022/09/01 Tobias Wicky, AI2, tobiasw@allenai.org
 
-import os, re, click, glob, datetime, json, sys
+import datetime
+import glob
+import json
+import os
+import re
+import sys
+from typing import Any, Dict
+
+import click
+import numpy as np
 import yaml
-from typing import Dict, Any
 
 
 # this dict maps the names of the timer in the JSON file to the actual
@@ -121,15 +130,16 @@ def meta_data_from_git_env(setup: Dict[str, Any], run_directory: str) -> Dict[st
 
 
 def meta_data_from_output(
-    stdout_file: str, raw_timers: Dict[str, Dict[str, float]], run_directory: str
+    setup: Dict[str, Any],
+    stdout_file: str,
+    raw_timers: Dict[str, Dict[str, float]],
+    run_directory: str,
 ) -> Dict[str, Any]:
-    setup = {}
     setup["dirname"] = os.path.basename(run_directory)
-    setup["comment"] = "Values generated from means - no detailed info available"
     setup["timestamp"] = datetime.datetime.fromtimestamp(
         os.path.getmtime(stdout_file)
     ).strftime("%d/%m/%Y %H:%M:%S")
-    setup["version"] = "fortran"
+    setup["backend"] = "fortran"
     dynamics_timer = TIMER_MAPPING["FVDynamics"][0]
     setup["timesteps"] = raw_timers[dynamics_timer]["hits"] + 1
     return setup
@@ -152,18 +162,49 @@ def assemble_meta_data(
     stdout_file: str, run_directory: str, raw_timers: Dict[str, Dict[str, float]]
 ):
     """assmebles meta-data about the run"""
-    setup = meta_data_from_output(stdout_file, raw_timers, run_directory)
+    setup = {}
+    setup["format_version"] = 3
+    setup["comment"] = "Values generated from means - no detailed info available"
+    setup = meta_data_from_output(setup, stdout_file, raw_timers, run_directory)
     setup = meta_data_from_config(setup, run_directory)
     setup = meta_data_from_git_env(setup, run_directory)
+
     return setup
 
 
-def print_to_output(setup: Dict[str, Any], times: Dict[str, Any], output=sys.stdout):
-    """Prints the collected data into the specified output"""
+def combine_outputs(setup: Dict[str, Any], times: Dict[str, Any]):
     experiment = {}
     experiment["setup"] = setup
     experiment["times"] = times
+    return experiment
+
+
+def print_to_output(experiment: Dict[str, Any], output=sys.stdout):
+    """Prints the collected data into the specified output"""
     json.dump(experiment, output, indent=4)
+
+
+def extract_dt(experiment: Dict[str, Any], output_file: str):
+    with open(output_file, "r+") as f:
+        content = f.read()
+        match = re.search(r"^.*dtf.*", content, re.MULTILINE)
+        assert len(match.group().splitlines()) == 1
+        for line in match.group().splitlines():
+            time = string_to_numeric_value(line[21:])
+    experiment["dt_atmos"] = time
+    return experiment
+
+
+def calculate_sypd(experiment: Dict[str, Any]) -> float:
+
+    if "mainloop" in experiment["times"]:
+        mainloop = np.mean(sum(experiment["times"]["mainloop"]["times"], []))
+        speedup = experiment["dt_atmos"] / mainloop
+        sypd = 1.0 / 365.0 * speedup
+    else:
+        sypd = -999.0
+    experiment["SYPD"] = sypd
+    return experiment
 
 
 def string_to_numeric_value(s):
@@ -195,7 +236,10 @@ def stdout_to_json(stdout_file_regex, run_directory):
     raw_timers = parse_match_for_times(match)
     setup = assemble_meta_data(output_file, run_directory, raw_timers)
     times = generate_output_from_times(raw_timers, setup)
-    print_to_output(setup, times)
+    experiment = combine_outputs(setup, times)
+    experiment = extract_dt(experiment, output_file)
+    experiment = calculate_sypd(experiment)
+    print_to_output(experiment)
 
 
 if __name__ == "__main__":
