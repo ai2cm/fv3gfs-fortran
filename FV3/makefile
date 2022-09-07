@@ -6,6 +6,7 @@ FMS_DIR?=
 fms_exist=$(wildcard $(FMS_DIR))
 FFLAGS   += -I$(FMS_DIR) -Icoarse_graining -Igfsphysics -Iipd -Icpl -Iio -Iatmos_cubed_sphere -Iccpp/driver -I../stochastic_physics $(ESMF_INC)
 CPPDEFS  += -DESMF_VERSION_MAJOR=$(ESMF_VERSION_MAJOR)
+WRAPPER_COMPILER?=
 
 # Flag to CCPP build for 32bit dynamics
 ifeq ($(32BIT),Y)
@@ -254,8 +255,8 @@ wrapper_clean:
 	cd wrapper/lib && rm -f *.o *.mod *.lst *.c depend $(TEMPLATES_RELATIVE)
 
 wrapper_build:$(WRAPPER_OBJECTS)
-	cd wrapper && SETUP_PY_LIBS="$(SETUP_PY_LIBS)" python3 setup.py build_ext --inplace
-	cd wrapper && SETUP_PY_LIBS="$(SETUP_PY_LIBS)" python3 setup.py bdist_wheel
+	cd wrapper && SETUP_PY_LIBS="$(SETUP_PY_LIBS)" python3 setup.py build_ext --inplace $(WRAPPER_COMPILER)
+	cd wrapper && SETUP_PY_LIBS="$(SETUP_PY_LIBS)" python3 setup.py bdist_wheel $(WRAPPER_COMPILER)
 
 $(TEMPLATES_OUT): $(TEMPLATES_IN) $(PROPERTIES_FILES)
 	# fill_templates.py needs to be run in the same directory as the outputs
