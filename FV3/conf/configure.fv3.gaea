@@ -21,13 +21,12 @@ AVX2 = Y
 HYDRO = N
 32BIT = N
 
-include $(ESMF_INSTALL_LIBDIR)/esmf.mk
+include $(ESMF_DIR)/lib/esmf.mk
 ESMF_INC = $(ESMF_F90COMPILEPATHS)
 ESMF_LIB = $(ESMF_F90ESMFLINKPATHS) $(ESMF_F90ESMFLINKLIBS)
 
-NEMSIOINC = -I$(NCEPLIBS_INCLUDE_DIR)
-NCEPLIBS = $(ESMF_LIB) -L$(NCEPLIBS_LIB_DIR) -lnemsio_d -lbacio_4 -lsp_v2.0.2_d -lw3emc_d -lw3nco_d
-# NCEPLIBS = $(ESMF_LIB) $(NEMSIO_LIB) $(BACIO_LIB4) $(SP_LIBd) $(W3EMC_LIBd) $(W3NCO_LIBd)
+NEMSIOINC = -I$(NCEPLIBS_DIR)/include
+NCEPLIBS = $(ESMF_LIB) -L$(NCEPLIBS_DIR)/lib -lnemsio_d -lbacio_4 -lsp_v2.0.2_d -lw3emc_d -lw3nco_d
 
 ##############################################
 # Need to use at least GNU Make version 3.81 #
