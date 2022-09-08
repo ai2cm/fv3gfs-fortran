@@ -2,11 +2,22 @@
 
 function mpichLDFlags {
     # -show prints includes as well as the exe...remove these
-    mpifort -show | sed 's/\(-I[^ ]*\|^[^ ]*\)//g'
+    if command -v mpifort &> /dev/null
+    then
+	mpifort -show | sed 's/\(-I[^ ]*\|^[^ ]*\)//g'
+    elif command -v ftn &> /dev/null
+    then
+	ftn -craype-verbose | sed 's/\(-I[^ ]*\|^[^ ]*\)//g'# | sed '$p'
+    else
+	echo "Could not find mpifort or ftn"
+    fi
 }
 
 function openmpiLDFlags {
-    mpif90 --showme:link
+    if command -v mpif90 &> /dev/null
+    then
+	mpif90 --showme:link
+    fi
 }
 
 
