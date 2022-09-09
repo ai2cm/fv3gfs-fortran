@@ -97,6 +97,10 @@ def main(data_path: str, output_path: str):
                         data_vars[varname] = get_data(
                             data_shape, total_ranks, n_savepoints, rank_list, varname
                         )[:, :, 3:-3, 3:-3, :]
+                    else:
+                        data_vars[varname] = get_data(
+                            data_shape, total_ranks, n_savepoints, rank_list, varname
+                        )
                 else:
                     data_vars[varname] = get_data(
                         data_shape, total_ranks, n_savepoints, rank_list, varname
