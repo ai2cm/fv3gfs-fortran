@@ -13,7 +13,9 @@ import serialbox  # noqa: E402
 def get_parser():
     parser = argparse.ArgumentParser("converts serialbox data to netcdf")
     parser.add_argument(
-        "data_path", type=str, help="path of serialbox data to convert",
+        "data_path",
+        type=str,
+        help="path of serialbox data to convert",
     )
     parser.add_argument(
         "output_path", type=str, help="output directory where netcdf data will be saved"
@@ -25,6 +27,7 @@ def read_serialized_data(serializer, savepoint, variable):
     data = serializer.read(variable, savepoint)
     if len(data.flatten()) == 1:
         return data[0]
+    data[data == 1e40] = 0.0
     return data
 
 
@@ -80,15 +83,33 @@ def main(data_path: str, output_path: str):
             encoding = {}
             for varname in set(names_list).difference(["rank"]):
                 data_shape = list(rank_list[0][varname][0].shape)
-                data_vars[varname] = get_data(
-                    data_shape, total_ranks, n_savepoints, rank_list, varname
-                )
+                if savepoint_name == "FVDynamics-Out":
+                    if varname in [
+                        "qvapor",
+                        "qliquid",
+                        "qice",
+                        "qrain",
+                        "qsnow",
+                        "qgraupel",
+                        "qo3mr",
+                        "qsgs_tke",
+                    ]:
+                        data_vars[varname] = get_data(
+                            data_shape, total_ranks, n_savepoints, rank_list, varname
+                        )[:, :, 3:-3, 3:-3, :]
+                    else:
+                        data_vars[varname] = get_data(
+                            data_shape, total_ranks, n_savepoints, rank_list, varname
+                        )
+                else:
+                    data_vars[varname] = get_data(
+                        data_shape, total_ranks, n_savepoints, rank_list, varname
+                    )
                 if len(data_shape) > 2:
                     encoding[varname] = {"zlib": True, "complevel": 1}
             dataset = xr.Dataset(data_vars=data_vars)
             dataset.to_netcdf(
-                os.path.join(output_path, f"{savepoint_name}.nc"),
-                encoding=encoding
+                os.path.join(output_path, f"{savepoint_name}.nc"), encoding=encoding
             )
 
 
