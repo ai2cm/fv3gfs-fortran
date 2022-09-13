@@ -83,7 +83,7 @@ def main(data_path: str, output_path: str):
             encoding = {}
             for varname in set(names_list).difference(["rank"]):
                 data_shape = list(rank_list[0][varname][0].shape)
-                if savepoint_name == "FVDynamics-Out":
+                if savepoint_name in ["FVDynamics-In", "FVDynamics-Out"]:
                     if varname in [
                         "qvapor",
                         "qliquid",
