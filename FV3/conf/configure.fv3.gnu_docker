@@ -90,7 +90,7 @@ CFLAGS_OPENMP = -fopenmp
 CFLAGS_DEBUG = -O0 -g 
 CFLAGS_GCOV = --coverage
 
-LDFLAGS := -L$(ESMF_LIB) -L${FMS_DIR}/libFMS/.libs/
+LDFLAGS := $(ESMF_LIB) -L${FMS_DIR}/libFMS/.libs/
 LDFLAGS_OPENMP := -fopenmp
 LDFLAGS_VERBOSE := -Wl,-V,--verbose,-cref,-M
 LDFLAGS_GCOV = --coverage
