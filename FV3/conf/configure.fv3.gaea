@@ -12,7 +12,7 @@ LD = ftn
 #########
 # default is 64-bit OpenMP non-hydrostatic build using AVX2
 DEBUG =
-REPRO =
+REPRO = Y
 VERBOSE =
 OPENMP = Y
 AVX2 = Y
