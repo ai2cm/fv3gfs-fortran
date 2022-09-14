@@ -26,7 +26,7 @@ NCEPLIBS = -L$(NCEPLIBS_DIR/lib -lnemsio_d -lbacio_4 -lsp_v2.0.2_d -lw3emc_d -lw
 
 include $(ESMF_DIR)/lib/esmf.mk
 ESMF_INC = $(ESMF_F90COMPILEPATHS)
-ESMF_LIB = $(ESMF_F90ESMFLINKPATHS)
+ESMF_LIB = $(ESMF_F90ESMFLINKPATHS) $(ESMF_F90ESMFLINKLIBS)
 
 ##############################################
 # Need to use at least GNU Make version 3.81 #
