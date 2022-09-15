@@ -5,8 +5,6 @@ function mpichLDFlags {
     if command -v mpifort &> /dev/null
     then
 	    mpifort -show | sed 's/\(-I[^ ]*\|^[^ ]*\)//g'
-    else
-	    echo "Could not find mpifort"
     fi
 }
 

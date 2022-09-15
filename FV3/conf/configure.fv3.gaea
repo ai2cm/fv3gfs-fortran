@@ -145,4 +145,4 @@ else
   LIBS += -lnetcdf
 endif
 
-LDFLAGS += $(LIBS)
+LDFLAGS += $(LIBS) $(FMS_DIR)/libFMS/.libs/libFMS.a
