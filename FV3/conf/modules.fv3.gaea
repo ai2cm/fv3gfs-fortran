@@ -14,13 +14,3 @@ module unload cray-mpich
 module load cray-mpich/7.7.11
 module load cray-hdf5
 module load cmake
-
-# make your compiler selections here
-export FC=ftn
-export CC=cc
-export CXX=CC
-export LD=ftn
-export TEMPLATE=site/intel.mk
-
-# highest level of AVX support
-export AVX_LEVEL=-xCORE-AVX2
