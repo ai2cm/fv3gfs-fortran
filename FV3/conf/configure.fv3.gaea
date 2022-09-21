@@ -1,4 +1,3 @@
-
 ############
 # commands #
 ############
@@ -12,18 +11,19 @@ LD = ftn
 #########
 # default is 64-bit OpenMP non-hydrostatic build using AVX2
 DEBUG =
-REPRO =
+REPRO = Y
 VERBOSE =
 OPENMP = Y
 AVX2 = Y
 HYDRO = N
+32BIT = N
 
-include       $(ESMFMKFILE)
-ESMF_INC    = $(ESMF_F90COMPILEPATHS)
-ESMF_LIB    = $(ESMF_F90ESMFLINKPATHS) $(ESMF_F90ESMFLINKLIBS)
+include $(ESMFMKFILE)
+ESMF_INC = $(ESMF_F90COMPILEPATHS)
+ESMF_LIB = $(ESMF_F90ESMFLINKPATHS) $(ESMF_F90ESMFLINKLIBS)
 
-NEMSIOINC = -I$(NEMSIO_INC)
-NCEPLIBS = $(ESMF_LIB) $(NEMSIO_LIB) $(BACIO_LIB4) $(SP_LIBd) $(W3EMC_LIBd) $(W3NCO_LIBd)
+NEMSIOINC = -I$(NCEPLIBS_DIR)/include
+NCEPLIBS = $(ESMF_LIB) -L$(NCEPLIBS_DIR)/lib -lnemsio_d -lbacio_4 -lsp_v2.0.2_d -lw3emc_d -lw3nco_d
 
 ##############################################
 # Need to use at least GNU Make version 3.81 #
@@ -37,13 +37,13 @@ endif
 NETCDF_ROOT = $(NETCDF_DIR)
 INCLUDE = -I$(NETCDF_ROOT)/include
 
-FPPFLAGS := -fpp -Wp,-w $(INCLUDE)
-CFLAGS := $(INCLUDE)
+FPPFLAGS := -fpp -Wp,-w $(INCLUDE) -fPIC
+CFLAGS := $(INCLUDE) -fPIC
 
-FFLAGS := $(INCLUDE) -fno-alias -auto -safe-cray-ptr -ftz -assume byterecl -nowarn -sox -align array64byte
+FFLAGS := $(INCLUDE) -fPIC -fno-alias -auto -safe-cray-ptr -ftz -assume byterecl -nowarn -sox -align array64byte
 
 CPPDEFS += -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO -DUSE_GFSL63 -DGFS_PHYS 
-CPPDEFS += -DNEW_TAUCTMAX -DINTERNAL_FILE_NML
+CPPDEFS += -DNEW_TAUCTMAX -DINTERNAL_FILE_NML -DNO_INLINE_POST -Duse_LARGEFILE
 
 ifeq ($(GT4PY_DEV),Y)
 CPPDEFS += -DGT4PY_DEV
@@ -133,10 +133,15 @@ FFLAGS += $(FFLAGS_VERBOSE)
 LDFLAGS += $(LDFLAGS_VERBOSE)
 endif
 
+ifneq ($(CALLPYFORT),)
+FFLAGS += -I$(CALLPYFORT)/build/src -DENABLE_CALLPYFORT
+LDFLAGS += -L$(CALLPYFORT)/build/src -lcallpy 
+endif
+
 ifneq ($(findstring netcdf/4,$(LOADEDMODULES)),)
   LIBS += -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
 else
   LIBS += -lnetcdf
 endif
 
-LDFLAGS += $(LIBS)
+LDFLAGS += $(LIBS) $(FMS_DIR)/libFMS/.libs/libFMS.a
