@@ -144,6 +144,8 @@ RUN git clone -b ESMF_8_0_0 --depth 1 https://git.code.sf.net/p/esmf/esmf $ESMF_
 ##---------------------------------------------------------------------------------
 FROM $BASE_IMAGE AS fv3gfs-src-serialize-false
 
+ENV ESMFMKFILE=/usr/local/esmf/lib/esmf.mk
+
 ARG compile_option
 ARG configure_file=configure.fv3.gnu_docker
 
