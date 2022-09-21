@@ -22,9 +22,12 @@ HYDRO = N
 32BIT = N
 
 NEMSIOINC = -I$(NEMSIO_INC)
+NCEPLIBS_DIR ?= /opt/NCEPlibs
+NCEPLIBS = -L$(NCEPLIBS_DIR)/lib -lnemsio_d -lbacio_4 -lsp_v2.0.2_d -lw3emc_d -lw3nco_d
 
-NCEPLIBS_DIR ?= /opt/NCEPlibs/lib
-NCEPLIBS = -L$(NCEPLIBS_DIR) -lnemsio_d -lbacio_4 -lsp_v2.0.2_d -lw3emc_d -lw3nco_d
+include $(ESMFMKFILE)
+ESMF_INC = $(ESMF_F90COMPILEPATHS)
+ESMF_LIB = $(ESMF_F90ESMFLINKPATHS) $(ESMF_F90ESMFLINKLIBS)
 
 ##############################################
 # Need to use at least GNU Make version 3.81 #
@@ -88,7 +91,7 @@ CFLAGS_OPENMP = -fopenmp
 CFLAGS_DEBUG = -O0 -g 
 CFLAGS_GCOV = --coverage
 
-LDFLAGS := -L${ESMF_DIR}/lib -L${FMS_DIR}/libFMS/.libs/
+LDFLAGS := $(ESMF_LIB) -L${FMS_DIR}/libFMS/.libs/
 LDFLAGS_OPENMP := -fopenmp
 LDFLAGS_VERBOSE := -Wl,-V,--verbose,-cref,-M
 LDFLAGS_GCOV = --coverage
@@ -138,6 +141,6 @@ FFLAGS += -I/usr/local/include -DENABLE_CALLPYFORT
 LDFLAGS += -L/usr/local/lib -lcallpy 
 endif
 
-LIBS += -lFMS -L/usr/local/esmf/lib -lesmf -lnetcdff -lnetcdf -llapack -lblas -lc -lrt
+LIBS += -lFMS -lesmf -lnetcdff -lnetcdf -llapack -lblas -lc -lrt
 
 LDFLAGS += $(LIBS)

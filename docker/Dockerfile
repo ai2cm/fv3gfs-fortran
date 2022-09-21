@@ -205,6 +205,8 @@ FROM fv3gfs-environment AS fv3gfs-environment-standard
 ##---------------------------------------------------------------------------------
 FROM fv3gfs-environment-${fv3_build_env_tag} AS fv3gfs-build
 
+ENV ESMFMKFILE=/usr/local/esmf/lib/esmf.mk
+
 ENV SERIALBOX_DIR=/serialbox \
     SERIALBOX_OUTDIR=/FV3 \
     FMS_DIR=/FMS \
