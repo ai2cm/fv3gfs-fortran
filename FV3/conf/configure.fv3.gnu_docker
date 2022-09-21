@@ -21,6 +21,7 @@ HYDRO = N
 32BIT = N
 
 NEMSIOINC = -I$(NEMSIO_INC)
+NCEPLIBS_DIR ?= /opt/NCEPlibs
 NCEPLIBS = -L$(NCEPLIBS_DIR)/lib -lnemsio_d -lbacio_4 -lsp_v2.0.2_d -lw3emc_d -lw3nco_d
 
 include $(ESMF_DIR)/lib/esmf.mk

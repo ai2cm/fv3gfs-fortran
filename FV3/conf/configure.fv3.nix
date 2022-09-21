@@ -26,8 +26,8 @@ HYDRO = N
 
 NEMSIOINC = -I$(NEMSIO_INC)
 
-NCEPLIBS_DIR ?= /opt/NCEPlibs/lib
-NCEPLIBS = -L$(NCEPLIBS_DIR) -lnemsio_d -lbacio_4 -lsp_v2.0.2_d -lw3emc_d -lw3nco_d
+NCEPLIBS_DIR ?= /opt/NCEPlibs
+NCEPLIBS = -L$(NCEPLIBS_DIR)/lib -lnemsio_d -lbacio_4 -lsp_v2.0.2_d -lw3emc_d -lw3nco_d
 
 ##############################################
 # Need to use at least GNU Make version 3.81 #
