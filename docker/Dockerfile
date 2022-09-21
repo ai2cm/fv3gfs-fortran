@@ -144,8 +144,6 @@ RUN git clone -b ESMF_8_0_0 --depth 1 https://git.code.sf.net/p/esmf/esmf $ESMF_
 ##---------------------------------------------------------------------------------
 FROM $BASE_IMAGE AS fv3gfs-src-serialize-false
 
-ENV ESMFMKFILE=/usr/local/esmf/lib/esmf.mk
-
 ARG compile_option
 ARG configure_file=configure.fv3.gnu_docker
 
@@ -206,6 +204,8 @@ FROM fv3gfs-environment AS fv3gfs-environment-standard
 ## Build FV3 executable in its own image
 ##---------------------------------------------------------------------------------
 FROM fv3gfs-environment-${fv3_build_env_tag} AS fv3gfs-build
+
+ENV ESMFMKFILE=/usr/local/esmf/lib/esmf.mk
 
 ENV SERIALBOX_DIR=/serialbox \
     SERIALBOX_OUTDIR=/FV3 \
