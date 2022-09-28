@@ -2,10 +2,10 @@
 ############
 # commands #
 ############
-FC = mpif90
-CC = mpicc
-CXX = g++
-LD = mpif90
+FC ?= mpif90
+CC ?= mpicc
+CXX ?= g++
+LD ?= mpif90
 
 NETCDF_DIR = /usr
 
