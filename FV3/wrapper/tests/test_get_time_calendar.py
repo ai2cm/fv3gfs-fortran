@@ -26,11 +26,11 @@ CFTIME_TYPES = {
 }
 
 
-class GetTimeTests(unittest.TestCase):
+class GetTimeCalendarTests(unittest.TestCase):
     DATE_TYPE = None
 
     def __init__(self, *args, **kwargs):
-        super(GetTimeTests, self).__init__(*args, **kwargs)
+        super(GetTimeCalendarTests, self).__init__(*args, **kwargs)
         self.mpi_comm = MPI.COMM_WORLD
 
     def setUp(self):
@@ -56,7 +56,7 @@ def set_calendar_type():
             "be passed through the command line."
         )
     calendar = sys.argv.pop()
-    GetTimeTests.DATE_TYPE = CFTIME_TYPES[calendar]
+    GetTimeCalendarTests.DATE_TYPE = CFTIME_TYPES[calendar]
     return calendar
 
 

@@ -28,14 +28,17 @@ class UsingMPITests(unittest.TestCase):
     def test_tracer_metadata(self):
         run_unittest_script("test_tracer_metadata.py")
 
-    def test_get_time_julian(self):
-        run_unittest_script("test_get_time.py", "julian")
+    def test_get_time_calendar_julian(self):
+        run_unittest_script("test_get_time_calendar.py", "julian")
 
-    def test_get_time_thirty_day(self):
-        run_unittest_script("test_get_time.py", "thirty_day")
+    def test_get_time_calendar_thirty_day(self):
+        run_unittest_script("test_get_time_calendar.py", "thirty_day")
 
-    def test_get_time_noleap(self):
-        run_unittest_script("test_get_time.py", "noleap")
+    def test_get_time_calendar_noleap(self):
+        run_unittest_script("test_get_time_calendar.py", "noleap")
+        
+    def test_get_time_advances(self):
+        run_unittest_script("test_get_time_advances.py")
 
     def test_flags(self):
         run_unittest_script("test_flags.py")
