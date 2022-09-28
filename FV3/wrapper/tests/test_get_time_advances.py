@@ -1,14 +1,3 @@
-"""Example usage:
-
-$ mpirun -n 6  \
-     python3 -m mpi4py test_get_time.py noleap
-
-Note the argument specifying the calendar type at the end of the command
-is required.  Valid calendars are:
-- julian
-- noleap
-- thirty_day
- """
 import unittest
 import os
 import cftime
