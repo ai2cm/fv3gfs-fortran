@@ -632,6 +632,16 @@ contains
              allocate(Atm(tile_count)%physics_tendency_diag%t_dt(is:ie,js:je,1:npz))
           endif
           coarse_diagnostic%data%var3 => Atm(tile_count)%physics_tendency_diag%t_dt(is:ie,js:je,1:npz)
+       elseif (ends_with(coarse_diagnostic%name, 'u_dt_phys_coarse')) then
+          if (.not. allocated(Atm(tile_count)%physics_tendency_diag%u_dt)) then
+              allocate(Atm(tile_count)%physics_tendency_diag%u_dt(is:ie,js:je,1:npz))
+          endif
+          coarse_diagnostic%data%var3 => Atm(tile_count)%physics_tendency_diag%u_dt(is:ie,js:je,1:npz)
+       elseif (ends_with(coarse_diagnostic%name, 'v_dt_phys_coarse')) then
+          if (.not. allocated(Atm(tile_count)%physics_tendency_diag%v_dt)) then
+              allocate(Atm(tile_count)%physics_tendency_diag%v_dt(is:ie,js:je,1:npz))
+          endif
+          coarse_diagnostic%data%var3 => Atm(tile_count)%physics_tendency_diag%v_dt(is:ie,js:je,1:npz)
        elseif (ends_with(coarse_diagnostic%name, 't_dt_nudge_coarse')) then
           if (.not. allocated(Atm(tile_count)%nudge_diag%nudge_t_dt)) then
              allocate(Atm(tile_count)%nudge_diag%nudge_t_dt(is:ie,js:je,1:npz))
