@@ -36,9 +36,6 @@ class UsingMPITests(unittest.TestCase):
 
     def test_get_time_calendar_noleap(self):
         run_unittest_script("test_get_time_calendar.py", "noleap")
-        
-    def test_get_time_advances(self):
-        run_unittest_script("test_get_time_advances.py")
 
     def test_flags(self):
         run_unittest_script("test_flags.py")
