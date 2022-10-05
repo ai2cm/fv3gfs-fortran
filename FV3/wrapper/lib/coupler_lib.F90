@@ -239,7 +239,7 @@ contains
 
     subroutine get_time(year, month, day, hour, minute, second, fms_calendar_type) bind(c, name='get_time_subroutine')
         integer, intent(out) :: year, month, day, hour, minute, second, fms_calendar_type
-        call get_date(Time_atmos, year, month, day, hour, minute, second)
+        call get_date(Atm%Time, year, month, day, hour, minute, second)
         fms_calendar_type = calendar_type
     end subroutine get_time
 
