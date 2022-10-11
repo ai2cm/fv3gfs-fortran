@@ -1404,6 +1404,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: toticeb(:)     => null()   !< accumulated ice precipitation in bucket (kg/m2)
     real (kind=kind_phys), pointer :: totsnwb(:)     => null()   !< accumulated snow precipitation in bucket (kg/m2)
     real (kind=kind_phys), pointer :: totgrpb(:)     => null()   !< accumulated graupel precipitation in bucket (kg/m2)
+    real (kind=kind_phys), pointer :: wind(:)        => null()   !< instantaneous lowest level wind speed passed to land surface model
 
 #ifdef CCPP
     !--- MYNN variables                                              
@@ -5235,6 +5236,7 @@ module GFS_typedefs
     allocate (Diag%ca_shal  (IM))
     allocate (Diag%ca_rad (IM))
     allocate (Diag%ca_micro  (IM))
+    allocate (Diag%wind     (IM))
     
     !--- 3D diagnostics
     if (Model%ldiag3d) then
@@ -5545,6 +5547,7 @@ module GFS_typedefs
     Diag%toticeb    = zero
     Diag%totsnwb    = zero
     Diag%totgrpb    = zero
+    Diag%wind       = zero
 !
     if (Model%do_ca) then
       Diag%ca_out   = zero
