@@ -1795,6 +1795,7 @@ module GFS_diagnostics
     ExtDiag(idx)%unit = 'kg/m2/s'
     ExtDiag(idx)%mod_name = 'gfs_phys'
     ExtDiag(idx)%intpl_method = 'bilinear'
+    ExtDiag(idx)%coarse_graining_method = "area_weighted"
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%chh(:)
@@ -1807,6 +1808,7 @@ module GFS_diagnostics
     ExtDiag(idx)%unit = 'm/s'
     ExtDiag(idx)%mod_name = 'gfs_phys'
     ExtDiag(idx)%intpl_method = 'bilinear'
+    ExtDiag(idx)%coarse_graining_method = "area_weighted"
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%cmm(:)
@@ -3019,6 +3021,7 @@ module GFS_diagnostics
     ExtDiag(idx)%unit = 'm'
     ExtDiag(idx)%mod_name = 'gfs_sfc'
     ExtDiag(idx)%cnvfac = cn_one/cn_100
+    ExtDiag(idx)%coarse_graining_method = "area_weighted"
     allocate (ExtDiag(idx)%data(nblks))
     do nb = 1,nblks
       ExtDiag(idx)%data(nb)%var2 => sfcprop(nb)%zorl(:)
