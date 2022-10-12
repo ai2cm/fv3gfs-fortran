@@ -1831,7 +1831,7 @@ module module_physics_driver
             Sfcprop%shdmin, Sfcprop%shdmax, Sfcprop%snoalb,              &
             Radtend%sfalb, flag_iter, flag_guess, Model%lheatstrg,       &
             Model%isot, Model%ivegsrc,                                   &
-            bexp1d, xlai1d, vegf1d, Model%pertvegf,                      &
+            bexp1d, xlai1d, vegf1d, Model%pertvegf, Model%czil,          &
 !  ---  input/output:
             weasd3(:,1), snowd3(:,1), tsfc3(:,1), tprcp3(:,1),           &
             Sfcprop%srflag, smsoil, stsoil, slsoil, Sfcprop%canopy,      &

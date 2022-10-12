@@ -7,7 +7,7 @@
      &       sfcspd, prcp, q2, q2sat, dqsdt2, th2, ivegsrc,             &
      &       vegtyp, soiltyp, slopetyp, shdmin, alb, snoalb,            &
      &       bexpp, xlaip,                                              & !  sfc-perts, mgehne
-     &       lheatstrg,                                                 &
+     &       lheatstrg, czil_from_namelist,                                                &
 !  ---  input/outputs:
      &       tbot, cmc, t1, stc, smc, sh2o, sneqv, ch, cm,z0,           &
 !  ---  outputs:
@@ -197,6 +197,7 @@
       real (kind=kind_phys), parameter :: sigma1  = 5.67e-8     ! con_sbc in penman, nopac, snopac
 
 !  ---  inputs:
+      real(kind=kind_phys) :: czil_from_namelist
       integer, intent(in) :: nsoil, couple, icein, vegtyp, soiltyp,     &
      &       slopetyp, ivegsrc
 
@@ -652,6 +653,7 @@
         t1v  = t1  * (1.0 + 0.61 * q2)
         th2v = th2 * (1.0 + 0.61 * q2)
 
+        czil = czil_from_namelist
         call sfcdif
 !  ---  inputs:                                                         !
 !          ( zlvl, z0, t1v, th2v, sfcspd, czil,                         !

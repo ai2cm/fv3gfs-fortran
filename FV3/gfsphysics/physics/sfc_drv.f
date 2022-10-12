@@ -144,7 +144,7 @@
      &       prsl1, prslki, zf, land, wind, slopetyp,                   &
      &       shdmin, shdmax, snoalb, sfalb, flag_iter, flag_guess,      &
      &       lheatstrg, isot, ivegsrc,                                  &
-     &       bexppert, xlaipert, vegfpert,pertvegf,                     &  ! sfc perts, mgehne
+     &       bexppert, xlaipert, vegfpert,pertvegf, czil,                    &  ! sfc perts, mgehne
 !  ---  in/outs:
      &       weasd, snwdph, tskin, tprcp, srflag, smc, stc, slc,        &
      &       canopy, trans, tsurf, zorl,                                &
@@ -180,6 +180,7 @@
 
 !  ---  input:
       integer, intent(in) :: im, km, isot, ivegsrc
+      real(kind=kind_phys) :: czil
       real (kind=kind_phys), dimension(5), intent(in) :: pertvegf
 
       integer, dimension(im), intent(in) :: soiltyp, vegtype, slopetyp
@@ -450,7 +451,7 @@
      &       sfcspd, prcp, q2, q2sat, dqsdt2, th2, ivegsrc,             &
      &       vtype, stype, slope, shdmin1d, alb, snoalb1d,              &
      &       bexpp, xlaip,                                              & ! sfc-perts, mgehne
-     &       lheatstrg,                                                 &
+     &       lheatstrg, czil,                                                 &
 !  ---  input/outputs:
      &       tbot, cmc, tsea, stsoil, smsoil, slsoil, sneqv, chx, cmx,  &
      &       z0,                                                        &

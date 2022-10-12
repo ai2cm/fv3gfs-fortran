@@ -1061,6 +1061,7 @@ module GFS_typedefs
     real(kind=kind_phys) :: phour           !< previous forecast hour
     real(kind=kind_phys) :: fhour           !< current forecast hour
     real(kind=kind_phys) :: zhour           !< previous hour diagnostic buckets emptied
+    real(kind=kind_phys) :: czil            !< czil parameter override
     integer              :: kdt             !< current forecast iteration
 #ifdef CCPP
     logical              :: first_time_step !< flag signaling first time step for time integration routine
@@ -3112,6 +3113,7 @@ module GFS_typedefs
                                                              !< 0=no change
                                                              !< 6=areodynamical roughness over water with input 10-m wind
                                                              !< 7=slightly decrease Cd for higher wind speed compare to 6
+    real(kind=kind_phys) :: czil           = 0.075           !< See set_soilveg.f for defaults.
 
 !--- background vertical diffusion
     real(kind=kind_phys) :: xkzm_m         = 1.0d0           !< [in] bkgd_vdif_m  background vertical diffusion for momentum  
@@ -3273,7 +3275,8 @@ module GFS_typedefs
                                sst_perturbation,                                            & 
                                override_surface_radiative_fluxes, use_climatological_sst,   &
                                emulate_zc_microphysics, save_zc_microphysics,&
-                               emulate_gscond_only
+                               emulate_gscond_only, &
+                               czil
 
 !--- other parameters 
     integer :: nctp    =  0                !< number of cloud types in CS scheme
@@ -3700,7 +3703,7 @@ module GFS_typedefs
     Model%dspfac           = dspfac
     Model%bl_upfr          = bl_upfr
     Model%bl_dnfr          = bl_dnfr
-
+    Model%czil             = czil
 !--- stochastic physics options
     ! do_sppt, do_shum, do_skeb and do_sfcperts are namelist variables in group
     ! physics that are parsed here and then compared in init_stochastic_physics
@@ -4639,6 +4642,7 @@ module GFS_typedefs
       print *, ' dlqf              : ', Model%dlqf
       print *, ' seed0             : ', Model%seed0
       print *, ' rbcr              : ', Model%rbcr
+      print *, ' czil              : ', Model%czil
 #ifdef CCPP
       print *, ' do_mynnedmf       : ', Model%do_mynnedmf
       print *, ' do_mynnsfclay     : ', Model%do_mynnsfclay
