@@ -142,7 +142,6 @@
 
 !           czilc = 10.0 ** (- (0.40/0.07) * z0) ! fei's canopy height dependance of czil
             ! czilc = 0.8
-            write(*,*) 'Overriding czilc...'
             czilc = czil_from_namelist
 
             tem1  = 1.0 - sigmaf(i)
