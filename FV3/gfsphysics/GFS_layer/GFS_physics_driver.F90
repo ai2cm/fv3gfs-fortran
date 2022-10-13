@@ -1697,7 +1697,7 @@ module module_physics_driver
 !  ---  input/output:
            zorl3, uustar3,                                              &
 !  ---  outputs:
-           cd3, cdq3, rb3, stress3, ffmm3, ffhh3, fm103, fh23)
+           cd3, cdq3, rb3, stress3, ffmm3, ffhh3, fm103, fh23, Model%czil)
 !          cd3, cdq3, rb3, stress3, ffmm3, ffhh3, fm103, fh23, wind, lprnt, ipr)
 !
 !  --- ...  lu: update flag_guess

@@ -3113,7 +3113,7 @@ module GFS_typedefs
                                                              !< 0=no change
                                                              !< 6=areodynamical roughness over water with input 10-m wind
                                                              !< 7=slightly decrease Cd for higher wind speed compare to 6
-    real(kind=kind_phys) :: czil           = 0.075           !< See set_soilveg.f for defaults.
+    real(kind=kind_phys) :: czil           = 0.8             !< See sfc_diff.f for default
 
 !--- background vertical diffusion
     real(kind=kind_phys) :: xkzm_m         = 1.0d0           !< [in] bkgd_vdif_m  background vertical diffusion for momentum  

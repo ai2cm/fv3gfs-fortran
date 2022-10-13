@@ -14,7 +14,7 @@
      &                    wet,dry,icy,                          !intent(in)
      &                    tskin, tsurf, snwdph, z0rl, ustar,
 !
-     &                    cm, ch, rb, stress, fm, fh, fm10, fh2)
+     &                    cm, ch, rb, stress, fm, fh, fm10, fh2, czil_from_namelist)
 !
       use physcons, rvrdm1 => con_fvirt
       implicit none
@@ -23,6 +23,7 @@
 ! --------  -------- ---------
       integer, intent(in) :: im, ivegsrc
       integer, intent(in) :: sfc_z0_type ! option for calculating surface roughness length over ocean
+      real(kind=kind_phys), intent(in) :: czil_from_namelist
 
       integer, dimension(im), intent(in) :: vegtype
 
@@ -139,7 +140,8 @@
             z0max = max(z0max, 1.0e-6)
 
 !           czilc = 10.0 ** (- (0.40/0.07) * z0) ! fei's canopy height dependance of czil
-            czilc = 0.8
+            ! czilc = 0.8
+            czilc = czil_from_namelist
 
             tem1  = 1.0 - sigmaf(i)
             ztmax = z0max*exp( - tem1*tem1
