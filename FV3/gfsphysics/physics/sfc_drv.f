@@ -144,7 +144,7 @@
      &       prsl1, prslki, zf, land, wind, slopetyp,                   &
      &       shdmin, shdmax, snoalb, sfalb, flag_iter, flag_guess,      &
      &       lheatstrg, isot, ivegsrc,                                  &
-     &       bexppert, xlaipert, vegfpert,pertvegf, czil,                    &  ! sfc perts, mgehne
+     &       bexppert, xlaipert, vegfpert,pertvegf, czil, wscale,                   &  ! sfc perts, mgehne
 !  ---  in/outs:
      &       weasd, snwdph, tskin, tprcp, srflag, smc, stc, slc,        &
      &       canopy, trans, tsurf, zorl,                                &
@@ -180,7 +180,7 @@
 
 !  ---  input:
       integer, intent(in) :: im, km, isot, ivegsrc
-      real(kind=kind_phys) :: czil
+      real(kind=kind_phys) :: czil, wscale
       real (kind=kind_phys), dimension(5), intent(in) :: pertvegf
 
       integer, dimension(im), intent(in) :: soiltyp, vegtype, slopetyp
@@ -431,8 +431,8 @@
             snowh = 10.0 * sneqv
           endif
 
-          chx    = ch(i)  * wind(i)              ! compute conductance
-          cmx    = cm(i)  * wind(i)
+          chx    = wscale * ch(i)  * wind(i)              ! compute conductance
+          cmx    = wscale * cm(i)  * wind(i)
           chh(i) = chx * rho(i)
           cmm(i) = cmx
 
