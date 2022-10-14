@@ -15,7 +15,8 @@
      &                    tskin, tsurf, snwdph, z0rl, ustar,
 !
      &                    cm, ch, rb, stress, fm, fh, fm10, fh2, 
-     &                    czil_from_namelist)
+     &                    czil_from_namelist,
+     &                    fm_d, pm_d, fh_d, ph_d)
 !
       use physcons, rvrdm1 => con_fvirt
       implicit none
@@ -25,6 +26,8 @@
       integer, intent(in) :: im, ivegsrc
       integer, intent(in) :: sfc_z0_type ! option for calculating surface roughness length over ocean
       real(kind=kind_phys), intent(in) :: czil_from_namelist
+      real(kind=kind_phys), dimension(im, 3), intent(out) :: fm_d, pm_d,
+     &                                                       fh_d, ph_d
 
       integer, dimension(im), intent(in) :: vegtype
 
@@ -160,7 +163,8 @@
      &       (z1(i), snwdph(i,1), thv1, wind(i), z0max, ztmax, tvs,
 !  ---  outputs:
      &        rb(i,1), fm(i,1), fh(i,1), fm10(i,1), fh2(i,1),
-     &        cm(i,1), ch(i,1), stress(i,1), ustar(i,1))
+     &        cm(i,1), ch(i,1), stress(i,1), ustar(i,1),
+     &        fm_d(i,1), pm_d(i,1), fh_d(i,1), ph_d(i,1))
           endif ! Dry points
 
           if (icy(i)) then ! Some ice
@@ -196,7 +200,8 @@
      &       (z1(i), snwdph(i,2), thv1, wind(i), z0max, ztmax, tvs,
 !  ---  outputs:
      &        rb(i,2), fm(i,2), fh(i,2), fm10(i,2), fh2(i,2),
-     &        cm(i,2), ch(i,2), stress(i,2), ustar(i,2))
+     &        cm(i,2), ch(i,2), stress(i,2), ustar(i,2),
+     &        fm_d(i,2), pm_d(i,2), fh_d(i,2), ph_d(i,2))
           endif ! Icy points
 
 ! BWG: Everything from here to end of subroutine was after
@@ -239,7 +244,8 @@
      &       (z1(i), snwdph(i,3), thv1, wind(i), z0max, ztmax, tvs,
 !  ---  outputs:
      &        rb(i,3), fm(i,3), fh(i,3), fm10(i,3), fh2(i,3),
-     &        cm(i,3), ch(i,3), stress(i,3), ustar(i,3))
+     &        cm(i,3), ch(i,3), stress(i,3), ustar(i,3),
+     &        fm_d(i,3), pm_d(i,3), fh_d(i,3), ph_d(i,3))
 !
 !  update z0 over ocean
 !
@@ -285,7 +291,8 @@
 !  ---  inputs:
      &     ( z1, snwdph, thv1, wind, z0max, ztmax, tvs,                 &
 !  ---  outputs:
-     &       rb, fm, fh, fm10, fh2, cm, ch, stress, ustar)
+     &       rb, fm, fh, fm10, fh2, cm, ch, stress, ustar,
+     &       fm_ds, pm_ds, fh_ds, ph_ds)
 !-----
 
 !  ---  inputs:
@@ -294,7 +301,8 @@
 
 !  ---  outputs:
       real(kind=kind_phys), intent(out) ::                              &
-     &       rb, fm, fh, fm10, fh2, cm, ch, stress, ustar
+     &       rb, fm, fh, fm10, fh2, cm, ch, stress, ustar,
+     &       fm_ds, pm_ds, fh_ds, ph_ds
 
 !  ---  locals:
       real(kind=kind_phys), parameter :: alpha=5., a0=-3.975            &
@@ -420,6 +428,11 @@
 !
 !  finish the exchange coefficient computation to provide fm and fh
 !
+          fm_ds = fm
+          pm_ds = pm
+          fh_ds = fh
+          ph_ds = ph
+
           fm        = fm - pm
           fh        = fh - ph
           fm10      = fm10 - pm10

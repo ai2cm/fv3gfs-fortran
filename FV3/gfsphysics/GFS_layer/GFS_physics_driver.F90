@@ -555,7 +555,7 @@ module module_physics_driver
              zorl3, cd3, cdq3, rb3, stress3, ffmm3, ffhh3, uustar3,      &
              fm103, fh23, qss3, cmm3, chh3, gflx3, evap3, hflx3, ep1d3,  &
              weasd3, snowd3, tprcp3, tsfc3, tsurf3, adjsfculw3, semis3,  &
-             gabsbdlw3
+             gabsbdlw3, fm_d3, pm_d3, fh_d3, ph_d3
 
       logical, dimension(size(Grid%xlon,1))                ::           &
            wet, dry,              icy
@@ -1697,7 +1697,8 @@ module module_physics_driver
 !  ---  input/output:
            zorl3, uustar3,                                              &
 !  ---  outputs:
-           cd3, cdq3, rb3, stress3, ffmm3, ffhh3, fm103, fh23, Model%czil)
+           cd3, cdq3, rb3, stress3, ffmm3, ffhh3, fm103, fh23, Model%czil, &
+           fm_d3, pm_d3, fh_d3, ph_d3)
 !          cd3, cdq3, rb3, stress3, ffmm3, ffhh3, fm103, fh23, wind, lprnt, ipr)
 !
 !  --- ...  lu: update flag_guess
@@ -2094,6 +2095,11 @@ module module_physics_driver
 
           Diag%cmm(i)       = cmm3(i,k)
           Diag%chh(i)       = chh3(i,k)
+
+          Diag%fm_d(i)      = fm_d3(i,k)
+          Diag%pm_d(i)      = pm_d3(i,k)
+          Diag%fh_d(i)      = fh_d3(i,k)
+          Diag%ph_d(i)      = ph_d3(i,k)
 
           Sfcprop%zorll(i)  = zorl3(i,1)
           Sfcprop%zorlo(i)  = zorl3(i,3)
