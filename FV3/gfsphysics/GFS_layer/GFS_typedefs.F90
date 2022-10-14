@@ -1459,6 +1459,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: pm_d   (:)     => null()
     real (kind=kind_phys), pointer :: fh_d   (:)     => null()
     real (kind=kind_phys), pointer :: ph_d   (:)     => null()
+    real (kind=kind_phys), pointer :: gustiness   (:)     => null()
     real (kind=kind_phys), pointer :: dlwsfci(:)     => null()   !< instantaneous sfc dnwd lw flux ( w/m**2 )
     real (kind=kind_phys), pointer :: ulwsfci(:)     => null()   !< instantaneous sfc upwd lw flux ( w/m**2 )
     real (kind=kind_phys), pointer :: dswsfci(:)     => null()   !< instantaneous sfc dnwd sw flux ( w/m**2 )
@@ -5217,6 +5218,7 @@ module GFS_typedefs
     allocate (Diag%pm_d    (IM))
     allocate (Diag%fh_d    (IM))
     allocate (Diag%ph_d    (IM))
+    allocate (Diag%gustiness    (IM))
     allocate (Diag%dlwsfci (IM))
     allocate (Diag%ulwsfci (IM))
     allocate (Diag%dswsfci (IM))
@@ -5523,6 +5525,7 @@ module GFS_typedefs
     Diag%pm_d       = zero
     Diag%fh_d       = zero
     Diag%ph_d       = zero
+    Diag%gustiness       = zero
     Diag%dlwsfci    = zero
     Diag%ulwsfci    = zero
     Diag%dswsfci    = zero

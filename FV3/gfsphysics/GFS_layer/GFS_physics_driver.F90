@@ -1673,6 +1673,7 @@ module module_physics_driver
         wind(i)         = max(sqrt(Statein%ugrs(i,1)*Statein%ugrs(i,1) + &
                                    Statein%vgrs(i,1)*Statein%vgrs(i,1))  &
                         + max(zero, min(Tbd%phy_f2d(i,Model%num_p2d), 30.0)), one)
+        Diag%gustiness(i) = max(zero, min(Tbd%phy_f2d(i,Model%num_p2d), 30.0))
       enddo
 
 !  --- ...  lu: iter-loop over (sfc_diff,sfc_drv,sfc_ocean,sfc_sice)
