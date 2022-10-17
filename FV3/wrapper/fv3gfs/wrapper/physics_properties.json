@@ -491,5 +491,12 @@
         "units": "W/m^2",
         "container": "Statein",
         "dims": ["y", "x"]
+    },
+    {
+        "name": "wind_override",
+        "fortran_name": "wind_override",
+        "units": "m/s",
+        "container": "Statein",
+        "dims": ["y", "x"]
     }
 ]

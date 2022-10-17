@@ -193,6 +193,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: adjsfcdlw_override(:) => null()  !< override to the downward longwave radiation flux at the surface
     real (kind=kind_phys), pointer :: adjsfcdsw_override(:) => null()  !< override to the downward shortwave radiation flux at the surface
     real (kind=kind_phys), pointer :: adjsfcnsw_override(:) => null()  !< override to the net shortwave radiation flux at the surface
+    real (kind=kind_phys), pointer :: wind_override(:) => null()  !< override for the lowest level wind speed used by the physics
     real (kind=kind_phys), pointer :: prescribed_sea_surface_temperature(:) => null()  !< sea surface temperature read in through data_table
     real (kind=kind_phys), pointer :: prescribed_sea_ice_fraction(:) => null()  !< sea ice read in through data_table
     contains
@@ -1089,6 +1090,7 @@ module GFS_typedefs
     logical :: iau_filter_increments
     real(kind=kind_phys) :: sst_perturbation  ! Sea surface temperature perturbation to climatology or nudging SST (default 0.0 K)
     logical :: override_surface_radiative_fluxes  ! Whether to use Statein to override the surface radiative fluxes
+    logical :: override_surface_wind_speed ! Whether to use Statein to override the surface wind speed
     logical :: use_climatological_sst  ! Whether to allow the Python wrapper to override the sea surface temperature
     logical :: emulate_zc_microphysics ! Use an emulator in place of ZC microphysics
     logical :: save_zc_microphysics ! Save ZC microphysics state
@@ -2082,6 +2084,11 @@ module GFS_typedefs
       Statein%adjsfcdlw_override = 0.0
       Statein%adjsfcdsw_override = 0.0
       Statein%adjsfcnsw_override = 0.0
+    endif
+
+    if (Model%override_surface_wind_speed) then
+      allocate(Statein%wind_override(IM))
+      Statein%wind_override = 0.0
     endif
 
     if (Model%use_prescribed_sea_surface_properties) then
@@ -3188,6 +3195,7 @@ module GFS_typedefs
 
     real(kind=kind_phys) :: sst_perturbation = 0.0  ! Sea surface temperature perturbation [K]
     logical :: override_surface_radiative_fluxes = .false.
+    logical :: override_surface_wind_speed = .false.
     logical :: use_climatological_sst = .true.
     logical :: emulate_zc_microphysics = .false.
     logical :: save_zc_microphysics = .false.
@@ -3287,7 +3295,7 @@ module GFS_typedefs
                                override_surface_radiative_fluxes, use_climatological_sst,   &
                                emulate_zc_microphysics, save_zc_microphysics,&
                                emulate_gscond_only, &
-                               czil, wscale
+                               czil, wscale, override_surface_wind_speed
 
 !--- other parameters 
     integer :: nctp    =  0                !< number of cloud types in CS scheme
@@ -3758,6 +3766,7 @@ module GFS_typedefs
 
     Model%sst_perturbation = sst_perturbation
     Model%override_surface_radiative_fluxes = override_surface_radiative_fluxes
+    Model%override_surface_wind_speed = override_surface_wind_speed
     Model%use_climatological_sst = use_climatological_sst
 
     !--- emulation parameters
@@ -4578,6 +4587,7 @@ module GFS_typedefs
       print *, ' isot              : ', Model%isot
       print *, ' sst_perturbation  : ', Model%sst_perturbation
       print *, ' override_surface_radiative_fluxes: ', Model%override_surface_radiative_fluxes
+      print *, ' override_surface_wind_speed: ', Model%override_surface_wind_speed
       print *, ' use_climatological_sst: ', Model%use_climatological_sst
       if (Model%lsm == Model%lsm_noahmp) then
       print *, ' Noah MP LSM is used, the options are'

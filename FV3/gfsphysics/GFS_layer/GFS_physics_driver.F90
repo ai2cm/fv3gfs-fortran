@@ -1670,9 +1670,13 @@ module module_physics_driver
         Diag%smcwlt2(i) = zero
         Diag%smcref2(i) = zero
 
-        wind(i)         = max(sqrt(Statein%ugrs(i,1)*Statein%ugrs(i,1) + &
-                                   Statein%vgrs(i,1)*Statein%vgrs(i,1))  &
-                        + max(zero, min(Tbd%phy_f2d(i,Model%num_p2d), 30.0)), one)
+        if (Model%override_surface_wind_speed) then
+          wind(i) = Statein%wind_override(i)
+        else
+          wind(i)         = max(sqrt(Statein%ugrs(i,1)*Statein%ugrs(i,1) + &
+                                    Statein%vgrs(i,1)*Statein%vgrs(i,1))  &
+                          + max(zero, min(Tbd%phy_f2d(i,Model%num_p2d), 30.0)), one)
+        endif
 
         Diag%wind(i) = wind(i)
         Diag%u_lowest(i) = Statein%ugrs(i,1)
