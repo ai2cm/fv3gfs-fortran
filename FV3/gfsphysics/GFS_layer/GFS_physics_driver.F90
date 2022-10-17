@@ -1673,6 +1673,10 @@ module module_physics_driver
         wind(i)         = max(sqrt(Statein%ugrs(i,1)*Statein%ugrs(i,1) + &
                                    Statein%vgrs(i,1)*Statein%vgrs(i,1))  &
                         + max(zero, min(Tbd%phy_f2d(i,Model%num_p2d), 30.0)), one)
+
+        Diag%wind(i) = wind(i)
+        Diag%u_lowest(i) = Statein%ugrs(i,1)
+        Diag%v_lowest(i) = Statein%vgrs(i,1)
         Diag%gustiness(i) = max(zero, min(Tbd%phy_f2d(i,Model%num_p2d), 30.0))
       enddo
 
@@ -2301,8 +2305,6 @@ module module_physics_driver
           Diag%spfhmax(i) = max(Diag%spfhmax(i), Sfcprop%q2m(i))
           Diag%spfhmin(i) = min(Diag%spfhmin(i), Sfcprop%q2m(i))
         enddo
-
-        Diag%wind = wind
 
         do i=1, im
 ! find max wind speed then decompose

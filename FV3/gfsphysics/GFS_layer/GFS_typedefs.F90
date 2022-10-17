@@ -1407,6 +1407,8 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: totsnwb(:)     => null()   !< accumulated snow precipitation in bucket (kg/m2)
     real (kind=kind_phys), pointer :: totgrpb(:)     => null()   !< accumulated graupel precipitation in bucket (kg/m2)
     real (kind=kind_phys), pointer :: wind(:)        => null()   !< instantaneous lowest level wind speed passed to land surface model
+    real (kind=kind_phys), pointer :: u_lowest(:)        => null()   !< instantaneous lowest level zonal wind
+    real (kind=kind_phys), pointer :: v_lowest(:)        => null()   !< instantaneous lowest level meridional wind
 
 #ifdef CCPP
     !--- MYNN variables                                              
@@ -1914,6 +1916,8 @@ module GFS_typedefs
     real (kind=kind_phys), pointer      :: weasd_land(:)      => null()  !<
     real (kind=kind_phys), pointer      :: weasd_ice(:)       => null()  !<
     real (kind=kind_phys), pointer      :: wind(:)            => null()  !<
+    real (kind=kind_phys), pointer      :: u_lowest(:)            => null()  !<
+    real (kind=kind_phys), pointer      :: v_lowest(:)            => null()  !<
     real (kind=kind_phys), pointer      :: work1(:)           => null()  !<
     real (kind=kind_phys), pointer      :: work2(:)           => null()  !<
     real (kind=kind_phys), pointer      :: work3(:)           => null()  !<
@@ -5255,7 +5259,9 @@ module GFS_typedefs
     allocate (Diag%ca_rad (IM))
     allocate (Diag%ca_micro  (IM))
     allocate (Diag%wind     (IM))
-    
+    allocate (Diag%u_lowest     (IM))
+    allocate (Diag%v_lowest     (IM))
+
     !--- 3D diagnostics
     if (Model%ldiag3d) then
       allocate (Diag%du3dt  (IM,Model%levs,4))
@@ -5571,6 +5577,8 @@ module GFS_typedefs
     Diag%totsnwb    = zero
     Diag%totgrpb    = zero
     Diag%wind       = zero
+    Diag%u_lowest       = zero
+    Diag%v_lowest       = zero
 !
     if (Model%do_ca) then
       Diag%ca_out   = zero
