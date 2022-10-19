@@ -1753,22 +1753,6 @@ module module_physics_driver
 !     if (lprnt) write(0,*)' bef nst tseal=',tseal(ipr) &
 !     ,' tsfc3=',tsfc3(ipr,3),' tsurf3=',tsurf3(ipr,3),' tem=',tem
 
-          do i=1,im
-            if (islmsk(i) == 0) then
-              Diag%conductance(i) = cdq3(i,3)
-              Diag%tsfc_sflx(i) = tsurf3(i,3)
-              Diag%qsat1(i) = fpvs(tsurf3(i,3))
-            elseif (islmsk(i) == 1) then
-              Diag%conductance(i) = cdq3(i,1)
-              Diag%tsfc_sflx(i) = tsurf3(i,1)
-              Diag%qsat1(i) = fpvs(Statein%tgrs(i,1))
-            else
-              Diag%conductance(i) = cdq3(i,2)
-              Diag%tsfc_sflx(i) = tsurf3(i,2)
-              Diag%qsat1(i) = fpvs(Statein%tgrs(i,1))
-            endif
-          enddo
-
           call sfc_nst                                                  &
 !  ---  inputs:
             (im, Statein%pgr, Statein%ugrs(:,1), Statein%vgrs(:,1),     &
@@ -1822,6 +1806,22 @@ module module_physics_driver
 !    &    ' dt_cool=',dt_cool(ipr),' dt_warm=',dt_warm(ipr),' kdt=',kdt
 
         else
+
+          do i=1,im
+            if (islmsk(i) == 0) then
+              Diag%conductance(i) = cdq3(i,3)
+              Diag%tsfc_sflx(i) = tsurf3(i,3)
+              Diag%qsat1(i) = fpvs(tsurf3(i,3))
+            elseif (islmsk(i) == 1) then
+              Diag%conductance(i) = cdq3(i,1)
+              Diag%tsfc_sflx(i) = tsurf3(i,1)
+              Diag%qsat1(i) = fpvs(Statein%tgrs(i,1))
+            else
+              Diag%conductance(i) = cdq3(i,2)
+              Diag%tsfc_sflx(i) = tsurf3(i,2)
+              Diag%qsat1(i) = fpvs(Statein%tgrs(i,1))
+            endif
+          enddo
 
 !  --- ...  surface energy balance over ocean
 
