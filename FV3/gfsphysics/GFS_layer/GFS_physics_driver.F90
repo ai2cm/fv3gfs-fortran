@@ -35,6 +35,7 @@ module module_physics_driver
   use module_sfc_nst,        only: sfc_nst
   use module_sfc_diag,       only: sfc_diag
   use mpp_mod,               only: mpp_error, NOTE
+  use funcphys, only: fpvs
 !
 !vay-2018
 !
@@ -1684,6 +1685,8 @@ module module_physics_driver
         Diag%gustiness(i) = max(zero, min(Tbd%phy_f2d(i,Model%num_p2d), 30.0))
       enddo
 
+        Diag%p1 = Statein%prsl(:,1)
+
 !  --- ...  lu: iter-loop over (sfc_diff,sfc_drv,sfc_ocean,sfc_sice)
 
       do iter=1,2
@@ -1748,6 +1751,22 @@ module module_physics_driver
           endif
 !     if (lprnt) write(0,*)' bef nst tseal=',tseal(ipr) &
 !     ,' tsfc3=',tsfc3(ipr,3),' tsurf3=',tsurf3(ipr,3),' tem=',tem
+
+          do i=1,im
+            if (islmsk(i) == 0) then
+              Diag%conductance(i) = cdq3(i,3)
+              Diag%tsfc_sflx(i) = tsurf3(i,3)
+              Diag%qsat1(i) = fpvs(tsurf3(i,3))
+            elseif (islmsk(i) == 1) then
+              Diag%conductance(i) = cdq3(i,1)
+              Diag%tsfc_sflx(i) = tsurf3(i,1)
+              Diag%qsat1(i) = fpvs(Statein%tgrs(i,1))
+            else
+              Diag%conductance(i) = cdq3(i,2)
+              Diag%tsfc_sflx(i) = tsurf3(i,2)
+              Diag%qsat1(i) = fpvs(Statein%tgrs(i,1))
+            endif
+          enddo
 
           call sfc_nst                                                  &
 !  ---  inputs:
@@ -2133,6 +2152,19 @@ module module_physics_driver
           endif
         enddo
       endif       ! if (Model%frac_grid)
+
+      do i=1,im
+        if (islmsk(i) == 0) then
+          Diag%hflx(i) = hflx3(i,3)
+          Diag%eta(i) = evap3(i,3)
+        elseif (islmsk(i) == 1) then
+          Diag%hflx(i) = hflx3(i,1)
+          Diag%eta(i) = evap3(i,1)
+        else
+          Diag%hflx(i) = hflx3(i,2)
+          Diag%eta(i) = evap3(i,2)
+        endif
+      enddo
 
 ! --- compositing done
 

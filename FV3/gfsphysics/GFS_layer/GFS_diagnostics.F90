@@ -1868,6 +1868,136 @@ module GFS_diagnostics
 
     idx = idx + 1
     ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'p_lowest'
+    ExtDiag(idx)%desc = 'Lowest level pressure'
+    ExtDiag(idx)%unit = 'Pa'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%intpl_method = 'bilinear'
+    ExtDiag(idx)%coarse_graining_method = "area_weighted"
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%p1(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'qsat_lowest'
+    ExtDiag(idx)%desc = 'Lowest level saturation specific humidity'
+    ExtDiag(idx)%unit = 'kg/kg'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%intpl_method = 'bilinear'
+    ExtDiag(idx)%coarse_graining_method = "area_weighted"
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%qsat1(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'edir'
+    ExtDiag(idx)%desc = 'Direct soil evaporation'
+    ExtDiag(idx)%unit = 'W/m**2'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%intpl_method = 'bilinear'
+    ExtDiag(idx)%coarse_graining_method = "area_weighted"
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%edir(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'ec'
+    ExtDiag(idx)%desc = 'Canopy evaporation'
+    ExtDiag(idx)%unit = 'W/m**2'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%intpl_method = 'bilinear'
+    ExtDiag(idx)%coarse_graining_method = "area_weighted"
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%ec(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'ett'
+    ExtDiag(idx)%desc = 'Total plant transpiration'
+    ExtDiag(idx)%unit = 'W/m**2'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%intpl_method = 'bilinear'
+    ExtDiag(idx)%coarse_graining_method = "area_weighted"
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%ett(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'eta'
+    ExtDiag(idx)%desc = 'Total evaporation'
+    ExtDiag(idx)%unit = 'W/m**2'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%intpl_method = 'bilinear'
+    ExtDiag(idx)%coarse_graining_method = "area_weighted"
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%eta(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'esnow'
+    ExtDiag(idx)%desc = 'Total snow evaporation'
+    ExtDiag(idx)%unit = 'W/m**2'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%intpl_method = 'bilinear'
+    ExtDiag(idx)%coarse_graining_method = "area_weighted"
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%esnow(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'tsfc_sflx'
+    ExtDiag(idx)%desc = 'Surface temperature input to surface flux scheme'
+    ExtDiag(idx)%unit = 'K'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%intpl_method = 'bilinear'
+    ExtDiag(idx)%coarse_graining_method = "area_weighted"
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%tsfc_sflx(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'conductance'
+    ExtDiag(idx)%desc = 'Conductance of heat and moisture'
+    ExtDiag(idx)%unit = 'm/s'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%intpl_method = 'bilinear'
+    ExtDiag(idx)%coarse_graining_method = "area_weighted"
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%conductance(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'hflx'
+    ExtDiag(idx)%desc = 'Sensible heat flux output by surface flux scheme'
+    ExtDiag(idx)%unit = 'm/s'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%intpl_method = 'bilinear'
+    ExtDiag(idx)%coarse_graining_method = "area_weighted"
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%hflx(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
     ExtDiag(idx)%name = 'u_lowest'
     ExtDiag(idx)%desc = 'Lowest level u wind'
     ExtDiag(idx)%unit = 'm/s'

@@ -1463,6 +1463,18 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: pm_d   (:)     => null()
     real (kind=kind_phys), pointer :: fh_d   (:)     => null()
     real (kind=kind_phys), pointer :: ph_d   (:)     => null()
+
+    real (kind=kind_phys), pointer :: p1(:) => null()
+    real (kind=kind_phys), pointer :: qsat1(:) => null()
+    real (kind=kind_phys), pointer :: edir(:) => null()
+    real (kind=kind_phys), pointer :: ec(:) => null()
+    real (kind=kind_phys), pointer :: ett(:) => null()
+    real (kind=kind_phys), pointer :: esnow(:) => null()
+    real (kind=kind_phys), pointer :: eta(:) => null()
+    real (kind=kind_phys), pointer :: tsfc_sflx(:) => null()
+    real (kind=kind_phys), pointer :: conductance(:) => null()
+    real (kind=kind_phys), pointer :: hflx(:) => null()
+
     real (kind=kind_phys), pointer :: gustiness   (:)     => null()
     real (kind=kind_phys), pointer :: dlwsfci(:)     => null()   !< instantaneous sfc dnwd lw flux ( w/m**2 )
     real (kind=kind_phys), pointer :: ulwsfci(:)     => null()   !< instantaneous sfc upwd lw flux ( w/m**2 )
@@ -5233,6 +5245,18 @@ module GFS_typedefs
     allocate (Diag%fh_d    (IM))
     allocate (Diag%ph_d    (IM))
     allocate (Diag%gustiness    (IM))
+
+    allocate (Diag%p1(IM))
+    allocate (Diag%qsat1(IM))
+    allocate (Diag%edir(IM))
+    allocate (Diag%ec(IM))
+    allocate (Diag%ett(IM))
+    allocate (Diag%esnow(IM))
+    allocate (Diag%eta(IM))
+    allocate (Diag%tsfc_sflx(IM))
+    allocate (Diag%conductance(IM))
+    allocate (Diag%hflx(IM))
+
     allocate (Diag%dlwsfci (IM))
     allocate (Diag%ulwsfci (IM))
     allocate (Diag%dswsfci (IM))
@@ -5542,6 +5566,18 @@ module GFS_typedefs
     Diag%fh_d       = zero
     Diag%ph_d       = zero
     Diag%gustiness       = zero
+
+    Diag%p1 = zero
+    Diag%qsat1 = zero
+    Diag%edir = zero
+    Diag%ec = zero
+    Diag%ett = zero
+    Diag%eta = zero
+    Diag%esnow = zero
+    Diag%tsfc_sflx = zero
+    Diag%conductance = zero
+    Diag%hflx = zero
+
     Diag%dlwsfci    = zero
     Diag%ulwsfci    = zero
     Diag%dswsfci    = zero
