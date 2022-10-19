@@ -1686,6 +1686,7 @@ module module_physics_driver
       enddo
 
         Diag%p1 = Statein%prsl(:,1)
+        Diag%prslki = work3
 
 !  --- ...  lu: iter-loop over (sfc_diff,sfc_drv,sfc_ocean,sfc_sice)
 

@@ -1985,6 +1985,19 @@ module GFS_diagnostics
 
     idx = idx + 1
     ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'prslki'
+    ExtDiag(idx)%desc = 'prslki'
+    ExtDiag(idx)%unit = 'none'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%intpl_method = 'bilinear'
+    ExtDiag(idx)%coarse_graining_method = "area_weighted"
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%prslki(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
     ExtDiag(idx)%name = 'hflx'
     ExtDiag(idx)%desc = 'Sensible heat flux output by surface flux scheme'
     ExtDiag(idx)%unit = 'm/s'

@@ -1474,6 +1474,7 @@ module GFS_typedefs
     real (kind=kind_phys), pointer :: tsfc_sflx(:) => null()
     real (kind=kind_phys), pointer :: conductance(:) => null()
     real (kind=kind_phys), pointer :: hflx(:) => null()
+    real (kind=kind_phys), pointer :: prslki(:) => null()
 
     real (kind=kind_phys), pointer :: gustiness   (:)     => null()
     real (kind=kind_phys), pointer :: dlwsfci(:)     => null()   !< instantaneous sfc dnwd lw flux ( w/m**2 )
@@ -5254,6 +5255,7 @@ module GFS_typedefs
     allocate (Diag%esnow(IM))
     allocate (Diag%eta(IM))
     allocate (Diag%tsfc_sflx(IM))
+    allocate (Diag%prslki(IM))
     allocate (Diag%conductance(IM))
     allocate (Diag%hflx(IM))
 
@@ -5577,6 +5579,7 @@ module GFS_typedefs
     Diag%tsfc_sflx = zero
     Diag%conductance = zero
     Diag%hflx = zero
+    Diag%prslki = zero
 
     Diag%dlwsfci    = zero
     Diag%ulwsfci    = zero
