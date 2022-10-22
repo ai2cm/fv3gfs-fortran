@@ -242,6 +242,13 @@ contains
         call get_date(Atm%Time, year, month, day, hour, minute, second)
         fms_calendar_type = calendar_type
     end subroutine get_time
+    
+    subroutine get_initialization_time(year, month, day, hour, minute, second, fms_calendar_type) & 
+        bind(c, name='get_initialization_time_subroutine')
+        integer, intent(out) :: year, month, day, hour, minute, second, fms_calendar_type
+        call get_date(Atm%Time_init, year, month, day, hour, minute, second)
+        fms_calendar_type = calendar_type
+    end subroutine get_initialization_time
 
     subroutine get_physics_timestep_subroutine(physics_timestep) bind(c)
         integer, intent(out) :: physics_timestep

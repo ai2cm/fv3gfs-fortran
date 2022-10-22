@@ -106,7 +106,12 @@ def main(test_dir, config):
 def get_default_config():
     with open(os.path.join(base_dir, "default_config.yml"), "r") as f:
         return yaml.safe_load(f)
-
+    
+    
+def get_from_restarts_config():
+    with open(os.path.join(base_dir, "from_restarts_config.yml"), "r") as f:
+        return yaml.safe_load(f)
+    
 
 def get_current_config():
     with open("fv3config.yml") as f:
