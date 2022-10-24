@@ -31,6 +31,9 @@ cdef extern:
     void save_intermediate_restart_subroutine()
     void initialize_time_subroutine(int *year, int *month, int *day, int *hour, int *minute, int *second)
     void get_time_subroutine(int *year, int *month, int *day, int *hour, int *minute, int *second, int *fms_calendar_type)
+    void get_initialization_time_subroutine(
+        int *year, int *month, int *day, int *hour, int *minute, int *second, int *fms_calendar_type
+    )
     void get_physics_timestep_subroutine(int *physics_timestep)
     void get_centered_grid_dimensions(int *nx, int *ny, int *nz)
     void get_n_ghost_cells_subroutine(int *n_ghost)
@@ -121,11 +124,25 @@ def set_time(time):
     initialize_time_subroutine(&year, &month, &day, &hour, &minute, &second)
 
 
-def get_time():
-    """Returns a cftime.datetime corresponding to the current model time.
+def get_time(which='model_time'):
+    """Returns a cftime.datetime corresponding to either the current model time
+    or the model initialization time.
+    
+    Arguments:
+        which (str): If omitted or "model_time", returns the current model time.
+            If "initialization_time", returns the GFS physics' initialization time.
     """
     cdef int year, month, day, hour, minute, second, fms_calendar_type
-    get_time_subroutine(&year, &month, &day, &hour, &minute, &second, &fms_calendar_type)
+    if which == 'model_time':
+        get_time_subroutine(
+            &year, &month, &day, &hour, &minute, &second, &fms_calendar_type
+        )
+    elif which == 'initialization_time':
+        get_initialization_time_subroutine(
+            &year, &month, &day, &hour, &minute, &second, &fms_calendar_type
+        )
+    else:
+        raise ValueError(f'Invalid `get_time` option `which`: "{which}".')
     return pace.util.FMS_TO_CFTIME_TYPE[fms_calendar_type](year, month, day, hour, minute, second)
 
 
@@ -280,6 +297,9 @@ def get_state(names, dict state=None, allocator=None):
 
     if 'time' in input_names_set:
         state['time'] = get_time()
+        
+    if 'initialization_time' in input_names_set:
+        state['initialization_time'] = get_time(which='initialization_time')
 
 {% for item in physics_2d_properties %}
     {% if item.name in overriding_fluxes %}
