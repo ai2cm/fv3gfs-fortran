@@ -124,11 +124,16 @@ def set_time(time):
     initialize_time_subroutine(&year, &month, &day, &hour, &minute, &second)
 
 
-def get_time(which=None):
-    """Returns a cftime.datetime corresponding to the current model time.
+def get_time(which='model_time'):
+    """Returns a cftime.datetime corresponding to either the current model time
+    or the model initialization time.
+    
+    Arguments:
+        which (str): If omitted or "model_time", returns the current model time.
+            If "initialization_time", returns the GFS physics' initialization time.
     """
     cdef int year, month, day, hour, minute, second, fms_calendar_type
-    if which is None:
+    if which == 'model_time':
         get_time_subroutine(
             &year, &month, &day, &hour, &minute, &second, &fms_calendar_type
         )
@@ -137,7 +142,7 @@ def get_time(which=None):
             &year, &month, &day, &hour, &minute, &second, &fms_calendar_type
         )
     else:
-        raise ValueError(f'Invalid get_time option {which}.')
+        raise ValueError(f'Invalid `get_time` option `which`: "{which}".')
     return pace.util.FMS_TO_CFTIME_TYPE[fms_calendar_type](year, month, day, hour, minute, second)
 
 
