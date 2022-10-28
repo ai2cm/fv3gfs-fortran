@@ -1705,8 +1705,11 @@
                 fint   = factor - float(index)
 
                 do ib = 1, nbands
-                  tauliq(ib) = max(f_zero, cldliqincld*(absliq1(index,ib)    &
-     &              + fint*(absliq1(index+1,ib)-absliq1(index,ib)) ))
+                  tauliq(ib) = max(                                     &
+     &               f_zero,                                            &
+     &               cldliqincld * (                                    &
+     &                 absliq1(index,ib) +                              &
+     &                 fint*(absliq1(index+1,ib)-absliq1(index,ib))))   
                 enddo
               endif   ! end if_ilwcliq_block
             endif   ! end if_cldliq_block
@@ -1727,7 +1730,7 @@
 
                 do ib = 1, nbands
                   ia = ipat(ib)             ! eb_&_c band index for ice cloud coeff
-                  tauice(ib) = max(f_zero, cldiceincld*(absice1(1,ia)        &
+                  tauice(ib) = max(f_zero, cldiceincld*(absice1(1,ia)   &
      &                         + absice1(2,ia)/refice) )
                 enddo
 
@@ -1742,7 +1745,8 @@
                 fint   = factor - float(index)
 
                 do ib = 1, nbands
-                  tauice(ib) = max(f_zero, cldiceincld*(absice2(index,ib)    &
+                  tauice(ib) = max(f_zero,                              &
+     &              cldiceincld*(absice2(index,ib)                      &
      &              + fint*(absice2(index+1,ib) - absice2(index,ib)) ))
                 enddo
 
@@ -1758,7 +1762,8 @@
                 fint   = factor - float(index)
 
                 do ib = 1, nbands
-                  tauice(ib) = max(f_zero, cldiceinclds*(absice3(index,ib)    &
+                  tauice(ib) = max(f_zero,                              &
+     &              cldiceincld*(absice3(index,ib)                      &
      &              + fint*(absice3(index+1,ib) - absice3(index,ib)) ))
                 enddo
 
