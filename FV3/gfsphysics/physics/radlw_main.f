@@ -1628,7 +1628,8 @@
       real (kind=kind_phys), dimension(nlay)   :: cldf
 
       real (kind=kind_phys) :: dgeice, factor, fint, tauran, tausnw,    &
-     &       cldliq, refliq, cldice, refice
+     &       cldliq, cldliqincld, refliq, cldice, cldiceincld, refice,  &
+     &       cfrac0
 
       logical :: lcloudy(ngptlw,nlay)
       integer :: ia, ib, ig, k, index
@@ -1662,6 +1663,12 @@
         lab_do_k : do k = 1, nlay
           lab_if_cld : if (cfrac(k) > cldmin) then
 
+! rescale cloud water and ice by cloud fraction
+
+            cfrac0 = cfrac(k)
+            cldliqincld = cldliq / cfrac0
+            cldiceincld = cldice / cfrac0
+
             tauran = absrain * cdat1(k)                      ! ncar formula
 !!          tausnw = abssnow1 * cdat3(k)                     ! ncar formula
 !  ---  if use fu's formula it needs to be normalized by snow density
@@ -1684,6 +1691,7 @@
             refice = reice(k)
 
 !  --- ...  calculation of absorption coefficients due to water clouds.
+            
 
             if ( cldliq <= f_zero ) then
               do ib = 1, nbands
@@ -1697,7 +1705,7 @@
                 fint   = factor - float(index)
 
                 do ib = 1, nbands
-                  tauliq(ib) = max(f_zero, cldliq*(absliq1(index,ib)    &
+                  tauliq(ib) = max(f_zero, cldliqincld*(absliq1(index,ib)    &
      &              + fint*(absliq1(index+1,ib)-absliq1(index,ib)) ))
                 enddo
               endif   ! end if_ilwcliq_block
@@ -1719,7 +1727,7 @@
 
                 do ib = 1, nbands
                   ia = ipat(ib)             ! eb_&_c band index for ice cloud coeff
-                  tauice(ib) = max(f_zero, cldice*(absice1(1,ia)        &
+                  tauice(ib) = max(f_zero, cldiceincld*(absice1(1,ia)        &
      &                         + absice1(2,ia)/refice) )
                 enddo
 
@@ -1734,7 +1742,7 @@
                 fint   = factor - float(index)
 
                 do ib = 1, nbands
-                  tauice(ib) = max(f_zero, cldice*(absice2(index,ib)    &
+                  tauice(ib) = max(f_zero, cldiceincld*(absice2(index,ib)    &
      &              + fint*(absice2(index+1,ib) - absice2(index,ib)) ))
                 enddo
 
@@ -1750,7 +1758,7 @@
                 fint   = factor - float(index)
 
                 do ib = 1, nbands
-                  tauice(ib) = max(f_zero, cldice*(absice3(index,ib)    &
+                  tauice(ib) = max(f_zero, cldiceinclds*(absice3(index,ib)    &
      &              + fint*(absice3(index+1,ib) - absice3(index,ib)) ))
                 enddo
 

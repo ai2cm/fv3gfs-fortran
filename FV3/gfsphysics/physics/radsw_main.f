@@ -1704,9 +1704,9 @@
       real (kind=kind_phys), dimension(nlay)       :: cldf
 
       real (kind=kind_phys) :: dgeice, factor, fint, tauran, tausnw,    &
-     &       cldliq, refliq, cldice, refice, cldran, cldsnw, refsnw,    &
-     &       extcoliq, ssacoliq, asycoliq, extcoice, ssacoice, asycoice,&
-     &       dgesnw
+     &       cldliq, cldliqincld, refliq, cldice, cldiceincld, refice,  &
+     &       cldran, cldsnw, refsnw, extcoliq, ssacoliq, asycoliq,      &
+     &       extcoice, ssacoice, asycoice, dgesnw, cfrac0
 
       logical :: lcloudy(nlay,ngptsw)
       integer :: ia, ib, ig, jb, k, index
@@ -1728,6 +1728,12 @@
 
         lab_do_k : do k = 1, nlay
           lab_if_cld : if (cfrac(k) > ftiny) then
+            
+! rescale cloud water and ice by cloud fraction
+
+          cfrac0 = cfrac(k)
+          cldliqincld = cldliq / cfrac0
+          cldiceincld = cldice / cfrac0
 
 !>    - Compute optical properties for rain and snow.
 !!\n    For rain: tauran/ssaran/asyran
@@ -1776,6 +1782,7 @@
 
 !  --- ...  calculation of absorption coefficients due to water clouds.
 
+
             if ( cldliq <= f_zero ) then
               do ib = nblow, nbhgh
                 tauliq(ib) = f_zero
@@ -1798,7 +1805,7 @@
      &              + fint*(asyliq1(index+1,ib)-asyliq1(index,ib)) ))
 !                 forcoliq = asycoliq * asycoliq
 
-                  tauliq(ib) = cldliq     * extcoliq
+                  tauliq(ib) = cldliqincld * extcoliq 
                   ssaliq(ib) = tauliq(ib) * ssacoliq
                   asyliq(ib) = ssaliq(ib) * asycoliq
                 enddo
@@ -1813,7 +1820,7 @@
      &              + fint*(asyliq2(index+1,ib)-asyliq2(index,ib)) ))
 !                 forcoliq = asycoliq * asycoliq
 
-                  tauliq(ib) = cldliq     * extcoliq
+                  tauliq(ib) = cldliqincld * extcoliq
                   ssaliq(ib) = tauliq(ib) * ssacoliq
                   asyliq(ib) = ssaliq(ib) * asycoliq
                 enddo
@@ -1846,7 +1853,7 @@
      &                                   ebari(ia)+fbari(ia)*refice ))
 !                 forcoice = asycoice * asycoice
 
-                  tauice(ib) = cldice     * extcoice
+                  tauice(ib) = cldiceincld * extcoice
                   ssaice(ib) = tauice(ib) * ssacoice
                   asyice(ib) = ssaice(ib) * asycoice
                 enddo
@@ -1869,7 +1876,7 @@
      &                + fint*(asyice2(index+1,ib)-asyice2(index,ib)) ))
 !                 forcoice = asycoice * asycoice
 
-                  tauice(ib) = cldice     * extcoice
+                  tauice(ib) = cldiceincld * extcoice
                   ssaice(ib) = tauice(ib) * ssacoice
                   asyice(ib) = ssaice(ib) * asycoice
                 enddo
@@ -1895,7 +1902,7 @@
 !    &                + fint*(fdlice3(index+1,ib)-fdlice3(index,ib)) ))
 !                 forcoice = min( asycoice, fdelta+0.5/ssacoice )           ! see fu 1996 p. 2067
 
-                  tauice(ib) = cldice     * extcoice
+                  tauice(ib) = cldiceincld * extcoice
                   ssaice(ib) = tauice(ib) * ssacoice
                   asyice(ib) = ssaice(ib) * asycoice
                 enddo
