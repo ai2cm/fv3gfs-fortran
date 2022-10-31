@@ -1706,7 +1706,7 @@
       real (kind=kind_phys) :: dgeice, factor, fint, tauran, tausnw,    &
      &       cldliq, cldliqincld, refliq, cldice, cldiceincld, refice,  &
      &       cldran, cldsnw, refsnw, extcoliq, ssacoliq, asycoliq,      &
-     &       extcoice, ssacoice, asycoice, dgesnw, cfrac0
+     &       extcoice, ssacoice, asycoice, dgesnw, cldfrac
 
       logical :: lcloudy(nlay,ngptsw)
       integer :: ia, ib, ig, jb, k, index
@@ -1728,12 +1728,6 @@
 
         lab_do_k : do k = 1, nlay
           lab_if_cld : if (cfrac(k) > ftiny) then
-            
-! rescale cloud water and ice by cloud fraction
-
-          cfrac0 = cfrac(k)
-          cldliqincld = cldliq / cfrac0
-          cldiceincld = cldice / cfrac0
 
 !>    - Compute optical properties for rain and snow.
 !!\n    For rain: tauran/ssaran/asyran
@@ -1781,6 +1775,17 @@
             refice = reice(k)
 
 !  --- ...  calculation of absorption coefficients due to water clouds.
+
+! rescale cloud water and ice by cloud fraction
+            if (cfrac(k) >= 1.0e-2) then
+              cldfrac = cfrac(k)
+              cldliqincld = cldliq / cldfrac
+              cldiceincld = cldice / cldfrac
+            else
+! don't do this for very small cloud fractions
+              cldliqincld = cldliq
+              cldiceincld = cldice 
+            endif
 
 
             if ( cldliq <= f_zero ) then

@@ -1629,7 +1629,7 @@
 
       real (kind=kind_phys) :: dgeice, factor, fint, tauran, tausnw,    &
      &       cldliq, cldliqincld, refliq, cldice, cldiceincld, refice,  &
-     &       cfrac0
+     &       cldfrac
 
       logical :: lcloudy(ngptlw,nlay)
       integer :: ia, ib, ig, k, index
@@ -1663,12 +1663,6 @@
         lab_do_k : do k = 1, nlay
           lab_if_cld : if (cfrac(k) > cldmin) then
 
-! rescale cloud water and ice by cloud fraction
-
-            cfrac0 = cfrac(k)
-            cldliqincld = cldliq / cfrac0
-            cldiceincld = cldice / cfrac0
-
             tauran = absrain * cdat1(k)                      ! ncar formula
 !!          tausnw = abssnow1 * cdat3(k)                     ! ncar formula
 !  ---  if use fu's formula it needs to be normalized by snow density
@@ -1689,6 +1683,17 @@
 !           refice = max(5.0e0, reice(k) )
             refliq = reliq(k)
             refice = reice(k)
+
+! rescale cloud water and ice by cloud fraction
+            if (cfrac(k) >= 1.0e-2) then
+              cldfrac = cfrac(k)
+              cldliqincld = cldliq / cldfrac
+              cldiceincld = cldice / cldfrac
+            else
+! don't do this for very small cloud fractions
+              cldliqincld = cldliq
+              cldiceincld = cldice
+            endif
 
 !  --- ...  calculation of absorption coefficients due to water clouds.
             
