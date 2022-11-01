@@ -9,7 +9,8 @@ module coarse_grained_diagnostics_mod
   use mpp_domains_mod, only: domain2d, EAST, NORTH
   use mpp_mod, only: FATAL, mpp_error
   use coarse_graining_mod, only: block_sum, get_fine_array_bounds, get_coarse_array_bounds, MODEL_LEVEL, &
-                                 weighted_block_average, PRESSURE_LEVEL, vertically_remap_field, &
+                                 weighted_block_average, PRESSURE_LEVEL, HYBRID_MASS_WEIGHTED, HYBRID_AREA_WEIGHTED, &
+                                 vertically_remap_field, &
                                  vertical_remapping_requirements, mask_area_weights, &
                                  block_edge_sum_x, block_edge_sum_y, eddy_covariance_2d_weights, eddy_covariance_3d_weights
   use time_manager_mod, only: time_type
