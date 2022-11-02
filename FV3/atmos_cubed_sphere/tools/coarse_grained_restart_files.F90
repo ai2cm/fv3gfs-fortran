@@ -611,7 +611,7 @@ end subroutine coarse_grain_via_hybrid_area_weighted_coarse_graining
        Atm%gridstruct%dy(is:ie+1,js:je), &
        Atm%ptop, &
        temp_coarse_v)
-     call weighted_block_edge_average_y(Atm%gridstruct%dx(is:ie,js:je+1), &
+     call weighted_block_edge_average_y(Atm%gridstruct%dy(is:ie+1,js:je), &
        Atm%v(is:ie+1,js:je,1:npz), Atm%coarse_graining%restart%v)
      Atm%coarse_graining%restart%v = blending_factor_dgrid_v * temp_coarse_v + (1 - blending_factor_dgrid_v) * Atm%coarse_graining%restart%v
 
@@ -758,8 +758,8 @@ end subroutine coarse_grain_via_hybrid_area_weighted_coarse_graining
       Atm%gridstruct%dy(is:ie+1,js:je), &
       Atm%ptop, &
       temp_coarse_v)
-    call weighted_block_edge_average_x(Atm%gridstruct%dx(is:ie,js:je+1), &
-      Atm%u(is:ie,js:je+1,1:npz), Atm%coarse_graining%restart%u)
+    call weighted_block_edge_average_y(Atm%gridstruct%dy(is:ie+1,js:je), &
+      Atm%v(is:ie+1,js:je,1:npz), Atm%coarse_graining%restart%v)
     Atm%coarse_graining%restart%v = blending_factor_dgrid_v * temp_coarse_v + (1 - blending_factor_dgrid_v) * Atm%coarse_graining%restart%v
 
     call coarse_grain_field_via_hybrid_area_weighted_coarse_graining(&

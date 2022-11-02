@@ -704,7 +704,7 @@ contains
 
    subroutine block_edge_min_y(fine, coarse)
       real, intent(in) :: fine(is_coarse:ie_coarse+1,js:je)
-      real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse+1)
+      real, intent(out) :: coarse(is_coarse:ie_coarse+1,js_coarse:je_coarse)
   
       integer :: i_coarse, j, j_coarse, offset
   
@@ -1167,7 +1167,7 @@ subroutine compute_blending_factor_dgrid_u(phalf, dx, blending_factor)
   call interpolate_to_d_grid_and_downsample_along_y(phalf, phalf_d_grid, npz+1)
   call weighted_block_edge_average_x_pre_downsampled(phalf_d_grid, dx, coarse_phalf_d_grid, npz+1)
   call compute_coarse_pfull(coarse_phalf_d_grid, coarse_pfull_d_grid, x_pad=0, y_pad=1)
-  call block_edge_min_x(coarse_pfull_d_grid, blending_pressure)
+  call block_edge_min_x(phalf_d_grid(is:ie,js_coarse:je_coarse,npz+1), blending_pressure)
   coarse_surface_pressure = coarse_phalf_d_grid(is_coarse:ie_coarse,js_coarse:je_coarse+1,npz+1)
   blending_pressure = sigma_blend * blending_pressure
 
@@ -1182,7 +1182,7 @@ end subroutine compute_blending_factor_dgrid_u
 
 subroutine compute_blending_factor_dgrid_v(phalf, dy, blending_factor)
   real, intent(in) :: phalf(is-1:is+1,js-1:js+1,1:npz+1)
-  real, intent(in) :: dy(is:ie,js:je+1)
+  real, intent(in) :: dy(is:ie+1,js:je)
   real, intent(out) :: blending_factor(is_coarse:ie_coarse+1,js_coarse:je_coarse,1:npz)
 
   real, allocatable :: phalf_d_grid(:,:,:)
@@ -1202,7 +1202,7 @@ subroutine compute_blending_factor_dgrid_v(phalf, dy, blending_factor)
   call interpolate_to_d_grid_and_downsample_along_x(phalf, phalf_d_grid, npz+1)
   call weighted_block_edge_average_y_pre_downsampled(phalf_d_grid, dy, coarse_phalf_d_grid, npz+1)
   call compute_coarse_pfull(coarse_phalf_d_grid, coarse_pfull_d_grid, x_pad=1, y_pad=0)
-  call block_edge_min_y(coarse_pfull_d_grid, blending_pressure)
+  call block_edge_min_y(phalf_d_grid(is_coarse:ie_coarse+1,js:je,npz+1), blending_pressure)
   coarse_surface_pressure = coarse_phalf_d_grid(is_coarse:ie_coarse+1,js_coarse:je_coarse,npz+1)
   blending_pressure = sigma_blend * blending_pressure
 
