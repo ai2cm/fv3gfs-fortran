@@ -680,15 +680,27 @@ end subroutine coarse_grain_via_hybrid_area_weighted_coarse_graining
 
     do n_tracer = 1, n_prognostic_tracers
       call get_tracer_names(MODEL_ATMOS, n_tracer, tracer_name)
-      call coarse_grain_field_via_hybrid_mass_weighted_coarse_graining(&
-        Atm%q(is:ie,js:je,1:npz,n_tracer),&
-        phalf(is:ie,js:je,1:npz+1),&
-        coarse_phalf_on_fine,&
-        Atm%ptop,&
-        masked_area_weights,&
-        mass,&
-        blending_factor_agrid,&
-        Atm%coarse_graining%restart%q(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz,n_tracer))
+      if (trim(tracer_name) .eq. 'cld_amt') then
+        call coarse_grain_field_via_hybrid_area_weighted_coarse_graining(&
+          Atm%q(is:ie,js:je,1:npz,n_tracer),&
+          phalf(is:ie,js:je,1:npz+1),&
+          coarse_phalf_on_fine,&
+          Atm%ptop,&
+          masked_area_weights,&
+          Atm%gridstruct%area(is:ie,js:je),&
+          blending_factor_agrid,&
+          Atm%coarse_graining%restart%q(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz,n_tracer))
+      else
+        call coarse_grain_field_via_hybrid_mass_weighted_coarse_graining(&
+          Atm%q(is:ie,js:je,1:npz,n_tracer),&
+          phalf(is:ie,js:je,1:npz+1),&
+          coarse_phalf_on_fine,&
+          Atm%ptop,&
+          masked_area_weights,&
+          mass,&
+          blending_factor_agrid,&
+          Atm%coarse_graining%restart%q(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz,n_tracer))
+      endif
     enddo
 
     do n_tracer = n_prognostic_tracers + 1, n_tracers

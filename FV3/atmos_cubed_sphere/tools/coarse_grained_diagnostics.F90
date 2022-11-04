@@ -44,8 +44,8 @@ module coarse_grained_diagnostics_mod
   public :: fv_coarse_diag_init, fv_coarse_diag
 
   integer :: tile_count = 1  ! Following fv_diagnostics.F90
-  integer :: DIAG_SIZE = 512
-  type(coarse_diag_type), dimension(512) :: coarse_diagnostics
+  integer :: DIAG_SIZE = 1024
+  type(coarse_diag_type), dimension(1024) :: coarse_diagnostics
 
   ! Reduction methods
   character(len=11) :: AREA_WEIGHTED = 'area_weighted'
