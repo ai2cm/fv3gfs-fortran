@@ -1,12 +1,12 @@
 module coarse_grained_restart_files_mod
 
   use coarse_graining_mod, only: compute_mass_weights, get_coarse_array_bounds,&
-       get_fine_array_bounds, MODEL_LEVEL, PRESSURE_LEVEL, HYBRID_MASS_WEIGHTED, HYBRID_AREA_WEIGHTED, &
+       get_fine_array_bounds, MODEL_LEVEL, PRESSURE_LEVEL, BLENDED_MASS_WEIGHTED, BLENDED_AREA_WEIGHTED, &
        weighted_block_average, weighted_block_edge_average_x, weighted_block_edge_average_y, &
        mask_area_weights, block_upsample, remap_edges_along_x, &
        remap_edges_along_y, vertically_remap_field, block_min, compute_blending_weights_agrid, &
-       compute_blending_weights_dgrid_u, compute_blending_weights_dgrid_v, hybrid_coarse_grain_field, &
-       hybrid_coarse_grain_u, hybrid_coarse_grain_v
+       compute_blending_weights_dgrid_u, compute_blending_weights_dgrid_v, blended_coarse_grain_field, &
+       blended_coarse_grain_u, blended_coarse_grain_v
   use constants_mod, only: GRAV, RDGAS, RVGAS
   use field_manager_mod, only: MODEL_ATMOS
   use fms_io_mod,      only: register_restart_field, save_restart
@@ -25,15 +25,15 @@ module coarse_grained_restart_files_mod
   integer :: is_coarse, ie_coarse, js_coarse, je_coarse
   integer :: n_prognostic_tracers, n_diagnostic_tracers, n_tracers
 
-  interface coarse_grain_fv_core_via_hybrid_method
-    module procedure coarse_grain_fv_core_via_hybrid_mass_weighted_method
-    module procedure coarse_grain_fv_core_via_hybrid_area_weighted_method
-  end interface coarse_grain_fv_core_via_hybrid_method
+  interface coarse_grain_fv_core_via_blended_method
+    module procedure coarse_grain_fv_core_via_blended_mass_weighted_method
+    module procedure coarse_grain_fv_core_via_blended_area_weighted_method
+  end interface coarse_grain_fv_core_via_blended_method
 
-  interface coarse_grain_fv_tracer_via_hybrid_method
-    module procedure coarse_grain_fv_tracer_via_hybrid_mass_weighted_method
-    module procedure coarse_grain_fv_tracer_via_hybrid_area_weighted_method
-  end interface coarse_grain_fv_tracer_via_hybrid_method
+  interface coarse_grain_fv_tracer_via_blended_method
+    module procedure coarse_grain_fv_tracer_via_blended_mass_weighted_method
+    module procedure coarse_grain_fv_tracer_via_blended_area_weighted_method
+  end interface coarse_grain_fv_tracer_via_blended_method
 
 contains
 
@@ -294,12 +294,13 @@ contains
        call coarse_grain_restart_data_on_model_levels(Atm)
     elseif (trim(Atm%coarse_graining%strategy) .eq. PRESSURE_LEVEL) then
        call coarse_grain_restart_data_on_pressure_levels(Atm)
-    elseif (trim(Atm%coarse_graining%strategy) .eq. HYBRID_MASS_WEIGHTED) then
-       call coarse_grain_restart_data_via_hybrid_method(Atm, mass_weighted=.true.)
-    elseif (trim(Atm%coarse_graining%strategy) .eq. HYBRID_AREA_WEIGHTED) then
-       call coarse_grain_restart_data_via_hybrid_method(Atm, mass_weighted=.false.)
+    elseif (trim(Atm%coarse_graining%strategy) .eq. BLENDED_MASS_WEIGHTED) then
+       call coarse_grain_restart_data_via_blended_method(Atm, mass_weighted=.true.)
+    elseif (trim(Atm%coarse_graining%strategy) .eq. BLENDED_AREA_WEIGHTED) then
+       call coarse_grain_restart_data_via_blended_method(Atm, mass_weighted=.false.)
     else
-       write(error_message, *) 'Currently only model_level and pressure_level coarse-graining are supported for restart files.'
+       write(error_message, *) 'Currently only model_level, pressure_level, blended_area_weighted, and blended_mass_weighted &
+                                &coarse-graining are supported for restart files.  Got ', trim(Atm%coarse_graining%strategy)
        call mpp_error(FATAL, error_message)
     endif
   end subroutine coarse_grain_restart_data
@@ -349,7 +350,7 @@ contains
      call impose_hydrostatic_balance(Atm, coarse_phalf)
   end subroutine coarse_grain_restart_data_on_pressure_levels
 
-  subroutine coarse_grain_restart_data_via_hybrid_method(Atm, mass_weighted)
+  subroutine coarse_grain_restart_data_via_blended_method(Atm, mass_weighted)
     type(fv_atmos_type), intent(inout) :: Atm
     logical, intent(in) :: mass_weighted
 
@@ -365,9 +366,9 @@ contains
     allocate(blending_weights_dgrid_v(is_coarse:ie_coarse+1,js_coarse:je_coarse,1:npz))
 
     ! delp and delz are coarse-grained on model levels via an area-weighted
-    ! average; u, v, W, T, and all the tracers are coarsened via hybrid pressure
-    ! level and mass-weighted model level coarse-graining. At the end, delz and
-    ! phis are corrected to impose hydrostatic balance.
+    ! average; u, v, W, T, and all the tracers are coarsened via blended
+    ! pressure level and mass-weighted model level coarse-graining. At the end,
+    ! delz and phis are corrected to impose hydrostatic balance.
     call compute_pressure_level_coarse_graining_requirements( &
       Atm, phalf, coarse_phalf, coarse_phalf_on_fine, masked_area_weights)
 
@@ -379,14 +380,14 @@ contains
     if (mass_weighted) then
       allocate(mass(is:ie,js:je,1:npz))
       call compute_mass_weights(Atm%gridstruct%area(is:ie,js:je), Atm%delp(is:ie,js:je,1:npz), mass)
-      call coarse_grain_fv_core_via_hybrid_method(Atm, phalf, coarse_phalf, coarse_phalf_on_fine, masked_area_weights,&
+      call coarse_grain_fv_core_via_blended_method(Atm, phalf, coarse_phalf, coarse_phalf_on_fine, masked_area_weights,&
         mass, blending_weights_agrid, blending_weights_dgrid_u, blending_weights_dgrid_v)
-      call coarse_grain_fv_tracer_via_hybrid_method( Atm, phalf, coarse_phalf_on_fine, masked_area_weights, mass,&
+      call coarse_grain_fv_tracer_via_blended_method( Atm, phalf, coarse_phalf_on_fine, masked_area_weights, mass,&
         blending_weights_agrid)
     else
-      call coarse_grain_fv_core_via_hybrid_method(Atm, phalf, coarse_phalf, coarse_phalf_on_fine, masked_area_weights,&
+      call coarse_grain_fv_core_via_blended_method(Atm, phalf, coarse_phalf, coarse_phalf_on_fine, masked_area_weights,&
         Atm%gridstruct%area(is:ie,js:je), blending_weights_agrid, blending_weights_dgrid_u, blending_weights_dgrid_v)
-      call coarse_grain_fv_tracer_via_hybrid_method(Atm, phalf, coarse_phalf_on_fine, masked_area_weights,&
+      call coarse_grain_fv_tracer_via_blended_method(Atm, phalf, coarse_phalf_on_fine, masked_area_weights,&
         Atm%gridstruct%area(is:ie,js:je), blending_weights_agrid)
     endif
     call coarse_grain_fv_srf_wnd_restart_data(Atm)
@@ -395,7 +396,7 @@ contains
       call coarse_grain_fv_land_restart_data(Atm)
     endif
     call impose_hydrostatic_balance(Atm, coarse_phalf)
-  end subroutine coarse_grain_restart_data_via_hybrid_method
+  end subroutine coarse_grain_restart_data_via_blended_method
 
   subroutine coarse_grain_fv_core_restart_data_on_model_levels(Atm, mass)
     type(fv_atmos_type), intent(inout) :: Atm
@@ -560,7 +561,7 @@ contains
      enddo
    end subroutine coarse_grain_fv_tracer_restart_data_on_pressure_levels
 
-   subroutine coarse_grain_fv_core_via_hybrid_mass_weighted_method(Atm, phalf, coarse_phalf, coarse_phalf_on_fine,&
+   subroutine coarse_grain_fv_core_via_blended_mass_weighted_method(Atm, phalf, coarse_phalf, coarse_phalf_on_fine,&
      masked_area_weights, model_level_weights, blending_weights_agrid, blending_weights_dgrid_u, blending_weights_dgrid_v)
      type(fv_atmos_type), intent(inout) :: Atm
      real, intent(in) :: phalf(is-1:ie+1,js-1:je+1,1:npz+1)
@@ -571,15 +572,15 @@ contains
      real, intent(in) :: blending_weights_dgrid_u(is_coarse:ie_coarse,js_coarse:je_coarse+1,1:npz)
      real, intent(in) :: blending_weights_dgrid_v(is_coarse:ie_coarse+1,js_coarse:je_coarse,1:npz)
 
-     call hybrid_coarse_grain_u(Atm%u(is:ie,js:je+1,1:npz), phalf, Atm%gridstruct%dx(is:ie,js:je+1), Atm%ptop,&
+     call blended_coarse_grain_u(Atm%u(is:ie,js:je+1,1:npz), phalf, Atm%gridstruct%dx(is:ie,js:je+1), Atm%ptop,&
        blending_weights_dgrid_u, Atm%coarse_graining%restart%u)
-     call hybrid_coarse_grain_v(Atm%v(is:ie+1,js:je,1:npz), phalf, Atm%gridstruct%dy(is:ie+1,js:je), Atm%ptop,&
+     call blended_coarse_grain_v(Atm%v(is:ie+1,js:je,1:npz), phalf, Atm%gridstruct%dy(is:ie+1,js:je), Atm%ptop,&
        blending_weights_dgrid_v, Atm%coarse_graining%restart%v)
-     call hybrid_coarse_grain_field(Atm%pt(is:ie,js:je,1:npz), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
+     call blended_coarse_grain_field(Atm%pt(is:ie,js:je,1:npz), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
        Atm%ptop, masked_area_weights, model_level_weights, blending_weights_agrid, Atm%coarse_graining%restart%pt)
 
      if (.not. Atm%flagstruct%hydrostatic) then
-       call hybrid_coarse_grain_field(Atm%w(is:ie,js:je,1:npz), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
+       call blended_coarse_grain_field(Atm%w(is:ie,js:je,1:npz), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
          Atm%ptop, masked_area_weights, model_level_weights, blending_weights_agrid, Atm%coarse_graining%restart%w)
 
        ! Always coarse-grain delz an ze0 via an area weighted average
@@ -592,14 +593,14 @@ contains
      call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), Atm%phis(is:ie,js:je), Atm%coarse_graining%restart%phis)
 
      if (Atm%coarse_graining%write_coarse_agrid_vel_rst) then
-       call hybrid_coarse_grain_field(Atm%ua(is:ie,js:je,1:npz), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
+       call blended_coarse_grain_field(Atm%ua(is:ie,js:je,1:npz), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
          Atm%ptop, masked_area_weights, model_level_weights, blending_weights_agrid, Atm%coarse_graining%restart%ua)
-       call hybrid_coarse_grain_field(Atm%va(is:ie,js:je,1:npz), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
+       call blended_coarse_grain_field(Atm%va(is:ie,js:je,1:npz), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
          Atm%ptop, masked_area_weights, model_level_weights, blending_weights_agrid, Atm%coarse_graining%restart%va)
      endif
-   end subroutine coarse_grain_fv_core_via_hybrid_mass_weighted_method
+   end subroutine coarse_grain_fv_core_via_blended_mass_weighted_method
 
-   subroutine coarse_grain_fv_tracer_via_hybrid_mass_weighted_method(Atm, phalf, coarse_phalf_on_fine, masked_area_weights,&
+   subroutine coarse_grain_fv_tracer_via_blended_mass_weighted_method(Atm, phalf, coarse_phalf_on_fine, masked_area_weights,&
     model_level_weights, blending_weights_agrid)
     type(fv_atmos_type), intent(inout) :: Atm
     real, intent(in) :: phalf(is-1:ie+1,js-1:je+1,1:npz+1)
@@ -613,24 +614,24 @@ contains
     do n_tracer = 1, n_prognostic_tracers
       call get_tracer_names(MODEL_ATMOS, n_tracer, tracer_name)
       if (trim(tracer_name) .eq. 'cld_amt') then
-        call hybrid_coarse_grain_field(Atm%q(is:ie,js:je,1:npz,n_tracer), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
+        call blended_coarse_grain_field(Atm%q(is:ie,js:je,1:npz,n_tracer), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
           Atm%ptop, masked_area_weights, Atm%gridstruct%area(is:ie,js:je), blending_weights_agrid,&
           Atm%coarse_graining%restart%q(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz,n_tracer))
       else
-        call hybrid_coarse_grain_field(Atm%q(is:ie,js:je,1:npz,n_tracer), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
+        call blended_coarse_grain_field(Atm%q(is:ie,js:je,1:npz,n_tracer), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
           Atm%ptop, masked_area_weights, model_level_weights, blending_weights_agrid,&
           Atm%coarse_graining%restart%q(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz,n_tracer))
       endif
     enddo
 
     do n_tracer = n_prognostic_tracers + 1, n_tracers
-      call hybrid_coarse_grain_field(Atm%qdiag(is:ie,js:je,1:npz,n_tracer), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
+      call blended_coarse_grain_field(Atm%qdiag(is:ie,js:je,1:npz,n_tracer), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
         Atm%ptop, masked_area_weights, model_level_weights, blending_weights_agrid,&
         Atm%coarse_graining%restart%q(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz,n_tracer))
     enddo
-   end subroutine coarse_grain_fv_tracer_via_hybrid_mass_weighted_method
+   end subroutine coarse_grain_fv_tracer_via_blended_mass_weighted_method
 
-   subroutine coarse_grain_fv_core_via_hybrid_area_weighted_method(Atm, phalf, coarse_phalf, coarse_phalf_on_fine,&
+   subroutine coarse_grain_fv_core_via_blended_area_weighted_method(Atm, phalf, coarse_phalf, coarse_phalf_on_fine,&
     masked_area_weights, model_level_weights, blending_weights_agrid, blending_weights_dgrid_u, blending_weights_dgrid_v)
     type(fv_atmos_type), intent(inout) :: Atm
     real, intent(in) :: phalf(is-1:ie+1,js-1:je+1,1:npz+1)
@@ -642,15 +643,15 @@ contains
     real, intent(in) :: blending_weights_dgrid_u(is_coarse:ie_coarse,js_coarse:je_coarse+1,1:npz)
     real, intent(in) :: blending_weights_dgrid_v(is_coarse:ie_coarse+1,js_coarse:je_coarse,1:npz)
 
-    call hybrid_coarse_grain_u(Atm%u(is:ie,js:je+1,1:npz), phalf, Atm%gridstruct%dx(is:ie,js:je+1),&
+    call blended_coarse_grain_u(Atm%u(is:ie,js:je+1,1:npz), phalf, Atm%gridstruct%dx(is:ie,js:je+1),&
       Atm%ptop, blending_weights_dgrid_u, Atm%coarse_graining%restart%u)
-    call hybrid_coarse_grain_v(Atm%v(is:ie+1,js:je,1:npz), phalf, Atm%gridstruct%dy(is:ie+1,js:je),&
+    call blended_coarse_grain_v(Atm%v(is:ie+1,js:je,1:npz), phalf, Atm%gridstruct%dy(is:ie+1,js:je),&
       Atm%ptop, blending_weights_dgrid_v, Atm%coarse_graining%restart%v)
-    call hybrid_coarse_grain_field(Atm%pt(is:ie,js:je,1:npz), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
+    call blended_coarse_grain_field(Atm%pt(is:ie,js:je,1:npz), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
       Atm%ptop, masked_area_weights, model_level_weights, blending_weights_agrid, Atm%coarse_graining%restart%pt)
 
     if (.not. Atm%flagstruct%hydrostatic) then
-      call hybrid_coarse_grain_field(Atm%w(is:ie,js:je,1:npz), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
+      call blended_coarse_grain_field(Atm%w(is:ie,js:je,1:npz), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
         Atm%ptop, masked_area_weights, model_level_weights, blending_weights_agrid, Atm%coarse_graining%restart%w)
 
       ! Always coarse-grain delz an ze0 via an area weighted average
@@ -663,14 +664,14 @@ contains
     call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), Atm%phis(is:ie,js:je), Atm%coarse_graining%restart%phis)
 
     if (Atm%coarse_graining%write_coarse_agrid_vel_rst) then
-      call hybrid_coarse_grain_field(Atm%ua(is:ie,js:je,1:npz), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
+      call blended_coarse_grain_field(Atm%ua(is:ie,js:je,1:npz), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
         Atm%ptop, masked_area_weights, model_level_weights, blending_weights_agrid, Atm%coarse_graining%restart%ua)
-      call hybrid_coarse_grain_field(Atm%va(is:ie,js:je,1:npz), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
+      call blended_coarse_grain_field(Atm%va(is:ie,js:je,1:npz), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
         Atm%ptop, masked_area_weights, model_level_weights, blending_weights_agrid, Atm%coarse_graining%restart%va)
     endif
-  end subroutine coarse_grain_fv_core_via_hybrid_area_weighted_method
+  end subroutine coarse_grain_fv_core_via_blended_area_weighted_method
 
-  subroutine coarse_grain_fv_tracer_via_hybrid_area_weighted_method(Atm, phalf, coarse_phalf_on_fine, masked_area_weights,&
+  subroutine coarse_grain_fv_tracer_via_blended_area_weighted_method(Atm, phalf, coarse_phalf_on_fine, masked_area_weights,&
     model_level_weights, blending_weights_agrid)
     type(fv_atmos_type), intent(inout) :: Atm
     real, intent(in) :: phalf(is-1:ie+1,js-1:je+1,1:npz+1)
@@ -682,16 +683,16 @@ contains
     integer :: n_tracer
 
     do n_tracer = 1, n_tracers
-      call hybrid_coarse_grain_field(Atm%q(is:ie,js:je,1:npz,n_tracer), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
+      call blended_coarse_grain_field(Atm%q(is:ie,js:je,1:npz,n_tracer), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
         Atm%ptop, masked_area_weights, model_level_weights, blending_weights_agrid,&
         Atm%coarse_graining%restart%q(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz,n_tracer))
     enddo
     do n_tracer = n_prognostic_tracers + 1, n_tracers
-      call hybrid_coarse_grain_field(Atm%qdiag(is:ie,js:je,1:npz,n_tracer), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
+      call blended_coarse_grain_field(Atm%qdiag(is:ie,js:je,1:npz,n_tracer), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine,&
         Atm%ptop, masked_area_weights, model_level_weights, blending_weights_agrid,&
         Atm%coarse_graining%restart%q(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz,n_tracer))
     enddo
-   end subroutine coarse_grain_fv_tracer_via_hybrid_area_weighted_method
+   end subroutine coarse_grain_fv_tracer_via_blended_area_weighted_method
 
    subroutine compute_top_height(delz, phis, top_height)
      real, intent(in) :: delz(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz)

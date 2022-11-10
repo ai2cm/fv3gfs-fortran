@@ -12,12 +12,12 @@ module coarse_graining_mod
   public :: block_sum, compute_mass_weights, get_fine_array_bounds, &
        get_coarse_array_bounds, coarse_graining_init, weighted_block_average, &
        weighted_block_edge_average_x, weighted_block_edge_average_y, MODEL_LEVEL, &
-       block_upsample, mask_area_weights, PRESSURE_LEVEL, HYBRID_MASS_WEIGHTED, HYBRID_AREA_WEIGHTED,&
+       block_upsample, mask_area_weights, PRESSURE_LEVEL, BLENDED_MASS_WEIGHTED, BLENDED_AREA_WEIGHTED,&
        vertical_remapping_requirements, vertically_remap_field, block_mode, block_min, block_max, &
        remap_edges_along_x, remap_edges_along_y, block_edge_sum_x, block_edge_sum_y, &
        eddy_covariance_2d_weights, eddy_covariance_3d_weights, compute_blending_weights_agrid, &
-       compute_blending_weights_dgrid_u, compute_blending_weights_dgrid_v, hybrid_coarse_grain_field, &
-       hybrid_coarse_grain_u, hybrid_coarse_grain_v
+       compute_blending_weights_dgrid_u, compute_blending_weights_dgrid_v, blended_coarse_grain_field, &
+       blended_coarse_grain_u, blended_coarse_grain_v
 
   interface block_sum
      module procedure block_sum_2d
@@ -78,19 +78,19 @@ module coarse_graining_mod
      module procedure weighted_block_edge_average_y_pre_downsampled_masked
   end interface weighted_block_edge_average_y_pre_downsampled
 
-  interface hybrid_coarse_grain_field
-      module procedure hybrid_coarse_grain_field_area_weighted
-      module procedure hybrid_coarse_grain_field_mass_weighted
-  end interface hybrid_coarse_grain_field
+  interface blended_coarse_grain_field
+      module procedure blended_coarse_grain_field_area_weighted
+      module procedure blended_coarse_grain_field_mass_weighted
+  end interface blended_coarse_grain_field
 
   ! Global variables for the module, initialized in coarse_graining_init
   integer :: is, ie, js, je, npz
   integer :: is_coarse, ie_coarse, js_coarse, je_coarse
   character(len=11) :: MODEL_LEVEL = 'model_level'
   character(len=14) :: PRESSURE_LEVEL = 'pressure_level'
-  character(len=20) :: HYBRID_MASS_WEIGHTED = 'hybrid_mass_weighted'
-  character(len=20) :: HYBRID_AREA_WEIGHTED = 'hybrid_area_weighted'
-  real :: sigma_blend = 0.9  ! Constant defining sigma level at which we switch to pressure-level coarsening in the hybrid method.
+  character(len=21) :: BLENDED_MASS_WEIGHTED = 'blended_mass_weighted'
+  character(len=21) :: BLENDED_AREA_WEIGHTED = 'blended_area_weighted'
+  real :: sigma_blend = 0.9  ! Constant defining sigma level at which we switch to pressure-level coarsening in the blended method.
 
   ! Namelist parameters initialized with default values
   integer :: coarsening_factor = 8
@@ -173,9 +173,9 @@ contains
 
     if (trim(strategy) .ne. MODEL_LEVEL .and. &
         trim(strategy) .ne. PRESSURE_LEVEL .and. &
-        trim(strategy) .ne. HYBRID_MASS_WEIGHTED .and. &
-        trim(strategy) .ne. HYBRID_AREA_WEIGHTED) then
-       write(error_message, *) 'Invalid coarse graining strategy provided.'
+        trim(strategy) .ne. BLENDED_MASS_WEIGHTED .and. &
+        trim(strategy) .ne. BLENDED_AREA_WEIGHTED) then
+       write(error_message, *) 'Invalid coarse graining strategy provided, ', trim(strategy)
        call mpp_error(FATAL, error_message)
     endif
   end subroutine assert_valid_strategy
@@ -1243,7 +1243,7 @@ contains
    call weighted_block_average(masked_area_weights, remapped, result)
  end subroutine pressure_coarse_grain_field
 
- subroutine hybrid_coarse_grain_field_area_weighted(field, phalf, coarse_phalf_on_fine, ptop, masked_area_weights,&
+ subroutine blended_coarse_grain_field_area_weighted(field, phalf, coarse_phalf_on_fine, ptop, masked_area_weights,&
    model_level_weights, blending_weights, result)
    real, intent(in), dimension(is:ie,js:je,1:npz) :: field, masked_area_weights
    real, intent(in), dimension(is:ie,js:je,1:npz+1) :: phalf, coarse_phalf_on_fine
@@ -1260,9 +1260,9 @@ contains
    call pressure_coarse_grain_field(field, phalf, coarse_phalf_on_fine, ptop, masked_area_weights, pressure_coarse_grained)
    call weighted_block_average(model_level_weights, field, result)
    result = blending_weights * pressure_coarse_grained + (1 - blending_weights) * result
- end subroutine hybrid_coarse_grain_field_area_weighted
+ end subroutine blended_coarse_grain_field_area_weighted
 
- subroutine hybrid_coarse_grain_field_mass_weighted(field, phalf, coarse_phalf_on_fine, ptop, masked_area_weights,&
+ subroutine blended_coarse_grain_field_mass_weighted(field, phalf, coarse_phalf_on_fine, ptop, masked_area_weights,&
    model_level_weights, blending_weights, result)
    real, intent(in), dimension(is:ie,js:je,1:npz) :: field, masked_area_weights
    real, intent(in), dimension(is:ie,js:je,1:npz+1) :: phalf, coarse_phalf_on_fine
@@ -1280,9 +1280,9 @@ contains
    call pressure_coarse_grain_field(field, phalf, coarse_phalf_on_fine, ptop, masked_area_weights, pressure_coarse_grained)
    call weighted_block_average(model_level_weights, field, result)
    result = blending_weights * pressure_coarse_grained + (1 - blending_weights) * result
- end subroutine hybrid_coarse_grain_field_mass_weighted
+ end subroutine blended_coarse_grain_field_mass_weighted
 
- subroutine hybrid_coarse_grain_u(u, phalf, dx, ptop, blending_weights, u_coarse)
+ subroutine blended_coarse_grain_u(u, phalf, dx, ptop, blending_weights, u_coarse)
    real, intent(in) :: u(is:ie,js:je+1,1:npz)
    real, intent(in) :: phalf(is-1:ie+1,js-1:je+1,1:npz+1)
    real, intent(in) :: dx(is:ie,js:je+1)
@@ -1297,9 +1297,9 @@ contains
    call remap_edges_along_x(u, phalf, dx, ptop, pressure_coarse_grained)
    call weighted_block_edge_average_x(dx, u, u_coarse)
    u_coarse = blending_weights * pressure_coarse_grained + (1 - blending_weights) * u_coarse
- end subroutine hybrid_coarse_grain_u
+ end subroutine blended_coarse_grain_u
 
- subroutine hybrid_coarse_grain_v(v, phalf, dy, ptop, blending_weights, v_coarse)
+ subroutine blended_coarse_grain_v(v, phalf, dy, ptop, blending_weights, v_coarse)
    real, intent(in) :: v(is:ie+1,js:je,1:npz)
    real, intent(in) :: phalf(is-1:ie+1,js-1:je+1,1:npz+1)
    real, intent(in) :: dy(is:ie+1,js:je)
@@ -1314,6 +1314,6 @@ contains
    call remap_edges_along_y(v, phalf, dy, ptop, pressure_coarse_grained)
    call weighted_block_edge_average_y(dy, v, v_coarse)
    v_coarse = blending_weights * pressure_coarse_grained + (1 - blending_weights) * v_coarse
- end subroutine hybrid_coarse_grain_v
+ end subroutine blended_coarse_grain_v
 
 end module coarse_graining_mod
