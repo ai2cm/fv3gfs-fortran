@@ -21,7 +21,6 @@ for filename in config_filenames:
         config_params.append(pytest.param(filename, pytest.mark.slow))
     else:
         config_params.append(filename)
-print(config_params)
 
 
 @pytest.fixture(params=config_filenames)
