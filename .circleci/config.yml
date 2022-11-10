@@ -23,6 +23,10 @@ commands:
           command: |
             git submodule init
             git submodule update
+      - restore_cache:
+          name: Restore nix build cache
+          keys:
+            - nix-fv3gfs-fortran-{{ git rev-parse HEAD }}
       - run: |
           nix-env -iA cachix -f https://cachix.org/api/v1/install
           cachix use vulcanclimatemodeling
@@ -32,6 +36,11 @@ commands:
       - run:
           name: Build wrapper
           command: nix-shell --run "make -j 4 -C FV3 wrapper_build"
+      - save_cache:
+          name: Save nix build cache
+          key: nix-fv3gfs-fortran-{{ git rev-parse HEAD }}
+          paths:
+            - FV3/
       - run:
           name: Test
           command: nix-shell --run "pytest --native tests/pytest -v << parameters.fortran-pytest-args >>"
@@ -153,6 +162,7 @@ workflows:
       - nix-additional:
           name: "Additional native tests"
           requires:
+            - nix-basic
             - hold-nix-additional
           filters:
             branches:

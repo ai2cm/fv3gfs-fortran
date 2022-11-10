@@ -23,7 +23,7 @@ for filename in config_filenames:
         config_params.append(filename)
 
 
-@pytest.fixture(params=config_filenames)
+@pytest.fixture(params=config_params)
 def config(request):
     config_filename = os.path.join(CONFIG_DIR, request.param)
     with open(config_filename, "r") as config_file:
