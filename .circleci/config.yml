@@ -37,7 +37,7 @@ commands:
           command: nix-shell --run "pytest --native tests/pytest -v << parameters.fortran-pytest-args >>"
       - run:
           name: Test wrapper
-          command: nix-shell --run "make << parameters.wrapper-make-rule >>"
+          command: nix-shell --run "make -C FV3/wrapper << parameters.wrapper-make-rule >>"
 jobs:
   nix-full:
     docker:
