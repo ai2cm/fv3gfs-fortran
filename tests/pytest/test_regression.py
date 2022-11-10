@@ -111,10 +111,10 @@ def test_regression(
     "config_filename",
     [
         "default.yml",
-        "baroclinic.yml",
-        "restart.yml",
-        "model-level-coarse-graining.yml",
-        "pressure-level-coarse-graining.yml",
+        pytest.param("baroclinic.yml", marks=pytest.mark.slow),
+        pytest.param("restart.yml", marks=pytest.mark.slow),
+        pytest.param("model-level-coarse-graining.yml", marks=pytest.mark.slow),
+        pytest.param("pressure-level-coarse-graining.yml", marks=pytest.mark.slow),
     ],
 )
 def test_regression_native(run_native, config_filename: str, tmpdir, system_regtest):
@@ -125,7 +125,12 @@ def test_regression_native(run_native, config_filename: str, tmpdir, system_regt
 
 
 @pytest.mark.parametrize(
-    "config_filename", ["default.yml", "emulation.yml", "restart.yml"]
+    "config_filename",
+    [
+        "default.yml",
+        pytest.param("emulation.yml", marks=pytest.mark.slow),
+        pytest.param("restart.yml", marks=pytest.mark.slow),
+    ],
 )
 def test_restart_reproducibility(run_native, config_filename, tmpdir):
     config_template = get_config(config_filename)
@@ -157,6 +162,7 @@ def test_restart_reproducibility(run_native, config_filename, tmpdir):
     assert segmented_checksums == continuous_checksums
 
 
+@pytest.mark.slow
 def test_indefinite_physics_diagnostics(run_native, tmpdir):
     config_template = get_config("default.yml")
 
@@ -176,7 +182,7 @@ def test_indefinite_physics_diagnostics(run_native, tmpdir):
     run_native(fdiag, fdiag_rundir)
     run_native(indefinite, indefinite_rundir)
 
-    fdiag_checksums =  _checksum_diagnostics(fdiag_rundir)
+    fdiag_checksums = _checksum_diagnostics(fdiag_rundir)
     indefinite_checksums = _checksum_diagnostics(indefinite_rundir)
     assert fdiag_checksums == indefinite_checksums
 
@@ -190,13 +196,16 @@ def open_tiles(prefix):
     return xarray.concat(datasets, dim="tile")
 
 
+@pytest.mark.slow
 def test_use_prescribed_sea_surface_properties(run_native, tmpdir):
     config = get_config("default.yml")
 
     prescribed_ssts.create_sst_dataset(tmpdir)
     patch_files = prescribed_ssts.get_patch_files(tmpdir)
     config["patch_files"] = patch_files
-    config["namelist"]["gfs_physics_nml"]["use_prescribed_sea_surface_properties"] = True
+    config["namelist"]["gfs_physics_nml"][
+        "use_prescribed_sea_surface_properties"
+    ] = True
     config["namelist"]["fv_grid_nml"]["grid_file"] = "INPUT/grid_spec.nc"
 
     rundir = os.path.join(str(tmpdir), "rundir")
@@ -209,19 +218,26 @@ def test_use_prescribed_sea_surface_properties(run_native, tmpdir):
 PRESCRIBED_SST_ERRORS = {
     "MPP_OPEN:INPUT/sst.nc does not exist.": prescribed_ssts.grid_file_assets("C12")
     + [prescribed_ssts.data_table_asset()],
-    "sea_surface_temperature dataset not specified in data_table.": prescribed_ssts.grid_file_assets("C12"),
+    "sea_surface_temperature dataset not specified in data_table.": prescribed_ssts.grid_file_assets(
+        "C12"
+    ),
 }
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize(
     ("message", "patch_files"),
     list(PRESCRIBED_SST_ERRORS.items()),
     ids=list(PRESCRIBED_SST_ERRORS.keys()),
 )
-def test_use_prescribed_sea_surface_properties_error(run_native, tmpdir, message, patch_files):
+def test_use_prescribed_sea_surface_properties_error(
+    run_native, tmpdir, message, patch_files
+):
     config = get_config("default.yml")
     config["patch_files"] = patch_files
-    config["namelist"]["gfs_physics_nml"]["use_prescribed_sea_surface_properties"] = True
+    config["namelist"]["gfs_physics_nml"][
+        "use_prescribed_sea_surface_properties"
+    ] = True
     config["namelist"]["fv_grid_nml"]["grid_file"] = "INPUT/grid_spec.nc"
     rundir = os.path.join(str(tmpdir), "rundir")
     result = run_native(config, rundir, error_expected=True)
@@ -377,9 +393,7 @@ def run_model_docker(rundir, model_image, n_processes, additional_env_vars=None)
     )
     with open(fv3out_filename, "w") as fv3out_f, open(fv3err_filename, "w") as fv3err_f:
         subprocess.check_call(
-            call,
-            stdout=fv3out_f,
-            stderr=fv3err_f,
+            call, stdout=fv3out_f, stderr=fv3err_f,
         )
 
 

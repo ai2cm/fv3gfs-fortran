@@ -7,7 +7,21 @@ import hashlib
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
 CONFIG_DIR = os.path.join(TEST_DIR, "config")
+SLOW_CONFIGS = [
+    "restart.yml",
+    "emulation.yml",
+    "baroclinic.yml",
+    "model-level-coarse-graining.yml",
+    "pressure-level-coarse-graining.yml",
+]
 config_filenames = os.listdir(CONFIG_DIR)
+config_params = []
+for filename in config_filenames:
+    if filename in SLOW_CONFIGS:
+        config_params.append(pytest.param(filename, pytest.mark.slow))
+    else:
+        config_params.append(filename)
+print(config_params)
 
 
 @pytest.fixture(params=config_filenames)
@@ -80,8 +94,7 @@ def test_fv3_wrapper_regression(regtest, tmpdir, config):
 def run_fv3(config, run_dir):
     fv3config.write_run_directory(config, str(run_dir))
     subprocess.check_call(
-        ["mpirun", "-n", "6", "fv3.exe"],
-        cwd=run_dir,
+        ["mpirun", "-n", "6", "fv3.exe"], cwd=run_dir,
     )
 
 

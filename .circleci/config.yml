@@ -1,47 +1,16 @@
 version: 2.1
 orbs:
   gcp-gcr: circleci/gcp-gcr@0.15.0
-jobs:
-  nix-mac:
-    macos:
-      xcode: 11.3.0
-    environment:
-      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
-      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
-      MPIR_CVAR_OFI_SKIP_IPV6: "1"
-      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
-    steps:
-      - run: |
-          curl -L -O https://nixos.org/nix/install
-          sh install --darwin-use-unencrypted-nix-store-volume
-          rm -f install
-      - run: |
-          nix-env -i git openssh google-cloud-sdk
-          nix-env -iA cachix -f https://cachix.org/api/v1/install
-          cachix use vulcanclimatemodeling
-          echo $ENCODED_GCR_KEY | base64 -d > $GOOGLE_APPLICATION_CREDENTIALS
-      - checkout
-      - run:
-          name: "Pull Submodules"
-          command: |
-            git submodule init
-            git submodule update
-      - run: |
-          nix-build -j 4 -A fms | cachix push vulcanclimatemodeling
-          nix-shell --run "cd FV3 && bash configure nix && make -j 4"
-          # additional changes to the DNS settings are needed for mac
-          # https://stackoverflow.com/questions/23112515/mpich2-gethostbyname-failed
-          echo "127.0.0.1 $HOSTNAME" | sudo tee -a /etc/hosts
-      - run:
-          name: Test
-          command: nix-shell --run "pytest --native tests/pytest"
+commands:
   nix:
-    docker:
-      - image: nixos/nix
-    environment:
-      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
-      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
-      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    description: "Install and run tests via nix"
+    parameters:
+      fortran-pytest-args:
+        type: string
+        default: ""
+      wrapper-make-rule:
+        type: string
+        default: test
     steps:
       - run: nix-env -i git openssh google-cloud-sdk
       - checkout
@@ -65,10 +34,42 @@ jobs:
           command: nix-shell --run "make -j 4 -C FV3 wrapper_build"
       - run:
           name: Test
-          command: nix-shell --run "pytest --native tests/pytest -v"
+          command: nix-shell --run "pytest --native tests/pytest -v << parameters.fortran-pytest-args >>"
       - run:
           name: Test wrapper
-          command: nix-shell --run "make test_wrapper"
+          command: nix-shell --run "make << parameters.wrapper-make-rule >>"
+jobs:
+  nix-full:
+    docker:
+      - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    steps:
+      - nix
+  nix-basic:
+    docker:
+      - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    steps:
+      - nix:
+          fortran-pytest-args: "-m 'not slow'"
+          wrapper-make-rule: "test_basic"
+  nix-additional:
+    docker:
+      - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    steps:
+      - nix:
+          fortran-pytest-args: "-m 'slow'"
+          wrapper-make-rule: "test_additional"
   lint:
     docker:
       - image: circleci/python:3.9
@@ -76,7 +77,6 @@ jobs:
       - checkout
       - run: sudo pip3 install pre-commit==2.15.0
       - run: pre-commit
-
   build_default:
     machine:
       docker_layer_caching: true
@@ -139,7 +139,35 @@ workflows:
   version: 2
   build:
     jobs:
-      - build_default
-      - nix
       - lint
-#      - nix-mac
+      - nix-basic:
+          name: "Minimal native tests"
+          filters:
+            branches:
+              ignore: master
+      - hold-nix-additional:
+          type: approval
+          filters:
+            branches:
+              ignore: master
+      - nix-additional:
+          name: "Additional native tests"
+          requires:
+            - hold-nix-additional
+          filters:
+            branches:
+              ignore: master
+      - hold-build_default:
+          type: approval
+          filters:
+            branches:
+              ignore: master
+      - build_default:
+          name: "Docker tests"
+          requires:
+            - hold-build_default
+      - nix-full:
+          name: "Full native tests"
+          filters:
+            branches:
+              only: master

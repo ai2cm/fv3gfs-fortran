@@ -73,6 +73,14 @@ test: ## run tests quickly with the default Python
 	pytest -v tests/pytest
 	pytest -v tests/test_all_mpi_requiring.py
 
+test_basic: ## run tests quickly with the default Python
+	pytest -v tests/pytest -m "not slow"
+	pytest -v tests/test_all_mpi_requiring.py -m "not slow"
+
+test_additional: ## run tests quickly with the default Python
+	pytest -v tests/pytest -m "slow"
+	pytest -v tests/test_all_mpi_requiring.py -m "slow"
+
 coverage: ## check code coverage quickly with the default Python
 	coverage run --source fv3gfs setup.py test
 	coverage report -m
