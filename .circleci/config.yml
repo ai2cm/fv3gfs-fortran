@@ -26,7 +26,7 @@ commands:
       - restore_cache:
           name: Restore nix build cache
           keys:
-            - nix-fv3gfs-fortran-{{ git rev-parse HEAD }}
+            - nix-fv3gfs-fortran-{{ .Environment.CIRCLE_SHA1 }}
       - run: |
           nix-env -iA cachix -f https://cachix.org/api/v1/install
           cachix use vulcanclimatemodeling
@@ -38,7 +38,7 @@ commands:
           command: nix-shell --run "make -j 4 -C FV3 wrapper_build"
       - save_cache:
           name: Save nix build cache
-          key: nix-fv3gfs-fortran-{{ git rev-parse HEAD }}
+          key: nix-fv3gfs-fortran-{{ .Environment.CIRCLE_SHA1 }}
           paths:
             - FV3/
       - run:
@@ -162,7 +162,7 @@ workflows:
       - nix-additional:
           name: "Additional native tests"
           requires:
-            - nix-basic
+            - Minimal native tests
             - hold-nix-additional
           filters:
             branches:
