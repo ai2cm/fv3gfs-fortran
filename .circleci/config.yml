@@ -3,14 +3,7 @@ orbs:
   gcp-gcr: circleci/gcp-gcr@0.15.0
 commands:
   nix:
-    description: "Install and run tests via nix"
-    parameters:
-      fortran-pytest-args:
-        type: string
-        default: ""
-      wrapper-make-rule:
-        type: string
-        default: test
+    description: "Build fortran and wrapper in nix environment"
     steps:
       - run: nix-env -i git openssh google-cloud-sdk
       - checkout
@@ -41,12 +34,6 @@ commands:
           key: nix-fv3gfs-fortran-{{ .Environment.CIRCLE_SHA1 }}
           paths:
             - FV3/
-      - run:
-          name: Test
-          command: nix-shell --run "pytest --native tests/pytest -v << parameters.fortran-pytest-args >>"
-      - run:
-          name: Test wrapper
-          command: nix-shell --run "make -C FV3/wrapper << parameters.wrapper-make-rule >>"
 jobs:
   nix-full:
     docker:
@@ -57,6 +44,12 @@ jobs:
       FSSPEC_GS_REQUESTER_PAYS: vcm-ml
     steps:
       - nix
+      - run:
+          name: Test fortran
+          command: nix-shell --run "pytest --native tests/pytest -v"
+      - run:
+          name: Test wrapper
+          command: nix-shell --run "make -C FV3/wrapper test"
   nix-basic:
     docker:
       - image: nixos/nix
@@ -65,10 +58,14 @@ jobs:
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
       FSSPEC_GS_REQUESTER_PAYS: vcm-ml
     steps:
-      - nix:
-          fortran-pytest-args: "-m 'not slow'"
-          wrapper-make-rule: "test_basic"
-  nix-additional:
+      - nix
+      - run:
+          name: Test fortran
+          command: nix-shell --run "pytest --native tests/pytest -v -m basic"
+      - run:
+          name: Test wrapper
+          command: nix-shell --run "make -C FV3/wrapper test_basic"
+  nix-coarse-graining:
     docker:
       - image: nixos/nix
     environment:
@@ -76,9 +73,52 @@ jobs:
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
       FSSPEC_GS_REQUESTER_PAYS: vcm-ml
     steps:
-      - nix:
-          fortran-pytest-args: "-m 'slow'"
-          wrapper-make-rule: "test_additional"
+      - nix
+      - run:
+          name: Test fortran
+          command: nix-shell --run "pytest --native tests/pytest -v -m coarse"
+      - run:
+          name: Test wrapper
+          command: nix-shell --run "make -C FV3/wrapper test_coarse_graining"
+  nix-emulation:
+    docker:
+      - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    steps:
+      - nix
+      - run:
+          name: Test fortran
+          command: nix-shell --run "pytest --native tests/pytest -v -m emulation"
+      - run:
+          name: Test wrapper
+          command: nix-shell --run "make -C FV3/wrapper test_emulation"
+  nix-unmarked:
+    docker:
+      - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    steps:
+      - nix
+      - run:
+          name: Test fortran
+          command: nix-shell --run "pytest --native tests/pytest -v -m 'not basic and not coarse and not emulation'"
+  nix-wrapper:
+    docker:
+      - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    steps:
+      - nix
+      - run:
+          name: Test wrapper
+          command: nix-shell --run "make -C FV3/wrapper test"
   lint:
     docker:
       - image: circleci/python:3.9
@@ -150,32 +190,67 @@ workflows:
     jobs:
       - lint
       - nix-basic:
-          name: "Minimal native tests"
+          name: Minimal native fortran and wrapper tests
           filters:
             branches:
               ignore: master
-      - hold-nix-additional:
+      - hold-nix-coarse-graining:
+          name: Launch coarse graining tests
           type: approval
           filters:
             branches:
               ignore: master
-      - nix-additional:
-          name: "Additional native tests"
+      - nix-coarse-graining:
+          name: Coarse graining tests
           requires:
-            - Minimal native tests
-            - hold-nix-additional
+            - Minimal native fortran and wrapper tests
+            - Launch coarse graining tests
           filters:
             branches:
               ignore: master
-      - hold-build_default:
+      - hold-nix-emulation:
+          name: Launch emulation tests
           type: approval
           filters:
             branches:
               ignore: master
-      - build_default:
-          name: "Docker tests"
+      - nix-emulation:
+          name: Emulation tests
           requires:
-            - hold-build_default
+            - Minimal native fortran and wrapper tests
+            - Launch emulation tests
+          filters:
+            branches:
+              ignore: master
+      - hold-nix-unmarked:
+          name: Launch unmarked fortran tests
+          type: approval
+          filters:
+            branches:
+              ignore: master
+      - nix-unmarked:
+          name: Unmarked fortran tests
+          requires:
+            - Minimal native fortran and wrapper tests
+            - Launch unmarked fortran tests
+          filters:
+            branches:
+              ignore: master
+      - hold-nix-wrapper:
+          name: Launch wrapper tests
+          type: approval
+          filters:
+            branches:
+              ignore: master
+      - nix-wrapper:
+          name: Wrapper tests
+          requires:
+            - Minimal native fortran and wrapper tests
+            - Launch wrapper tests
+          filters:
+            branches:
+              ignore: master
+      - build_default
       - nix-full:
           name: "Full native tests"
           filters:

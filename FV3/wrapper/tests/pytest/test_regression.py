@@ -7,23 +7,17 @@ import hashlib
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
 CONFIG_DIR = os.path.join(TEST_DIR, "config")
-SLOW_CONFIGS = [
+CONFIG_PARAMS = [
+    pytest.param("default.yml", marks=pytest.mark.basic),
+    pytest.param("emulation.yml", marks=pytest.mark.emulation),
+    pytest.param("model-level-coarse-graining.yml", marks=pytest.mark.coarse),
+    pytest.param("pressure-level-coarse-graining.yml", marks=pytest.mark.coarse),
     "restart.yml",
-    "emulation.yml",
-    "baroclinic.yml",
-    "model-level-coarse-graining.yml",
-    "pressure-level-coarse-graining.yml",
+    "baroclinic.yml"
 ]
-config_filenames = os.listdir(CONFIG_DIR)
-config_params = []
-for filename in config_filenames:
-    if filename in SLOW_CONFIGS:
-        config_params.append(pytest.param(filename, marks=pytest.mark.slow))
-    else:
-        config_params.append(filename)
 
 
-@pytest.fixture(params=config_params)
+@pytest.fixture(params=CONFIG_PARAMS)
 def config(request):
     config_filename = os.path.join(CONFIG_DIR, request.param)
     with open(config_filename, "r") as config_file:

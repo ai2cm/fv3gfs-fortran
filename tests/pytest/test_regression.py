@@ -110,11 +110,11 @@ def test_regression(
 @pytest.mark.parametrize(
     "config_filename",
     [
-        "default.yml",
-        pytest.param("baroclinic.yml", marks=pytest.mark.slow),
-        pytest.param("restart.yml", marks=pytest.mark.slow),
-        pytest.param("model-level-coarse-graining.yml", marks=pytest.mark.slow),
-        pytest.param("pressure-level-coarse-graining.yml", marks=pytest.mark.slow),
+        pytest.param("default.yml", marks=pytest.mark.basic),
+        pytest.param("model-level-coarse-graining.yml", marks=pytest.mark.coarse),
+        pytest.param("pressure-level-coarse-graining.yml", marks=pytest.mark.coarse),
+        "baroclinic.yml",
+        "restart.yml",
     ],
 )
 def test_regression_native(run_native, config_filename: str, tmpdir, system_regtest):
@@ -127,9 +127,9 @@ def test_regression_native(run_native, config_filename: str, tmpdir, system_regt
 @pytest.mark.parametrize(
     "config_filename",
     [
-        "default.yml",
-        pytest.param("emulation.yml", marks=pytest.mark.slow),
-        pytest.param("restart.yml", marks=pytest.mark.slow),
+        pytest.param("default.yml", marks=pytest.mark.basic),
+        pytest.param("emulation.yml", marks=pytest.mark.emulation),
+        "restart.yml"
     ],
 )
 def test_restart_reproducibility(run_native, config_filename, tmpdir):
@@ -162,7 +162,6 @@ def test_restart_reproducibility(run_native, config_filename, tmpdir):
     assert segmented_checksums == continuous_checksums
 
 
-@pytest.mark.slow
 def test_indefinite_physics_diagnostics(run_native, tmpdir):
     config_template = get_config("default.yml")
 
@@ -196,7 +195,6 @@ def open_tiles(prefix):
     return xarray.concat(datasets, dim="tile")
 
 
-@pytest.mark.slow
 def test_use_prescribed_sea_surface_properties(run_native, tmpdir):
     config = get_config("default.yml")
 
@@ -224,7 +222,6 @@ PRESCRIBED_SST_ERRORS = {
 }
 
 
-@pytest.mark.slow
 @pytest.mark.parametrize(
     ("message", "patch_files"),
     list(PRESCRIBED_SST_ERRORS.items()),
@@ -253,12 +250,14 @@ def emulation_run(run_native, tmpdir_factory):
     return completed_process, run_dir
 
 
+@pytest.mark.emulation
 def test_callpyfort_integration(emulation_run):
     _, run_dir = emulation_run
     assert os.path.exists(join(run_dir, "microphysics_success.txt"))
     assert os.path.exists(join(run_dir, "store_success.txt"))
 
 
+@pytest.mark.emulation
 @pytest.mark.parametrize("tile", range(1, 7))
 def test_zhao_carr_diagnostics(emulation_run, regtest, tile):
     rundir = emulation_run[1]
@@ -267,6 +266,7 @@ def test_zhao_carr_diagnostics(emulation_run, regtest, tile):
     ds.info(regtest)
 
 
+@pytest.mark.emulation
 def test_gscond_logs(run_native, regtest, tmpdir):
     config = get_config("emulation.yml")
     config["namelist"]["gfs_physics_nml"]["emulate_gscond_only"] = True
@@ -277,6 +277,7 @@ def test_gscond_logs(run_native, regtest, tmpdir):
     print(first_state, file=regtest)
 
 
+@pytest.mark.emulation
 @pytest.mark.parametrize("tile", range(1, 7))
 def test_zhao_carr_surface_precipitation_matches_total_water_source(
     emulation_run, tile
