@@ -46,7 +46,7 @@ jobs:
       - nix
       - run:
           name: Test fortran
-          command: nix-shell --run "pytest --native tests/pytest -v"
+          command: nix-shell --run "make test_native_fortran"
       - run:
           name: Test wrapper
           command: nix-shell --run "make -C FV3/wrapper test"
@@ -61,7 +61,7 @@ jobs:
       - nix
       - run:
           name: Test fortran
-          command: nix-shell --run "pytest --native tests/pytest -v -m basic"
+          command: nix-shell --run "make test_native_fortran_basic"
       - run:
           name: Test wrapper
           command: nix-shell --run "make -C FV3/wrapper test_basic"
@@ -76,7 +76,7 @@ jobs:
       - nix
       - run:
           name: Test fortran
-          command: nix-shell --run "pytest --native tests/pytest -v -m coarse"
+          command: nix-shell --run "make test_native_fortran_coarse_graining"
       - run:
           name: Test wrapper
           command: nix-shell --run "make -C FV3/wrapper test_coarse_graining"
@@ -91,7 +91,7 @@ jobs:
       - nix
       - run:
           name: Test fortran
-          command: nix-shell --run "pytest --native tests/pytest -v -m emulation"
+          command: nix-shell --run "make test_native_fortran_emulation"
       - run:
           name: Test wrapper
           command: nix-shell --run "make -C FV3/wrapper test_emulation"
@@ -106,7 +106,7 @@ jobs:
       - nix
       - run:
           name: Test fortran
-          command: nix-shell --run "pytest --native tests/pytest -v -m 'not basic and not coarse and not emulation'"
+          command: nix-shell --run "make test_native_fortran_unmarked"
   nix-wrapper:
     docker:
       - image: nixos/nix
