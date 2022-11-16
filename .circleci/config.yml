@@ -1,47 +1,9 @@
 version: 2.1
 orbs:
   gcp-gcr: circleci/gcp-gcr@0.15.0
-jobs:
-  nix-mac:
-    macos:
-      xcode: 11.3.0
-    environment:
-      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
-      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
-      MPIR_CVAR_OFI_SKIP_IPV6: "1"
-      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
-    steps:
-      - run: |
-          curl -L -O https://nixos.org/nix/install
-          sh install --darwin-use-unencrypted-nix-store-volume
-          rm -f install
-      - run: |
-          nix-env -i git openssh google-cloud-sdk
-          nix-env -iA cachix -f https://cachix.org/api/v1/install
-          cachix use vulcanclimatemodeling
-          echo $ENCODED_GCR_KEY | base64 -d > $GOOGLE_APPLICATION_CREDENTIALS
-      - checkout
-      - run:
-          name: "Pull Submodules"
-          command: |
-            git submodule init
-            git submodule update
-      - run: |
-          nix-build -j 4 -A fms | cachix push vulcanclimatemodeling
-          nix-shell --run "cd FV3 && bash configure nix && make -j 4"
-          # additional changes to the DNS settings are needed for mac
-          # https://stackoverflow.com/questions/23112515/mpich2-gethostbyname-failed
-          echo "127.0.0.1 $HOSTNAME" | sudo tee -a /etc/hosts
-      - run:
-          name: Test
-          command: nix-shell --run "pytest --native tests/pytest"
+commands:
   nix:
-    docker:
-      - image: nixos/nix
-    environment:
-      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
-      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
-      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    description: "Build fortran and wrapper in nix environment"
     steps:
       - run: nix-env -i git openssh google-cloud-sdk
       - checkout
@@ -54,6 +16,10 @@ jobs:
           command: |
             git submodule init
             git submodule update
+      - restore_cache:
+          name: Restore nix build cache
+          keys:
+            - nix-fv3gfs-fortran-{{ .Environment.CIRCLE_SHA1 }}
       - run: |
           nix-env -iA cachix -f https://cachix.org/api/v1/install
           cachix use vulcanclimatemodeling
@@ -63,12 +29,96 @@ jobs:
       - run:
           name: Build wrapper
           command: nix-shell --run "make -j 4 -C FV3 wrapper_build"
+      - save_cache:
+          name: Save nix build cache
+          key: nix-fv3gfs-fortran-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - FV3/
+jobs:
+  nix-full:
+    docker:
+      - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    steps:
+      - nix
       - run:
-          name: Test
-          command: nix-shell --run "pytest --native tests/pytest -v"
+          name: Test fortran
+          command: nix-shell --run "make test_native_fortran"
       - run:
           name: Test wrapper
-          command: nix-shell --run "make test_wrapper"
+          command: nix-shell --run "make -C FV3/wrapper test"
+  nix-basic:
+    docker:
+      - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    steps:
+      - nix
+      - run:
+          name: Test fortran
+          command: nix-shell --run "make test_native_fortran_basic"
+      - run:
+          name: Test wrapper
+          command: nix-shell --run "make -C FV3/wrapper test_basic"
+  nix-coarse-graining:
+    docker:
+      - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    steps:
+      - nix
+      - run:
+          name: Test fortran
+          command: nix-shell --run "make test_native_fortran_coarse_graining"
+      - run:
+          name: Test wrapper
+          command: nix-shell --run "make -C FV3/wrapper test_coarse_graining"
+  nix-emulation:
+    docker:
+      - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    steps:
+      - nix
+      - run:
+          name: Test fortran
+          command: nix-shell --run "make test_native_fortran_emulation"
+      - run:
+          name: Test wrapper
+          command: nix-shell --run "make -C FV3/wrapper test_emulation"
+  nix-unmarked:
+    docker:
+      - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    steps:
+      - nix
+      - run:
+          name: Test fortran
+          command: nix-shell --run "make test_native_fortran_unmarked"
+  nix-wrapper:
+    docker:
+      - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    steps:
+      - nix
+      - run:
+          name: Test wrapper
+          command: nix-shell --run "make -C FV3/wrapper test"
   lint:
     docker:
       - image: circleci/python:3.9
@@ -76,7 +126,6 @@ jobs:
       - checkout
       - run: sudo pip3 install pre-commit==2.15.0
       - run: pre-commit
-
   build_default:
     machine:
       docker_layer_caching: true
@@ -139,7 +188,71 @@ workflows:
   version: 2
   build:
     jobs:
-      - build_default
-      - nix
       - lint
-#      - nix-mac
+      - nix-basic:
+          name: Minimal native fortran and wrapper tests
+          filters:
+            branches:
+              ignore: master
+      - hold-nix-coarse-graining:
+          name: Launch coarse graining tests
+          type: approval
+          filters:
+            branches:
+              ignore: master
+      - nix-coarse-graining:
+          name: Coarse graining tests
+          requires:
+            - Minimal native fortran and wrapper tests
+            - Launch coarse graining tests
+          filters:
+            branches:
+              ignore: master
+      - hold-nix-emulation:
+          name: Launch emulation tests
+          type: approval
+          filters:
+            branches:
+              ignore: master
+      - nix-emulation:
+          name: Emulation tests
+          requires:
+            - Minimal native fortran and wrapper tests
+            - Launch emulation tests
+          filters:
+            branches:
+              ignore: master
+      - hold-nix-unmarked:
+          name: Launch unmarked fortran tests
+          type: approval
+          filters:
+            branches:
+              ignore: master
+      - nix-unmarked:
+          name: Unmarked fortran tests
+          requires:
+            - Minimal native fortran and wrapper tests
+            - Launch unmarked fortran tests
+          filters:
+            branches:
+              ignore: master
+      - hold-nix-wrapper:
+          name: Launch wrapper tests
+          type: approval
+          filters:
+            branches:
+              ignore: master
+      - nix-wrapper:
+          name: Wrapper tests
+          requires:
+            - Minimal native fortran and wrapper tests
+            - Launch wrapper tests
+          filters:
+            branches:
+              ignore: master
+      - build_default
+      - nix-full:
+          name: "Full native tests"
+          filters:
+            branches:
+              only: master

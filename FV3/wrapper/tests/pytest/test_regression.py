@@ -7,10 +7,17 @@ import hashlib
 
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
 CONFIG_DIR = os.path.join(TEST_DIR, "config")
-config_filenames = os.listdir(CONFIG_DIR)
+CONFIG_PARAMS = [
+    pytest.param("default.yml", marks=pytest.mark.basic),
+    pytest.param("emulation.yml", marks=pytest.mark.emulation),
+    pytest.param("model-level-coarse-graining.yml", marks=pytest.mark.coarse),
+    pytest.param("pressure-level-coarse-graining.yml", marks=pytest.mark.coarse),
+    "restart.yml",
+    "baroclinic.yml"
+]
 
 
-@pytest.fixture(params=config_filenames)
+@pytest.fixture(params=CONFIG_PARAMS)
 def config(request):
     config_filename = os.path.join(CONFIG_DIR, request.param)
     with open(config_filename, "r") as config_file:
@@ -80,8 +87,7 @@ def test_fv3_wrapper_regression(regtest, tmpdir, config):
 def run_fv3(config, run_dir):
     fv3config.write_run_directory(config, str(run_dir))
     subprocess.check_call(
-        ["mpirun", "-n", "6", "fv3.exe"],
-        cwd=run_dir,
+        ["mpirun", "-n", "6", "fv3.exe"], cwd=run_dir,
     )
 
 
