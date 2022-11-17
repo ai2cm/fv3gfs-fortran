@@ -110,11 +110,11 @@ def test_regression(
 @pytest.mark.parametrize(
     "config_filename",
     [
-        "default.yml",
+        pytest.param("default.yml", marks=pytest.mark.basic),
+        pytest.param("model-level-coarse-graining.yml", marks=pytest.mark.coarse),
+        pytest.param("pressure-level-coarse-graining.yml", marks=pytest.mark.coarse),
         "baroclinic.yml",
         "restart.yml",
-        "model-level-coarse-graining.yml",
-        "pressure-level-coarse-graining.yml",
     ],
 )
 def test_regression_native(run_native, config_filename: str, tmpdir, system_regtest):
@@ -125,7 +125,12 @@ def test_regression_native(run_native, config_filename: str, tmpdir, system_regt
 
 
 @pytest.mark.parametrize(
-    "config_filename", ["default.yml", "emulation.yml", "restart.yml"]
+    "config_filename",
+    [
+        pytest.param("default.yml", marks=pytest.mark.basic),
+        pytest.param("emulation.yml", marks=pytest.mark.emulation),
+        "restart.yml"
+    ],
 )
 def test_restart_reproducibility(run_native, config_filename, tmpdir):
     config_template = get_config(config_filename)
@@ -176,7 +181,7 @@ def test_indefinite_physics_diagnostics(run_native, tmpdir):
     run_native(fdiag, fdiag_rundir)
     run_native(indefinite, indefinite_rundir)
 
-    fdiag_checksums =  _checksum_diagnostics(fdiag_rundir)
+    fdiag_checksums = _checksum_diagnostics(fdiag_rundir)
     indefinite_checksums = _checksum_diagnostics(indefinite_rundir)
     assert fdiag_checksums == indefinite_checksums
 
@@ -237,12 +242,14 @@ def emulation_run(run_native, tmpdir_factory):
     return completed_process, run_dir
 
 
+@pytest.mark.emulation
 def test_callpyfort_integration(emulation_run):
     _, run_dir = emulation_run
     assert os.path.exists(join(run_dir, "microphysics_success.txt"))
     assert os.path.exists(join(run_dir, "store_success.txt"))
 
 
+@pytest.mark.emulation
 @pytest.mark.parametrize("tile", range(1, 7))
 def test_zhao_carr_diagnostics(emulation_run, regtest, tile):
     rundir = emulation_run[1]
@@ -251,6 +258,7 @@ def test_zhao_carr_diagnostics(emulation_run, regtest, tile):
     ds.info(regtest)
 
 
+@pytest.mark.emulation
 def test_gscond_logs(run_native, regtest, tmpdir):
     config = get_config("emulation.yml")
     config["namelist"]["gfs_physics_nml"]["emulate_gscond_only"] = True
@@ -261,6 +269,7 @@ def test_gscond_logs(run_native, regtest, tmpdir):
     print(first_state, file=regtest)
 
 
+@pytest.mark.emulation
 @pytest.mark.parametrize("tile", range(1, 7))
 def test_zhao_carr_surface_precipitation_matches_total_water_source(
     emulation_run, tile

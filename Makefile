@@ -112,6 +112,21 @@ test_native: ## run native tests (all tools and build dependencies are assumed t
 		cd $(DIR)  && \
 		gcovr -d -r ../FV3 --html --html-details -o index.html
 
+test_native_fortran:
+	pytest --native tests/pytest -v
+
+test_native_fortran_basic:
+	pytest --native tests/pytest -v -m 'basic'
+
+test_native_fortran_coarse_graining:
+	pytest --native tests/pytest -v -m 'coarse'
+
+test_native_fortran_emulation:
+	pytest --native tests/pytest -v -m 'emulation'
+
+test_native_fortran_unmarked:
+	pytest --native tests/pytest -v -m 'not basic and not coarse and not emulation'
+
 test_wrapper:
 	$(MAKE) -C FV3/wrapper/ test
 
