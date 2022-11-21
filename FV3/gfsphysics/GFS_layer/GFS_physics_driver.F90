@@ -611,7 +611,8 @@ module module_physics_driver
         t_post_precpd, &
         tp_cpf
 
-      real(kind=kind_phys), dimension(size(Grid%xlon,1))  :: psp_cpf
+      real(kind=kind_phys), dimension(size(Grid%xlon,1))  :: psp_cpf, &
+        pr_post_precpd
 #endif
 
 !--- ALLOCATABLE ELEMENTS
@@ -4670,7 +4671,7 @@ module module_physics_driver
             call set_state("total_precipitation", rain1)
             call set_state("ratio_of_snowfall_to_rainfall", Diag%sr)
             call set_state("tendency_of_rain_water_mixing_ratio_due_to_microphysics", rainp)
-            
+
             call call_function("emulation", "microphysics")
 
             ! Need to apply the "gscond after last timestep".
@@ -4686,14 +4687,14 @@ module module_physics_driver
             call get_state("air_temperature_after_precpd", t_post_precpd)
             call get_state("specific_humidity_after_precpd", qv_post_precpd)
             call get_state("cloud_water_mixing_ratio_after_precpd", qc_post_precpd)
-            call get_state("total_precipitation", rain1)
+            call get_state("total_precipitation", pr_post_precpd)
 
             if (Model%ldiag3d) then
               Diag%zhao_carr_emulator%humidity = (qv_post_precpd(1:im,1:levs) - dqdt(:,:,1)) / dtp
               Diag%zhao_carr_emulator%cloud_water = (qc_post_precpd(1:im,1:levs) - dqdt(:,:,ntcw)) / dtp
               Diag%zhao_carr_emulator%temperature = (t_post_precpd(1:im,1:levs) - dtdt) / dtp
             end if
-            Diag%zhao_carr_emulator%surface_precipitation = rain1 / dtp * rhowater
+            Diag%zhao_carr_emulator%surface_precipitation = pr_post_precpd / dtp * rhowater
 
             ! apply emulator
             if (Model%emulate_zc_microphysics) then
@@ -4704,6 +4705,8 @@ module module_physics_driver
                   Stateout%gt0(i,k) = t_post_precpd(i,k)
                 enddo
               enddo
+
+              rain1(:) = pr_post_precpd
             endif
 
 #endif
