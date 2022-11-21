@@ -4670,14 +4670,13 @@ module module_physics_driver
             call set_state("total_precipitation", rain1)
             call set_state("ratio_of_snowfall_to_rainfall", Diag%sr)
             call set_state("tendency_of_rain_water_mixing_ratio_due_to_microphysics", rainp)
-
+            
             call call_function("emulation", "microphysics")
 
-            if (.not. Model%emulate_gscond_only) then
-              call apply_python_gscond_updates_to_diags(Diag, dqdt, dtdt, Model%ntcw, dtp)
-              if (Model%emulate_zc_microphysics) then
-                call apply_python_gscond_updates_to_tbd(Tbd)
-              end if
+            ! Need to apply the "gscond after last timestep".
+            ! no need for Stateout since final state is determined from precpd emulation.  
+            if (Model%emulate_zc_microphysics) then
+              call apply_python_gscond_updates_to_tbd(Tbd)
             end if
             
             if (Model%save_zc_microphysics) then
