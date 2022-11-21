@@ -4629,14 +4629,15 @@ module module_physics_driver
             call set_state("specific_humidity_after_gscond", Stateout%gq0(1:im, 1:levs, 1))
             call set_state("air_temperature_after_gscond", Stateout%gt0(1:im, 1:levs))
             call set_state("cloud_water_mixing_ratio_after_gscond", Stateout%gq0(1:im, 1:levs, ntcw))
+            
+            ! if gscond model not specified, does nothing and diags should be equivalent w/ physics
+            call call_function("emulation", "gscond")  
+            call apply_python_gscond_updates_to_diags(Diag, dqdt, dtdt, Model%ntcw, dtp)
 
+            ! update state now so fortran precpd can respond to gscond emulator output
             if (Model%emulate_gscond_only) then
-              call call_function("emulation", "gscond")
-              call apply_python_gscond_updates_to_diags(Diag, dqdt, dtdt, Model%ntcw, dtp)
-              if (Model%emulate_zc_microphysics) then
-                call apply_python_gscond_updates_to_stateout(Stateout, Model%ntcw)
-                call apply_python_gscond_updates_to_tbd(Tbd)
-              end if
+              call apply_python_gscond_updates_to_stateout(Stateout, Model%ntcw)
+              call apply_python_gscond_updates_to_tbd(Tbd)
             endif
 
 #endif
@@ -4650,9 +4651,6 @@ module module_physics_driver
               Diag%zhao_carr_physics%humidity = (Stateout%gq0(1:im,1:levs, 1) - dqdt(:,:,1)) / dtp
               Diag%zhao_carr_physics%cloud_water = (Stateout%gq0(1:im,1:levs,ntcw) - dqdt(:,:,ntcw)) / dtp
               Diag%zhao_carr_physics%temperature = (Stateout%gt0(1:im,1:levs) - dtdt) / dtp
-              if (Model%emulate_gscond_only) then
-                call adjust_zhao_carr_physics_diags_gscond_only(Diag)
-              end if
             end if
             ! rain1 has units m, and represents surface precip over dtp
             Diag%zhao_carr_physics%surface_precipitation = rain1 / dtp * rhowater
