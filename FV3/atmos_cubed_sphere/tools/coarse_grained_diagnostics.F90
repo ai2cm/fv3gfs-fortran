@@ -763,12 +763,7 @@ contains
     call get_need_nd_work_array(3, need_3d_work_array)
     call get_need_mass_array(Atm(tile_count)%coarse_graining%strategy, need_mass_array)
     call get_need_height_array(need_height_array)
-
-    if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL) then
-      call get_need_masked_area_array(need_masked_area_array)
-    else
-      need_masked_area_array = .false.
-    endif
+    call get_need_masked_area_array(Atm(tile_count)%coarse_graining%strategy, need_masked_area_array)
 
     call get_fine_array_bounds(is, ie, js, je)
     call get_coarse_array_bounds(is_coarse, ie_coarse, js_coarse, je_coarse)
@@ -1061,17 +1056,18 @@ contains
      character(len=64), intent(in) :: coarsening_strategy
      logical, intent(out) :: need_mass_array
 
+     logical :: valid_axes, valid_id, valid_reduction_method, valid_strategy
      integer :: index
 
      need_mass_array = .false.
+     valid_strategy = trim(coarsening_strategy) .eq. MODEL_LEVEL
+     if (.not. valid_strategy) return
      do index = 1, DIAG_SIZE
-       if ((coarse_diagnostics(index)%axes == 3) .and. & 
-           (trim(coarse_diagnostics(index)%reduction_method) .eq. MASS_WEIGHTED) .and. &
-           (coarse_diagnostics(index)%id > 0) .and. &
-           (trim(coarsening_strategy) .eq. MODEL_LEVEL)) then
-           need_mass_array = .true.
-           exit
-       endif
+       valid_axes = coarse_diagnostics(index)%axes .eq. 3
+       valid_id = coarse_diagnostics(index)%id .gt. 0
+       valid_reduction_method = trim(coarse_diagnostics(index)%reduction_method) .eq. MASS_WEIGHTED
+       need_mass_array = valid_axes .and. valid_id .and. valid_reduction_method
+       if (need_mass_array) exit
      enddo
   end subroutine get_need_mass_array
 
@@ -1093,13 +1089,16 @@ contains
     enddo
  end subroutine get_need_height_array
 
-  subroutine get_need_masked_area_array(need_masked_area_array)
+  subroutine get_need_masked_area_array(coarsening_strategy, need_masked_area_array)
+    character(len=64), intent(in) :: coarsening_strategy
     logical, intent(out) :: need_masked_area_array
 
-    logical :: valid_axes, valid_id
+    logical :: valid_axes, valid_id, valid_strategy
     integer :: index
 
     need_masked_area_array = .false.
+    valid_strategy = trim(coarsening_strategy) .eq. PRESSURE_LEVEL
+    if (.not. valid_strategy) return
     do index = 1, DIAG_SIZE
       valid_axes = coarse_diagnostics(index)%axes .eq. 3
       valid_id = coarse_diagnostics(index)%id .gt. 0
