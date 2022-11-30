@@ -330,6 +330,7 @@ def _checksum_rundir(rundir: str, file):
         print(path, checksum_file(path), file=file)
 
 
+@pytest.mark.emulation
 def test_checksum_emulation(emulation_run, system_regtest):
     _, run_dir = emulation_run
     _checksum_rundir(run_dir, file=system_regtest)
