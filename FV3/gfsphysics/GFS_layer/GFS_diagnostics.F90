@@ -1350,6 +1350,92 @@ module GFS_diagnostics
 
     idx = idx + 1
     ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'shallow_convective_precipitation_rate_average'
+    ExtDiag(idx)%desc = 'averaged surface shallow convective precipitation rate'
+    ExtDiag(idx)%unit = 'kg/m**2/s'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%cnvfac = cn_th
+    ExtDiag(idx)%time_avg = .TRUE.
+    ExtDiag(idx)%time_avg_kind = 'full'
+    ExtDiag(idx)%intpl_method = 'bilinear'
+    ExtDiag(idx)%coarse_graining_method = 'area_weighted'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%shallow_cnvprcp(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'shallow_convective_precipitation_rate_bucket_average'
+    ExtDiag(idx)%desc = 'averaged bucket surface shallow convective precipitation rate'
+    ExtDiag(idx)%unit = 'kg/m**2/s'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%cnvfac = cn_th
+    ExtDiag(idx)%time_avg = .TRUE.
+    ExtDiag(idx)%intpl_method = 'bilinear'
+    ExtDiag(idx)%coarse_graining_method = 'area_weighted'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%shallow_cnvprcpb(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'shallow_convective_precipitation_rate'
+    ExtDiag(idx)%desc = 'surface shallow convective precipitation rate'
+    ExtDiag(idx)%unit = 'kg/m**2/s'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%coarse_graining_method = 'area_weighted'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%shallow_cnvprcp(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'deep_convective_precipitation_rate_average'
+    ExtDiag(idx)%desc = 'averaged surface deep convective precipitation rate'
+    ExtDiag(idx)%unit = 'kg/m**2/s'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%cnvfac = cn_th
+    ExtDiag(idx)%time_avg = .TRUE.
+    ExtDiag(idx)%time_avg_kind = 'full'
+    ExtDiag(idx)%intpl_method = 'bilinear'
+    ExtDiag(idx)%coarse_graining_method = 'area_weighted'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%deep_cnvprcp(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'deep_convective_precipitation_rate_bucket_average'
+    ExtDiag(idx)%desc = 'averaged bucket surface deep convective precipitation rate'
+    ExtDiag(idx)%unit = 'kg/m**2/s'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%cnvfac = cn_th
+    ExtDiag(idx)%time_avg = .TRUE.
+    ExtDiag(idx)%intpl_method = 'bilinear'
+    ExtDiag(idx)%coarse_graining_method = 'area_weighted'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%deep_cnvprcpb(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'deep_convective_precipitation_rate'
+    ExtDiag(idx)%desc = 'surface deep convective precipitation rate'
+    ExtDiag(idx)%unit = 'kg/m**2/s'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%coarse_graining_method = 'area_weighted'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%deep_cnvprcp(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
     ExtDiag(idx)%name = 'spfhmin2m'
     ExtDiag(idx)%desc = 'minimum specific humidity'
     ExtDiag(idx)%unit = 'kg/kg'
