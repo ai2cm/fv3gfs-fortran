@@ -6120,28 +6120,6 @@ module module_physics_driver
         delp = initial_mass_of_dry_air_plus_vapor * dry_air_plus_hydrometeor_mass_fraction_after_physics
       end subroutine compute_updated_delp_following_dynamics_definition
 
-      subroutine adjust_zhao_carr_physics_diags_gscond_only(Diag)
-        type (GFS_diag_type), intent(inout) :: Diag
-
-        call adjust_total_physics_tendency_gscond_only(&
-          Diag%zhao_carr_physics%humidity,&
-          Diag%gscond_physics%humidity,&
-          Diag%gscond_emulator%humidity&
-        )
-
-        call adjust_total_physics_tendency_gscond_only(&
-          Diag%zhao_carr_physics%temperature,&
-          Diag%gscond_physics%temperature,&
-          Diag%gscond_emulator%temperature&
-        )
-
-        call adjust_total_physics_tendency_gscond_only(&
-          Diag%zhao_carr_physics%cloud_water,&
-          Diag%gscond_physics%cloud_water,&
-          Diag%gscond_emulator%cloud_water&
-        )
-      end subroutine
-
       !> Adjust the total physics tendency in the gscond-only case
       !> The total tendency is defined as gscond_physics + precpd_physics
       subroutine adjust_total_physics_tendency_gscond_only(total, gscond_physics, gscond_emulator)
