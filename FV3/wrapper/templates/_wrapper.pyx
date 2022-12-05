@@ -586,7 +586,22 @@ def step_post_radiation_physics():
 
 
 def transform_agrid_winds_to_dgrid_winds(ua, va):
-    """ua and va are quantities"""
+    """Transform A-grid lat-lon winds to D-grid cubed-sphere winds.
+
+    This function wraps the cubed_a2d subroutine from the fortran model, making
+    it possible to call from Python without having to provide information about
+    the grid or domain decomposition.
+
+    Args:
+        ua : Quantity
+            The eastward wind defined on the A-grid
+        va : Quantity
+            The northward wind defined on the A-grid
+
+    Returns:
+        u, v : Quantity, Quantity
+            The cubed-sphere components of the wind defined on the D-grid
+    """
     cdef REAL_t[:, :, :] buffer_ua
     cdef REAL_t[:, :, :] buffer_va
     cdef REAL_t[:, :, :] buffer_u
@@ -608,7 +623,22 @@ def transform_agrid_winds_to_dgrid_winds(ua, va):
 
 
 def transform_dgrid_winds_to_agrid_winds(u, v):
-    """ua and va are quantities"""
+    """Transform D-grid cubed-sphere winds to A-grid lat-lon winds.
+
+    This function wraps the cubed_to_latlon subroutine from the fortran model,
+    making it possible to call from Python without having to provide information
+    about the grid or domain decomposition.
+
+    Args:
+        u : Quantity
+            The x-wind defined on the D-grid
+        v : Quantity
+            The y-wind defined on the D-grid
+
+    Returns:
+        ua, va : Quantity, Quantity
+            The lat-lon components of the wind defined on the A-grid
+    """
     cdef REAL_t[:, :, :] buffer_ua
     cdef REAL_t[:, :, :] buffer_va
     cdef REAL_t[:, :, :] buffer_u
