@@ -87,8 +87,8 @@ class WindTransformationTests(unittest.TestCase):
         v_increment.view[:] = v_increment.view[:][::-1, :, :]
 
         (
-            x_wind_increment_python,
-            y_wind_increment_python,
+            x_wind_physics_increment,
+            y_wind_physics_increment,
         ) = fv3gfs.wrapper.transform_agrid_winds_to_dgrid_winds(
             u_increment, v_increment
         )
@@ -99,11 +99,11 @@ class WindTransformationTests(unittest.TestCase):
         y_wind_after_physics = updated_dynamical_core_state["y_wind"]
 
         np.testing.assert_allclose(
-            x_wind_before_physics.view[:] + x_wind_increment_python.view[:],
+            x_wind_before_physics.view[:] + x_wind_physics_increment.view[:],
             x_wind_after_physics.view[:],
         )
         np.testing.assert_allclose(
-            y_wind_before_physics.view[:] + y_wind_increment_python.view[:],
+            y_wind_before_physics.view[:] + y_wind_physics_increment.view[:],
             y_wind_after_physics.view[:],
         )
 
@@ -113,7 +113,8 @@ if __name__ == "__main__":
     # Deactivate fv_sg_adj for these tests. fv_sg_adj can otherwise introduce an
     # additional momentum tendency on the A-grid winds that is not accounted for
     # by the difference between the A-grid winds at the start of the physics and
-    # the A-grid winds at the end of the physics.  This is just to make the test
-    # simpler and is orthogonal to the functionality we are testing here.
+    # the A-grid winds at the end of the physics.  This is just to make the
+    # A-grid to D-grid test simpler and is orthogonal to the functionality we
+    # are testing here.
     config["namelist"]["fv_core_nml"]["fv_sg_adj"] = -1
     main(test_dir, config)
