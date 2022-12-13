@@ -2,6 +2,7 @@ import unittest
 import os
 import numpy as np
 import fv3gfs.wrapper
+from copy import deepcopy
 from mpi4py import MPI
 from util import (
     get_default_config,
@@ -32,8 +33,9 @@ class WindTransformationTests(unittest.TestCase):
         u_fortran = state["eastward_wind"]
         v_fortran = state["northward_wind"]
 
-        # We expect exact reproduction of the fortran here, since the wrapper wraps the same routine
-        # that is used to convert the D-grid winds to the A-grid winds within the fortran model.
+        # We expect exact reproduction of the fortran here, since the wrapper
+        # wraps the same routine that is used to convert the D-grid winds to the
+        # A-grid winds within the fortran model.
         u_wrapper, v_wrapper = fv3gfs.wrapper.transform_dgrid_winds_to_agrid_winds(
             x_wind_fortran, y_wind_fortran
         )
@@ -41,35 +43,77 @@ class WindTransformationTests(unittest.TestCase):
         np.testing.assert_equal(v_wrapper.view[:], v_fortran.view[:])
 
     def test_transform_agrid_winds_to_dgrid_winds(self):
-        fv3gfs.wrapper.step()
-        state = fv3gfs.wrapper.get_state(
-            ["x_wind", "y_wind", "eastward_wind", "northward_wind"]
-        )
-        x_wind_fortran = state["x_wind"]
-        y_wind_fortran = state["y_wind"]
-        u_fortran = state["eastward_wind"]
-        v_fortran = state["northward_wind"]
+        # This test mimics the wind updating procedure from the
+        # atmosphere_state_update subroutine in the atmosphere.F90 module, but
+        # uses the Python wrapped cubed_a2d subroutine to convert the physics
+        # wind increments from the A to the D grid.
 
-        # Here we do not expect an exact match, because the cubed_a2d subroutine is not an exact
-        # inverse of the cubed_to_latlon subroutine.  Errors can actually be non-trivial, so the
-        # tolerance must be large (30 m/s).  In general the cubed_a2d subroutine tends to produce
-        # a smoother wind field than the native winds.
-        #
-        # TODO: to my eye the plotted transformed wind field looks reasonable, but the tolerance
-        # required is surprisingly large.  We should check more carefully to make sure things
-        # are operating as we expect here.
+        fv3gfs.wrapper.step_dynamics()
+        fv3gfs.wrapper.compute_physics()
+        post_physics_state = fv3gfs.wrapper.get_state(
+            [
+                "x_wind",
+                "y_wind",
+                "eastward_wind_before_physics",
+                "northward_wind_before_physics",
+                "eastward_wind_after_physics",
+                "northward_wind_after_physics",
+            ]
+        )
+        x_wind_before_physics = post_physics_state["x_wind"]
+        y_wind_before_physics = post_physics_state["y_wind"]
+
+        u_before_physics = post_physics_state["eastward_wind_before_physics"]
+        u_after_physics = post_physics_state["eastward_wind_after_physics"]
+
+        v_before_physics = post_physics_state["northward_wind_before_physics"]
+        v_after_physics = post_physics_state["northward_wind_after_physics"]
+
+        # Note that 3D variables from the physics component of the model have
+        # their vertical dimension flipped with respect to 3D variables from the
+        # dynamical core.  Therefore we need to flip the vertical dimension of
+        # these A-grid wind increments so that when we convert them to D-grid
+        # wind increments, they align with the D-grid winds in the dynamical
+        # core. 
+        # 
+        # TODO: there is probably an easier way to construct a Quantity object
+        # with similar properties to an existing one.
+        u_increment = deepcopy(u_after_physics)
+        u_increment.view[:] = u_after_physics.view[:] - u_before_physics.view[:]
+        u_increment.view[:] = u_increment.view[:][::-1, :, :]
+
+        v_increment = deepcopy(v_after_physics)
+        v_increment.view[:] = v_after_physics.view[:] - v_before_physics.view[:]
+        v_increment.view[:] = v_increment.view[:][::-1, :, :]
+
         (
-            x_wind_wrapper,
-            y_wind_wrapper,
-        ) = fv3gfs.wrapper.transform_agrid_winds_to_dgrid_winds(u_fortran, v_fortran)
+            x_wind_increment_python,
+            y_wind_increment_python,
+        ) = fv3gfs.wrapper.transform_agrid_winds_to_dgrid_winds(
+            u_increment, v_increment
+        )
+
+        fv3gfs.wrapper.apply_physics()
+        updated_dynamical_core_state = fv3gfs.wrapper.get_state(["x_wind", "y_wind"])
+        x_wind_after_physics = updated_dynamical_core_state["x_wind"]
+        y_wind_after_physics = updated_dynamical_core_state["y_wind"]
+
         np.testing.assert_allclose(
-            x_wind_wrapper.view[:], x_wind_fortran.view[:], atol=30
+            x_wind_before_physics.view[:] + x_wind_increment_python.view[:],
+            x_wind_after_physics.view[:],
         )
         np.testing.assert_allclose(
-            y_wind_wrapper.view[:], y_wind_fortran.view[:], atol=30
+            y_wind_before_physics.view[:] + y_wind_increment_python.view[:],
+            y_wind_after_physics.view[:],
         )
 
 
 if __name__ == "__main__":
     config = get_default_config()
+    # Deactivate fv_sg_adj for these tests. fv_sg_adj can otherwise introduce an
+    # additional momentum tendency on the A-grid winds that is not accounted for
+    # by the difference between the A-grid winds at the start of the physics and
+    # the A-grid winds at the end of the physics.  This is just to make the test
+    # simpler and is orthogonal to the functionality we are testing here.
+    config["namelist"]["fv_core_nml"]["fv_sg_adj"] = -1
     main(test_dir, config)
