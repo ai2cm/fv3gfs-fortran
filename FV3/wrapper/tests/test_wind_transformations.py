@@ -75,9 +75,10 @@ class WindTransformationTests(unittest.TestCase):
         # these A-grid wind increments so that when we convert them to D-grid
         # wind increments, they align with the D-grid winds in the dynamical
         # core. 
-        # 
-        # TODO: there is probably an easier way to construct a Quantity object
-        # with similar properties to an existing one.
+        #
+        # deepcopy calls here are used out of convenience to construct Quantity
+        # objects of the same shape and metadata as others.  Their data is
+        # overwritten immediately.
         u_increment = deepcopy(u_after_physics)
         u_increment.view[:] = u_after_physics.view[:] - u_before_physics.view[:]
         u_increment.view[:] = u_increment.view[:][::-1, :, :]
