@@ -117,8 +117,8 @@ contains
     end subroutine get_tracer_name
 
     subroutine transform_agrid_winds_to_dgrid_winds_subroutine(ua, va, u, v) bind(c)
-        ! Wraps the internal cubed_a2d subroutine in a more convenient way, handling halos
-        ! halo updates, and the additional grid arguments within fortran for convenience.
+        ! Wraps the internal cubed_a2d subroutine in a more convenient way, handling
+        ! halo updates and the additional grid arguments within fortran for convenience.
         real, intent(in), dimension(i_start():i_end(),j_start():j_end(),1:nz()) :: ua, va
         real, intent(out), dimension(i_start():i_end(),j_start():j_end()+1,1:nz()) :: u
         real, intent(out), dimension(i_start():i_end()+1,j_start():j_end(),1:nz()) :: v
@@ -149,13 +149,27 @@ contains
         call mpp_update_domains(ua_halo, Atm(mytile)%domain, complete=.false.)
         call mpp_update_domains(va_halo, Atm(mytile)%domain, complete=.true.)
 
-        call cubed_a2d(npx, npy, npz, ua_halo, va_halo, u_halo, v_halo, Atm(mytile)%gridstruct, Atm(mytile)%domain, Atm(mytile)%bd)
+        call cubed_a2d(&
+            npx, &
+            npy, &
+            npz, &
+            ua_halo, &
+            va_halo, &
+            u_halo, &
+            v_halo, &
+            Atm(mytile)%gridstruct, &
+            Atm(mytile)%domain, &
+            Atm(mytile)%bd &
+        )
 
         u = u_halo(is:ie,js:je+1,1:npz)
         v = v_halo(is:ie+1,js:je,1:npz)
     end subroutine transform_agrid_winds_to_dgrid_winds_subroutine
 
     subroutine transform_dgrid_winds_to_agrid_winds_subroutine(u, v, ua, va) bind(c)
+        ! Wraps the internal cubed_to_latlon subroutine in a more convenient way, 
+        ! handling halo updates and the additional grid arguments within fortran
+        ! for convenience.
         real, intent(in), dimension(i_start():i_end(),j_start():j_end()+1,1:nz()) :: u
         real, intent(in), dimension(i_start():i_end()+1,j_start():j_end(),1:nz()) :: v
         real, intent(out), dimension(i_start():i_end(),j_start():j_end(),1:nz()) :: ua, va
@@ -188,7 +202,22 @@ contains
         call start_group_halo_update(i_pack, u_halo, v_halo, Atm(mytile)%domain, gridtype=DGRID_NE)
         call complete_group_halo_update(i_pack, Atm(mytile)%domain)
 
-        call cubed_to_latlon(u_halo, v_halo, ua_halo, va_halo, Atm(mytile)%gridstruct, npx, npy, npz, mode, Atm(mytile)%gridstruct%grid_type, Atm(mytile)%domain, Atm(mytile)%gridstruct%nested, Atm(mytile)%flagstruct%c2l_ord, Atm(mytile)%bd)
+        call cubed_to_latlon(&
+            u_halo, &
+            v_halo, &
+            ua_halo, &
+            va_halo, &
+            Atm(mytile)%gridstruct, &
+            npx, &
+            npy, &
+            npz, &
+            mode, &
+            Atm(mytile)%gridstruct%grid_type, &
+            Atm(mytile)%domain, &
+            Atm(mytile)%gridstruct%nested, &
+            Atm(mytile)%flagstruct%c2l_ord, &
+            Atm(mytile)%bd &
+        )
 
         ua = ua_halo(is:ie,js:je,1:npz)
         va = va_halo(is:ie,js:je,1:npz)
