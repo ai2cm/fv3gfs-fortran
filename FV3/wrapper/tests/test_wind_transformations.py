@@ -50,7 +50,7 @@ class WindTransformationTests(unittest.TestCase):
 
         fv3gfs.wrapper.step_dynamics()
         fv3gfs.wrapper.compute_physics()
-        post_physics_state = fv3gfs.wrapper.get_state(
+        pre_applied_physics_state = fv3gfs.wrapper.get_state(
             [
                 "x_wind",
                 "y_wind",
@@ -60,21 +60,21 @@ class WindTransformationTests(unittest.TestCase):
                 "northward_wind_after_physics",
             ]
         )
-        x_wind_before_physics = post_physics_state["x_wind"]
-        y_wind_before_physics = post_physics_state["y_wind"]
+        x_wind_before_physics = pre_applied_physics_state["x_wind"]
+        y_wind_before_physics = pre_applied_physics_state["y_wind"]
 
-        u_before_physics = post_physics_state["eastward_wind_before_physics"]
-        u_after_physics = post_physics_state["eastward_wind_after_physics"]
+        u_before_physics = pre_applied_physics_state["eastward_wind_before_physics"]
+        u_after_physics = pre_applied_physics_state["eastward_wind_after_physics"]
 
-        v_before_physics = post_physics_state["northward_wind_before_physics"]
-        v_after_physics = post_physics_state["northward_wind_after_physics"]
+        v_before_physics = pre_applied_physics_state["northward_wind_before_physics"]
+        v_after_physics = pre_applied_physics_state["northward_wind_after_physics"]
 
         # Note that 3D variables from the physics component of the model have
         # their vertical dimension flipped with respect to 3D variables from the
         # dynamical core.  Therefore we need to flip the vertical dimension of
         # these A-grid wind increments so that when we convert them to D-grid
         # wind increments, they align with the D-grid winds in the dynamical
-        # core. 
+        # core.
         #
         # deepcopy calls here are used out of convenience to construct Quantity
         # objects of the same shape and metadata as others.  Their data is
