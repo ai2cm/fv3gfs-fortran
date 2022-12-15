@@ -607,8 +607,8 @@ def transform_agrid_winds_to_dgrid_winds(ua, va):
     cdef REAL_t[:, :, :] buffer_u
     cdef REAL_t[:, :, :] buffer_v
 
-    ua = ua.transpose([pace.util.Z_DIMS, pace.util.Y_DIMS, pace.util.X_DIMS])
-    va = va.transpose([pace.util.Z_DIMS, pace.util.Y_DIMS, pace.util.X_DIMS])
+    ua = ua.transpose([pace.util.Z_DIM, pace.util.Y_DIM, pace.util.X_DIM])
+    va = va.transpose([pace.util.Z_DIM, pace.util.Y_DIM, pace.util.X_DIM])
     buffer_ua = np.ascontiguousarray(ua.view[:])
     buffer_va = np.ascontiguousarray(va.view[:])
 
@@ -644,8 +644,8 @@ def transform_dgrid_winds_to_agrid_winds(u, v):
     cdef REAL_t[:, :, :] buffer_u
     cdef REAL_t[:, :, :] buffer_v
 
-    u = u.transpose([pace.util.Z_DIMS, pace.util.Y_DIMS, pace.util.X_DIMS])
-    v = v.transpose([pace.util.Z_DIMS, pace.util.Y_DIMS, pace.util.X_DIMS])
+    u = u.transpose([pace.util.Z_DIM, pace.util.Y_INTERFACE_DIM, pace.util.X_DIM])
+    v = v.transpose([pace.util.Z_DIM, pace.util.Y_DIM, pace.util.X_INTERFACE_DIM])
     buffer_u = np.ascontiguousarray(u.view[:])
     buffer_v = np.ascontiguousarray(v.view[:])
 

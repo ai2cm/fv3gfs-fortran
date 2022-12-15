@@ -144,10 +144,10 @@ contains
         allocate(u_halo(isd:ied,jsd:jed+1,1:npz))
         allocate(v_halo(isd:ied+1,jsd:jed,1:npz))
 
+        ! Note we do not need to do a halo update here, since cubed_a2d takes
+        ! of this internally.
         ua_halo(is:ie,js:je,1:npz) = ua
         va_halo(is:ie,js:je,1:npz) = va
-        call mpp_update_domains(ua_halo, Atm(mytile)%domain, complete=.false.)
-        call mpp_update_domains(va_halo, Atm(mytile)%domain, complete=.true.)
 
         call cubed_a2d(&
             npx, &

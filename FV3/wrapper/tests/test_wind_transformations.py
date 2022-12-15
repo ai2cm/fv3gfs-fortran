@@ -111,11 +111,16 @@ class WindTransformationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     config = get_default_config()
-    # Deactivate fv_sg_adj for these tests. fv_sg_adj can otherwise introduce an
-    # additional momentum tendency on the A-grid winds that is not accounted for
-    # by the difference between the A-grid winds at the start of the physics and
-    # the A-grid winds at the end of the physics.  This is just to make the
-    # A-grid to D-grid test simpler and is orthogonal to the functionality we
-    # are testing here.
+    # Deactivate fv_subgrid_z for these tests.  Due to how the
+    # atmosphere_state_update subroutine is implemented in the atmosphere.F90
+    # module, the A-grid wind tendencies from the fv_subgrid_z subroutine are
+    # lumped into the A-grid wind tendencies from the physics.  We do not
+    # currently have easy access to the fv_subgrid_z tendency from the wrapper,
+    # and rather than implement that for the sake of the A-grid to D-grid
+    # transformation test, it is easier to simply turn it off. This way the
+    # A-grid wind tendency that is applied in the atmosphere_state_update
+    # subroutine comes only from the difference in the A-grid winds at the start
+    # of the physics and at the end of the physics, which is something that we
+    # can easily compute using existing wrapper infrastructure.
     config["namelist"]["fv_core_nml"]["fv_sg_adj"] = -1
     main(test_dir, config)
