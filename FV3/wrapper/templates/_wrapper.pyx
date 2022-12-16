@@ -607,14 +607,15 @@ def transform_agrid_winds_to_dgrid_winds(ua, va):
     cdef REAL_t[:, :, :] buffer_u
     cdef REAL_t[:, :, :] buffer_v
 
+    units = ua.units
     ua = ua.transpose([pace.util.Z_DIM, pace.util.Y_DIM, pace.util.X_DIM])
     va = va.transpose([pace.util.Z_DIM, pace.util.Y_DIM, pace.util.X_DIM])
     buffer_ua = np.ascontiguousarray(ua.view[:])
     buffer_va = np.ascontiguousarray(va.view[:])
 
     allocator = get_quantity_factory()
-    u = allocator.empty([pace.util.Z_DIM, pace.util.Y_INTERFACE_DIM, pace.util.X_DIM], "m/s", dtype=real_type)
-    v = allocator.empty([pace.util.Z_DIM, pace.util.Y_DIM, pace.util.X_INTERFACE_DIM], "m/s", dtype=real_type)
+    u = allocator.empty([pace.util.Z_DIM, pace.util.Y_INTERFACE_DIM, pace.util.X_DIM], units, dtype=real_type)
+    v = allocator.empty([pace.util.Z_DIM, pace.util.Y_DIM, pace.util.X_INTERFACE_DIM], units, dtype=real_type)
 
     with pace.util.recv_buffer(u.np.empty, u.view[:]) as buffer_u, pace.util.recv_buffer(v.np.empty, v.view[:]) as buffer_v:
         transform_agrid_winds_to_dgrid_winds_subroutine(&buffer_ua[0, 0, 0], &buffer_va[0, 0, 0], &buffer_u[0, 0, 0], &buffer_v[0, 0, 0])
@@ -644,14 +645,15 @@ def transform_dgrid_winds_to_agrid_winds(u, v):
     cdef REAL_t[:, :, :] buffer_u
     cdef REAL_t[:, :, :] buffer_v
 
+    units = u.units
     u = u.transpose([pace.util.Z_DIM, pace.util.Y_INTERFACE_DIM, pace.util.X_DIM])
     v = v.transpose([pace.util.Z_DIM, pace.util.Y_DIM, pace.util.X_INTERFACE_DIM])
     buffer_u = np.ascontiguousarray(u.view[:])
     buffer_v = np.ascontiguousarray(v.view[:])
 
     allocator = get_quantity_factory()
-    ua = allocator.empty([pace.util.Z_DIM, pace.util.Y_DIM, pace.util.X_DIM], "m/s", dtype=real_type)
-    va = allocator.empty([pace.util.Z_DIM, pace.util.Y_DIM, pace.util.X_DIM], "m/s", dtype=real_type)
+    ua = allocator.empty([pace.util.Z_DIM, pace.util.Y_DIM, pace.util.X_DIM], units, dtype=real_type)
+    va = allocator.empty([pace.util.Z_DIM, pace.util.Y_DIM, pace.util.X_DIM], units, dtype=real_type)
 
     with pace.util.recv_buffer(ua.np.empty, ua.view[:]) as buffer_ua, pace.util.recv_buffer(va.np.empty, va.view[:]) as buffer_va:
         transform_dgrid_winds_to_agrid_winds_subroutine(&buffer_u[0, 0, 0], &buffer_v[0, 0, 0], &buffer_ua[0, 0, 0], &buffer_va[0, 0, 0])
