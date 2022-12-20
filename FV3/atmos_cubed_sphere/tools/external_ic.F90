@@ -199,7 +199,7 @@ module external_ic_mod
    real(kind=R_GRID), parameter :: cnst_0p20=0.20d0
    real :: deg2rad
    character (len = 80) :: source   ! This tells what the input source was for the data
-   public get_external_ic, get_cubed_sphere_terrain
+   public get_external_ic, get_cubed_sphere_terrain, cubed_a2d
 
 ! version number of this module
 ! Include variable "version" to be written to log file.

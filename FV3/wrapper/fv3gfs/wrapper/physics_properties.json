@@ -1,5 +1,19 @@
 [
     {
+        "name": "northward_wind_before_physics",
+        "fortran_name": "vgrs",
+        "units": "m/s",
+        "container": "Statein",
+        "dims": ["z", "y", "x"]
+    },
+    {
+        "name": "eastward_wind_before_physics",
+        "fortran_name": "ugrs",
+        "units": "m/s",
+        "container": "Statein",
+        "dims": ["z", "y", "x"]
+    },
+    {
         "name": "air_temperature_after_physics",
         "fortran_name": "gt0",
         "units": "K",
