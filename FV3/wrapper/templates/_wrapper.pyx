@@ -607,6 +607,12 @@ def transform_agrid_winds_to_dgrid_winds(ua, va):
     cdef REAL_t[:, :, :] buffer_u
     cdef REAL_t[:, :, :] buffer_v
 
+    if ua.units != va.units:
+        raise ValueError(
+            f"Input wind components have differing units from each other. "
+            f"ua has units {ua.units!r} and va has units {va.units!r}."
+        )
+
     units = ua.units
     ua = ua.transpose([pace.util.Z_DIM, pace.util.Y_DIM, pace.util.X_DIM])
     va = va.transpose([pace.util.Z_DIM, pace.util.Y_DIM, pace.util.X_DIM])
@@ -644,6 +650,12 @@ def transform_dgrid_winds_to_agrid_winds(u, v):
     cdef REAL_t[:, :, :] buffer_va
     cdef REAL_t[:, :, :] buffer_u
     cdef REAL_t[:, :, :] buffer_v
+
+    if u.units != v.units:
+        raise ValueError(
+            f"Input wind components have differing units from each other. "
+            f"u has units {u.units!r} and v has units {v.units!r}."
+        )
 
     units = u.units
     u = u.transpose([pace.util.Z_DIM, pace.util.Y_INTERFACE_DIM, pace.util.X_DIM])

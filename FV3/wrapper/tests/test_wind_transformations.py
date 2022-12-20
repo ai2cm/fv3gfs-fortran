@@ -1,6 +1,7 @@
 import unittest
 import os
 import numpy as np
+import pytest
 import fv3gfs.wrapper
 from copy import deepcopy
 from mpi4py import MPI
@@ -41,6 +42,9 @@ class WindTransformationTests(unittest.TestCase):
         )
         np.testing.assert_equal(u_wrapper.view[:], u_fortran.view[:])
         np.testing.assert_equal(v_wrapper.view[:], v_fortran.view[:])
+
+        assert u_wrapper.units == "m/s"
+        assert v_wrapper.units == "m/s"
 
     def test_transform_agrid_winds_to_dgrid_winds(self):
         # This test mimics the wind updating procedure from the
@@ -94,6 +98,9 @@ class WindTransformationTests(unittest.TestCase):
             u_increment, v_increment
         )
 
+        assert x_wind_physics_increment.units == "m/s"
+        assert y_wind_physics_increment.units == "m/s"
+
         fv3gfs.wrapper.apply_physics()
         updated_dynamical_core_state = fv3gfs.wrapper.get_state(["x_wind", "y_wind"])
         x_wind_after_physics = updated_dynamical_core_state["x_wind"]
@@ -107,6 +114,26 @@ class WindTransformationTests(unittest.TestCase):
             y_wind_before_physics.view[:] + y_wind_physics_increment.view[:],
             y_wind_after_physics.view[:],
         )
+
+    def test_transform_dgrid_winds_to_agrid_winds_invalid_units(self):
+        state = fv3gfs.wrapper.get_state(["x_wind", "y_wind"])
+        x_wind = state["x_wind"]
+        y_wind = state["y_wind"]
+        x_wind.metadata.units = "m/s/s"
+
+        with pytest.raises(ValueError, match="Input wind components"):
+            fv3gfs.wrapper.transform_dgrid_winds_to_agrid_winds(x_wind, y_wind)
+
+    def test_transform_agrid_winds_to_dgrid_winds_invalid_units(self):
+        state = fv3gfs.wrapper.get_state(["eastward_wind", "northward_wind"])
+        eastward_wind = state["eastward_wind"]
+        northward_wind = state["northward_wind"]
+        eastward_wind.metadata.units = "m/s/s"
+
+        with pytest.raises(ValueError, match="Input wind components"):
+            fv3gfs.wrapper.transform_agrid_winds_to_dgrid_winds(
+                eastward_wind, northward_wind
+            )
 
 
 if __name__ == "__main__":
