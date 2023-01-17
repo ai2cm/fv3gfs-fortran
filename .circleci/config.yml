@@ -22,9 +22,9 @@ commands:
             - nix-fv3gfs-fortran-{{ .Environment.CIRCLE_SHA1 }}
       - run: |
           nix-env -iA cachix -f https://cachix.org/api/v1/install
-          cachix use vulcanclimatemodeling
+          cachix use ai2climatemodeling
       - run: |
-          nix-build -j 4 -A fms | cachix push vulcanclimatemodeling
+          nix-build -j 4 -A fms | cachix push ai2climatemodeling
           nix-shell --run "cd FV3 && bash configure nix && make -j 4"
       - run:
           name: Build wrapper
