@@ -181,7 +181,7 @@ To begin, install nix following [these instructions](https://nixos.org/download.
 
 (optional) We host binaries using a tool called cachix, and this will greatly speed up any builds. To use our binaries, [install cachix](https://github.com/cachix/cachix#installation) and then run
 
-    cachix use vulcanclimatemodeling
+    cachix use ai2climatemodeling
 
 Without using the cachix cache, FV3 and all its dependencies will need to build from source (~20 minutes). This only happens once per machine, but it is slow.
 
