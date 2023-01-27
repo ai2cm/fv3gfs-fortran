@@ -1,0 +1,160 @@
+############
+# commands #
+############
+#export NCEPLIBS_DIR=$INSTALL_PREFIX/NCEPlibs
+#export ESMFMKFILE=$INSTALL_PREFIX/ESMFlibs/lib/libO/Linux.intel.64.mpiuni.default/esmf.mk
+#export FMS_DIR=$INSTALL_PREFIX/fv3gfs-fortran/FMS
+
+#Note that the variable $INSTALL_PREFIX needs to be exported prior configuring the environment. An example of the absolute pathes to the libraries is given below.
+
+export NCEPLIBS_DIR=/home/mr7417/NCEPlibs/NCEPlibs
+export ESMFMKFILE=/home/mr7417/ESMFlibs/lib/libO/Linux.intel.64.mpiuni.default/esmf.mk
+export FMS_DIR=/home/mr7417/fv3gfs-fortran/FMS
+
+FC = mpif90
+CC = mpicc
+LD = $(FC)
+
+#########
+# flags #
+#########
+# default is 64-bit OpenMP non-hydrostatic build using AVX2
+DEBUG =
+REPRO = Y
+VERBOSE =
+OPENMP = Y
+AVX2 = Y
+HYDRO = N
+32BIT = N
+
+include $(ESMFMKFILE)
+ESMF_INC = $(ESMF_F90COMPILEPATHS)
+ESMF_LIB = $(ESMF_F90ESMFLINKPATHS) $(ESMF_F90ESMFLINKLIBS)
+
+NEMSIOINC = -I$(NCEPLIBS_DIR)/include
+#NCEPLIBS = $(ESMF_LIB) -L$(NCEPLIBS_DIR)/lib -lnemsio_d -lbacio_4 -lsp_v2.0.2_d -lw3emc_d -lw3nco_d
+NCEPLIBS = $(ESMF_LIB) -L$(NCEPLIBS_DIR)/exec_linux.intel -lnemsio_d -lbacio_4 -lsp_v2.0.2_d -lw3emc_d -lw3nco_d
+##############################################
+# Need to use at least GNU Make version 3.81 #
+##############################################
+need := 3.81
+ok := $(filter $(need),$(firstword $(sort $(MAKE_VERSION) $(need))))
+ifneq ($(need),$(ok))
+$(error Need at least make version $(need).  Load module gmake/3.81)
+endif
+
+NETCDF_ROOT = $(NETCDF_DIR)
+INCLUDE = -I$(NETCDF_ROOT)/include
+
+# The fpp option -D__GFORTRAN__(-Dname) is specified to avoid the unwanted errors when compiling the model. The source of the errors is the mismatch between the way the "intent" of the arguments are defined in the interface definition of the proceduce pointer used in the atmos_model.F90 and the way the "intent" of the arguments are defined in the procedures the pointet points to
+
+FPPFLAGS := -fpp -Wp,-w, -D__GFORTRAN__ $(INCLUDE) -fPIC
+CFLAGS := $(INCLUDE) -fPIC
+
+FFLAGS := $(INCLUDE) -fPIC -fno-alias -auto -safe-cray-ptr -ftz -assume byterecl -nowarn -sox -align array64byte
+
+CPPDEFS += -Duse_libMPI -Duse_netCDF -DSPMD -DUSE_LOG_DIAG_FIELD_INFO -DUSE_GFSL63 -DGFS_PHYS 
+CPPDEFS += -DNEW_TAUCTMAX -DINTERNAL_FILE_NML -DNO_INLINE_POST -Duse_LARGEFILE
+
+ifeq ($(GT4PY_DEV),Y)
+CPPDEFS += -DGT4PY_DEV
+endif
+
+ifeq ($(AI2_SUBSET_PHYSICS),Y)
+CPPDEFS += -DAI2_SUBSET_PHYSICS
+endif
+
+ifeq ($(HYDRO),Y)
+CPPDEFS += 
+else
+CPPDEFS += -DMOIST_CAPPA -DUSE_COND
+endif
+
+ifeq ($(32BIT),Y)
+CPPDEFS += -DOVERLOAD_R4 -DOVERLOAD_R8
+FFLAGS += -i4 -real-size 32
+else
+FFLAGS += -i4 -real-size 64 -no-prec-div -no-prec-sqrt
+endif
+
+# The option -march=CORE-AVX2 is specific for Stellar cluster. Please visit https://researchcomputing.princeton.edu/systems/stellar#flags for more information.
+#
+ifeq ($(AVX2),Y)
+FFLAGS += -march=CORE-AVX2 -qno-opt-dynamic-align
+CFLAGS += -march=CORE-AVX2 -qno-opt-dynamic-align
+else
+FFLAGS += -xHOST -qno-opt-dynamic-align
+CFLAGS += -xHOST -qno-opt-dynamic-align
+endif
+
+FFLAGS_OPT = -O2 -debug minimal -fp-model source -qoverride-limits -qopt-prefetch=3
+FFLAGS_REPRO = -O2 -debug minimal -fp-model source -qoverride-limits -g -traceback
+FFLAGS_DEBUG = -g -O0 -check -check noarg_temp_created -check nopointer -warn -warn noerrors -fp-stack-check -fstack-protector-all -fpe0 -debug -traceback -ftrapuv
+
+TRANSCENDENTALS := -fast-transcendentals
+FFLAGS_OPENMP = -qopenmp
+FFLAGS_VERBOSE = -v -V -what
+
+CFLAGS += -D__IFC -sox -fp-model source
+
+CFLAGS_OPT = -O2 -debug minimal
+CFLAGS_REPRO = -O2 -debug minimal
+CFLAGS_OPENMP = -qopenmp
+CFLAGS_DEBUG = -O0 -g -ftrapuv -traceback
+
+# Optional Testing compile flags.  Mutually exclusive from DEBUG, REPRO, and OPT
+# *_TEST will match the production if no new option(s) is(are) to be tested.
+FFLAGS_TEST = -O3 -debug minimal -fp-model source -qoverride-limits
+CFLAGS_TEST = -O2
+
+LDFLAGS :=
+LDFLAGS_OPENMP := -qopenmp
+LDFLAGS_VERBOSE := -Wl,-V,--verbose,-cref,-M
+
+# start with blank LIBS
+LIBS :=
+
+ifneq ($(REPRO),)
+CFLAGS += $(CFLAGS_REPRO)
+FFLAGS += $(FFLAGS_REPRO)
+FAST :=
+else ifneq ($(DEBUG),)
+CFLAGS += $(CFLAGS_DEBUG)
+FFLAGS += $(FFLAGS_DEBUG)
+FAST :=
+else ifneq ($(TEST),)
+CFLAGS += $(CFLAGS_TEST)
+FFLAGS += $(FFLAGS_TEST)
+FAST :=
+else
+CFLAGS += $(CFLAGS_OPT)
+FFLAGS += $(FFLAGS_OPT)
+FAST := $(TRANSCENDENTALS)
+endif
+
+ifneq ($(OPENMP),)
+CFLAGS += $(CFLAGS_OPENMP)
+FFLAGS += $(FFLAGS_OPENMP)
+LDFLAGS += $(LDFLAGS_OPENMP)
+# to correct a loader bug on gaea: envars below set by module load inteli. Note this line might not be nesseseary for Stellar cluster.
+LIBS += -L$(INTEL_PATH)/$(INTEL_MAJOR_VERSION)/$(INTEL_MINOR_VERSION)/lib/intel64 -lifcoremt
+endif
+
+ifneq ($(VERBOSE),)
+CFLAGS += $(CFLAGS_VERBOSE)
+FFLAGS += $(FFLAGS_VERBOSE)
+LDFLAGS += $(LDFLAGS_VERBOSE)
+endif
+
+ifneq ($(CALLPYFORT),)
+FFLAGS += -I$(CALLPYFORT)/build/src -DENABLE_CALLPYFORT
+LDFLAGS += -L$(CALLPYFORT)/build/src -lcallpy 
+endif
+
+ifneq ($(findstring netcdf,$(LOADEDMODULES)),)
+  LIBS += -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
+else
+  LIBS += -lnetcdf
+endif
+
+LDFLAGS += $(LIBS) $(FMS_DIR)/libFMS/.libs/libFMS.a
