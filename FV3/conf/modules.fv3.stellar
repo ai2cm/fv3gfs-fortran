@@ -12,7 +12,6 @@
 # module load netcdf/intel-19.1/hdf5-1.10.6/4.7.4
 # module load hdf5/intel-19.1/1.10.6
 
-# Up-to-date equivalents of Kai's modules:
 module load intel/2021.1.2
 module load openmpi/intel-2021.1/4.1.2
 module load netcdf/intel-2021.1/hdf5-1.10.6/4.7.4
