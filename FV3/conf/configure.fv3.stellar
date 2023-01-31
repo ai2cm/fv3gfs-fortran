@@ -151,10 +151,6 @@ FFLAGS += -I$(CALLPYFORT)/build/src -DENABLE_CALLPYFORT
 LDFLAGS += -L$(CALLPYFORT)/build/src -lcallpy 
 endif
 
-ifneq ($(findstring netcdf,$(LOADEDMODULES)),)
-  LIBS += -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
-else
-  LIBS += -lnetcdf
-endif
+LIBS += -lnetcdff -lnetcdf -lhdf5_hl -lhdf5 -lz
 
 LDFLAGS += $(LIBS) $(FMS_DIR)/libFMS/.libs/libFMS.a
