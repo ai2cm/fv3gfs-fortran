@@ -9,6 +9,7 @@
 
 FC = mpif90
 CC = mpicc
+CXX = mpicxx
 LD = $(FC)
 
 #########
@@ -28,8 +29,7 @@ ESMF_INC = $(ESMF_F90COMPILEPATHS)
 ESMF_LIB = $(ESMF_F90ESMFLINKPATHS) $(ESMF_F90ESMFLINKLIBS)
 
 NEMSIOINC = -I$(NCEPLIBS_DIR)/include
-#NCEPLIBS = $(ESMF_LIB) -L$(NCEPLIBS_DIR)/lib -lnemsio_d -lbacio_4 -lsp_v2.0.2_d -lw3emc_d -lw3nco_d
-NCEPLIBS = $(ESMF_LIB) -L$(NCEPLIBS_DIR)/exec_linux.intel -lnemsio_d -lbacio_4 -lsp_v2.0.2_d -lw3emc_d -lw3nco_d
+NCEPLIBS = $(ESMF_LIB) -L$(NCEPLIBS_DIR)/lib -lnemsio_d -lbacio_4 -lsp_v2.0.2_d -lw3emc_d -lw3nco_d
 ##############################################
 # Need to use at least GNU Make version 3.81 #
 ##############################################
@@ -42,7 +42,10 @@ endif
 NETCDF_ROOT = $(NETCDF_DIR)
 INCLUDE = -I$(NETCDF_ROOT)/include
 
-# The fpp option -D__GFORTRAN__(-Dname) is specified to avoid the unwanted errors when compiling the model. The source of the errors is the mismatch between the way the "intent" of the arguments are defined in the interface definition of the proceduce pointer used in the atmos_model.F90 and the way the "intent" of the arguments are defined in the procedures the pointer points to
+# The fpp option -D__GFORTRAN__(-Dname) is specified to avoid the unwanted errors when compiling the model.
+# The source of the errors is the mismatch between the way the "intent" of the arguments
+# are defined in the interface definition of the proceduce pointer used in the atmos_model.F90
+# and the way the "intent" of the arguments are defined in the procedures the pointer points to.
 
 FPPFLAGS := -fpp -Wp,-w, -D__GFORTRAN__ $(INCLUDE) -fPIC
 CFLAGS := $(INCLUDE) -fPIC
@@ -132,8 +135,6 @@ ifneq ($(OPENMP),)
 CFLAGS += $(CFLAGS_OPENMP)
 FFLAGS += $(FFLAGS_OPENMP)
 LDFLAGS += $(LDFLAGS_OPENMP)
-# to correct a loader bug on gaea: envars below set by module load inteli. Note this line might not be nesseseary for Stellar cluster.
-LIBS += -L$(INTEL_PATH)/$(INTEL_MAJOR_VERSION)/$(INTEL_MINOR_VERSION)/lib/intel64 -lifcoremt
 endif
 
 ifneq ($(VERBOSE),)
