@@ -24,6 +24,3 @@ export CC=mpicc
 export CXX=mpicxx
 export LD=mpif90
 
-# Additional environment variables from: https://github.com/ai2cm/fv3net/blob/78f9cc93fe0d99d80b809a1b93601efb9bf17b0b/.environment-scripts/gaea/configuration_variables.sh#L18-L19
-export CPPFLAGS='-Duse_LARGEFILE -DMAXFIELDMETHODS_=500 -DGFS_PHYS'
-export FCFLAGS='-FR -i4 -r8'
