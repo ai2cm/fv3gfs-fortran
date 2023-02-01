@@ -541,6 +541,53 @@ contains
          coarse_diagnostics(index)%data%var3 => Atm(tile_count)%w(is:ie,js:je,1:npz)
          coarse_diagnostics(index)%iv = -1
       endif
+
+      do t = 1, n_tracers
+        call get_tracer_names(MODEL_ATMOS, t, tracer_name, tracer_long_name, tracer_units)
+        index = index + 1
+        coarse_diagnostics(index)%axes = 2
+        coarse_diagnostics(index)%module_name = DYNAMICS
+        coarse_diagnostics(index)%name = 'vertically_integrated_' // trim(tracer_name) // '_coarse'
+        coarse_diagnostics(index)%description =  'vertical mass-weighted integral of ' // trim(tracer_long_name)
+        coarse_diagnostics(index)%units = trim(tracer_units) // ' kg/m**2'
+        coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+        coarse_diagnostics(index)%vertically_integrated = .true.
+        if (t .gt. n_prognostic) then
+          coarse_diagnostics(index)%data%var3 => Atm(tile_count)%qdiag(is:ie,js:je,1:npz,t)
+        else
+          coarse_diagnostics(index)%data%var3 => Atm(tile_count)%q(is:ie,js:je,1:npz,t)
+        endif
+      enddo
+
+      index = index + 1
+      coarse_diagnostics(index)%axes = 2
+      coarse_diagnostics(index)%module_name = DYNAMICS
+      coarse_diagnostics(index)%name = 'tq_coarse'
+      coarse_diagnostics(index)%description = 'coarse-grained total water path'
+      coarse_diagnostics(index)%units = 'kg/m**2'
+      coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+      coarse_diagnostics(index)%vertically_integrated = .true.
+      coarse_diagnostics(index)%special_case = "total_water_path"
+
+      index = index + 1
+      coarse_diagnostics(index)%axes = 2
+      coarse_diagnostics(index)%module_name = DYNAMICS
+      coarse_diagnostics(index)%name = 'lw_coarse'
+      coarse_diagnostics(index)%description = 'coarse-grained total liquid water path'
+      coarse_diagnostics(index)%units = 'kg/m**2'
+      coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+      coarse_diagnostics(index)%vertically_integrated = .true.
+      coarse_diagnostics(index)%special_case = "total_liquid_water_path"
+
+      index = index + 1
+      coarse_diagnostics(index)%axes = 2
+      coarse_diagnostics(index)%module_name = DYNAMICS
+      coarse_diagnostics(index)%name = 'iw_coarse'
+      coarse_diagnostics(index)%description = 'coarse-grained total ice water path'
+      coarse_diagnostics(index)%units = 'kg/m**2'
+      coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+      coarse_diagnostics(index)%vertically_integrated = .true.
+      coarse_diagnostics(index)%special_case = "total_ice_water_path"
     enddo
   end subroutine populate_coarse_diag_type
 
@@ -950,8 +997,11 @@ contains
     real, intent(in) :: height_on_interfaces(is:ie,js:je,1:npz+1)
     real, intent(out) :: result(is_coarse:ie_coarse,js_coarse:je_coarse)
 
+    integer :: n_prognostic
     character(len=256) :: error_message
     real, allocatable :: work_2d(:,:)
+
+    n_prognostic = size(Atm%q, 4)
 
     if (coarse_diag%pressure_level > 0 .or. coarse_diag%vertically_integrated &
          .or. coarse_diag%scaled_by_specific_heat_and_vertically_integrated) then 
@@ -984,6 +1034,25 @@ contains
           work_2d, &
           result &
           )
+      elseif (&
+        trim(coarse_diag%special_case) .eq. 'total_water_path' &
+        .or. trim(coarse_diag%special_case) .eq. 'total_ice_water_path' &
+        .or. trim(coarse_diag%special_case) .eq. 'total_liquid_water_path' &
+      ) then
+        call compute_multi_species_water_path( &
+          is, &
+          ie, &
+          js, &
+          je, &
+          npz, &
+          n_prognostic, &
+          Atm%flagstruct%nwat, &
+          Atm%q(is:ie,js:je,1:npz,1:n_prognostic), &
+          Atm%delp(is:ie,js:je,1:npz), &
+          coarse_diag%special_case, &
+          work_2d &
+        )
+        call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), work_2d, result)
       elseif (coarse_diag%vertically_integrated) then
         call vertically_integrate( &
              is, &
@@ -1214,12 +1283,9 @@ contains
     real, dimension(isc:iec,jsc:jec,1:npz), intent(out) :: cvm
     real, dimension(isc:iec) :: qc, cvm_tmp
     integer :: j, k, sphum, liq_wat, ice_wat, rainwat, snowwat, graupel
-    sphum = get_tracer_index (MODEL_ATMOS, 'sphum')
-    liq_wat = get_tracer_index (MODEL_ATMOS, 'liq_wat')
-    ice_wat = get_tracer_index (MODEL_ATMOS, 'ice_wat')
-    rainwat = get_tracer_index (MODEL_ATMOS, 'rainwat')
-    snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
-    graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
+    
+    call get_hydrometeor_indexes(sphum, liq_wat, ice_wat, rainwat, snowwat, graupel)
+
     do j = jsc, jec
        do k = 1, npz
           call moist_cv(isc, iec, isd, ied, jsd, jed, npz, j, k, nwat, sphum, &
@@ -1237,12 +1303,9 @@ contains
     real, dimension(isc:iec,jsc:jec,1:npz), intent(out) :: cpm
     real, dimension(isc:iec) :: qc, cpm_tmp
     integer :: j, k, sphum, liq_wat, ice_wat, rainwat, snowwat, graupel
-    sphum = get_tracer_index (MODEL_ATMOS, 'sphum')
-    liq_wat = get_tracer_index (MODEL_ATMOS, 'liq_wat')
-    ice_wat = get_tracer_index (MODEL_ATMOS, 'ice_wat')
-    rainwat = get_tracer_index (MODEL_ATMOS, 'rainwat')
-    snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
-    graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
+
+    call get_hydrometeor_indexes(sphum, liq_wat, ice_wat, rainwat, snowwat, graupel)
+
     do j = jsc, jec
        do k = 1, npz
           call moist_cp(isc, iec, isd, ied, jsd, jed, npz, j, k, nwat, sphum, &
@@ -1361,4 +1424,52 @@ contains
     factor = Atm(tile_count)%coarse_graining%factor
     grid_coarse = Atm(tile_count)%gridstruct%grid(is:ie+1:factor,js:je+1:factor,:)
   end subroutine compute_grid_coarse
+
+  subroutine get_hydrometeor_indexes(sphum, liq_wat, ice_wat, rainwat, snowwat, graupel)
+    integer, intent(out) :: sphum, liq_wat, ice_wat, rainwat, snowwat, graupel
+    sphum =   get_tracer_index (MODEL_ATMOS, 'sphum')
+    liq_wat = get_tracer_index (MODEL_ATMOS, 'liq_wat')
+    ice_wat = get_tracer_index (MODEL_ATMOS, 'ice_wat')
+    rainwat = get_tracer_index (MODEL_ATMOS, 'rainwat')
+    snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
+    graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
+  end subroutine get_hydrometeor_indexes
+
+  subroutine compute_multi_species_water_path(is, ie, js, je, npz, n_prognostic, n_water, q, delp, case, water_path)
+    integer, intent(in) :: is, ie, js, je, npz, n_prognostic, n_water
+    real, intent(in) :: q(is:ie,js:je,1:npz,1:n_prognostic)
+    real, intent(in) :: delp(is:ie,js:je,1:npz)
+    character(len=64), intent(in) :: case
+    real, intent(out) :: water_path(is:ie,js:je)
+
+    real, allocatable :: water(:,:,:)
+    integer :: j, k, sphum, liq_wat, ice_wat, rainwat, snowwat, graupel
+
+    allocate(water(is:ie,js:je,1:npz))
+    water = 0.0
+
+    call get_hydrometeor_indexes(sphum, liq_wat, ice_wat, rainwat, snowwat, graupel)
+
+    if (trim(case) .eq. 'total_water_path') then
+      water = sum(q(is:ie,js:je,1:npz,1:n_water), dim=4)
+    elseif (trim(case) .eq. 'total_ice_water_path') then
+      if (ice_wat .gt. 0) then
+        water = water + q(is:ie,js:je,1:npz,ice_wat)
+      endif
+      if (snowwat .gt. 0) then
+        water = water + q(is:ie,js:je,1:npz,snowwat)
+      endif
+      if (graupel .gt. 0) then
+        water = water + q(is:ie,js:je,1:npz,graupel)
+      endif
+    elseif (trim(case) .eq. 'total_liquid_water_path') then
+      if (liq_wat .gt. 0) then
+        water = water + q(is:ie,js:je,1:npz,liq_wat)
+      endif
+      if (rainwat .gt. 0) then
+        water = water + q(is:ie,js:je,1:npz,rainwat)
+      endif
+    endif
+    water_path = sum(water * delp, dim=3) / grav
+  end subroutine compute_multi_species_water_path
 end module coarse_grained_diagnostics_mod
