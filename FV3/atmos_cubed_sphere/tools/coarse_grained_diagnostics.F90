@@ -1000,17 +1000,12 @@ contains
 
     n_prognostic = size(Atm%q, 4)
 
-    if (coarse_diag%pressure_level > 0 .or. coarse_diag%vertically_integrated &
-         .or. coarse_diag%scaled_by_specific_heat_and_vertically_integrated &
-         .or. trim(coarse_diag%special_case) .ne. '') then 
+    if (is_derived_2d_field(coarse_diag)) then 
       allocate(work_2d(is:ie,js:je))
     endif
 
     if (trim(coarse_diag%reduction_method) .eq. AREA_WEIGHTED) then
-      if (coarse_diag%pressure_level < 0 &
-         .and. .not. coarse_diag%vertically_integrated &
-         .and. .not. coarse_diag%scaled_by_specific_heat_and_vertically_integrated &
-         .and. trim(coarse_diag%special_case) .eq. '') then
+      if (.not. is_derived_2d_field(coarse_diag)) then
         call weighted_block_average( &
           Atm%gridstruct%area(is:ie,js:je), &
           coarse_diag%data%var2, &
@@ -1420,8 +1415,19 @@ contains
     grid_coarse = Atm(tile_count)%gridstruct%grid(is:ie+1:factor,js:je+1:factor,:)
   end subroutine compute_grid_coarse
 
+  logical function is_derived_2d_field(coarse_diag)
+    type(coarse_diag_type), intent(in) :: coarse_diag
+
+    is_derived_2d_field = &
+           coarse_diag%pressure_level .gt. 0 &
+      .or. coarse_diag%vertically_integrated &
+      .or. coarse_diag%scaled_by_specific_heat_and_vertically_integrated &
+      .or. trim(coarse_diag%special_case) .ne. ''
+  end function is_derived_2d_field
+
   subroutine get_hydrometeor_indexes(sphum, liq_wat, ice_wat, rainwat, snowwat, graupel)
     integer, intent(out) :: sphum, liq_wat, ice_wat, rainwat, snowwat, graupel
+
     sphum   = get_tracer_index (MODEL_ATMOS, 'sphum')
     liq_wat = get_tracer_index (MODEL_ATMOS, 'liq_wat')
     ice_wat = get_tracer_index (MODEL_ATMOS, 'ice_wat')
