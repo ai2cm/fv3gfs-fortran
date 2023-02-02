@@ -566,7 +566,6 @@ contains
       coarse_diagnostics(index)%description = 'coarse-grained total water path'
       coarse_diagnostics(index)%units = 'kg/m**2'
       coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
-      coarse_diagnostics(index)%vertically_integrated = .true.
       coarse_diagnostics(index)%special_case = "total_water_path"
 
       index = index + 1
@@ -576,7 +575,6 @@ contains
       coarse_diagnostics(index)%description = 'coarse-grained total liquid water path'
       coarse_diagnostics(index)%units = 'kg/m**2'
       coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
-      coarse_diagnostics(index)%vertically_integrated = .true.
       coarse_diagnostics(index)%special_case = "total_liquid_water_path"
 
       index = index + 1
@@ -586,7 +584,6 @@ contains
       coarse_diagnostics(index)%description = 'coarse-grained total ice water path'
       coarse_diagnostics(index)%units = 'kg/m**2'
       coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
-      coarse_diagnostics(index)%vertically_integrated = .true.
       coarse_diagnostics(index)%special_case = "total_ice_water_path"
     enddo
   end subroutine populate_coarse_diag_type
@@ -1034,11 +1031,7 @@ contains
           work_2d, &
           result &
           )
-      elseif (&
-        trim(coarse_diag%special_case) .eq. 'total_water_path' &
-        .or. trim(coarse_diag%special_case) .eq. 'total_ice_water_path' &
-        .or. trim(coarse_diag%special_case) .eq. 'total_liquid_water_path' &
-      ) then
+      elseif (is_multi_species_water_path(coarse_diag%special_case)) then
         call compute_multi_species_water_path( &
           is, &
           ie, &
@@ -1427,7 +1420,7 @@ contains
 
   subroutine get_hydrometeor_indexes(sphum, liq_wat, ice_wat, rainwat, snowwat, graupel)
     integer, intent(out) :: sphum, liq_wat, ice_wat, rainwat, snowwat, graupel
-    sphum =   get_tracer_index (MODEL_ATMOS, 'sphum')
+    sphum   = get_tracer_index (MODEL_ATMOS, 'sphum')
     liq_wat = get_tracer_index (MODEL_ATMOS, 'liq_wat')
     ice_wat = get_tracer_index (MODEL_ATMOS, 'ice_wat')
     rainwat = get_tracer_index (MODEL_ATMOS, 'rainwat')
@@ -1435,41 +1428,50 @@ contains
     graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
   end subroutine get_hydrometeor_indexes
 
-  subroutine compute_multi_species_water_path(is, ie, js, je, npz, n_prognostic, n_water, q, delp, case, water_path)
+  logical function is_multi_species_water_path(special_case)
+    character(len=64), intent(in) :: special_case
+
+    is_multi_species_water_path = &
+           trim(special_case) .eq. 'total_water_path' &
+      .or. trim(special_case) .eq. 'total_ice_water_path' &
+      .or. trim(special_case) .eq. 'total_liquid_water_path'
+  end function is_multi_species_water_path
+
+  subroutine compute_multi_species_water_path(is, ie, js, je, npz, n_prognostic, n_water, q, delp, case, result)
     integer, intent(in) :: is, ie, js, je, npz, n_prognostic, n_water
     real, intent(in) :: q(is:ie,js:je,1:npz,1:n_prognostic)
     real, intent(in) :: delp(is:ie,js:je,1:npz)
     character(len=64), intent(in) :: case
-    real, intent(out) :: water_path(is:ie,js:je)
+    real, intent(out) :: result(is:ie,js:je)
 
-    real, allocatable :: water(:,:,:)
-    integer :: j, k, sphum, liq_wat, ice_wat, rainwat, snowwat, graupel
+    real, allocatable :: total(:,:,:)
+    integer :: sphum, liq_wat, ice_wat, rainwat, snowwat, graupel
 
-    allocate(water(is:ie,js:je,1:npz))
-    water = 0.0
+    allocate(total(is:ie,js:je,1:npz))
+    total = 0.0
 
     call get_hydrometeor_indexes(sphum, liq_wat, ice_wat, rainwat, snowwat, graupel)
 
     if (trim(case) .eq. 'total_water_path') then
-      water = sum(q(is:ie,js:je,1:npz,1:n_water), dim=4)
+      total = sum(q(is:ie,js:je,1:npz,1:n_water), dim=4)
     elseif (trim(case) .eq. 'total_ice_water_path') then
       if (ice_wat .gt. 0) then
-        water = water + q(is:ie,js:je,1:npz,ice_wat)
+        total = total + q(is:ie,js:je,1:npz,ice_wat)
       endif
       if (snowwat .gt. 0) then
-        water = water + q(is:ie,js:je,1:npz,snowwat)
+        total = total + q(is:ie,js:je,1:npz,snowwat)
       endif
       if (graupel .gt. 0) then
-        water = water + q(is:ie,js:je,1:npz,graupel)
+        total = total + q(is:ie,js:je,1:npz,graupel)
       endif
     elseif (trim(case) .eq. 'total_liquid_water_path') then
       if (liq_wat .gt. 0) then
-        water = water + q(is:ie,js:je,1:npz,liq_wat)
+        total = total + q(is:ie,js:je,1:npz,liq_wat)
       endif
       if (rainwat .gt. 0) then
-        water = water + q(is:ie,js:je,1:npz,rainwat)
+        total = total + q(is:ie,js:je,1:npz,rainwat)
       endif
     endif
-    water_path = sum(water * delp, dim=3) / grav
+    result = sum(total * delp, dim=3) / grav
   end subroutine compute_multi_species_water_path
 end module coarse_grained_diagnostics_mod
