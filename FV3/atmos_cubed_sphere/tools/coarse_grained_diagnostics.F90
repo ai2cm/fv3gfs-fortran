@@ -541,51 +541,51 @@ contains
          coarse_diagnostics(index)%data%var3 => Atm(tile_count)%w(is:ie,js:je,1:npz)
          coarse_diagnostics(index)%iv = -1
       endif
-
-      do t = 1, n_tracers
-        call get_tracer_names(MODEL_ATMOS, t, tracer_name, tracer_long_name, tracer_units)
-        index = index + 1
-        coarse_diagnostics(index)%axes = 2
-        coarse_diagnostics(index)%module_name = DYNAMICS
-        coarse_diagnostics(index)%name = 'vertically_integrated_' // trim(tracer_name) // '_coarse'
-        coarse_diagnostics(index)%description =  'vertical mass-weighted integral of ' // trim(tracer_long_name)
-        coarse_diagnostics(index)%units = trim(tracer_units) // ' kg/m**2'
-        coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
-        coarse_diagnostics(index)%vertically_integrated = .true.
-        if (t .gt. n_prognostic) then
-          coarse_diagnostics(index)%data%var3 => Atm(tile_count)%qdiag(is:ie,js:je,1:npz,t)
-        else
-          coarse_diagnostics(index)%data%var3 => Atm(tile_count)%q(is:ie,js:je,1:npz,t)
-        endif
-      enddo
-
-      index = index + 1
-      coarse_diagnostics(index)%axes = 2
-      coarse_diagnostics(index)%module_name = DYNAMICS
-      coarse_diagnostics(index)%name = 'tq_coarse'
-      coarse_diagnostics(index)%description = 'coarse-grained total water path'
-      coarse_diagnostics(index)%units = 'kg/m**2'
-      coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
-      coarse_diagnostics(index)%special_case = "total_water_path"
-
-      index = index + 1
-      coarse_diagnostics(index)%axes = 2
-      coarse_diagnostics(index)%module_name = DYNAMICS
-      coarse_diagnostics(index)%name = 'lw_coarse'
-      coarse_diagnostics(index)%description = 'coarse-grained total liquid water path'
-      coarse_diagnostics(index)%units = 'kg/m**2'
-      coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
-      coarse_diagnostics(index)%special_case = "total_liquid_water_path"
-
-      index = index + 1
-      coarse_diagnostics(index)%axes = 2
-      coarse_diagnostics(index)%module_name = DYNAMICS
-      coarse_diagnostics(index)%name = 'iw_coarse'
-      coarse_diagnostics(index)%description = 'coarse-grained total ice water path'
-      coarse_diagnostics(index)%units = 'kg/m**2'
-      coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
-      coarse_diagnostics(index)%special_case = "total_ice_water_path"
     enddo
+
+    do t = 1, n_tracers
+      call get_tracer_names(MODEL_ATMOS, t, tracer_name, tracer_long_name, tracer_units)
+      index = index + 1
+      coarse_diagnostics(index)%axes = 2
+      coarse_diagnostics(index)%module_name = DYNAMICS
+      coarse_diagnostics(index)%name = 'vertically_integrated_' // trim(tracer_name) // '_coarse'
+      coarse_diagnostics(index)%description =  'vertical mass-weighted integral of ' // trim(tracer_long_name)
+      coarse_diagnostics(index)%units = trim(tracer_units) // ' kg/m**2'
+      coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+      coarse_diagnostics(index)%vertically_integrated = .true.
+      if (t .gt. n_prognostic) then
+        coarse_diagnostics(index)%data%var3 => Atm(tile_count)%qdiag(is:ie,js:je,1:npz,t)
+      else
+        coarse_diagnostics(index)%data%var3 => Atm(tile_count)%q(is:ie,js:je,1:npz,t)
+      endif
+    enddo
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'tq_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained total water path'
+    coarse_diagnostics(index)%units = 'kg/m**2'
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+    coarse_diagnostics(index)%special_case = "total_water_path"
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'lw_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained total liquid water path'
+    coarse_diagnostics(index)%units = 'kg/m**2'
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+    coarse_diagnostics(index)%special_case = "total_liquid_water_path"
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'iw_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained total ice water path'
+    coarse_diagnostics(index)%units = 'kg/m**2'
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+    coarse_diagnostics(index)%special_case = "total_ice_water_path"
   end subroutine populate_coarse_diag_type
 
   subroutine register_coarse_diagnostics(Atm, coarse_diagnostics, Time, &
