@@ -65,7 +65,8 @@ module fv_arrays_mod
            id_qdt, id_aam, id_amdt,                               &
            id_acly, id_acl, id_acl2,                              &
            id_dbz, id_maxdbz, id_basedbz, id_dbz4km, id_dbztop, id_dbz_m10C, &
-           id_ctz, id_w1km, id_wmaxup, id_wmaxdn, id_cape, id_cin, id_diss
+           id_ctz, id_w1km, id_wmaxup, id_wmaxdn, id_cape, id_cin, id_diss, &
+           id_total_delp
 
  integer :: id_lagrangian_tendency_of_hydrostatic_pressure
 

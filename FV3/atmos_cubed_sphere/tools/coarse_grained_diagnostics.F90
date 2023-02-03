@@ -109,8 +109,8 @@ contains
     index = index + 1
     coarse_diagnostics(index)%axes = 3
     coarse_diagnostics(index)%module_name = DYNAMICS
-    coarse_diagnostics(index)%name = 'delp_coarse'
-    coarse_diagnostics(index)%description = 'coarse-grained pressure thickness'
+    coarse_diagnostics(index)%name = 'total_delp_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained total pressure thickness including hydrometeor mass'
     coarse_diagnostics(index)%units = 'Pa'
     coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
     coarse_diagnostics(index)%always_model_level_coarse_grain = .true.
@@ -1068,7 +1068,7 @@ contains
        if ((coarse_diagnostics(index)%axes == 3) .and. & 
            (trim(coarse_diagnostics(index)%reduction_method) .eq. MASS_WEIGHTED) .and. &
            (coarse_diagnostics(index)%id > 0) .and. &
-           (trim(coarsening_strategy) .eq. MODEL_LEVEL)) then
+           ((trim(coarsening_strategy) .eq. MODEL_LEVEL) .or. coarse_diagnostics(index)%always_model_level_coarse_grain)) then
            need_mass_array = .true.
            exit
        endif
