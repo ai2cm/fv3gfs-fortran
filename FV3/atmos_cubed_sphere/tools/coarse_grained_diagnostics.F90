@@ -1127,7 +1127,7 @@ contains
        if ((coarse_diagnostics(index)%axes == 3) .and. & 
            (trim(coarse_diagnostics(index)%reduction_method) .eq. MASS_WEIGHTED) .and. &
            (coarse_diagnostics(index)%id > 0) .and. &
-           (trim(coarsening_strategy) .eq. MODEL_LEVEL)) then
+           ((trim(coarsening_strategy) .eq. MODEL_LEVEL) .or. coarse_diagnostics(index)%always_model_level_coarse_grain)) then
            need_mass_array = .true.
            exit
        endif
