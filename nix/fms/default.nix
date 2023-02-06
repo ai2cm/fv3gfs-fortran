@@ -16,7 +16,7 @@
 } :
 stdenv.mkDerivation rec {
   pname = "fms";
-  version = "0.0.1";
+  version = "0.0.0";
 
   src = ../../FMS/.;
 

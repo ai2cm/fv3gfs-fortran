@@ -162,11 +162,11 @@ diag_table:
       reduction_method: average
     - module_name: gfs_phys
       field_name: vertically_integrated_tendency_of_air_temperature_due_to_longwave_heating_assuming_clear_sky_coarse
-      output_name: int_tendency_of_air_temperature_due_to_longwave_heating_assuming_clear_sky_coarse
+      output_name: vertically_integrated_tdtlwc_coarse
       reduction_method: average
     - module_name: gfs_phys
       field_name: vertically_integrated_tendency_of_air_temperature_due_to_shortwave_heating_assuming_clear_sky_coarse
-      output_name: int_tendency_of_air_temperature_due_to_shortwave_heating_assuming_clear_sky_coarse
+      output_name: vertically_integrated_tdtswc_coarse
       reduction_method: average
     - module_name: gfs_phys
       field_name: vertically_integrated_tendency_of_specific_humidity_due_to_turbulence_coarse

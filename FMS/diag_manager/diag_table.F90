@@ -356,7 +356,7 @@ CONTAINS
     INTEGER, INTENT(out), OPTIONAL, TARGET :: istat
     CHARACTER(len=*), INTENT(out), OPTIONAL :: err_msg
 
-    INTEGER, PARAMETER :: DT_LINE_LENGTH = 512
+    INTEGER, PARAMETER :: DT_LINE_LENGTH = 256
 
     INTEGER :: stdlog_unit !< Fortran file unit number for the stdlog file.
     INTEGER :: record_len !< String length of the diag_table line read in.
@@ -371,7 +371,7 @@ CONTAINS
 
     CHARACTER(len=5) :: line_number !< String representation of the line number.
     CHARACTER(len=9) :: amonth !< Month name
-    CHARACTER(len=DT_LINE_LENGTH) :: record_line !< Current line from the diag_table.
+    CHARACTER(len=256) :: record_line !< Current line from the diag_table.
     CHARACTER(len=256) :: local_err_msg !< Sting to hold local error messages.
     CHARACTER(len=DT_LINE_LENGTH), DIMENSION(:), ALLOCATABLE :: diag_table
 
