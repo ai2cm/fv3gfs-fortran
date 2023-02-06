@@ -1,5 +1,27 @@
 data_table: default
-diag_table: gs://vcm-fv3config/config/diag_table/baroclinic_test/v1.0/diag_table
+diag_table:
+  base_time: 2000-01-01 00:00:00
+  name: baroclinic
+  file_configs:
+  - field_configs:
+    - {module_name: dynamics, field_name: u_plev, output_name: u_plev}
+    - {module_name: dynamics, field_name: v_plev, output_name: v_plev}
+    - {module_name: dynamics, field_name: t_plev, output_name: t_plev}
+    - {module_name: dynamics, field_name: h_plev, output_name: h_plev}
+    - {module_name: dynamics, field_name: q_plev, output_name: q_plev}
+    - {module_name: dynamics, field_name: omg_plev, output_name: omg_plev}
+    - {module_name: dynamics, field_name: ps, output_name: ps}
+    - {module_name: dynamics, field_name: z500, output_name: h500}
+    - {module_name: dynamics, field_name: u200, output_name: u200}
+    - {module_name: dynamics, field_name: v200, output_name: v200}
+    - {module_name: dynamics, field_name: vort850, output_name: VORT850}
+    - {module_name: dynamics, field_name: vort500, output_name: VORT500}
+    - {module_name: dynamics, field_name: vort200, output_name: VORT200}
+    name: atmos_4xdaily_fine_inst
+    frequency: 6
+    frequency_units: hours
+    time_axis_name: time
+    time_axis_units: days
 field_table: gs://vcm-fv3config/config/field_table/baroclinic_test/v1.0/field_table
 experiment_name: baroclinic
 forcing: gs://vcm-fv3config/data/base_forcing/v1.1/
