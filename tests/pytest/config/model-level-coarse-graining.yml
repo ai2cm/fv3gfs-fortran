@@ -76,34 +76,118 @@ diag_table:
     - {module_name: dynamics, field_name: grid_lont_coarse, output_name: grid_lont_coarse}
     - {module_name: dynamics, field_name: grid_latt_coarse, output_name: grid_latt_coarse}
     - {module_name: dynamics, field_name: area_coarse, output_name: area_coarse}
-    - {module_name: gfs_phys, field_name: tendency_of_air_temperature_due_to_longwave_heating_coarse, output_name: tendency_of_air_temperature_due_to_longwave_heating_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: tendency_of_air_temperature_due_to_shortwave_heating_coarse, output_name: tendency_of_air_temperature_due_to_shortwave_heating_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: tendency_of_air_temperature_due_to_turbulence_coarse, output_name: tendency_of_air_temperature_due_to_turbulence_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: tendency_of_air_temperature_due_to_deep_convection_coarse, output_name: tendency_of_air_temperature_due_to_deep_convection_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: tendency_of_air_temperature_due_to_shallow_convection_coarse, output_name: tendency_of_air_temperature_due_to_shallow_convection_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: tendency_of_air_temperature_due_to_microphysics_coarse, output_name: tendency_of_air_temperature_due_to_microphysics_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: tendency_of_air_temperature_due_to_dissipation_of_gravity_waves_coarse, output_name: tendency_of_air_temperature_due_to_dissipation_of_gravity_waves_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: tendency_of_air_temperature_due_to_longwave_heating_assuming_clear_sky_coarse, output_name: tendency_of_air_temperature_due_to_longwave_heating_assuming_clear_sky_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: tendency_of_air_temperature_due_to_shortwave_heating_assuming_clear_sky_coarse, output_name: tendency_of_air_temperature_due_to_shortwave_heating_assuming_clear_sky_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: tendency_of_specific_humidity_due_to_turbulence_coarse, output_name: tendency_of_specific_humidity_due_to_turbulence_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: tendency_of_specific_humidity_due_to_deep_convection_coarse, output_name: tendency_of_specific_humidity_due_to_deep_convection_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: tendency_of_specific_humidity_due_to_shallow_convection_coarse, output_name: tendency_of_specific_humidity_due_to_shallow_convection_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: tendency_of_specific_humidity_due_to_microphysics_coarse, output_name: tendency_of_specific_humidity_due_to_microphysics_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: tendency_of_specific_humidity_due_to_change_in_atmosphere_mass_coarse, output_name: tendency_of_specific_humidity_due_to_change_in_atmosphere_mass_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: vertically_integrated_tendency_of_air_temperature_due_to_longwave_heating_coarse, output_name: int_tendency_of_air_temperature_due_to_longwave_heating_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: vertically_integrated_tendency_of_air_temperature_due_to_shortwave_heating_coarse, output_name: int_tendency_of_air_temperature_due_to_shortwave_heating_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: vertically_integrated_tendency_of_air_temperature_due_to_turbulence_coarse, output_name: int_tendency_of_air_temperature_due_to_turbulence_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: vertically_integrated_tendency_of_air_temperature_due_to_deep_convection_coarse, output_name: int_tendency_of_air_temperature_due_to_deep_convection_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: vertically_integrated_tendency_of_air_temperature_due_to_shallow_convection_coarse, output_name: int_tendency_of_air_temperature_due_to_shallow_convection_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: vertically_integrated_tendency_of_air_temperature_due_to_microphysics_coarse, output_name: int_tendency_of_air_temperature_due_to_microphysics_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: vertically_integrated_tendency_of_air_temperature_due_to_dissipation_of_gravity_waves_coarse, output_name: int_tendency_of_air_temperature_due_to_dissipation_of_gravity_waves_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: vertically_integrated_tendency_of_air_temperature_due_to_longwave_heating_assuming_clear_sky_coarse, output_name: int_tendency_of_air_temperature_due_to_longwave_heating_assuming_clear_sky_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: vertically_integrated_tendency_of_air_temperature_due_to_shortwave_heating_assuming_clear_sky_coarse, output_name: int_tendency_of_air_temperature_due_to_shortwave_heating_assuming_clear_sky_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: vertically_integrated_tendency_of_specific_humidity_due_to_turbulence_coarse, output_name: int_tendency_of_specific_humidity_due_to_turbulence_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: vertically_integrated_tendency_of_specific_humidity_due_to_deep_convection_coarse, output_name: int_tendency_of_specific_humidity_due_to_deep_convection_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: vertically_integrated_tendency_of_specific_humidity_due_to_shallow_convection_coarse, output_name: int_tendency_of_specific_humidity_due_to_shallow_convection_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: vertically_integrated_tendency_of_specific_humidity_due_to_microphysics_coarse, output_name: int_tendency_of_specific_humidity_due_to_microphysics_coarse, reduction_method: average}
-    - {module_name: gfs_phys, field_name: vertically_integrated_tendency_of_specific_humidity_due_to_change_in_atmosphere_mass_coarse, output_name: int_tendency_of_specific_humidity_due_to_change_in_atmosphere_mass_coarse, reduction_method: average}
+    - module_name: gfs_phys
+      field_name: tendency_of_air_temperature_due_to_longwave_heating_coarse
+      output_name: tendency_of_air_temperature_due_to_longwave_heating_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_air_temperature_due_to_shortwave_heating_coarse
+      output_name: tendency_of_air_temperature_due_to_shortwave_heating_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_air_temperature_due_to_turbulence_coarse
+      output_name: tendency_of_air_temperature_due_to_turbulence_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_air_temperature_due_to_deep_convection_coarse
+      output_name: tendency_of_air_temperature_due_to_deep_convection_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_air_temperature_due_to_shallow_convection_coarse
+      output_name: tendency_of_air_temperature_due_to_shallow_convection_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_air_temperature_due_to_microphysics_coarse
+      output_name: tendency_of_air_temperature_due_to_microphysics_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_air_temperature_due_to_dissipation_of_gravity_waves_coarse
+      output_name: tendency_of_air_temperature_due_to_dissipation_of_gravity_waves_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_air_temperature_due_to_longwave_heating_assuming_clear_sky_coarse
+      output_name: tendency_of_air_temperature_due_to_longwave_heating_assuming_clear_sky_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_air_temperature_due_to_shortwave_heating_assuming_clear_sky_coarse
+      output_name: tendency_of_air_temperature_due_to_shortwave_heating_assuming_clear_sky_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_specific_humidity_due_to_turbulence_coarse
+      output_name: tendency_of_specific_humidity_due_to_turbulence_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_specific_humidity_due_to_deep_convection_coarse
+      output_name: tendency_of_specific_humidity_due_to_deep_convection_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_specific_humidity_due_to_shallow_convection_coarse
+      output_name: tendency_of_specific_humidity_due_to_shallow_convection_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_specific_humidity_due_to_microphysics_coarse
+      output_name: tendency_of_specific_humidity_due_to_microphysics_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_specific_humidity_due_to_change_in_atmosphere_mass_coarse
+      output_name: tendency_of_specific_humidity_due_to_change_in_atmosphere_mass_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_air_temperature_due_to_longwave_heating_coarse
+      output_name: int_tendency_of_air_temperature_due_to_longwave_heating_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_air_temperature_due_to_shortwave_heating_coarse
+      output_name: int_tendency_of_air_temperature_due_to_shortwave_heating_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_air_temperature_due_to_turbulence_coarse
+      output_name: int_tendency_of_air_temperature_due_to_turbulence_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_air_temperature_due_to_deep_convection_coarse
+      output_name: int_tendency_of_air_temperature_due_to_deep_convection_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_air_temperature_due_to_shallow_convection_coarse
+      output_name: int_tendency_of_air_temperature_due_to_shallow_convection_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_air_temperature_due_to_microphysics_coarse
+      output_name: int_tendency_of_air_temperature_due_to_microphysics_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_air_temperature_due_to_dissipation_of_gravity_waves_coarse
+      output_name: int_tendency_of_air_temperature_due_to_dissipation_of_gravity_waves_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_air_temperature_due_to_longwave_heating_assuming_clear_sky_coarse
+      output_name: int_tendency_of_air_temperature_due_to_longwave_heating_assuming_clear_sky_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_air_temperature_due_to_shortwave_heating_assuming_clear_sky_coarse
+      output_name: int_tendency_of_air_temperature_due_to_shortwave_heating_assuming_clear_sky_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_specific_humidity_due_to_turbulence_coarse
+      output_name: int_tendency_of_specific_humidity_due_to_turbulence_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_specific_humidity_due_to_deep_convection_coarse
+      output_name: int_tendency_of_specific_humidity_due_to_deep_convection_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_specific_humidity_due_to_shallow_convection_coarse
+      output_name: int_tendency_of_specific_humidity_due_to_shallow_convection_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_specific_humidity_due_to_microphysics_coarse
+      output_name: int_tendency_of_specific_humidity_due_to_microphysics_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_specific_humidity_due_to_change_in_atmosphere_mass_coarse
+      output_name: int_tendency_of_specific_humidity_due_to_change_in_atmosphere_mass_coarse
+      reduction_method: average
     name: physics_tendencies_15min_coarse
     frequency: 15
     frequency_units: minutes
