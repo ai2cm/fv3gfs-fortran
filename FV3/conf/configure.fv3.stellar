@@ -11,9 +11,15 @@ export NCEPLIBS_DIR=/home/mr7417/NCEPlibs
 export ESMFMKFILE=/home/mr7417/ESMFlibs/lib/libO/Linux.intel.64.mpiuni.default/esmf.mk
 export FMS_DIR=/home/mr7417/fv3gfs-fortran/FMS
 
+ifeq ($(origin FC),default)
 FC = mpif90
+endif
+ifeq ($(origin CC),default)
 CC = mpicc
+endif
+ifeq ($(origin CXX),default)
 CXX=mpicxx
+endif
 LD = $(FC)
 
 #########
