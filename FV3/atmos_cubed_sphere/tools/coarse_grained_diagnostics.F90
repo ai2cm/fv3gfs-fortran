@@ -1274,7 +1274,12 @@ contains
     real, dimension(isc:iec) :: qc, cvm_tmp
     integer :: j, k, sphum, liq_wat, ice_wat, rainwat, snowwat, graupel
     
-    call get_hydrometeor_indexes(sphum, liq_wat, ice_wat, rainwat, snowwat, graupel)
+    sphum   = get_tracer_index (MODEL_ATMOS, 'sphum')
+    liq_wat = get_tracer_index (MODEL_ATMOS, 'liq_wat')
+    ice_wat = get_tracer_index (MODEL_ATMOS, 'ice_wat')
+    rainwat = get_tracer_index (MODEL_ATMOS, 'rainwat')
+    snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
+    graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
 
     do j = jsc, jec
        do k = 1, npz
@@ -1294,7 +1299,12 @@ contains
     real, dimension(isc:iec) :: qc, cpm_tmp
     integer :: j, k, sphum, liq_wat, ice_wat, rainwat, snowwat, graupel
 
-    call get_hydrometeor_indexes(sphum, liq_wat, ice_wat, rainwat, snowwat, graupel)
+    sphum   = get_tracer_index (MODEL_ATMOS, 'sphum')
+    liq_wat = get_tracer_index (MODEL_ATMOS, 'liq_wat')
+    ice_wat = get_tracer_index (MODEL_ATMOS, 'ice_wat')
+    rainwat = get_tracer_index (MODEL_ATMOS, 'rainwat')
+    snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
+    graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
 
     do j = jsc, jec
        do k = 1, npz
@@ -1425,17 +1435,6 @@ contains
       .or. trim(coarse_diag%special_case) .ne. ''
   end function is_derived_2d_field
 
-  subroutine get_hydrometeor_indexes(sphum, liq_wat, ice_wat, rainwat, snowwat, graupel)
-    integer, intent(out) :: sphum, liq_wat, ice_wat, rainwat, snowwat, graupel
-
-    sphum   = get_tracer_index (MODEL_ATMOS, 'sphum')
-    liq_wat = get_tracer_index (MODEL_ATMOS, 'liq_wat')
-    ice_wat = get_tracer_index (MODEL_ATMOS, 'ice_wat')
-    rainwat = get_tracer_index (MODEL_ATMOS, 'rainwat')
-    snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
-    graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
-  end subroutine get_hydrometeor_indexes
-
   logical function is_multi_species_water_path(special_case)
     character(len=64), intent(in) :: special_case
 
@@ -1458,11 +1457,18 @@ contains
     allocate(total(is:ie,js:je,1:npz))
     total = 0.0
 
-    call get_hydrometeor_indexes(sphum, liq_wat, ice_wat, rainwat, snowwat, graupel)
+    sphum   = get_tracer_index (MODEL_ATMOS, 'sphum')
+    liq_wat = get_tracer_index (MODEL_ATMOS, 'liq_wat')
+    ice_wat = get_tracer_index (MODEL_ATMOS, 'ice_wat')
+    rainwat = get_tracer_index (MODEL_ATMOS, 'rainwat')
+    snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
+    graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
 
     if (trim(case) .eq. 'total_water_path') then
       total = sum(q(is:ie,js:je,1:npz,1:n_water), dim=4)
     elseif (trim(case) .eq. 'total_ice_water_path') then
+      ! If the indices are less than or equal to zero then that water type is
+      ! unused in the active model configuration.
       if (ice_wat .gt. 0) then
         total = total + q(is:ie,js:je,1:npz,ice_wat)
       endif
