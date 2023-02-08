@@ -670,10 +670,10 @@ module GFS_driver
     type(GFS_radtend_type),         intent(inout) :: Radtend
     type(GFS_diag_type),            intent(inout) :: Diag
 #else
-    type(GFS_control_type),   intent(in) :: Model
-    type(GFS_statein_type),   intent(in) :: Statein
-    type(GFS_stateout_type),  intent(in) :: Stateout
-    type(GFS_sfcprop_type),   intent(in) :: Sfcprop
+    type(GFS_control_type),   intent(in   ) :: Model
+    type(GFS_statein_type),   intent(in   ) :: Statein
+    type(GFS_stateout_type),  intent(in   ) :: Stateout
+    type(GFS_sfcprop_type),   intent(in   ) :: Sfcprop
     type(GFS_coupling_type),  intent(inout) :: Coupling
     type(GFS_grid_type),      intent(in) :: Grid
     type(GFS_tbd_type),       intent(in) :: Tbd
