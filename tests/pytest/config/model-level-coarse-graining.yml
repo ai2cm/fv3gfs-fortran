@@ -241,6 +241,18 @@ diag_table:
     - {module_name: dynamics, field_name: int_t_dt_phys_coarse, output_name: int_t_dt_phys_coarse, reduction_method: average}
     - {module_name: dynamics, field_name: int_fv_sat_adj_qv_dt_coarse, output_name: int_fv_sat_adj_qv_dt_coarse, reduction_method: average}
     - {module_name: dynamics, field_name: int_fv_sat_adj_t_dt_coarse, output_name: int_fv_sat_adj_t_dt_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: tq_coarse, output_name: tq_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: iw_coarse, output_name: iw_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: lw_coarse, output_name: lw_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: vertically_integrated_sphum_coarse, output_name: vertically_integrated_sphum_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: vertically_integrated_liq_wat_coarse, output_name: vertically_integrated_liq_wat_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: vertically_integrated_ice_wat_coarse, output_name: vertically_integrated_ice_wat_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: vertically_integrated_rainwat_coarse, output_name: vertically_integrated_rainwat_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: vertically_integrated_snowwat_coarse, output_name: vertically_integrated_snowwat_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: vertically_integrated_graupel_coarse, output_name: vertically_integrated_graupel_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: vertically_integrated_o3mr_coarse, output_name: vertically_integrated_o3mr_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: vertically_integrated_sgs_tke_coarse, output_name: vertically_integrated_sgs_tke_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: vertically_integrated_cld_amt_coarse, output_name: vertically_integrated_cld_amt_coarse, reduction_method: average}
     name: atmos_15min_coarse_ave
     frequency: 15
     frequency_units: minutes

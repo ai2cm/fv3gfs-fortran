@@ -36,7 +36,7 @@ module coarse_grained_diagnostics_mod
     logical :: always_model_level_coarse_grain = .false.
     integer :: pressure_level = -1  ! If greater than 0, interpolate to this pressure level (in hPa)
     integer :: iv = 0  ! Controls type of pressure-level interpolation performed (-1, 0, or 1)
-    character(len=64) :: special_case  ! E.g. height is computed differently on pressure surfaces
+    character(len=64) :: special_case = ''  ! E.g. height is computed differently on pressure surfaces
     type(data_subtype) :: data
   end type coarse_diag_type
 
@@ -542,6 +542,50 @@ contains
          coarse_diagnostics(index)%iv = -1
       endif
     enddo
+
+    do t = 1, n_tracers
+      call get_tracer_names(MODEL_ATMOS, t, tracer_name, tracer_long_name, tracer_units)
+      index = index + 1
+      coarse_diagnostics(index)%axes = 2
+      coarse_diagnostics(index)%module_name = DYNAMICS
+      coarse_diagnostics(index)%name = 'vertically_integrated_' // trim(tracer_name) // '_coarse'
+      coarse_diagnostics(index)%description =  'vertical mass-weighted integral of ' // trim(tracer_long_name)
+      coarse_diagnostics(index)%units = trim(tracer_units) // ' kg/m**2'
+      coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+      coarse_diagnostics(index)%vertically_integrated = .true.
+      if (t .gt. n_prognostic) then
+        coarse_diagnostics(index)%data%var3 => Atm(tile_count)%qdiag(is:ie,js:je,1:npz,t)
+      else
+        coarse_diagnostics(index)%data%var3 => Atm(tile_count)%q(is:ie,js:je,1:npz,t)
+      endif
+    enddo
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'tq_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained total water path'
+    coarse_diagnostics(index)%units = 'kg/m**2'
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+    coarse_diagnostics(index)%special_case = "total_water_path"
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'lw_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained total liquid water path'
+    coarse_diagnostics(index)%units = 'kg/m**2'
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+    coarse_diagnostics(index)%special_case = "total_liquid_water_path"
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'iw_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained total ice water path'
+    coarse_diagnostics(index)%units = 'kg/m**2'
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+    coarse_diagnostics(index)%special_case = "total_ice_water_path"
   end subroutine populate_coarse_diag_type
 
   subroutine register_coarse_diagnostics(Atm, coarse_diagnostics, Time, &
@@ -950,18 +994,18 @@ contains
     real, intent(in) :: height_on_interfaces(is:ie,js:je,1:npz+1)
     real, intent(out) :: result(is_coarse:ie_coarse,js_coarse:je_coarse)
 
+    integer :: n_prognostic
     character(len=256) :: error_message
     real, allocatable :: work_2d(:,:)
 
-    if (coarse_diag%pressure_level > 0 .or. coarse_diag%vertically_integrated &
-         .or. coarse_diag%scaled_by_specific_heat_and_vertically_integrated) then 
+    n_prognostic = size(Atm%q, 4)
+
+    if (is_derived_2d_field(coarse_diag)) then 
       allocate(work_2d(is:ie,js:je))
     endif
 
     if (trim(coarse_diag%reduction_method) .eq. AREA_WEIGHTED) then
-      if (coarse_diag%pressure_level < 0 &
-         .and. .not. coarse_diag%vertically_integrated &
-         .and. .not. coarse_diag%scaled_by_specific_heat_and_vertically_integrated) then
+      if (.not. is_derived_2d_field(coarse_diag)) then
         call weighted_block_average( &
           Atm%gridstruct%area(is:ie,js:je), &
           coarse_diag%data%var2, &
@@ -984,6 +1028,21 @@ contains
           work_2d, &
           result &
           )
+      elseif (is_multi_species_water_path(coarse_diag%special_case)) then
+        call compute_multi_species_water_path( &
+          is, &
+          ie, &
+          js, &
+          je, &
+          npz, &
+          n_prognostic, &
+          Atm%flagstruct%nwat, &
+          Atm%q(is:ie,js:je,1:npz,1:n_prognostic), &
+          Atm%delp(is:ie,js:je,1:npz), &
+          coarse_diag%special_case, &
+          work_2d &
+        )
+        call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), work_2d, result)
       elseif (coarse_diag%vertically_integrated) then
         call vertically_integrate( &
              is, &
@@ -1361,4 +1420,68 @@ contains
     factor = Atm(tile_count)%coarse_graining%factor
     grid_coarse = Atm(tile_count)%gridstruct%grid(is:ie+1:factor,js:je+1:factor,:)
   end subroutine compute_grid_coarse
+
+  logical function is_derived_2d_field(coarse_diag)
+    type(coarse_diag_type), intent(in) :: coarse_diag
+
+    is_derived_2d_field = &
+           coarse_diag%pressure_level .gt. 0 &
+      .or. coarse_diag%vertically_integrated &
+      .or. coarse_diag%scaled_by_specific_heat_and_vertically_integrated &
+      .or. trim(coarse_diag%special_case) .ne. ''
+  end function is_derived_2d_field
+
+  logical function is_multi_species_water_path(special_case)
+    character(len=64), intent(in) :: special_case
+
+    is_multi_species_water_path = &
+           trim(special_case) .eq. 'total_water_path' &
+      .or. trim(special_case) .eq. 'total_ice_water_path' &
+      .or. trim(special_case) .eq. 'total_liquid_water_path'
+  end function is_multi_species_water_path
+
+  subroutine compute_multi_species_water_path(is, ie, js, je, npz, n_prognostic, n_water, q, delp, case, result)
+    integer, intent(in) :: is, ie, js, je, npz, n_prognostic, n_water
+    real, intent(in) :: q(is:ie,js:je,1:npz,1:n_prognostic)
+    real, intent(in) :: delp(is:ie,js:je,1:npz)
+    character(len=64), intent(in) :: case
+    real, intent(out) :: result(is:ie,js:je)
+
+    real, allocatable :: total(:,:,:)
+    integer :: sphum, liq_wat, ice_wat, rainwat, snowwat, graupel
+
+    allocate(total(is:ie,js:je,1:npz))
+    total = 0.0
+
+    sphum   = get_tracer_index (MODEL_ATMOS, 'sphum')
+    liq_wat = get_tracer_index (MODEL_ATMOS, 'liq_wat')
+    ice_wat = get_tracer_index (MODEL_ATMOS, 'ice_wat')
+    rainwat = get_tracer_index (MODEL_ATMOS, 'rainwat')
+    snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
+    graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
+
+    if (trim(case) .eq. 'total_water_path') then
+      total = sum(q(is:ie,js:je,1:npz,1:n_water), dim=4)
+    elseif (trim(case) .eq. 'total_ice_water_path') then
+      ! If the indices are less than or equal to zero then that water type is
+      ! unused in the active model configuration.
+      if (ice_wat .gt. 0) then
+        total = total + q(is:ie,js:je,1:npz,ice_wat)
+      endif
+      if (snowwat .gt. 0) then
+        total = total + q(is:ie,js:je,1:npz,snowwat)
+      endif
+      if (graupel .gt. 0) then
+        total = total + q(is:ie,js:je,1:npz,graupel)
+      endif
+    elseif (trim(case) .eq. 'total_liquid_water_path') then
+      if (liq_wat .gt. 0) then
+        total = total + q(is:ie,js:je,1:npz,liq_wat)
+      endif
+      if (rainwat .gt. 0) then
+        total = total + q(is:ie,js:je,1:npz,rainwat)
+      endif
+    endif
+    result = sum(total * delp, dim=3) / grav
+  end subroutine compute_multi_species_water_path
 end module coarse_grained_diagnostics_mod
