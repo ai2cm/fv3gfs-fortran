@@ -611,7 +611,8 @@ module module_physics_driver
         t_post_precpd, &
         tp_cpf
 
-      real(kind=kind_phys), dimension(size(Grid%xlon,1))  :: psp_cpf
+      real(kind=kind_phys), dimension(size(Grid%xlon,1))  :: psp_cpf, &
+        pr_post_precpd
 #endif
 
 !--- ALLOCATABLE ELEMENTS
@@ -4629,14 +4630,15 @@ module module_physics_driver
             call set_state("specific_humidity_after_gscond", Stateout%gq0(1:im, 1:levs, 1))
             call set_state("air_temperature_after_gscond", Stateout%gt0(1:im, 1:levs))
             call set_state("cloud_water_mixing_ratio_after_gscond", Stateout%gq0(1:im, 1:levs, ntcw))
+            
+            ! if gscond model not specified, does nothing and diags should be equivalent w/ physics
+            call call_function("emulation", "gscond")  
+            call apply_python_gscond_updates_to_diags(Diag, dqdt, dtdt, Model%ntcw, dtp)
 
+            ! update state now so fortran precpd can respond to gscond emulator output
             if (Model%emulate_gscond_only) then
-              call call_function("emulation", "gscond")
-              call apply_python_gscond_updates_to_diags(Diag, dqdt, dtdt, Model%ntcw, dtp)
-              if (Model%emulate_zc_microphysics) then
-                call apply_python_gscond_updates_to_stateout(Stateout, Model%ntcw)
-                call apply_python_gscond_updates_to_tbd(Tbd)
-              end if
+              call apply_python_gscond_updates_to_stateout(Stateout, Model%ntcw)
+              call apply_python_gscond_updates_to_tbd(Tbd)
             endif
 
 #endif
@@ -4650,9 +4652,6 @@ module module_physics_driver
               Diag%zhao_carr_physics%humidity = (Stateout%gq0(1:im,1:levs, 1) - dqdt(:,:,1)) / dtp
               Diag%zhao_carr_physics%cloud_water = (Stateout%gq0(1:im,1:levs,ntcw) - dqdt(:,:,ntcw)) / dtp
               Diag%zhao_carr_physics%temperature = (Stateout%gt0(1:im,1:levs) - dtdt) / dtp
-              if (Model%emulate_gscond_only) then
-                call adjust_zhao_carr_physics_diags_gscond_only(Diag)
-              end if
             end if
             ! rain1 has units m, and represents surface precip over dtp
             Diag%zhao_carr_physics%surface_precipitation = rain1 / dtp * rhowater
@@ -4675,11 +4674,10 @@ module module_physics_driver
 
             call call_function("emulation", "microphysics")
 
-            if (.not. Model%emulate_gscond_only) then
-              call apply_python_gscond_updates_to_diags(Diag, dqdt, dtdt, Model%ntcw, dtp)
-              if (Model%emulate_zc_microphysics) then
-                call apply_python_gscond_updates_to_tbd(Tbd)
-              end if
+            ! Need to apply the "gscond after last timestep".
+            ! no need for Stateout since final state is determined from precpd emulation.  
+            if (Model%emulate_zc_microphysics) then
+              call apply_python_gscond_updates_to_tbd(Tbd)
             end if
             
             if (Model%save_zc_microphysics) then
@@ -4689,14 +4687,14 @@ module module_physics_driver
             call get_state("air_temperature_after_precpd", t_post_precpd)
             call get_state("specific_humidity_after_precpd", qv_post_precpd)
             call get_state("cloud_water_mixing_ratio_after_precpd", qc_post_precpd)
-            call get_state("total_precipitation", rain1)
+            call get_state("total_precipitation", pr_post_precpd)
 
             if (Model%ldiag3d) then
               Diag%zhao_carr_emulator%humidity = (qv_post_precpd(1:im,1:levs) - dqdt(:,:,1)) / dtp
               Diag%zhao_carr_emulator%cloud_water = (qc_post_precpd(1:im,1:levs) - dqdt(:,:,ntcw)) / dtp
               Diag%zhao_carr_emulator%temperature = (t_post_precpd(1:im,1:levs) - dtdt) / dtp
             end if
-            Diag%zhao_carr_emulator%surface_precipitation = rain1 / dtp * rhowater
+            Diag%zhao_carr_emulator%surface_precipitation = pr_post_precpd / dtp * rhowater
 
             ! apply emulator
             if (Model%emulate_zc_microphysics) then
@@ -4707,6 +4705,8 @@ module module_physics_driver
                   Stateout%gt0(i,k) = t_post_precpd(i,k)
                 enddo
               enddo
+
+              rain1(:) = pr_post_precpd
             endif
 
 #endif
@@ -6119,28 +6119,6 @@ module module_physics_driver
         ! Compute the mass of dry air plus all hydrometeors at the end of the physics.
         delp = initial_mass_of_dry_air_plus_vapor * dry_air_plus_hydrometeor_mass_fraction_after_physics
       end subroutine compute_updated_delp_following_dynamics_definition
-
-      subroutine adjust_zhao_carr_physics_diags_gscond_only(Diag)
-        type (GFS_diag_type), intent(inout) :: Diag
-
-        call adjust_total_physics_tendency_gscond_only(&
-          Diag%zhao_carr_physics%humidity,&
-          Diag%gscond_physics%humidity,&
-          Diag%gscond_emulator%humidity&
-        )
-
-        call adjust_total_physics_tendency_gscond_only(&
-          Diag%zhao_carr_physics%temperature,&
-          Diag%gscond_physics%temperature,&
-          Diag%gscond_emulator%temperature&
-        )
-
-        call adjust_total_physics_tendency_gscond_only(&
-          Diag%zhao_carr_physics%cloud_water,&
-          Diag%gscond_physics%cloud_water,&
-          Diag%gscond_emulator%cloud_water&
-        )
-      end subroutine
 
       !> Adjust the total physics tendency in the gscond-only case
       !> The total tendency is defined as gscond_physics + precpd_physics
