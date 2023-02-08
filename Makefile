@@ -1,4 +1,5 @@
 # setup (use XXX=<value> make <target> to override)
+# Placeholder change...
 GCR_URL ?= us.gcr.io/vcm-ml
 COMMIT_SHA := $(shell git rev-parse HEAD)
 DOCKERFILE ?= docker/Dockerfile
