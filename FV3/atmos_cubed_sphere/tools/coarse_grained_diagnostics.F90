@@ -1273,14 +1273,12 @@ contains
     real, dimension(isc:iec,jsc:jec,1:npz), intent(out) :: cvm
     real, dimension(isc:iec) :: qc, cvm_tmp
     integer :: j, k, sphum, liq_wat, ice_wat, rainwat, snowwat, graupel
-    
     sphum   = get_tracer_index (MODEL_ATMOS, 'sphum')
     liq_wat = get_tracer_index (MODEL_ATMOS, 'liq_wat')
     ice_wat = get_tracer_index (MODEL_ATMOS, 'ice_wat')
     rainwat = get_tracer_index (MODEL_ATMOS, 'rainwat')
     snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
     graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
-
     do j = jsc, jec
        do k = 1, npz
           call moist_cv(isc, iec, isd, ied, jsd, jed, npz, j, k, nwat, sphum, &
@@ -1298,14 +1296,12 @@ contains
     real, dimension(isc:iec,jsc:jec,1:npz), intent(out) :: cpm
     real, dimension(isc:iec) :: qc, cpm_tmp
     integer :: j, k, sphum, liq_wat, ice_wat, rainwat, snowwat, graupel
-
     sphum   = get_tracer_index (MODEL_ATMOS, 'sphum')
     liq_wat = get_tracer_index (MODEL_ATMOS, 'liq_wat')
     ice_wat = get_tracer_index (MODEL_ATMOS, 'ice_wat')
     rainwat = get_tracer_index (MODEL_ATMOS, 'rainwat')
     snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
     graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
-
     do j = jsc, jec
        do k = 1, npz
           call moist_cp(isc, iec, isd, ied, jsd, jed, npz, j, k, nwat, sphum, &
