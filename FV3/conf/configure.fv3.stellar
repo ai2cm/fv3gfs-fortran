@@ -1,15 +1,26 @@
 ############
 # commands #
 ############
-# Note it is expected that the NCEPLIBS_DIR, FMS_DIR, and ESMFMKFILE environment 
-# variables are exported before using this configure file.  The NCEPLIBS_DIR and
-# FMS_DIR variables refer to the install locations of NCEPlibs and FMS, respectively,
-# and the ESMFMKFILE variable refers to the location of the esmf.mk file associated 
-# with the installation of ESMF.
+#export NCEPLIBS_DIR=$INSTALL_PREFIX/NCEPlibs
+#export ESMFMKFILE=$INSTALL_PREFIX/ESMFlibs/lib/libO/Linux.intel.64.mpiuni.default/esmf.mk
+#export FMS_DIR=$INSTALL_PREFIX/fv3gfs-fortran/FMS
 
+#Note that the variable $INSTALL_PREFIX needs to be exported prior configuring the environment. An example of the absolute pathes to the libraries is given below.
+
+export NCEPLIBS_DIR=/home/mr7417/NCEPlibs
+export ESMFMKFILE=/home/mr7417/ESMFlibs/lib/libO/Linux.intel.64.mpiuni.default/esmf.mk
+export FMS_DIR=/home/mr7417/fv3gfs-fortran/FMS
+
+ifeq ($(origin FC),default)
 FC = mpif90
+endif
+ifeq ($(origin CC),default)
 CC = mpicc
-CXX = mpicxx
+endif
+ifeq ($(origin CXX),default)
+CXX=mpicxx
+endif
+
 LD = $(FC)
 
 #########
@@ -42,12 +53,13 @@ endif
 NETCDF_ROOT = $(NETCDF_DIR)
 INCLUDE = -I$(NETCDF_ROOT)/include
 
-# The fpp option -D__GFORTRAN__(-Dname) is specified to avoid the unwanted errors when compiling the model.
-# The source of the errors is the mismatch between the way the "intent" of the arguments
-# are defined in the interface definition of the proceduce pointer used in the atmos_model.F90
-# and the way the "intent" of the arguments are defined in the procedures the pointer points to.
+# The fpp option -DHARMONIZE_PROCEDURE_POINTER_INTENTS is specified to avoid the unwanted errors when compiling the model. 
+# The source of the errors is the mismatch between the way the "intent" of the arguments 
+# are defined in the interface definition of the proceduce pointer used in the atmos_model.F90 
+# and the way the "intent" of the arguments are defined in the procedures the pointer points to
 
-FPPFLAGS := -fpp -Wp,-w, -D__GFORTRAN__ $(INCLUDE) -fPIC
+FPPFLAGS := -fpp -Wp,-w, -DHARMONIZE_PROCEDURE_POINTER_INTENTS $(INCLUDE) -fPIC
+
 CFLAGS := $(INCLUDE) -fPIC
 
 FFLAGS := $(INCLUDE) -fPIC -fno-alias -auto -safe-cray-ptr -ftz -assume byterecl -nowarn -sox -align array64byte

@@ -658,7 +658,7 @@ module GFS_driver
 ! Since IPD_func0d_proc declares all arguments as intent(inout), we
 ! need to do the same here - however, this way we are loosing the
 ! valuable information on the actual intent to this routine. *DH
-#ifdef __GFORTRAN__
+#if defined(__GFORTRAN__) || defined(HARMONIZE_PROCEDURE_POINTER_INTENTS)
     type(GFS_control_type),         intent(inout) :: Model
     type(GFS_statein_type),         intent(inout) :: Statein
     type(GFS_stateout_type),        intent(inout) :: Stateout
@@ -670,15 +670,15 @@ module GFS_driver
     type(GFS_radtend_type),         intent(inout) :: Radtend
     type(GFS_diag_type),            intent(inout) :: Diag
 #else
-    type(GFS_control_type),   intent(in   ) :: Model
-    type(GFS_statein_type),   intent(in   ) :: Statein
-    type(GFS_stateout_type),  intent(in   ) :: Stateout
-    type(GFS_sfcprop_type),   intent(in   ) :: Sfcprop
+    type(GFS_control_type),   intent(in) :: Model
+    type(GFS_statein_type),   intent(in) :: Statein
+    type(GFS_stateout_type),  intent(in) :: Stateout
+    type(GFS_sfcprop_type),   intent(in) :: Sfcprop
     type(GFS_coupling_type),  intent(inout) :: Coupling
-    type(GFS_grid_type),      intent(in   ) :: Grid
-    type(GFS_tbd_type),       intent(in   ) :: Tbd
-    type(GFS_cldprop_type),   intent(in   ) :: Cldprop
-    type(GFS_radtend_type),   intent(in   ) :: Radtend
+    type(GFS_grid_type),      intent(in) :: Grid
+    type(GFS_tbd_type),       intent(in) :: Tbd
+    type(GFS_cldprop_type),   intent(in) :: Cldprop
+    type(GFS_radtend_type),   intent(in) :: Radtend
     type(GFS_diag_type),      intent(inout) :: Diag
 #endif
     !--- local variables
