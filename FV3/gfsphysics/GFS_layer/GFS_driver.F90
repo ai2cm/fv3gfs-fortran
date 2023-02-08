@@ -675,10 +675,10 @@ module GFS_driver
     type(GFS_stateout_type),  intent(in   ) :: Stateout
     type(GFS_sfcprop_type),   intent(in   ) :: Sfcprop
     type(GFS_coupling_type),  intent(inout) :: Coupling
-    type(GFS_grid_type),      intent(in) :: Grid
-    type(GFS_tbd_type),       intent(in) :: Tbd
-    type(GFS_cldprop_type),   intent(in) :: Cldprop
-    type(GFS_radtend_type),   intent(in) :: Radtend
+    type(GFS_grid_type),      intent(in   ) :: Grid
+    type(GFS_tbd_type),       intent(in   ) :: Tbd
+    type(GFS_cldprop_type),   intent(in   ) :: Cldprop
+    type(GFS_radtend_type),   intent(in   ) :: Radtend
     type(GFS_diag_type),      intent(inout) :: Diag
 #endif
     !--- local variables
