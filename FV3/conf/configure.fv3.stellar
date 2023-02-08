@@ -6,10 +6,16 @@
 # FMS_DIR variables refer to the install locations of NCEPlibs and FMS, respectively,
 # and the ESMFMKFILE variable refers to the location of the esmf.mk file associated 
 # with the installation of ESMF.
-
+ifeq ($(origin FC),default)
 FC = mpif90
+endif
+ifeq ($(origin CC),default)
 CC = mpicc
-CXX = mpicxx
+endif
+ifeq ($(origin CXX),default)
+CXX=mpicxx
+endif
+>>>>>>> upstream/new-branch
 LD = $(FC)
 
 #########
@@ -47,7 +53,7 @@ INCLUDE = -I$(NETCDF_ROOT)/include
 # are defined in the interface definition of the proceduce pointer used in the atmos_model.F90
 # and the way the "intent" of the arguments are defined in the procedures the pointer points to.
 
-FPPFLAGS := -fpp -Wp,-w, -D__GFORTRAN__ $(INCLUDE) -fPIC
+FPPFLAGS := -fpp -Wp,-w, -DHARMONIZE_PROCEDURE_POINTER_INTENTS $(INCLUDE) -fPIC
 CFLAGS := $(INCLUDE) -fPIC
 
 FFLAGS := $(INCLUDE) -fPIC -fno-alias -auto -safe-cray-ptr -ftz -assume byterecl -nowarn -sox -align array64byte
