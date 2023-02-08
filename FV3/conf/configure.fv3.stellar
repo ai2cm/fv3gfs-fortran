@@ -1,15 +1,11 @@
 ############
 # commands #
 ############
-#export NCEPLIBS_DIR=$INSTALL_PREFIX/NCEPlibs
-#export ESMFMKFILE=$INSTALL_PREFIX/ESMFlibs/lib/libO/Linux.intel.64.mpiuni.default/esmf.mk
-#export FMS_DIR=$INSTALL_PREFIX/fv3gfs-fortran/FMS
-
-#Note that the variable $INSTALL_PREFIX needs to be exported prior configuring the environment. An example of the absolute pathes to the libraries is given below.
-
-export NCEPLIBS_DIR=/home/mr7417/NCEPlibs
-export ESMFMKFILE=/home/mr7417/ESMFlibs/lib/libO/Linux.intel.64.mpiuni.default/esmf.mk
-export FMS_DIR=/home/mr7417/fv3gfs-fortran/FMS
+# Note it is expected that the NCEPLIBS_DIR, FMS_DIR, and ESMFMKFILE environment 
+# variables are exported before using this configure file.  The NCEPLIBS_DIR and
+# FMS_DIR variables refer to the install locations of NCEPlibs and FMS, respectively,
+# and the ESMFMKFILE variable refers to the location of the esmf.mk file associated 
+# with the installation of ESMF.
 
 ifeq ($(origin FC),default)
 FC = mpif90
