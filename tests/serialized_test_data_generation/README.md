@@ -20,7 +20,7 @@ experiments present in the `configs` directory and push the data to the cloud st
 ./make_all_datasets.sh
 ```
 Note that this will take a long time and will make all data on your local hard-drive. Make sure you have enough free space available.
-Data will show up in the `data` directory. Model run output will be generated in the `rundir`. Use `make distclean` to remove all data.
+Data will show up in the `data` directory. Model run output will be generated in the `rundir`. Use `make distclean` to remove all data. By default, `make_all_datasets.sh` will push the data to `gs://vcm-fv3gfs-serialized-regression-data`. If you do not have access to that bucket, it is recommended that you remove `push_data` from the `make_all_datasets.sh` script. Additionally, if `EXPERIMENT_PATTERN` variable is not set, all experiments will be run and the output data folder will be overwritten after every config. If you plan to generate multiple datasets, you should add a make target to move the data to a different location.
 
 Other make targets are available and a quick documentation can be accessed using `make help`.
 

@@ -64,6 +64,8 @@ cdef extern:
 {% for item in flagstruct_properties %}
     void get_{{ item.fortran_name }}({{item.type_cython}} *{{ item.fortran_name }}_out)
 {% endfor %}
+    void transform_agrid_winds_to_dgrid_winds_subroutine(REAL_t *ua, REAL_t *va, REAL_t *u, REAL_t *v)
+    void transform_dgrid_winds_to_agrid_winds_subroutine(REAL_t *u, REAL_t *v, REAL_t *ua, REAL_t *va)
 
 cdef get_quantity_factory():
     cdef int nx, ny, nz, nz_soil, n_topo_variables
@@ -581,3 +583,91 @@ def step_post_radiation_physics():
     """Compute Post-radiation physics (e.g. moist physics turbulence)"""
     # TODO ensure that IPD_control.first_step is set in this routine
     do_physics()
+
+
+def transform_agrid_winds_to_dgrid_winds(ua, va):
+    """Transform A-grid lat-lon winds to D-grid cubed-sphere winds.
+
+    This function wraps the cubed_a2d subroutine from the fortran model, making
+    it possible to call from Python without having to provide information about
+    the grid or domain decomposition.
+
+    Args:
+        ua : Quantity
+            The eastward wind defined on the A-grid
+        va : Quantity
+            The northward wind defined on the A-grid
+
+    Returns:
+        u, v : Quantity, Quantity
+            The cubed-sphere components of the wind defined on the D-grid
+    """
+    cdef REAL_t[:, :, :] buffer_ua
+    cdef REAL_t[:, :, :] buffer_va
+    cdef REAL_t[:, :, :] buffer_u
+    cdef REAL_t[:, :, :] buffer_v
+
+    if ua.units != va.units:
+        raise ValueError(
+            f"Input wind components have differing units from each other. "
+            f"ua has units {ua.units!r} and va has units {va.units!r}."
+        )
+
+    units = ua.units
+    ua = ua.transpose([pace.util.Z_DIM, pace.util.Y_DIM, pace.util.X_DIM])
+    va = va.transpose([pace.util.Z_DIM, pace.util.Y_DIM, pace.util.X_DIM])
+    buffer_ua = np.ascontiguousarray(ua.view[:])
+    buffer_va = np.ascontiguousarray(va.view[:])
+
+    allocator = get_quantity_factory()
+    u = allocator.empty([pace.util.Z_DIM, pace.util.Y_INTERFACE_DIM, pace.util.X_DIM], units, dtype=real_type)
+    v = allocator.empty([pace.util.Z_DIM, pace.util.Y_DIM, pace.util.X_INTERFACE_DIM], units, dtype=real_type)
+
+    with pace.util.recv_buffer(u.np.empty, u.view[:]) as buffer_u, pace.util.recv_buffer(v.np.empty, v.view[:]) as buffer_v:
+        transform_agrid_winds_to_dgrid_winds_subroutine(&buffer_ua[0, 0, 0], &buffer_va[0, 0, 0], &buffer_u[0, 0, 0], &buffer_v[0, 0, 0])
+
+    return u, v
+
+
+def transform_dgrid_winds_to_agrid_winds(u, v):
+    """Transform D-grid cubed-sphere winds to A-grid lat-lon winds.
+
+    This function wraps the cubed_to_latlon subroutine from the fortran model,
+    making it possible to call from Python without having to provide information
+    about the grid or domain decomposition.
+
+    Args:
+        u : Quantity
+            The x-wind defined on the D-grid
+        v : Quantity
+            The y-wind defined on the D-grid
+
+    Returns:
+        ua, va : Quantity, Quantity
+            The lat-lon components of the wind defined on the A-grid
+    """
+    cdef REAL_t[:, :, :] buffer_ua
+    cdef REAL_t[:, :, :] buffer_va
+    cdef REAL_t[:, :, :] buffer_u
+    cdef REAL_t[:, :, :] buffer_v
+
+    if u.units != v.units:
+        raise ValueError(
+            f"Input wind components have differing units from each other. "
+            f"u has units {u.units!r} and v has units {v.units!r}."
+        )
+
+    units = u.units
+    u = u.transpose([pace.util.Z_DIM, pace.util.Y_INTERFACE_DIM, pace.util.X_DIM])
+    v = v.transpose([pace.util.Z_DIM, pace.util.Y_DIM, pace.util.X_INTERFACE_DIM])
+    buffer_u = np.ascontiguousarray(u.view[:])
+    buffer_v = np.ascontiguousarray(v.view[:])
+
+    allocator = get_quantity_factory()
+    ua = allocator.empty([pace.util.Z_DIM, pace.util.Y_DIM, pace.util.X_DIM], units, dtype=real_type)
+    va = allocator.empty([pace.util.Z_DIM, pace.util.Y_DIM, pace.util.X_DIM], units, dtype=real_type)
+
+    with pace.util.recv_buffer(ua.np.empty, ua.view[:]) as buffer_ua, pace.util.recv_buffer(va.np.empty, va.view[:]) as buffer_va:
+        transform_dgrid_winds_to_agrid_winds_subroutine(&buffer_u[0, 0, 0], &buffer_v[0, 0, 0], &buffer_ua[0, 0, 0], &buffer_va[0, 0, 0])
+
+    return ua, va
