@@ -745,6 +745,8 @@ contains
           !            'Relative Humidity', '%', missing_value=missing_value, range=rhrange )
           idiag%id_delp = register_diag_field ( trim(field), 'delp', axes(1:3), Time,        &
                'pressure thickness', 'pa', missing_value=missing_value )
+          idiag%id_delp_total = register_diag_field ( trim(field), 'delp_total', axes(1:3), Time,        &
+               'pressure thickness including condensate mass', 'pa', missing_value=missing_value )
           if ( .not. Atm(n)%flagstruct%hydrostatic )                                        &
                idiag%id_delz = register_diag_field ( trim(field), 'delz', axes(1:3), Time,        &
                'height thickness', 'm', missing_value=missing_value )
@@ -2703,6 +2705,8 @@ contains
           endif
        endif
 
+
+       if (idiag%id_delp_total .gt. 0) used = send_data(idiag%id_delp_total, Atm(n)%delp(isc:iec,jsc:jec,1:npz), Time)
 
 #ifdef GFS_PHYS
        if(idiag%id_delp > 0 .or. idiag%id_cape > 0 .or. idiag%id_cin > 0 .or. ((.not. Atm(n)%flagstruct%hydrostatic) .and. idiag%id_pfnh > 0)) then
