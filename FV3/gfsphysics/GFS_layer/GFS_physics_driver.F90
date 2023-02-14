@@ -2296,6 +2296,8 @@ module module_physics_driver
           Diag%spfhmin(i) = min(Diag%spfhmin(i), Sfcprop%q2m(i))
         enddo
 
+        Diag%wind = wind
+
         do i=1, im
 ! find max wind speed then decompose
            tem = sqrt(Diag%u10m(i)*Diag%u10m(i) + Diag%v10m(i)*Diag%v10m(i))
