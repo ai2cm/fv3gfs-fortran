@@ -89,6 +89,7 @@ diag_table:
     - {module_name: dynamics, field_name: rainwat, output_name: rainwat}
     - {module_name: dynamics, field_name: snowwat, output_name: snowwat}
     - {module_name: dynamics, field_name: graupel, output_name: graupel}
+    - {module_name: dynamics, field_name: delp_total, output_name: delp_total}
     name: atmos_8xdaily
     frequency: 3
     frequency_units: hours

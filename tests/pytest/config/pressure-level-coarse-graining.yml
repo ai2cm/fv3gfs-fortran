@@ -216,6 +216,8 @@ diag_table:
     - {module_name: dynamics, field_name: vertical_eddy_flux_of_snowwat_coarse, output_name: vertical_eddy_flux_of_snowwat_coarse}
     - {module_name: dynamics, field_name: vertical_eddy_flux_of_graupel_coarse, output_name: vertical_eddy_flux_of_graupel_coarse}
     - {module_name: dynamics, field_name: vertical_eddy_flux_of_temperature_coarse, output_name: vertical_eddy_flux_of_temperature_coarse}
+    - {module_name: dynamics, field_name: vort_coarse, output_name: vort_coarse}
+    - {module_name: dynamics, field_name: vort850_coarse, output_name: vort850_coarse}
     name: atmos_15min_coarse_inst
     frequency: 15
     frequency_units: minutes
