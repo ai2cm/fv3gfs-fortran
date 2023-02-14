@@ -586,6 +586,33 @@ contains
     coarse_diagnostics(index)%units = 'kg/m**2'
     coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
     coarse_diagnostics(index)%special_case = "total_ice_water_path"
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'tb_coarse'
+    coarse_diagnostics(index)%description = 'coarse temperature in lowest model level'
+    coarse_diagnostics(index)%units = 'K'
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+    coarse_diagnostics(index)%data%var2 => Atm(tile_count)%pt(is:ie,js:je,npz)
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'us_coarse'
+    coarse_diagnostics(index)%description = 'coarse zonal wind in lowest model level'
+    coarse_diagnostics(index)%units = 'm/s'
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+    coarse_diagnostics(index)%data%var2 => Atm(tile_count)%ua(is:ie,js:je,npz)
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'vs_coarse'
+    coarse_diagnostics(index)%description = 'coarse meridional wind in lowest model level'
+    coarse_diagnostics(index)%units = 'm/s'
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+    coarse_diagnostics(index)%data%var2 => Atm(tile_count)%va(is:ie,js:je,npz)
   end subroutine populate_coarse_diag_type
 
   subroutine register_coarse_diagnostics(Atm, coarse_diagnostics, Time, &
