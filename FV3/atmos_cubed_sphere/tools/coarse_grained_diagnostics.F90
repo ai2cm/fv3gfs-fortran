@@ -109,8 +109,8 @@ contains
     index = index + 1
     coarse_diagnostics(index)%axes = 3
     coarse_diagnostics(index)%module_name = DYNAMICS
-    coarse_diagnostics(index)%name = 'delp_coarse'
-    coarse_diagnostics(index)%description = 'coarse-grained pressure thickness'
+    coarse_diagnostics(index)%name = 'delp_total_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained pressure thickness including condensate mass'
     coarse_diagnostics(index)%units = 'Pa'
     coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
     coarse_diagnostics(index)%always_model_level_coarse_grain = .true.

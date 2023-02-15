@@ -203,7 +203,7 @@ diag_table:
     - {module_name: dynamics, field_name: dy_coarse, output_name: dy_coarse}
     - {module_name: dynamics, field_name: ps_coarse, output_name: ps_coarse}
     - {module_name: dynamics, field_name: omega_coarse, output_name: omega_coarse}
-    - {module_name: dynamics, field_name: delp_coarse, output_name: delp_coarse}
+    - {module_name: dynamics, field_name: delp_total_coarse, output_name: delp_total_coarse}
     - {module_name: dynamics, field_name: q500_coarse, output_name: q500_coarse}
     - {module_name: dynamics, field_name: u200_coarse, output_name: u200_coarse}
     - {module_name: dynamics, field_name: v200_coarse, output_name: v200_coarse}
@@ -236,7 +236,7 @@ diag_table:
     - {module_name: dynamics, field_name: fv_sat_adj_qv_dt_coarse, output_name: fv_sat_adj_qv_dt_coarse, reduction_method: average}
     - {module_name: dynamics, field_name: fv_sat_adj_t_dt_coarse, output_name: fv_sat_adj_t_dt_coarse, reduction_method: average}
     - {module_name: dynamics, field_name: omega_coarse, output_name: omega_coarse, reduction_method: average}
-    - {module_name: dynamics, field_name: delp_coarse, output_name: delp_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: delp_total_coarse, output_name: delp_total_coarse, reduction_method: average}
     - {module_name: dynamics, field_name: zsurf_coarse, output_name: HGTsfc_coarse, reduction_method: average}
     - {module_name: dynamics, field_name: ps_coarse, output_name: ps_coarse, reduction_method: average}
     - {module_name: dynamics, field_name: int_qv_dt_phys_coarse, output_name: int_qv_dt_phys_coarse, reduction_method: average}
