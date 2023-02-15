@@ -136,6 +136,7 @@ diag_table:
     - {module_name: gfs_sfc, field_name: SOILT2, output_name: SOILT2}
     - {module_name: gfs_sfc, field_name: SOILT3, output_name: SOILT3}
     - {module_name: gfs_sfc, field_name: SOILT4, output_name: SOILT4}
+    - {module_name: gfs_phys, field_name: lowest_level_wind_speed, output_name: lowest_level_wind_speed}
     name: sfc_dt_atmos
     frequency: 0
     frequency_units: hours

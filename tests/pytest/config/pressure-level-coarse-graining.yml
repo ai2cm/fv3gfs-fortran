@@ -65,6 +65,7 @@ diag_table:
     - {module_name: gfs_phys, field_name: hpbl_coarse, output_name: HPBLsfc_coarse}
     - {module_name: gfs_phys, field_name: u10m_coarse, output_name: UGRD10m_coarse}
     - {module_name: gfs_phys, field_name: v10m_coarse, output_name: VGRD10m_coarse}
+    - {module_name: gfs_phys, field_name: lowest_level_wind_speed_coarse, output_name: lowest_level_wind_speed_coarse}
     name: gfsphysics_15min_coarse
     frequency: 0
     frequency_units: minutes
@@ -216,6 +217,9 @@ diag_table:
     - {module_name: dynamics, field_name: vertical_eddy_flux_of_snowwat_coarse, output_name: vertical_eddy_flux_of_snowwat_coarse}
     - {module_name: dynamics, field_name: vertical_eddy_flux_of_graupel_coarse, output_name: vertical_eddy_flux_of_graupel_coarse}
     - {module_name: dynamics, field_name: vertical_eddy_flux_of_temperature_coarse, output_name: vertical_eddy_flux_of_temperature_coarse}
+    - {module_name: dynamics, field_name: tb_coarse, output_name: tb_coarse}
+    - {module_name: dynamics, field_name: us_coarse, output_name: us_coarse}
+    - {module_name: dynamics, field_name: vs_coarse, output_name: vs_coarse}
     name: atmos_15min_coarse_inst
     frequency: 15
     frequency_units: minutes

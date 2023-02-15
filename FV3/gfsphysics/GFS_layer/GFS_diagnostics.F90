@@ -1445,6 +1445,19 @@ module GFS_diagnostics
 
     idx = idx + 1
     ExtDiag(idx)%axes = 2
+    ExtDiag(idx)%name = 'lowest_level_wind_speed'
+    ExtDiag(idx)%desc = 'lowest model level wind speed passed to land surface model'
+    ExtDiag(idx)%unit = 'm/s'
+    ExtDiag(idx)%mod_name = 'gfs_phys'
+    ExtDiag(idx)%intpl_method = 'bilinear'
+    ExtDiag(idx)%coarse_graining_method = 'area_weighted'
+    allocate (ExtDiag(idx)%data(nblks))
+    do nb = 1,nblks
+      ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%wind(:)
+    enddo
+
+    idx = idx + 1
+    ExtDiag(idx)%axes = 2
     ExtDiag(idx)%name = 't02max'
     ExtDiag(idx)%desc = 'max hourly 2m Temperature'
     ExtDiag(idx)%unit = 'K'
