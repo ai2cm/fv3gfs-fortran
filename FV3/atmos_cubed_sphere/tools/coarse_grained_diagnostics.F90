@@ -4,7 +4,7 @@ module coarse_grained_diagnostics_mod
   use diag_manager_mod, only: diag_axis_init, register_diag_field, register_static_field, send_data
   use field_manager_mod,  only: MODEL_ATMOS
   use fv_arrays_mod, only: fv_atmos_type, fv_coarse_graining_type
-  use fv_diagnostics_mod, only: cs3_interpolator, get_height_field, get_height_given_pressure
+  use fv_diagnostics_mod, only: cs3_interpolator, get_height_field, get_height_given_pressure, get_vorticity, interpolate_vertical
   use fv_mapz_mod, only: moist_cp, moist_cv
   use mpp_domains_mod, only: domain2d, EAST, NORTH
   use mpp_mod, only: FATAL, mpp_error
@@ -36,7 +36,7 @@ module coarse_grained_diagnostics_mod
     logical :: always_model_level_coarse_grain = .false.
     integer :: pressure_level = -1  ! If greater than 0, interpolate to this pressure level (in hPa)
     integer :: iv = 0  ! Controls type of pressure-level interpolation performed (-1, 0, or 1)
-    character(len=64) :: special_case  ! E.g. height is computed differently on pressure surfaces
+    character(len=64) :: special_case = ''  ! E.g. height is computed differently on pressure surfaces
     type(data_subtype) :: data
   end type coarse_diag_type
 
@@ -109,8 +109,8 @@ contains
     index = index + 1
     coarse_diagnostics(index)%axes = 3
     coarse_diagnostics(index)%module_name = DYNAMICS
-    coarse_diagnostics(index)%name = 'delp_coarse'
-    coarse_diagnostics(index)%description = 'coarse-grained pressure thickness'
+    coarse_diagnostics(index)%name = 'delp_total_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained pressure thickness including condensate mass'
     coarse_diagnostics(index)%units = 'Pa'
     coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
     coarse_diagnostics(index)%always_model_level_coarse_grain = .true.
@@ -125,6 +125,15 @@ contains
     coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
     coarse_diagnostics(index)%data%var2 => Atm(tile_count)%ps(is:ie,js:je)
     
+    index = index + 1
+    coarse_diagnostics(index)%axes = 3
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'vort_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained relative vorticity'
+    coarse_diagnostics(index)%units = '1/s'
+    coarse_diagnostics(index)%reduction_method = MASS_WEIGHTED
+    coarse_diagnostics(index)%special_case = 'vorticity'
+
     if (.not. Atm(tile_count)%flagstruct%hydrostatic) then
        index = index + 1
        coarse_diagnostics(index)%axes = 3
@@ -507,6 +516,16 @@ contains
       coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
       coarse_diagnostics(index)%special_case = 'height'
 
+      index = index + 1
+      coarse_diagnostics(index)%pressure_level = pressure_levels(p)
+      coarse_diagnostics(index)%axes = 2
+      coarse_diagnostics(index)%module_name = DYNAMICS
+      coarse_diagnostics(index)%name = 'vort' // trim(adjustl(pressure_level_label)) // '_coarse'
+      coarse_diagnostics(index)%description = 'coarse-grained ' // trim(adjustl(pressure_level_label)) // '-mb vorticity'
+      coarse_diagnostics(index)%units = '1/s'
+      coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+      coarse_diagnostics(index)%special_case = 'vorticity'
+
       do t = 1, n_tracers
         call get_tracer_names(MODEL_ATMOS, t, tracer_name, tracer_long_name, tracer_units)
         index = index + 1
@@ -542,6 +561,77 @@ contains
          coarse_diagnostics(index)%iv = -1
       endif
     enddo
+
+    do t = 1, n_tracers
+      call get_tracer_names(MODEL_ATMOS, t, tracer_name, tracer_long_name, tracer_units)
+      index = index + 1
+      coarse_diagnostics(index)%axes = 2
+      coarse_diagnostics(index)%module_name = DYNAMICS
+      coarse_diagnostics(index)%name = 'vertically_integrated_' // trim(tracer_name) // '_coarse'
+      coarse_diagnostics(index)%description =  'vertical mass-weighted integral of ' // trim(tracer_long_name)
+      coarse_diagnostics(index)%units = trim(tracer_units) // ' kg/m**2'
+      coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+      coarse_diagnostics(index)%vertically_integrated = .true.
+      if (t .gt. n_prognostic) then
+        coarse_diagnostics(index)%data%var3 => Atm(tile_count)%qdiag(is:ie,js:je,1:npz,t)
+      else
+        coarse_diagnostics(index)%data%var3 => Atm(tile_count)%q(is:ie,js:je,1:npz,t)
+      endif
+    enddo
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'tq_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained total water path'
+    coarse_diagnostics(index)%units = 'kg/m**2'
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+    coarse_diagnostics(index)%special_case = "total_water_path"
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'lw_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained total liquid water path'
+    coarse_diagnostics(index)%units = 'kg/m**2'
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+    coarse_diagnostics(index)%special_case = "total_liquid_water_path"
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'iw_coarse'
+    coarse_diagnostics(index)%description = 'coarse-grained total ice water path'
+    coarse_diagnostics(index)%units = 'kg/m**2'
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+    coarse_diagnostics(index)%special_case = "total_ice_water_path"
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'tb_coarse'
+    coarse_diagnostics(index)%description = 'coarse temperature in lowest model level'
+    coarse_diagnostics(index)%units = 'K'
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+    coarse_diagnostics(index)%data%var2 => Atm(tile_count)%pt(is:ie,js:je,npz)
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'us_coarse'
+    coarse_diagnostics(index)%description = 'coarse zonal wind in lowest model level'
+    coarse_diagnostics(index)%units = 'm/s'
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+    coarse_diagnostics(index)%data%var2 => Atm(tile_count)%ua(is:ie,js:je,npz)
+
+    index = index + 1
+    coarse_diagnostics(index)%axes = 2
+    coarse_diagnostics(index)%module_name = DYNAMICS
+    coarse_diagnostics(index)%name = 'vs_coarse'
+    coarse_diagnostics(index)%description = 'coarse meridional wind in lowest model level'
+    coarse_diagnostics(index)%units = 'm/s'
+    coarse_diagnostics(index)%reduction_method = AREA_WEIGHTED
+    coarse_diagnostics(index)%data%var2 => Atm(tile_count)%va(is:ie,js:je,npz)
   end subroutine populate_coarse_diag_type
 
   subroutine register_coarse_diagnostics(Atm, coarse_diagnostics, Time, &
@@ -753,7 +843,9 @@ contains
     real, allocatable :: work_2d(:,:), work_2d_coarse(:,:), work_3d_coarse(:,:,:)
     real, allocatable :: mass(:,:,:), height_on_interfaces(:,:,:), masked_area(:,:,:)
     real, allocatable :: phalf(:,:,:), upsampled_coarse_phalf(:,:,:)
+    real, allocatable, target :: vorticity(:,:,:)
     integer :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz
+    integer :: isd, ied, jsd, jed
     logical :: used
     logical :: need_2d_work_array, need_3d_work_array, need_mass_array, need_height_array, need_masked_area_array
     integer :: index, i, j
@@ -770,6 +862,10 @@ contains
       need_masked_area_array = .false.
     endif
 
+    isd = Atm(tile_count)%bd%isd
+    ied = Atm(tile_count)%bd%ied
+    jsd = Atm(tile_count)%bd%jsd
+    jed = Atm(tile_count)%bd%jed
     call get_fine_array_bounds(is, ie, js, je)
     call get_coarse_array_bounds(is_coarse, ie_coarse, js_coarse, je_coarse)
     npz = Atm(tile_count)%npz
@@ -821,6 +917,13 @@ contains
       if (.not. allocated(work_2d_coarse)) allocate(work_2d_coarse(is_coarse:ie_coarse,js_coarse:je_coarse))
       allocate(work_2d(is:ie,js:je))
     endif
+
+    if (need_vorticity_array()) then
+      allocate(vorticity(is:ie,js:je,1:npz))
+      call get_vorticity(is, ie, js, je, isd, ied, jsd, jed, npz, Atm(tile_count)%u, Atm(tile_count)%v, vorticity, &
+              Atm(tile_count)%gridstruct%dx, Atm(tile_count)%gridstruct%dy, Atm(tile_count)%gridstruct%rarea)
+      call associate_vorticity_pointers(is, ie, js, je, npz, vorticity)
+   endif
 
     do index = 1, DIAG_SIZE
       if (coarse_diagnostics(index)%id .gt. 0) then
@@ -950,18 +1053,18 @@ contains
     real, intent(in) :: height_on_interfaces(is:ie,js:je,1:npz+1)
     real, intent(out) :: result(is_coarse:ie_coarse,js_coarse:je_coarse)
 
+    integer :: n_prognostic
     character(len=256) :: error_message
     real, allocatable :: work_2d(:,:)
 
-    if (coarse_diag%pressure_level > 0 .or. coarse_diag%vertically_integrated &
-         .or. coarse_diag%scaled_by_specific_heat_and_vertically_integrated) then 
+    n_prognostic = size(Atm%q, 4)
+
+    if (is_derived_2d_field(coarse_diag)) then 
       allocate(work_2d(is:ie,js:je))
     endif
 
     if (trim(coarse_diag%reduction_method) .eq. AREA_WEIGHTED) then
-      if (coarse_diag%pressure_level < 0 &
-         .and. .not. coarse_diag%vertically_integrated &
-         .and. .not. coarse_diag%scaled_by_specific_heat_and_vertically_integrated) then
+      if (.not. is_derived_2d_field(coarse_diag)) then
         call weighted_block_average( &
           Atm%gridstruct%area(is:ie,js:je), &
           coarse_diag%data%var2, &
@@ -984,6 +1087,40 @@ contains
           work_2d, &
           result &
           )
+      elseif (trim(coarse_diag%special_case) .eq. 'vorticity') then
+        ! Note that FV3 uses a different interpolation routine for vorticity
+        ! than other vertically interpolated diagnostics.
+        call interpolate_vertical( &
+          is, &
+          ie, &
+          js, &
+          je, &
+          npz, &
+          100.0 * coarse_diag%pressure_level, &  ! Convert mb to Pa
+          Atm%peln(is:ie,1:npz+1,js:je), &
+          coarse_diag%data%var3, &
+          work_2d(is:ie,js:je) &
+        )
+        call weighted_block_average( &
+          Atm%gridstruct%area(is:ie,js:je), &
+          work_2d, &
+          result &
+          )
+      elseif (is_multi_species_water_path(coarse_diag%special_case)) then
+        call compute_multi_species_water_path( &
+          is, &
+          ie, &
+          js, &
+          je, &
+          npz, &
+          n_prognostic, &
+          Atm%flagstruct%nwat, &
+          Atm%q(is:ie,js:je,1:npz,1:n_prognostic), &
+          Atm%delp(is:ie,js:je,1:npz), &
+          coarse_diag%special_case, &
+          work_2d &
+        )
+        call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), work_2d, result)
       elseif (coarse_diag%vertically_integrated) then
         call vertically_integrate( &
              is, &
@@ -1361,4 +1498,95 @@ contains
     factor = Atm(tile_count)%coarse_graining%factor
     grid_coarse = Atm(tile_count)%gridstruct%grid(is:ie+1:factor,js:je+1:factor,:)
   end subroutine compute_grid_coarse
+
+  logical function is_derived_2d_field(coarse_diag)
+    type(coarse_diag_type), intent(in) :: coarse_diag
+
+    is_derived_2d_field = &
+           coarse_diag%pressure_level .gt. 0 &
+      .or. coarse_diag%vertically_integrated &
+      .or. coarse_diag%scaled_by_specific_heat_and_vertically_integrated &
+      .or. trim(coarse_diag%special_case) .ne. ''
+  end function is_derived_2d_field
+
+  logical function is_multi_species_water_path(special_case)
+    character(len=64), intent(in) :: special_case
+
+    is_multi_species_water_path = &
+           trim(special_case) .eq. 'total_water_path' &
+      .or. trim(special_case) .eq. 'total_ice_water_path' &
+      .or. trim(special_case) .eq. 'total_liquid_water_path'
+  end function is_multi_species_water_path
+
+  subroutine compute_multi_species_water_path(is, ie, js, je, npz, n_prognostic, n_water, q, delp, case, result)
+    integer, intent(in) :: is, ie, js, je, npz, n_prognostic, n_water
+    real, intent(in) :: q(is:ie,js:je,1:npz,1:n_prognostic)
+    real, intent(in) :: delp(is:ie,js:je,1:npz)
+    character(len=64), intent(in) :: case
+    real, intent(out) :: result(is:ie,js:je)
+
+    real, allocatable :: total(:,:,:)
+    integer :: sphum, liq_wat, ice_wat, rainwat, snowwat, graupel
+
+    allocate(total(is:ie,js:je,1:npz))
+    total = 0.0
+
+    sphum   = get_tracer_index (MODEL_ATMOS, 'sphum')
+    liq_wat = get_tracer_index (MODEL_ATMOS, 'liq_wat')
+    ice_wat = get_tracer_index (MODEL_ATMOS, 'ice_wat')
+    rainwat = get_tracer_index (MODEL_ATMOS, 'rainwat')
+    snowwat = get_tracer_index (MODEL_ATMOS, 'snowwat')
+    graupel = get_tracer_index (MODEL_ATMOS, 'graupel')
+
+    if (trim(case) .eq. 'total_water_path') then
+      total = sum(q(is:ie,js:je,1:npz,1:n_water), dim=4)
+    elseif (trim(case) .eq. 'total_ice_water_path') then
+      ! If the indices are less than or equal to zero then that water type is
+      ! unused in the active model configuration.
+      if (ice_wat .gt. 0) then
+        total = total + q(is:ie,js:je,1:npz,ice_wat)
+      endif
+      if (snowwat .gt. 0) then
+        total = total + q(is:ie,js:je,1:npz,snowwat)
+      endif
+      if (graupel .gt. 0) then
+        total = total + q(is:ie,js:je,1:npz,graupel)
+      endif
+    elseif (trim(case) .eq. 'total_liquid_water_path') then
+      if (liq_wat .gt. 0) then
+        total = total + q(is:ie,js:je,1:npz,liq_wat)
+      endif
+      if (rainwat .gt. 0) then
+        total = total + q(is:ie,js:je,1:npz,rainwat)
+      endif
+    endif
+    result = sum(total * delp, dim=3) / grav
+  end subroutine compute_multi_species_water_path
+
+  logical function need_vorticity_array()
+    integer :: index
+
+    need_vorticity_array = .false.
+    do index = 1, DIAG_SIZE
+      if (trim(coarse_diagnostics(index)%special_case) .eq. 'vorticity' .and. &
+          coarse_diagnostics(index)%id .gt. 0) then
+          need_vorticity_array = .true.
+          exit
+      endif
+    enddo
+  end function need_vorticity_array
+
+  subroutine associate_vorticity_pointers(is, ie, js, je, npz, vorticity)
+    integer, intent(in) :: is, ie, js, je, npz
+    real, target, intent(in) :: vorticity(is:ie,js:je,1:npz)
+ 
+     integer :: index
+ 
+     do index = 1, DIAG_SIZE
+       if (trim(coarse_diagnostics(index)%special_case) .eq. 'vorticity' .and. &
+           coarse_diagnostics(index)%id .gt. 0) then
+           coarse_diagnostics(index)%data%var3 => vorticity(is:ie,js:je,1:npz)
+       endif
+     enddo
+  end subroutine associate_vorticity_pointers
 end module coarse_grained_diagnostics_mod

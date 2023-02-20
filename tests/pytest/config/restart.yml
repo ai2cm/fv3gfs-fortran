@@ -1,5 +1,146 @@
 data_table: default
-diag_table: default
+diag_table:
+  base_time: 2000-01-01 00:00:00
+  name: restart
+  file_configs:
+  - field_configs:
+    - {module_name: dynamics, field_name: pk, output_name: pk}
+    - {module_name: dynamics, field_name: bk, output_name: bk}
+    - {module_name: dynamics, field_name: hyam, output_name: hyam}
+    - {module_name: dynamics, field_name: hybm, output_name: hybm}
+    - {module_name: dynamics, field_name: zsurf, output_name: HGTsfc}
+    name: atmos_static
+    frequency: -1
+    frequency_units: hours
+    time_axis_name: time
+    time_axis_units: hours
+  - field_configs:
+    - {module_name: dynamics, field_name: grid_lont, output_name: lon}
+    - {module_name: dynamics, field_name: grid_latt, output_name: lat}
+    - {module_name: dynamics, field_name: grid_lon, output_name: lonb}
+    - {module_name: dynamics, field_name: grid_lat, output_name: latb}
+    - {module_name: dynamics, field_name: area, output_name: area}
+    - {module_name: dynamics, field_name: us, output_name: UGRDlowest}
+    - {module_name: dynamics, field_name: u850, output_name: UGRD850}
+    - {module_name: dynamics, field_name: u500, output_name: UGRD500}
+    - {module_name: dynamics, field_name: u250, output_name: UGRD250}
+    - {module_name: dynamics, field_name: u50, output_name: UGRD50}
+    - {module_name: dynamics, field_name: vs, output_name: VGRDlowest}
+    - {module_name: dynamics, field_name: v850, output_name: VGRD850}
+    - {module_name: dynamics, field_name: v500, output_name: VGRD500}
+    - {module_name: dynamics, field_name: v200, output_name: VGRD200}
+    - {module_name: dynamics, field_name: v50, output_name: VGRD50}
+    - {module_name: dynamics, field_name: tb, output_name: TMPlowest}
+    - {module_name: dynamics, field_name: t850, output_name: TMP850}
+    - {module_name: dynamics, field_name: t500, output_name: TMP500}
+    - {module_name: dynamics, field_name: t200, output_name: TMP200}
+    - {module_name: dynamics, field_name: w850, output_name: VVEL850}
+    - {module_name: dynamics, field_name: w500, output_name: VVEL500}
+    - {module_name: dynamics, field_name: w200, output_name: VVEL200}
+    - {module_name: dynamics, field_name: w50, output_name: VVEL50}
+    - {module_name: dynamics, field_name: vort850, output_name: VORT850}
+    - {module_name: dynamics, field_name: vort500, output_name: VORT500}
+    - {module_name: dynamics, field_name: vort200, output_name: VORT200}
+    - {module_name: dynamics, field_name: dp1000, output_name: DPT1000}
+    - {module_name: dynamics, field_name: dp850, output_name: DPT850}
+    - {module_name: dynamics, field_name: dp500, output_name: DPT500}
+    - {module_name: dynamics, field_name: rh1000, output_name: RH1000}
+    - {module_name: dynamics, field_name: rh925, output_name: RH925}
+    - {module_name: dynamics, field_name: rh850, output_name: RH850}
+    - {module_name: dynamics, field_name: rh700, output_name: RH700}
+    - {module_name: dynamics, field_name: rh500, output_name: RH500}
+    - {module_name: dynamics, field_name: slp, output_name: PRMSL}
+    - {module_name: dynamics, field_name: ps, output_name: PRESsfc}
+    - {module_name: dynamics, field_name: tq, output_name: PWAT}
+    - {module_name: dynamics, field_name: lw, output_name: VIL}
+    - {module_name: dynamics, field_name: iw, output_name: iw}
+    - {module_name: dynamics, field_name: w100m, output_name: VVEL100m}
+    - {module_name: dynamics, field_name: w2500m, output_name: VVEL2500m}
+    - {module_name: dynamics, field_name: w5km, output_name: VVEL5km}
+    - {module_name: dynamics, field_name: max_reflectivity, output_name: REFC}
+    - {module_name: dynamics, field_name: base_reflectivity, output_name: REFD1km}
+    - {module_name: dynamics, field_name: echo_top, output_name: RETOP}
+    - {module_name: dynamics, field_name: ctt, output_name: TMPctp}
+    - {module_name: dynamics, field_name: ctp, output_name: PRESctp}
+    - {module_name: dynamics, field_name: ctz, output_name: HGTctp}
+    name: atmos_dt_atmos
+    frequency: 0
+    frequency_units: hours
+    time_axis_name: time
+    time_axis_units: hours
+  - field_configs:
+    - {module_name: dynamics, field_name: grid_lont, output_name: lon}
+    - {module_name: dynamics, field_name: grid_latt, output_name: lat}
+    - {module_name: dynamics, field_name: grid_lon, output_name: lonb}
+    - {module_name: dynamics, field_name: grid_lat, output_name: latb}
+    - {module_name: dynamics, field_name: area, output_name: area}
+    - {module_name: dynamics, field_name: ucomp, output_name: ucomp}
+    - {module_name: dynamics, field_name: vcomp, output_name: vcomp}
+    - {module_name: dynamics, field_name: temp, output_name: temp}
+    - {module_name: dynamics, field_name: delp, output_name: delp}
+    - {module_name: dynamics, field_name: sphum, output_name: sphum}
+    - {module_name: dynamics, field_name: pfnh, output_name: nhpres}
+    - {module_name: dynamics, field_name: w, output_name: w}
+    - {module_name: dynamics, field_name: delz, output_name: delz}
+    - {module_name: dynamics, field_name: ps, output_name: ps}
+    - {module_name: dynamics, field_name: reflectivity, output_name: reflectivity}
+    - {module_name: dynamics, field_name: liq_wat, output_name: liq_wat}
+    - {module_name: dynamics, field_name: ice_wat, output_name: ice_wat}
+    - {module_name: dynamics, field_name: rainwat, output_name: rainwat}
+    - {module_name: dynamics, field_name: snowwat, output_name: snowwat}
+    - {module_name: dynamics, field_name: graupel, output_name: graupel}
+    name: atmos_8xdaily
+    frequency: 3
+    frequency_units: hours
+    time_axis_name: time
+    time_axis_units: hours
+  - field_configs:
+    - {module_name: dynamics, field_name: grid_lont, output_name: lon}
+    - {module_name: dynamics, field_name: grid_latt, output_name: lat}
+    - {module_name: dynamics, field_name: grid_lon, output_name: lonb}
+    - {module_name: dynamics, field_name: grid_lat, output_name: latb}
+    - {module_name: dynamics, field_name: area, output_name: area}
+    - {module_name: gfs_phys, field_name: cnvprcp_ave, output_name: CPRATsfc}
+    - {module_name: gfs_phys, field_name: totprcp_ave, output_name: PRATEsfc}
+    - {module_name: gfs_phys, field_name: totice_ave, output_name: ICEsfc}
+    - {module_name: gfs_phys, field_name: totsnw_ave, output_name: SNOWsfc}
+    - {module_name: gfs_phys, field_name: totgrp_ave, output_name: GRAUPELsfc}
+    - {module_name: gfs_phys, field_name: DSWRF, output_name: DSWRFsfc}
+    - {module_name: gfs_phys, field_name: USWRF, output_name: USWRFsfc}
+    - {module_name: gfs_phys, field_name: DSWRFtoa, output_name: DSWRFtoa}
+    - {module_name: gfs_phys, field_name: USWRFtoa, output_name: USWRFtoa}
+    - {module_name: gfs_phys, field_name: ULWRFtoa, output_name: ULWRFtoa}
+    - {module_name: gfs_phys, field_name: ULWRF, output_name: ULWRFsfc}
+    - {module_name: gfs_phys, field_name: DLWRF, output_name: DLWRFsfc}
+    - {module_name: gfs_phys, field_name: lhtfl_ave, output_name: LHTFLsfc}
+    - {module_name: gfs_phys, field_name: shtfl_ave, output_name: SHTFLsfc}
+    - {module_name: gfs_phys, field_name: hpbl, output_name: HPBLsfc}
+    - {module_name: gfs_sfc, field_name: fice, output_name: ICECsfc}
+    - {module_name: gfs_sfc, field_name: SLMSKsfc, output_name: SLMSKsfc}
+    - {module_name: gfs_phys, field_name: TCDC_aveclm, output_name: TCDCclm}
+    - {module_name: gfs_phys, field_name: TCDC_avehcl, output_name: TCDChcl}
+    - {module_name: gfs_phys, field_name: TCDC_avelcl, output_name: TCDClcl}
+    - {module_name: gfs_phys, field_name: TCDC_avemcl, output_name: TCDCmcl}
+    - {module_name: gfs_sfc, field_name: q2m, output_name: SPFH2m}
+    - {module_name: gfs_sfc, field_name: t2m, output_name: TMP2m}
+    - {module_name: gfs_sfc, field_name: tsfc, output_name: TMPsfc}
+    - {module_name: gfs_phys, field_name: dpt2m, output_name: DPT2m}
+    - {module_name: gfs_phys, field_name: u10m, output_name: UGRD10m}
+    - {module_name: gfs_phys, field_name: v10m, output_name: VGRD10m}
+    - {module_name: gfs_sfc, field_name: weasd, output_name: WEASDsfc}
+    - {module_name: gfs_sfc, field_name: snowd, output_name: SNODsfc}
+    - {module_name: gfs_phys, field_name: tmpmax2m, output_name: TMAX2m}
+    - {module_name: gfs_phys, field_name: wind10mmax, output_name: MAXWIND10m}
+    - {module_name: gfs_phys, field_name: soilm, output_name: SOILM}
+    - {module_name: gfs_sfc, field_name: SOILT1, output_name: SOILT1}
+    - {module_name: gfs_sfc, field_name: SOILT2, output_name: SOILT2}
+    - {module_name: gfs_sfc, field_name: SOILT3, output_name: SOILT3}
+    - {module_name: gfs_sfc, field_name: SOILT4, output_name: SOILT4}
+    name: sfc_dt_atmos
+    frequency: 0
+    frequency_units: hours
+    time_axis_name: time
+    time_axis_units: hours
 experiment_name: restart
 forcing: "gs://vcm-fv3config/data/base_forcing/v1.1/"
 orographic_forcing: gs://vcm-fv3config/data/orographic_data/v1.0

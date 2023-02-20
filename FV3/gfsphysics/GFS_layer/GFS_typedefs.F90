@@ -5204,6 +5204,7 @@ module GFS_typedefs
     allocate (Diag%dlwsfci (IM))
     allocate (Diag%ulwsfci (IM))
     allocate (Diag%dswsfci (IM))
+    allocate (Diag%wind    (IM))
 #ifdef CCPP
     allocate (Diag%nswsfci (IM))
 #endif

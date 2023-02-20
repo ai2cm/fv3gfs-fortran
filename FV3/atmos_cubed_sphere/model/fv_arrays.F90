@@ -123,7 +123,7 @@ module fv_arrays_mod
      integer :: id_column_eastward_acceleration_nudge, id_column_northward_acceleration_nudge
 
      integer, allocatable :: id_vertically_integrated_tracers(:)
-
+     integer :: id_delp_total
   end type fv_diag_type
 
   type fv_coarse_diag_type

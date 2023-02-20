@@ -1,5 +1,270 @@
 data_table: default
-diag_table: gs://vcm-fv3config/config/diag_table/test_coarse_graining/v1.3/diag_table_coarse_graining
+diag_table:
+  base_time: 2000-01-01 00:00:00
+  name: pressure-level-coarse-graining
+  file_configs:
+  - field_configs:
+    - {module_name: dynamics, field_name: grid_lon, output_name: grid_lon}
+    - {module_name: dynamics, field_name: grid_lat, output_name: grid_lat}
+    - {module_name: dynamics, field_name: grid_lont, output_name: grid_lont}
+    - {module_name: dynamics, field_name: grid_latt, output_name: grid_latt}
+    - {module_name: dynamics, field_name: area, output_name: area}
+    - {module_name: dynamics, field_name: dx, output_name: dx}
+    - {module_name: dynamics, field_name: dy, output_name: dy}
+    name: grid_spec
+    frequency: -1
+    frequency_units: months
+    time_axis_name: time
+    time_axis_units: days
+  - field_configs:
+    - {module_name: dynamics, field_name: grid_lon_coarse, output_name: grid_lon_coarse}
+    - {module_name: dynamics, field_name: grid_lat_coarse, output_name: grid_lat_coarse}
+    - {module_name: dynamics, field_name: grid_lont_coarse, output_name: grid_lont_coarse}
+    - {module_name: dynamics, field_name: grid_latt_coarse, output_name: grid_latt_coarse}
+    - {module_name: dynamics, field_name: area_coarse, output_name: area_coarse}
+    - {module_name: dynamics, field_name: dx_coarse, output_name: dx_coarse}
+    - {module_name: dynamics, field_name: dy_coarse, output_name: dy_coarse}
+    name: grid_spec_coarse
+    frequency: -1
+    frequency_units: months
+    time_axis_name: time
+    time_axis_units: days
+  - field_configs:
+    - {module_name: dynamics, field_name: pk, output_name: pk}
+    - {module_name: dynamics, field_name: bk, output_name: bk}
+    - {module_name: dynamics, field_name: hyam, output_name: hyam}
+    - {module_name: dynamics, field_name: hybm, output_name: hybm}
+    - {module_name: dynamics, field_name: zsurf, output_name: HGTsfc}
+    name: atmos_static
+    frequency: -1
+    frequency_units: hours
+    time_axis_name: time
+    time_axis_units: hours
+  - field_configs:
+    - {module_name: dynamics, field_name: grid_lon_coarse, output_name: grid_lon_coarse}
+    - {module_name: dynamics, field_name: grid_lat_coarse, output_name: grid_lat_coarse}
+    - {module_name: dynamics, field_name: grid_lont_coarse, output_name: grid_lont_coarse}
+    - {module_name: dynamics, field_name: grid_latt_coarse, output_name: grid_latt_coarse}
+    - {module_name: dynamics, field_name: area_coarse, output_name: area_coarse}
+    - {module_name: dynamics, field_name: dx_coarse, output_name: dx_coarse}
+    - {module_name: dynamics, field_name: dy_coarse, output_name: dy_coarse}
+    - {module_name: gfs_phys, field_name: DLWRF_coarse, output_name: DLWRFsfc_coarse}
+    - {module_name: gfs_phys, field_name: DSWRF_coarse, output_name: DSWRFsfc_coarse}
+    - {module_name: gfs_phys, field_name: ULWRF_coarse, output_name: ULWRFsfc_coarse}
+    - {module_name: gfs_phys, field_name: USWRF_coarse, output_name: USWRFsfc_coarse}
+    - {module_name: gfs_phys, field_name: DSWRFtoa_coarse, output_name: DSWRFtoa_coarse}
+    - {module_name: gfs_phys, field_name: USWRFtoa_coarse, output_name: USWRFtoa_coarse}
+    - {module_name: gfs_phys, field_name: ULWRFtoa_coarse, output_name: ULWRFtoa_coarse}
+    - {module_name: gfs_sfc, field_name: tsfc_coarse, output_name: tsfc_coarse}
+    - {module_name: gfs_phys, field_name: lhtfl_ave_coarse, output_name: LHTFLsfc_coarse}
+    - {module_name: gfs_phys, field_name: shtfl_ave_coarse, output_name: SHTFLsfc_coarse}
+    - {module_name: gfs_phys, field_name: totprcpb_ave_coarse, output_name: PRATEsfc_coarse}
+    - {module_name: gfs_phys, field_name: cnvprcpb_ave_coarse, output_name: CPRATEsfc_coarse}
+    - {module_name: gfs_phys, field_name: dusfc_coarse, output_name: uflx_coarse}
+    - {module_name: gfs_phys, field_name: dvsfc_coarse, output_name: vflx_coarse}
+    - {module_name: gfs_phys, field_name: hpbl_coarse, output_name: HPBLsfc_coarse}
+    - {module_name: gfs_phys, field_name: u10m_coarse, output_name: UGRD10m_coarse}
+    - {module_name: gfs_phys, field_name: v10m_coarse, output_name: VGRD10m_coarse}
+    - {module_name: gfs_phys, field_name: lowest_level_wind_speed_coarse, output_name: lowest_level_wind_speed_coarse}
+    name: gfsphysics_15min_coarse
+    frequency: 0
+    frequency_units: minutes
+    time_axis_name: time
+    time_axis_units: minutes
+  - field_configs:
+    - {module_name: dynamics, field_name: grid_lon_coarse, output_name: grid_lon_coarse}
+    - {module_name: dynamics, field_name: grid_lat_coarse, output_name: grid_lat_coarse}
+    - {module_name: dynamics, field_name: grid_lont_coarse, output_name: grid_lont_coarse}
+    - {module_name: dynamics, field_name: grid_latt_coarse, output_name: grid_latt_coarse}
+    - {module_name: dynamics, field_name: area_coarse, output_name: area_coarse}
+    - module_name: gfs_phys
+      field_name: tendency_of_air_temperature_due_to_longwave_heating_coarse
+      output_name: tendency_of_air_temperature_due_to_longwave_heating_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_air_temperature_due_to_shortwave_heating_coarse
+      output_name: tendency_of_air_temperature_due_to_shortwave_heating_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_air_temperature_due_to_turbulence_coarse
+      output_name: tendency_of_air_temperature_due_to_turbulence_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_air_temperature_due_to_deep_convection_coarse
+      output_name: tendency_of_air_temperature_due_to_deep_convection_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_air_temperature_due_to_shallow_convection_coarse
+      output_name: tendency_of_air_temperature_due_to_shallow_convection_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_air_temperature_due_to_microphysics_coarse
+      output_name: tendency_of_air_temperature_due_to_microphysics_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_air_temperature_due_to_dissipation_of_gravity_waves_coarse
+      output_name: tendency_of_air_temperature_due_to_dissipation_of_gravity_waves_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_air_temperature_due_to_longwave_heating_assuming_clear_sky_coarse
+      output_name: tendency_of_air_temperature_due_to_longwave_heating_assuming_clear_sky_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_air_temperature_due_to_shortwave_heating_assuming_clear_sky_coarse
+      output_name: tendency_of_air_temperature_due_to_shortwave_heating_assuming_clear_sky_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_specific_humidity_due_to_turbulence_coarse
+      output_name: tendency_of_specific_humidity_due_to_turbulence_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_specific_humidity_due_to_deep_convection_coarse
+      output_name: tendency_of_specific_humidity_due_to_deep_convection_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_specific_humidity_due_to_shallow_convection_coarse
+      output_name: tendency_of_specific_humidity_due_to_shallow_convection_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_specific_humidity_due_to_microphysics_coarse
+      output_name: tendency_of_specific_humidity_due_to_microphysics_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: tendency_of_specific_humidity_due_to_change_in_atmosphere_mass_coarse
+      output_name: tendency_of_specific_humidity_due_to_change_in_atmosphere_mass_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_air_temperature_due_to_longwave_heating_coarse
+      output_name: int_tendency_of_air_temperature_due_to_longwave_heating_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_air_temperature_due_to_shortwave_heating_coarse
+      output_name: int_tendency_of_air_temperature_due_to_shortwave_heating_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_air_temperature_due_to_turbulence_coarse
+      output_name: int_tendency_of_air_temperature_due_to_turbulence_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_air_temperature_due_to_deep_convection_coarse
+      output_name: int_tendency_of_air_temperature_due_to_deep_convection_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_air_temperature_due_to_shallow_convection_coarse
+      output_name: int_tendency_of_air_temperature_due_to_shallow_convection_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_air_temperature_due_to_microphysics_coarse
+      output_name: int_tendency_of_air_temperature_due_to_microphysics_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_air_temperature_due_to_dissipation_of_gravity_waves_coarse
+      output_name: int_tendency_of_air_temperature_due_to_dissipation_of_gravity_waves_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_air_temperature_due_to_longwave_heating_assuming_clear_sky_coarse
+      output_name: vertically_integrated_tdtlwc_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_air_temperature_due_to_shortwave_heating_assuming_clear_sky_coarse
+      output_name: vertically_integrated_tdtswc_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_specific_humidity_due_to_turbulence_coarse
+      output_name: int_tendency_of_specific_humidity_due_to_turbulence_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_specific_humidity_due_to_deep_convection_coarse
+      output_name: int_tendency_of_specific_humidity_due_to_deep_convection_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_specific_humidity_due_to_shallow_convection_coarse
+      output_name: int_tendency_of_specific_humidity_due_to_shallow_convection_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_specific_humidity_due_to_microphysics_coarse
+      output_name: int_tendency_of_specific_humidity_due_to_microphysics_coarse
+      reduction_method: average
+    - module_name: gfs_phys
+      field_name: vertically_integrated_tendency_of_specific_humidity_due_to_change_in_atmosphere_mass_coarse
+      output_name: int_tendency_of_specific_humidity_due_to_change_in_atmosphere_mass_coarse
+      reduction_method: average
+    name: physics_tendencies_15min_coarse
+    frequency: 15
+    frequency_units: minutes
+    time_axis_name: time
+    time_axis_units: minutes
+  - field_configs:
+    - {module_name: dynamics, field_name: grid_lon_coarse, output_name: grid_lon_coarse}
+    - {module_name: dynamics, field_name: grid_lat_coarse, output_name: grid_lat_coarse}
+    - {module_name: dynamics, field_name: grid_lont_coarse, output_name: grid_lont_coarse}
+    - {module_name: dynamics, field_name: grid_latt_coarse, output_name: grid_latt_coarse}
+    - {module_name: dynamics, field_name: area_coarse, output_name: area_coarse}
+    - {module_name: dynamics, field_name: dx_coarse, output_name: dx_coarse}
+    - {module_name: dynamics, field_name: dy_coarse, output_name: dy_coarse}
+    - {module_name: dynamics, field_name: ps_coarse, output_name: ps_coarse}
+    - {module_name: dynamics, field_name: omega_coarse, output_name: omega_coarse}
+    - {module_name: dynamics, field_name: delp_total_coarse, output_name: delp_total_coarse}
+    - {module_name: dynamics, field_name: q500_coarse, output_name: q500_coarse}
+    - {module_name: dynamics, field_name: u200_coarse, output_name: u200_coarse}
+    - {module_name: dynamics, field_name: v200_coarse, output_name: v200_coarse}
+    - {module_name: dynamics, field_name: liq_wat200_coarse, output_name: liq_wat200_coarse}
+    - {module_name: dynamics, field_name: z850_coarse, output_name: z850_coarse}
+    - {module_name: dynamics, field_name: vertical_eddy_flux_of_sphum_coarse, output_name: vertical_eddy_flux_of_sphum_coarse}
+    - {module_name: dynamics, field_name: vertical_eddy_flux_of_liq_wat_coarse, output_name: vertical_eddy_flux_of_liq_wat_coarse}
+    - {module_name: dynamics, field_name: vertical_eddy_flux_of_ice_wat_coarse, output_name: vertical_eddy_flux_of_ice_wat_coarse}
+    - {module_name: dynamics, field_name: vertical_eddy_flux_of_rainwat_coarse, output_name: vertical_eddy_flux_of_rainwat_coarse}
+    - {module_name: dynamics, field_name: vertical_eddy_flux_of_snowwat_coarse, output_name: vertical_eddy_flux_of_snowwat_coarse}
+    - {module_name: dynamics, field_name: vertical_eddy_flux_of_graupel_coarse, output_name: vertical_eddy_flux_of_graupel_coarse}
+    - {module_name: dynamics, field_name: vertical_eddy_flux_of_temperature_coarse, output_name: vertical_eddy_flux_of_temperature_coarse}
+    - {module_name: dynamics, field_name: vort_coarse, output_name: vort_coarse}
+    - {module_name: dynamics, field_name: vort850_coarse, output_name: vort850_coarse}
+    - {module_name: dynamics, field_name: tb_coarse, output_name: tb_coarse}
+    - {module_name: dynamics, field_name: us_coarse, output_name: us_coarse}
+    - {module_name: dynamics, field_name: vs_coarse, output_name: vs_coarse}
+    name: atmos_15min_coarse_inst
+    frequency: 15
+    frequency_units: minutes
+    time_axis_name: time
+    time_axis_units: minutes
+  - field_configs:
+    - {module_name: dynamics, field_name: grid_lon_coarse, output_name: grid_lon_coarse}
+    - {module_name: dynamics, field_name: grid_lat_coarse, output_name: grid_lat_coarse}
+    - {module_name: dynamics, field_name: grid_lont_coarse, output_name: grid_lont_coarse}
+    - {module_name: dynamics, field_name: grid_latt_coarse, output_name: grid_latt_coarse}
+    - {module_name: dynamics, field_name: area_coarse, output_name: area_coarse}
+    - {module_name: dynamics, field_name: dx_coarse, output_name: dx_coarse}
+    - {module_name: dynamics, field_name: dy_coarse, output_name: dy_coarse}
+    - {module_name: dynamics, field_name: qv_dt_phys_coarse, output_name: qv_dt_phys_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: t_dt_phys_coarse, output_name: t_dt_phys_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: fv_sat_adj_qv_dt_coarse, output_name: fv_sat_adj_qv_dt_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: fv_sat_adj_t_dt_coarse, output_name: fv_sat_adj_t_dt_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: omega_coarse, output_name: omega_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: delp_total_coarse, output_name: delp_total_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: zsurf_coarse, output_name: HGTsfc_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: ps_coarse, output_name: ps_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: int_qv_dt_phys_coarse, output_name: int_qv_dt_phys_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: int_t_dt_phys_coarse, output_name: int_t_dt_phys_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: int_fv_sat_adj_qv_dt_coarse, output_name: int_fv_sat_adj_qv_dt_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: int_fv_sat_adj_t_dt_coarse, output_name: int_fv_sat_adj_t_dt_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: tq_coarse, output_name: tq_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: iw_coarse, output_name: iw_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: lw_coarse, output_name: lw_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: vertically_integrated_sphum_coarse, output_name: vertically_integrated_sphum_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: vertically_integrated_liq_wat_coarse, output_name: vertically_integrated_liq_wat_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: vertically_integrated_ice_wat_coarse, output_name: vertically_integrated_ice_wat_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: vertically_integrated_rainwat_coarse, output_name: vertically_integrated_rainwat_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: vertically_integrated_snowwat_coarse, output_name: vertically_integrated_snowwat_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: vertically_integrated_graupel_coarse, output_name: vertically_integrated_graupel_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: vertically_integrated_o3mr_coarse, output_name: vertically_integrated_o3mr_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: vertically_integrated_sgs_tke_coarse, output_name: vertically_integrated_sgs_tke_coarse, reduction_method: average}
+    - {module_name: dynamics, field_name: vertically_integrated_cld_amt_coarse, output_name: vertically_integrated_cld_amt_coarse, reduction_method: average}
+    name: atmos_15min_coarse_ave
+    frequency: 15
+    frequency_units: minutes
+    time_axis_name: time
+    time_axis_units: minutes
+field_table: gs://vcm-fv3config/config/field_table/TKE-EDMF/v1.1/field_table
 experiment_name: pressure-level-coarse-graining
 forcing: "gs://vcm-fv3config/data/base_forcing/v1.1/"
 orographic_forcing: gs://vcm-fv3config/data/orographic_data/v1.0
@@ -229,7 +494,8 @@ namelist:
     fhlwr: 3600.0
     fhswr: 3600.0
     fhzero: 0.25
-    hybedmf: true
+    hybedmf: false
+    satmedmf: true
     iaer: 111
     ialb: 1
     ico2: 2

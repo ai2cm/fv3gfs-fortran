@@ -1,6 +1,10 @@
 module dynamics_data_mod
 
 use atmosphere_mod, only: Atm, mytile
+use external_ic_mod, only: cubed_a2d
+use fv_grid_utils_mod, only: cubed_to_latlon
+use mpp_domains_mod, only: DGRID_NE, mpp_update_domains
+use fv_mp_mod,       only: start_group_halo_update, complete_group_halo_update, group_halo_update_type
 use tracer_manager_mod, only: get_tracer_names, get_number_tracers, get_tracer_index
 use field_manager_mod,  only: MODEL_ATMOS
 use iso_c_binding
@@ -111,5 +115,112 @@ contains
             tracer_units_out(i) = tracer_units(i:i)
         enddo
     end subroutine get_tracer_name
+
+    subroutine transform_agrid_winds_to_dgrid_winds_subroutine(ua, va, u, v) bind(c)
+        ! Wraps the internal cubed_a2d subroutine in a more convenient way, handling
+        ! halo updates and the additional grid arguments within fortran for convenience.
+        real, intent(in), dimension(i_start():i_end(),j_start():j_end(),1:nz()) :: ua, va
+        real, intent(out), dimension(i_start():i_end(),j_start():j_end()+1,1:nz()) :: u
+        real, intent(out), dimension(i_start():i_end()+1,j_start():j_end(),1:nz()) :: v
+
+        real, allocatable, dimension(:,:,:) :: ua_halo, va_halo, u_halo, v_halo
+
+        integer :: is, ie, js, je, isd, ied, jsd, jed, npx, npy, npz
+
+        is = i_start()
+        ie = i_end()
+        js = j_start()
+        je = j_end()
+        isd = Atm(mytile)%bd%isd
+        ied = Atm(mytile)%bd%ied
+        jsd = Atm(mytile)%bd%jsd
+        jed = Atm(mytile)%bd%jed
+        npx = Atm(mytile)%npx
+        npy = Atm(mytile)%npy
+        npz = nz()
+
+        allocate(ua_halo(isd:ied,jsd:jed,1:npz))
+        allocate(va_halo(isd:ied,jsd:jed,1:npz))
+        allocate(u_halo(isd:ied,jsd:jed+1,1:npz))
+        allocate(v_halo(isd:ied+1,jsd:jed,1:npz))
+
+        ! Note we do not need to do a halo update here, since cubed_a2d takes
+        ! of this internally.
+        ua_halo(is:ie,js:je,1:npz) = ua
+        va_halo(is:ie,js:je,1:npz) = va
+
+        call cubed_a2d(&
+            npx, &
+            npy, &
+            npz, &
+            ua_halo, &
+            va_halo, &
+            u_halo, &
+            v_halo, &
+            Atm(mytile)%gridstruct, &
+            Atm(mytile)%domain, &
+            Atm(mytile)%bd &
+        )
+
+        u = u_halo(is:ie,js:je+1,1:npz)
+        v = v_halo(is:ie+1,js:je,1:npz)
+    end subroutine transform_agrid_winds_to_dgrid_winds_subroutine
+
+    subroutine transform_dgrid_winds_to_agrid_winds_subroutine(u, v, ua, va) bind(c)
+        ! Wraps the internal cubed_to_latlon subroutine in a more convenient way, 
+        ! handling halo updates and the additional grid arguments within fortran
+        ! for convenience.
+        real, intent(in), dimension(i_start():i_end(),j_start():j_end()+1,1:nz()) :: u
+        real, intent(in), dimension(i_start():i_end()+1,j_start():j_end(),1:nz()) :: v
+        real, intent(out), dimension(i_start():i_end(),j_start():j_end(),1:nz()) :: ua, va
+
+        real, allocatable, dimension(:,:,:) :: ua_halo, va_halo, u_halo, v_halo
+
+        type(group_halo_update_type), save :: i_pack
+        integer :: is, ie, js, je, isd, ied, jsd, jed, npx, npy, npz, mode
+
+        is = i_start()
+        ie = i_end()
+        js = j_start()
+        je = j_end()
+        isd = Atm(mytile)%bd%isd
+        ied = Atm(mytile)%bd%ied
+        jsd = Atm(mytile)%bd%jsd
+        jed = Atm(mytile)%bd%jed
+        npx = Atm(mytile)%npx
+        npy = Atm(mytile)%npy
+        npz = nz()
+        mode = 1
+
+        allocate(ua_halo(isd:ied,jsd:jed,1:npz))
+        allocate(va_halo(isd:ied,jsd:jed,1:npz))
+        allocate(u_halo(isd:ied,jsd:jed+1,1:npz))
+        allocate(v_halo(isd:ied+1,jsd:jed,1:npz))
+
+        u_halo(is:ie,js:je+1,1:npz) = u
+        v_halo(is:ie+1,js:je,1:npz) = v
+        call start_group_halo_update(i_pack, u_halo, v_halo, Atm(mytile)%domain, gridtype=DGRID_NE)
+        call complete_group_halo_update(i_pack, Atm(mytile)%domain)
+
+        call cubed_to_latlon(&
+            u_halo, &
+            v_halo, &
+            ua_halo, &
+            va_halo, &
+            Atm(mytile)%gridstruct, &
+            npx, &
+            npy, &
+            npz, &
+            mode, &
+            Atm(mytile)%gridstruct%grid_type, &
+            Atm(mytile)%domain, &
+            Atm(mytile)%gridstruct%nested, &
+            Atm(mytile)%flagstruct%c2l_ord, &
+            Atm(mytile)%bd &
+        )
+
+        ua = ua_halo(is:ie,js:je,1:npz)
+        va = va_halo(is:ie,js:je,1:npz)
+    end subroutine transform_dgrid_winds_to_agrid_winds_subroutine
 
 end module dynamics_data_mod
