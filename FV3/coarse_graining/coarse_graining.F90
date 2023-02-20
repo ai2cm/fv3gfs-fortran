@@ -13,7 +13,8 @@ module coarse_graining_mod
        get_coarse_array_bounds, coarse_graining_init, weighted_block_average, &
        weighted_block_edge_average_x, weighted_block_edge_average_y, MODEL_LEVEL, &
        MODEL_LEVEL_AREA_WEIGHTED, &
-       block_upsample, mask_area_weights, PRESSURE_LEVEL, BLENDED_MASS_WEIGHTED, BLENDED_AREA_WEIGHTED,&
+       block_upsample, mask_area_weights, PRESSURE_LEVEL, PRESSURE_LEVEL_EXTRAPOLATE, &
+       BLENDED_MASS_WEIGHTED, BLENDED_AREA_WEIGHTED,&
        vertical_remapping_requirements, vertically_remap_field, block_mode, block_min, block_max, &
        remap_edges_along_x, remap_edges_along_y, block_edge_sum_x, block_edge_sum_y, &
        eddy_covariance_2d_weights, eddy_covariance_3d_weights, compute_blending_weights_agrid, &
@@ -90,6 +91,7 @@ module coarse_graining_mod
   character(len=11) :: MODEL_LEVEL = 'model_level'
   character(len=25) :: MODEL_LEVEL_AREA_WEIGHTED = 'model_level_area_weighted'
   character(len=14) :: PRESSURE_LEVEL = 'pressure_level'
+  character(len=26) :: PRESSURE_LEVEL_EXTRAPOLATE = 'pressure_level_extrapolate'
   character(len=21) :: BLENDED_MASS_WEIGHTED = 'blended_mass_weighted'
   character(len=21) :: BLENDED_AREA_WEIGHTED = 'blended_area_weighted'
   real :: sigma_blend = 0.9  ! Constant defining sigma level at which we switch to pressure-level coarsening in the blended method.
@@ -176,6 +178,7 @@ contains
     if (trim(strategy) .ne. MODEL_LEVEL .and. &
         trim(strategy) .ne. MODEL_LEVEL_AREA_WEIGHTED .and. &
         trim(strategy) .ne. PRESSURE_LEVEL .and. &
+        trim(strategy) .ne. PRESSURE_LEVEL_EXTRAPOLATE .and. &
         trim(strategy) .ne. BLENDED_MASS_WEIGHTED .and. &
         trim(strategy) .ne. BLENDED_AREA_WEIGHTED) then
        write(error_message, *) 'Invalid coarse graining strategy provided, ', trim(strategy)
@@ -820,11 +823,12 @@ contains
     enddo
    end subroutine upsample_d_grid_x
 
-   subroutine remap_edges_along_x(field, phalf, dx, ptop, result)
+   subroutine remap_edges_along_x(field, phalf, dx, ptop, extrapolate, result)
     real, intent(in) :: field(is:ie,js:je+1,1:npz)
     real, intent(in) :: phalf(is-1,ie+1,js-1,je+1,1:npz+1)
     real, intent(in) :: dx(is:ie,js:je+1)
     real, intent(in) :: ptop
+    logical, intent(in) :: extrapolate
     real, intent(out) :: result(is_coarse:ie_coarse,js_coarse:je_coarse+1,1:npz)
 
     real, allocatable, dimension(:,:,:) :: phalf_d_grid, coarse_phalf_d_grid, coarse_phalf_d_grid_on_fine, remapped
@@ -861,13 +865,17 @@ contains
     enddo
 
     ! 5. Create mask
-    do k = 1, npz
-      where (coarse_phalf_d_grid_on_fine(:,:,k+1) .lt. phalf_d_grid(:,:,npz+1))
-        mask(:,:,k) = .true.
-      elsewhere
-        mask(:,:,k) = .false.
-      endwhere
-    enddo
+    if (extrapolate) then
+      mask = .true.  ! We don't mask anywhere if we are extrapolating
+    else
+      do k = 1, npz
+        where (coarse_phalf_d_grid_on_fine(:,:,k+1) .lt. phalf_d_grid(:,:,npz+1))
+          mask(:,:,k) = .true.
+        elsewhere
+          mask(:,:,k) = .false.
+        endwhere
+      enddo
+    endif
 
     ! 6. Coarsen the remapped field
     call weighted_block_edge_average_x_pre_downsampled(remapped, dx, result, mask, npz)
@@ -965,11 +973,12 @@ contains
     enddo
   end subroutine upsample_d_grid_y
 
-  subroutine remap_edges_along_y(field, phalf, dy, ptop, result)
+  subroutine remap_edges_along_y(field, phalf, dy, ptop, extrapolate, result)
     real, intent(in) :: field(is:ie+1,js:je,1:npz)
     real, intent(in) :: phalf(is-1:ie+1,js-1:je+1,1:npz+1)
     real, intent(in) :: dy(is:ie+1,js:je)
     real, intent(in) :: ptop
+    logical, intent(in) :: extrapolate
     real, intent(out) :: result(is_coarse:ie_coarse+1,js_coarse:je_coarse,1:npz)
 
     real, allocatable, dimension(:,:,:) :: phalf_d_grid, coarse_phalf_d_grid, coarse_phalf_d_grid_on_fine, remapped
@@ -1006,13 +1015,17 @@ contains
     enddo
 
     ! 5. Create mask
-    do k = 1, npz
-      where (coarse_phalf_d_grid_on_fine(:,:,k+1) .lt. phalf_d_grid(:,:,npz+1))
-        mask(:,:,k) = .true.
-      elsewhere
-        mask(:,:,k) = .false.
-      endwhere
-    enddo
+    if (extrapolate) then
+      mask = .true.  ! We don't mask anywhere if we are extrapolating
+    else
+      do k = 1, npz
+        where (coarse_phalf_d_grid_on_fine(:,:,k+1) .lt. phalf_d_grid(:,:,npz+1))
+          mask(:,:,k) = .true.
+        elsewhere
+          mask(:,:,k) = .false.
+        endwhere
+      enddo
+    endif
 
     ! 6. Coarsen the remapped field
     call weighted_block_edge_average_y_pre_downsampled(remapped, dy, result, mask, npz)
@@ -1294,10 +1307,11 @@ contains
    real, intent(out) :: u_coarse(is_coarse:ie_coarse,js_coarse:je_coarse+1,1:npz)
 
    real, allocatable :: pressure_coarse_grained(:,:,:)
+   logical :: extrapolate = .false.
 
    allocate(pressure_coarse_grained(is_coarse:ie_coarse,js_coarse:je_coarse+1,1:npz))
 
-   call remap_edges_along_x(u, phalf, dx, ptop, pressure_coarse_grained)
+   call remap_edges_along_x(u, phalf, dx, ptop, extrapolate, pressure_coarse_grained)
    call weighted_block_edge_average_x(dx, u, u_coarse)
    u_coarse = blending_weights * pressure_coarse_grained + (1 - blending_weights) * u_coarse
  end subroutine blended_coarse_grain_u
@@ -1311,10 +1325,11 @@ contains
    real, intent(out) :: v_coarse(is_coarse:ie_coarse+1,js_coarse:je_coarse,1:npz)
 
    real, allocatable :: pressure_coarse_grained(:,:,:)
+   logical :: extrapolate = .false.
 
    allocate(pressure_coarse_grained(is_coarse:ie_coarse+1,js_coarse:je_coarse,1:npz))
 
-   call remap_edges_along_y(v, phalf, dy, ptop, pressure_coarse_grained)
+   call remap_edges_along_y(v, phalf, dy, ptop, extrapolate, pressure_coarse_grained)
    call weighted_block_edge_average_y(dy, v, v_coarse)
    v_coarse = blending_weights * pressure_coarse_grained + (1 - blending_weights) * v_coarse
  end subroutine blended_coarse_grain_v
