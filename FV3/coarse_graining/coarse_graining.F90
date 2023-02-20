@@ -12,6 +12,7 @@ module coarse_graining_mod
   public :: block_sum, compute_mass_weights, get_fine_array_bounds, &
        get_coarse_array_bounds, coarse_graining_init, weighted_block_average, &
        weighted_block_edge_average_x, weighted_block_edge_average_y, MODEL_LEVEL, &
+       MODEL_LEVEL_AREA_WEIGHTED, &
        block_upsample, mask_area_weights, PRESSURE_LEVEL, BLENDED_MASS_WEIGHTED, BLENDED_AREA_WEIGHTED,&
        vertical_remapping_requirements, vertically_remap_field, block_mode, block_min, block_max, &
        remap_edges_along_x, remap_edges_along_y, block_edge_sum_x, block_edge_sum_y, &
@@ -87,6 +88,7 @@ module coarse_graining_mod
   integer :: is, ie, js, je, npz
   integer :: is_coarse, ie_coarse, js_coarse, je_coarse
   character(len=11) :: MODEL_LEVEL = 'model_level'
+  character(len=25) :: MODEL_LEVEL_AREA_WEIGHTED = 'model_level_area_weighted'
   character(len=14) :: PRESSURE_LEVEL = 'pressure_level'
   character(len=21) :: BLENDED_MASS_WEIGHTED = 'blended_mass_weighted'
   character(len=21) :: BLENDED_AREA_WEIGHTED = 'blended_area_weighted'
@@ -172,6 +174,7 @@ contains
     character(len=256) :: error_message
 
     if (trim(strategy) .ne. MODEL_LEVEL .and. &
+        trim(strategy) .ne. MODEL_LEVEL_AREA_WEIGHTED .and. &
         trim(strategy) .ne. PRESSURE_LEVEL .and. &
         trim(strategy) .ne. BLENDED_MASS_WEIGHTED .and. &
         trim(strategy) .ne. BLENDED_AREA_WEIGHTED) then

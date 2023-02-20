@@ -1,7 +1,8 @@
 module coarse_grained_restart_files_mod
 
   use coarse_graining_mod, only: compute_mass_weights, get_coarse_array_bounds,&
-       get_fine_array_bounds, MODEL_LEVEL, PRESSURE_LEVEL, BLENDED_MASS_WEIGHTED, BLENDED_AREA_WEIGHTED, &
+       get_fine_array_bounds, MODEL_LEVEL, MODEL_LEVEL_AREA_WEIGHTED, PRESSURE_LEVEL, &
+       BLENDED_MASS_WEIGHTED, BLENDED_AREA_WEIGHTED, &
        weighted_block_average, weighted_block_edge_average_x, weighted_block_edge_average_y, &
        mask_area_weights, block_upsample, remap_edges_along_x, &
        remap_edges_along_y, vertically_remap_field, block_min, compute_blending_weights_agrid, &
@@ -291,7 +292,9 @@ contains
     character(len=256) :: error_message
 
     if (trim(Atm%coarse_graining%strategy) .eq. MODEL_LEVEL) then
-       call coarse_grain_restart_data_on_model_levels(Atm)
+       call coarse_grain_restart_data_on_model_levels(Atm, mass_weighted=.true.)
+    elseif (trim(Atm%coarse_graining%strategy) .eq. MODEL_LEVEL_AREA_WEIGHTED) then
+       call coarse_grain_restart_data_on_model_levels(Atm, mass_weighted=.false.)
     elseif (trim(Atm%coarse_graining%strategy) .eq. PRESSURE_LEVEL) then
        call coarse_grain_restart_data_on_pressure_levels(Atm)
     elseif (trim(Atm%coarse_graining%strategy) .eq. BLENDED_MASS_WEIGHTED) then
@@ -299,22 +302,30 @@ contains
     elseif (trim(Atm%coarse_graining%strategy) .eq. BLENDED_AREA_WEIGHTED) then
        call coarse_grain_restart_data_via_blended_method(Atm, mass_weighted=.false.)
     else
-       write(error_message, *) 'Currently only model_level, pressure_level, blended_area_weighted, and blended_mass_weighted &
+       write(error_message, *) 'Currently only model_level, model_level_area_weighted, pressure_level, blended_area_weighted, and blended_mass_weighted &
                                 &coarse-graining are supported for restart files.  Got ', trim(Atm%coarse_graining%strategy)
        call mpp_error(FATAL, error_message)
     endif
   end subroutine coarse_grain_restart_data
   
-  subroutine coarse_grain_restart_data_on_model_levels(Atm)
+  subroutine coarse_grain_restart_data_on_model_levels(Atm, mass_weighted)
     type(fv_atmos_type), intent(inout) :: Atm
+    logical, intent(in) :: mass_weighted
 
     real, allocatable :: mass(:,:,:)
 
-    allocate(mass(is:ie,js:je,1:npz))
-    call compute_mass_weights(Atm%gridstruct%area(is:ie,js:je), Atm%delp(is:ie,js:je,1:npz), mass)
+    if (mass_weighted) then
+       allocate(mass(is:ie,js:je,1:npz))
+       call compute_mass_weights(Atm%gridstruct%area(is:ie,js:je), Atm%delp(is:ie,js:je,1:npz), mass)
+    endif
 
-    call coarse_grain_fv_core_restart_data_on_model_levels(Atm, mass)
-    call coarse_grain_fv_tracer_restart_data_on_model_levels(Atm, mass)
+    if (mass_weighted) then
+       call coarse_grain_fv_core_on_model_levels_mass_weighted(Atm, mass)
+       call coarse_grain_fv_tracer_on_model_levels_mass_weighted(Atm, mass)
+    else
+       call coarse_grain_fv_core_on_model_levels_area_weighted(Atm)
+       call coarse_grain_fv_tracer_on_model_levels_area_weighted(Atm)
+    endif
     call coarse_grain_fv_srf_wnd_restart_data(Atm)
     if (Atm%flagstruct%fv_land) then
        call coarse_grain_mg_drag_restart_data(Atm)
@@ -398,7 +409,7 @@ contains
     call impose_hydrostatic_balance(Atm, coarse_phalf)
   end subroutine coarse_grain_restart_data_via_blended_method
 
-  subroutine coarse_grain_fv_core_restart_data_on_model_levels(Atm, mass)
+  subroutine coarse_grain_fv_core_on_model_levels_mass_weighted(Atm, mass)
     type(fv_atmos_type), intent(inout) :: Atm
     real, intent(in) :: mass(is:ie,js:je,1:npz)
 
@@ -433,9 +444,45 @@ contains
        call weighted_block_average(mass(is:ie,js:je,1:npz), &
             Atm%va(is:ie,js:je,1:npz), Atm%coarse_graining%restart%va)
     endif
-  end subroutine coarse_grain_fv_core_restart_data_on_model_levels
+  end subroutine coarse_grain_fv_core_on_model_levels_mass_weighted
 
-  subroutine coarse_grain_fv_tracer_restart_data_on_model_levels(Atm, mass)
+  subroutine coarse_grain_fv_core_on_model_levels_area_weighted(Atm)
+    type(fv_atmos_type), intent(inout) :: Atm
+
+    if (Atm%coarse_graining%write_coarse_dgrid_vel_rst) then
+       call weighted_block_edge_average_x(Atm%gridstruct%dx(is:ie,js:je+1), &
+            Atm%u(is:ie,js:je+1,1:npz), Atm%coarse_graining%restart%u)
+       call weighted_block_edge_average_y(Atm%gridstruct%dy(is:ie+1,js:je), &
+            Atm%v(is:ie+1,js:je,1:npz), Atm%coarse_graining%restart%v)
+    endif
+
+    if (.not. Atm%flagstruct%hydrostatic) then
+       call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), &
+            Atm%w(is:ie,js:je,1:npz), Atm%coarse_graining%restart%w)
+       call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), &
+            Atm%delz(is:ie,js:je,1:npz), Atm%coarse_graining%restart%delz)
+       if (Atm%flagstruct%hybrid_z) then
+          call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), &
+            Atm%ze0(is:ie,js:je,1:npz), Atm%coarse_graining%restart%ze0)
+       endif
+    endif
+
+    call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), &
+         Atm%pt(is:ie,js:je,1:npz), Atm%coarse_graining%restart%pt)
+    call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), &
+         Atm%delp(is:ie,js:je,1:npz), Atm%coarse_graining%restart%delp)
+    call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), &
+         Atm%phis(is:ie,js:je), Atm%coarse_graining%restart%phis)
+
+    if (Atm%coarse_graining%write_coarse_agrid_vel_rst) then
+       call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), &
+            Atm%ua(is:ie,js:je,1:npz), Atm%coarse_graining%restart%ua)
+       call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), &
+            Atm%va(is:ie,js:je,1:npz), Atm%coarse_graining%restart%va)
+    endif
+  end subroutine coarse_grain_fv_core_on_model_levels_area_weighted
+
+  subroutine coarse_grain_fv_tracer_on_model_levels_mass_weighted(Atm, mass)
     type(fv_atmos_type), intent(inout) :: Atm
     real, intent(in) :: mass(is:ie,js:je,1:npz)
 
@@ -460,7 +507,27 @@ contains
                Atm%qdiag(is:ie,js:je,1:npz,n_tracer), &
                Atm%coarse_graining%restart%qdiag(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz,n_tracer))
     enddo
-  end subroutine coarse_grain_fv_tracer_restart_data_on_model_levels
+  end subroutine coarse_grain_fv_tracer_on_model_levels_mass_weighted
+
+  subroutine coarse_grain_fv_tracer_on_model_levels_area_weighted(Atm)
+    type(fv_atmos_type), intent(inout) :: Atm
+
+    character(len=64) :: tracer_name
+    integer :: n_tracer
+
+    do n_tracer = 1, n_prognostic_tracers
+       call get_tracer_names(MODEL_ATMOS, n_tracer, tracer_name)
+       call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), &
+               Atm%q(is:ie,js:je,1:npz,n_tracer), &
+               Atm%coarse_graining%restart%q(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz,n_tracer))
+    enddo
+
+    do n_tracer = n_prognostic_tracers + 1, n_tracers
+       call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), &
+               Atm%qdiag(is:ie,js:je,1:npz,n_tracer), &
+               Atm%coarse_graining%restart%qdiag(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz,n_tracer))
+    enddo
+  end subroutine coarse_grain_fv_tracer_on_model_levels_area_weighted
 
   subroutine coarse_grain_fv_srf_wnd_restart_data(Atm)
     type(fv_atmos_type), intent(inout) :: Atm
