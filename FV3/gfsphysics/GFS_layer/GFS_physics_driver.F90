@@ -1066,6 +1066,28 @@ module module_physics_driver
       !$ser data prs_del=del prs_del_gz=del_gz
 #endif
 
+      ! Prescribe sea ice from a file.  Ported from the GFDL SHiELD_physics repository:
+      ! https://github.com/NOAA-GFDL/SHiELD_physics/blob/main/GFS_layer/GFS_physics_driver.F90
+      if (Model%use_prescribed_sea_surface_properties) then
+        do i= 1, im
+          if (Statein%prescribed_sea_ice_fraction(i) > -1. .and. Statein%prescribed_sea_ice_fraction(i) < 2.) then !Avoid bad values
+            if (Statein%prescribed_sea_ice_fraction(i) >= 0.15 .and. nint(Sfcprop%slmsk(i)) == 0) then !create sea ice
+                Sfcprop%fice(i) = Statein%prescribed_sea_ice_fraction(i)
+                Sfcprop%slmsk(i) = 2
+                Sfcprop%hice(i) = 0.1 !minimum value
+            elseif (nint(Sfcprop%slmsk(i)) == 2) then
+                if (Statein%prescribed_sea_ice_fraction(i) < 0.15) then !remove sea ice
+                  Sfcprop%slmsk(i) = 0
+                  Sfcprop%fice(i) = 0.0
+                  Sfcprop%hice(i) = 0.0
+                else
+                  Sfcprop%fice(i) = Statein%prescribed_sea_ice_fraction(i)
+                endif
+            endif
+          endif
+        enddo
+      endif
+
       do i = 1, IM
         sigmaf(i) = max( Sfcprop%vfrac(i),0.01 )
         islmsk(i) = nint(Sfcprop%slmsk(i))
@@ -2132,28 +2154,6 @@ module module_physics_driver
             Sfcprop%tsfc(i) = Statein%atm_ts(i) + Model%sst_perturbation
             Sfcprop%tsfco(i) = Statein%atm_ts(i) + Model%sst_perturbation
             tsfc3(i,3) = Statein%atm_ts(i) + Model%sst_perturbation
-          endif
-        enddo
-      endif
-
-      ! Prescribe sea ice from a file.  Ported from the GFDL SHiELD_physics repository:
-      ! https://github.com/NOAA-GFDL/SHiELD_physics/blob/main/GFS_layer/GFS_physics_driver.F90
-      if (Model%use_prescribed_sea_surface_properties) then
-        do i= 1, im
-          if (Statein%prescribed_sea_ice_fraction(i) > -1. .and. Statein%prescribed_sea_ice_fraction(i) < 2.) then !Avoid bad values
-            if (Statein%prescribed_sea_ice_fraction(i) >= 0.15 .and. islmsk(i) == 0) then !create sea ice
-                Sfcprop%fice(i) = Statein%prescribed_sea_ice_fraction(i)
-                Sfcprop%slmsk(i) = 2
-                Sfcprop%hice(i) = 0.1 !minimum value
-            elseif (islmsk(i) == 2) then
-                if (Statein%prescribed_sea_ice_fraction(i) < 0.15) then !remove sea ice
-                  Sfcprop%slmsk(i) = 0
-                  Sfcprop%fice(i) = 0.0
-                  Sfcprop%hice(i) = 0.0
-                else
-                  Sfcprop%fice(i) = Statein%prescribed_sea_ice_fraction(i)
-                endif
-            endif
           endif
         enddo
       endif
