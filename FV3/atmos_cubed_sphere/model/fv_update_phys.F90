@@ -104,7 +104,7 @@ module fv_update_phys_mod
   use boundary_mod,       only: extrapolation_BC
   use fv_eta_mod,         only: get_eta_level
   use fv_timing_mod,      only: timing_on, timing_off
-  use fv_diagnostics_mod, only: prt_maxmin
+  use fv_diagnostics_mod, only: prt_maxmin, compute_column_integral
   use fv_mapz_mod,        only: moist_cv, moist_cp
 #if defined (ATMOS_NUDGE)
   use atmos_nudge_mod,    only: get_atmos_nudge, do_ps
@@ -1219,13 +1219,5 @@ if (allocated(physics_tendency_diag%t_dt)) physics_tendency_diag%t_dt = (pt(is:i
     enddo     ! k-loop
 
   end subroutine update2d_dwinds_phys
-
-  subroutine compute_column_integral(integrand, delp, is, ie, js, je, npz, column_integral)
-    integer, intent(in) :: is, ie, js, je, npz
-    real, intent(in), dimension(is:ie,js:je,1:npz) :: integrand, delp
-    real, intent(out) :: column_integral(is:ie,js:je)
-
-    column_integral = sum(integrand * delp, 3) / grav
-  end subroutine compute_column_integral
 
 end module fv_update_phys_mod
