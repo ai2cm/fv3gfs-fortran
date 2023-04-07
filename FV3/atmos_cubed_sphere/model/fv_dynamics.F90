@@ -132,7 +132,7 @@ module fv_dynamics_mod
    use fv_mp_mod,           only: start_group_halo_update, complete_group_halo_update
    use fv_timing_mod,       only: timing_on, timing_off
    use diag_manager_mod,    only: send_data
-   use fv_diagnostics_mod,  only: fv_time, prt_mxm, range_check, prt_minmax
+   use fv_diagnostics_mod,  only: fv_time, prt_mxm, range_check, prt_minmax, compute_column_integral
    use mpp_domains_mod,     only: DGRID_NE, CGRID_NE, mpp_update_domains, domain2D
    use mpp_mod,             only: mpp_pe
    use field_manager_mod,   only: MODEL_ATMOS
@@ -147,7 +147,6 @@ module fv_dynamics_mod
    use fv_arrays_mod,       only: fv_grid_type, fv_flags_type, fv_atmos_type, fv_nest_type, & 
                                   fv_diag_type, fv_grid_bounds_type, fv_sat_adj_tendency_diag_type
    use fv_nwp_nudge_mod,    only: do_adiabatic_init
-   use fv_update_phys_mod,  only: compute_column_integral
 #ifdef MULTI_GASES
    use multi_gases_mod,     only:  virq, virqd, vicpqd
 #endif

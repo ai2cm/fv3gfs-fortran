@@ -124,6 +124,7 @@ module fv_arrays_mod
 
      integer, allocatable :: id_vertically_integrated_tracers(:)
      integer :: id_delp_total
+     integer :: id_column_physics_heating, id_column_physics_moistening
   end type fv_diag_type
 
   type fv_coarse_diag_type
