@@ -123,7 +123,7 @@ module fv_update_phys_mod
 
   implicit none
 
-  public :: fv_update_phys, del2_phys, compute_column_integral
+  public :: fv_update_phys, del2_phys
 #ifdef ROT3
   public :: update_dwinds_phys
 #endif
