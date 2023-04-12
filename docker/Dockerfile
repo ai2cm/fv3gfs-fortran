@@ -1,10 +1,7 @@
-ARG serialize=false
-ARG fv3_build_env_tag=standard
 ARG BASE_IMAGE
 ARG MPI_IMAGE=fv3gfs-mpi
 ARG FMS_IMAGE=fv3gfs-fms
 ARG ESMF_IMAGE=fv3gfs-esmf
-ARG SERIALBOX_IMAGE=fv3gfs-environment-serialbox
 
 FROM $BASE_IMAGE AS fv3gfs-mpi
 
@@ -25,7 +22,8 @@ RUN wget -q http://www.mpich.org/static/downloads/3.1.4/mpich-3.1.4.tar.gz && \
 FROM $MPI_IMAGE AS mpi_image
 
 FROM $BASE_IMAGE AS fv3gfs-environment
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && DEBIAN_FRONTEND="noninteractive" apt-get -y install tzdata && \
+    apt-get install -y \
     wget \
     gcc \
     libtool-bin \
@@ -54,53 +52,6 @@ RUN git config --global http.sslverify false && \
     cd NCEPlibs && \
     git checkout 3da51e139d5cd731c9fc27f39d88cb4e1328212b && \
     echo "y" | ./make_ncep_libs.sh -s linux -c gnu -d /opt/NCEPlibs -o 1
-
-##
-## Setup environment for Serialbox
-##---------------------------------------------------------------------------------
-FROM fv3gfs-environment as fv3gfs-environment-serialbox
-# set TZ
-ENV DEBIAN_FRONTEND=noninteractive TZ=US/Pacific
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
-# install dependencies for serialbox
-RUN apt-get update && apt-get install -y \
-    libssl-dev \
-    clang \
-    clang-format \
-    clang-tidy \
-    python3-numpy \
-    python3-nose \
-    python3-sphinx
-
-# RUN wget -q https://github.com/Kitware/CMake/releases/download/v3.18.3/cmake-3.18.3-Linux-x86_64.sh && \
-#     chmod +x ./cmake-3.18.3-Linux-x86_64.sh && \
-#     cmake-3.18.3-Linux-x86_64.sh
-
-RUN wget https://github.com/Kitware/CMake/releases/download/v3.17.3/cmake-3.17.3.tar.gz && \
-    tar xzf cmake-3.17.3.tar.gz && \
-    cd cmake-3.17.3 && \
-    ./bootstrap && make -j4 && make install
-
-# Install headers from the Boost library
-RUN wget -q https://boostorg.jfrog.io/artifactory/main/release/1.74.0/source/boost_1_74_0.tar.gz && \
-    tar xzf boost_1_74_0.tar.gz && \
-    cd boost_1_74_0 && \
-    cp -r boost /usr/include/ && cd /    
-
-# install serialbox from source
-COPY serialbox serialbox
-RUN cd serialbox && \
-    mkdir build && \
-    cd build && \
-    cmake -DSERIALBOX_USE_NETCDF=ON -DSERIALBOX_ENABLE_FORTRAN=ON \
-      -DSERIALBOX_TESTING=ON  ../ && \
-    make -j16 && \
-    make test && \
-    make install
-
-# setup link for backwards comatibility
-RUN ln -s /serialbox /serialbox2
 
 ## Build FMS
 ##---------------------------------------------------------------------------------
@@ -140,9 +91,9 @@ RUN git clone -b ESMF_8_0_0 --depth 1 https://git.code.sf.net/p/esmf/esmf $ESMF_
     make install && \
     make installcheck
 
-## Copy FV3GFS sources for non-serialize image
+## Copy FV3GFS sources
 ##---------------------------------------------------------------------------------
-FROM $BASE_IMAGE AS fv3gfs-src-serialize-false
+FROM $BASE_IMAGE AS fv3gfs-src
 
 ARG compile_option
 ARG configure_file=configure.fv3.gnu_docker
@@ -168,55 +119,28 @@ RUN cp /FV3/conf/$configure_file \
 
 COPY FV3/atmos_cubed_sphere /FV3/atmos_cubed_sphere
 
-## Convert FV3GFS sources for serialize image
-##---------------------------------------------------------------------------------
-FROM $SERIALBOX_IMAGE AS fv3gfs-src-serialize-true
-
-ARG compile_option
-ARG configure_file=configure.fv3.gnu_docker_serialize
-
-ENV SERIALBOX_OUTDIR=/FV3
-ENV FV3_BASE=/FV3/original
-
-COPY --from=fv3gfs-src-serialize-false /FV3 $FV3_BASE
-COPY --from=fv3gfs-src-serialize-false /stochastic_physics $(FV3_BASE)/../stochastic_physics 
-
-# copy appropriate configuration file to configure.fv3
-RUN cp $FV3_BASE/conf/$configure_file \
-        $FV3_BASE/conf/configure.fv3 && \
-    if [ ! -z $compile_option ]; then sed -i "33i $compile_option" \
-        $FV3_BASE/conf/configure.fv3; fi && \
-    cd $FV3_BASE && \
-    make serialize_preprocess
-
-
 ## Convert FV3GFS sources for emulation image
 ##---------------------------------------------------------------------------------
 
-FROM fv3gfs-src-serialize-$serialize AS fv3gfs-sources
+FROM fv3gfs-src AS fv3gfs-sources
 
 FROM $FMS_IMAGE AS fms_image
 FROM $ESMF_IMAGE AS esmf_image
-FROM $SERIALBOX_IMAGE AS serialbox_image
 
 FROM fv3gfs-environment AS fv3gfs-environment-standard
 
 ## Build FV3 executable in its own image
 ##---------------------------------------------------------------------------------
-FROM fv3gfs-environment-${fv3_build_env_tag} AS fv3gfs-build
+FROM fv3gfs-environment-standard AS fv3gfs-build
 
 ENV ESMFMKFILE=/usr/local/esmf/lib/esmf.mk
 
-ENV SERIALBOX_DIR=/serialbox \
-    SERIALBOX_OUTDIR=/FV3 \
-    FMS_DIR=/FMS \
+ENV FMS_DIR=/FMS \
     ESMF_DIR=/usr/local/esmf
 
 ENV ESMF_INC="-I/usr/local/esmf/include" \
-    LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ESMF_DIR}/lib:${FMS_DIR}/libFMS/.libs/:${SERIALBOX_DIR}/lib \
-    PPSER_PY=$(SERIALBOX_DIR)/python/pp_ser/pp_ser.py
+    LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:${ESMF_DIR}/lib:${FMS_DIR}/libFMS/.libs
 
-COPY --from=serialbox_image /serialbox/install $SERIALBOX_DIR
 COPY --from=fms_image /FMS $FMS_DIR
 COPY --from=esmf_image /usr/local/esmf $ESMF_DIR
 
@@ -235,9 +159,7 @@ FROM fv3gfs-build AS fv3gfs-compiled
 
 RUN apt-get update && apt-get install -y \
     python3 \
-    python3-pip && \
-    ln -s /bin/python3 /bin/python && \
-    ln -s /bin/pip3 /bin/pip
+    python3-pip
 # install python packages needed to convert to netcdf data
 RUN pip3 install --upgrade setuptools pip && \
     pip3 install --no-cache-dir pyyaml xarray==0.16.2 f90nml==1.1.0 netCDF4

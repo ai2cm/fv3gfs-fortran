@@ -13,8 +13,11 @@ OTHER_MOUNTS ?=
 
 # base images w/ or w/o CUDA
 ifeq ($(CUDA),n)
-	BASE_IMAGE ?=ubuntu:18.04
-	DEP_TAG_NAME ?=gnu7-mpich314-nocuda
+	# Note this BASE_IMAGE version is the same as the one used in the
+	# fv3net prognostic_run image.  It corresponds to an image with Ubuntu
+	# version 20.04.
+	BASE_IMAGE ?=ubuntu@sha256:9101220a875cee98b016668342c489ff0674f247f6ca20dfc91b91c0f28581ae
+	DEP_TAG_NAME ?=gnu9-mpich314-nocuda
 else
 	BASE_IMAGE ?=nvidia/cuda:10.2-devel-ubuntu18.04
 	DEP_TAG_NAME ?=gnu7-mpich314-cuda102
@@ -24,21 +27,19 @@ BUILD_ARGS += --build-arg BASE_IMAGE=$(BASE_IMAGE)
 # image names (use XXX_IMAGE=<name> make <target> to override)
 COMPILED_TAG_NAME ?=$(DEP_TAG_NAME)
 COMPILED_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)
-SERIALIZE_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)-serialize
 EMULATION_IMAGE ?= $(GCR_URL)/$(COMPILE_TARGET):$(COMPILED_TAG_NAME)-emulation
 ENVIRONMENT_IMAGE ?= $(GCR_URL)/$(ENVIRONMENT_TARGET):$(ENVIRONMENT_TAG_NAME)
 MPI_IMAGE ?= $(GCR_URL)/mpi-build:$(DEP_TAG_NAME)
 FMS_IMAGE ?= $(GCR_URL)/fms-build:$(DEP_TAG_NAME)
 ESMF_IMAGE ?= $(GCR_URL)/esmf-build:$(DEP_TAG_NAME)
-SERIALBOX_IMAGE ?= $(GCR_URL)/serialbox-build:$(DEP_TAG_NAME)
 
 # used to shorten build times in CircleCI
 ifeq ($(BUILD_FROM_INTERMEDIATE),y)
-	BUILD_ARGS += --build-arg FMS_IMAGE=$(FMS_IMAGE) --build-arg ESMF_IMAGE=$(ESMF_IMAGE) --build-arg SERIALBOX_IMAGE=$(SERIALBOX_IMAGE) --build-arg MPI_IMAGE=$(MPI_IMAGE)
+	BUILD_ARGS += --build-arg FMS_IMAGE=$(FMS_IMAGE) --build-arg ESMF_IMAGE=$(ESMF_IMAGE) --build-arg MPI_IMAGE=$(MPI_IMAGE)
 endif
 
-.PHONY: help build build_environment build_compiled build_serialize build_debug
-.PHONY: build_deps push_deps pull_deps enter enter_serialize test update_circleci_reference clean
+.PHONY: help build build_environment build_compiled build_debug
+.PHONY: build_deps push_deps pull_deps enter test update_circleci_reference clean
 
 help:
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
@@ -60,16 +61,10 @@ build_compiled: ## build production container image
 build_debug: ## build container image for debugging
 	COMPILED_TAG_NAME=$(COMPILED_TAG_NAME)-debug COMPILE_OPTION="REPRO=\\\nDEBUG=Y" $(MAKE) build
 
-build_serialize: ## build container image for serialization
-	BUILD_ARGS="$(BUILD_ARGS) --build-arg serialize=true" \
-	COMPILED_IMAGE=$(SERIALIZE_IMAGE) \
-	$(MAKE) build_compiled
-
-build_deps: ## build container images of dependnecies (FMS, ESMF, SerialBox)
+build_deps: ## build container images of dependnecies (FMS, ESMF)
 	docker build -f $(DOCKERFILE) -t $(MPI_IMAGE) $(BUILD_ARGS) --target fv3gfs-mpi .
 	docker build -f $(DOCKERFILE) -t $(FMS_IMAGE) $(BUILD_ARGS) --target fv3gfs-fms .
 	docker build -f $(DOCKERFILE) -t $(ESMF_IMAGE) $(BUILD_ARGS) --target fv3gfs-esmf .
-	docker build -f $(DOCKERFILE) -t $(SERIALBOX_IMAGE) $(BUILD_ARGS) --target fv3gfs-environment-serialbox .
 
 push_image_%:
 	docker tag $(GCR_URL)/$*:$(DEP_TAG_NAME) $(GCR_URL)/$*:$(DEP_TAG_NAME)-$(COMMIT_SHA)
@@ -77,23 +72,17 @@ push_image_%:
 	docker push $(GCR_URL)/$*:$(DEP_TAG_NAME)-$(COMMIT_SHA)
 
 ## push container images of dependencies to GCP 
-push_deps: push_image_mpi-build push_image_fms-build push_image_esmf-build push_image_serialbox-build
+push_deps: push_image_mpi-build push_image_fms-build push_image_esmf-build
 
 pull_deps: ## pull container images of dependencies from GCP (for faster builds)
 	docker pull $(MPI_IMAGE)
 	docker pull $(FMS_IMAGE)
 	docker pull $(ESMF_IMAGE)
-	docker pull $(SERIALBOX_IMAGE)
 
 enter: ## run and enter production container for development
 	docker run --rm \
 		-v $(shell pwd)/FV3:/FV3 $(OTHER_MOUNTS) \
 		-w /FV3 -it $(COMPILED_IMAGE) bash
-
-enter_serialize: ## run and enter serialization container for development
-	docker run --rm \
-		-v $(shell pwd)/FV3:/FV3/original $(OTHER_MOUNTS) \
-		-w /FV3 -it $(SERIALIZE_IMAGE) bash
 
 test: ## run tests (set COMPILED_TAG_NAME to override default)
 	pytest tests/pytest --capture=no --verbose --refdir $(shell pwd)/tests/pytest/reference/circleci --image_version $(COMPILED_TAG_NAME)

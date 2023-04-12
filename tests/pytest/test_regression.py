@@ -24,7 +24,6 @@ SUBMIT_JOB_FILENAME = os.path.join(TEST_DIR, "run_files/submit_job.sh")
 STDOUT_FILENAME = "stdout.log"
 STDERR_FILENAME = "stderr.log"
 MD5SUM_FILENAME = "md5.txt"
-SERIALIZE_MD5SUM_FILENAME = "md5_serialize.txt"
 GOOGLE_APP_CREDS = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", None)
 
 USE_LOCAL_ARCHIVE = True
@@ -65,9 +64,31 @@ def get_config(filename):
         return fv3config.load(f)
 
 
-def get_run_dir(model_image_tag, config):
-    run_name = config["experiment_name"]
+def get_run_dir(model_image_tag, run_name):
     return os.path.join(OUTPUT_DIR, model_image_tag, run_name)
+
+
+def get_compile_mode_suffix(debug):
+    return "-debug" if debug else ""
+
+
+def get_model_image_tag(image_version, debug):
+    compile_mode = get_compile_mode_suffix(debug)
+    return f"{image_version}{compile_mode}"
+
+
+def get_model_image(image, image_version, debug):
+    model_image_tag = get_model_image_tag(image_version, debug)
+    return f"{image}:{model_image_tag}"
+
+
+def get_run_name(experiment_name, debug, layout=None):
+    compile_mode = get_compile_mode_suffix(debug)
+    if layout is None:
+        return f"{experiment_name}{compile_mode}"
+    else:
+        layout_x, layout_y = layout
+        return f"{experiment_name}-{layout_x}x{layout_y}{compile_mode}"
 
 
 def get_n_processes(config):
@@ -75,35 +96,39 @@ def get_n_processes(config):
     return 6 * layout[0] * layout[1]
 
 
+# Note the non-debug-mode coarse-graining test cases were added to establish
+# new checksums for test cases with the TKE-EDMF turbulence scheme active.
+# When we fix the bug in the deep convection scheme these will be used to
+# demonstrate that answers do not change, at which point we can remove the
+# xfail marks on the debug mode tests, and remove the non-debug-mode versions.
+# As of GNU version 9, versions of the model compiled in REPRO mode and DEBUG
+# mode do not produce identical results, and therefore must have different
+# checksums defined for each.
 @pytest.mark.parametrize(
-    ("config_filename", "tag"),
+    ("config_filename", "debug"),
     [
-        ("default.yml", "{version}-debug"),
-        ("baroclinic.yml", "{version}-debug"),
-        ("default.yml", "{version}"),
-        ("default.yml", "{version}-serialize"),
-        ("restart.yml", "{version}"),
-        ("model-level-coarse-graining.yml", "{version}-debug"),
-        ("pressure-level-coarse-graining.yml", "{version}-debug"),
+        ("default.yml", True),
+        ("baroclinic.yml", True),
+        ("default.yml", False),
+        ("restart.yml", False),
+        ("model-level-coarse-graining.yml", False),
+        ("pressure-level-coarse-graining.yml", False),
+        pytest.param("model-level-coarse-graining.yml", True, marks=pytest.mark.xfail),
+        pytest.param("pressure-level-coarse-graining.yml", True, marks=pytest.mark.xfail),
     ],
 )
 def test_regression(
-    config_filename, tag, image, image_version, reference_dir, image_runner
+    config_filename, debug, image, image_version, reference_dir, image_runner
 ):
-    model_image_tag = tag.format(version=image_version)
-    model_image = f"{image}:{model_image_tag}"
     config = get_config(config_filename)
-    run_dir = get_run_dir(model_image_tag, config)
+    model_image_tag = get_model_image_tag(image_version, debug)
+    model_image = get_model_image(image, image_version, debug)
+    run_name = get_run_name(config["experiment_name"], debug)
+    run_dir = get_run_dir(model_image_tag, run_name)
     run_model(config, run_dir, model_image, image_runner)
-    run_name = config["experiment_name"]
     run_reference_dir = os.path.join(reference_dir, run_name)
     md5sum_filename = os.path.join(run_reference_dir, MD5SUM_FILENAME)
     check_rundir_md5sum(run_dir, md5sum_filename)
-    if "serialize" in model_image:
-        serialize_md5sum_filename = os.path.join(
-            run_reference_dir, SERIALIZE_MD5SUM_FILENAME
-        )
-        check_rundir_md5sum(run_dir, serialize_md5sum_filename)
     shutil.rmtree(run_dir)
 
 
@@ -431,27 +456,27 @@ def run_model(config, run_dir, model_image, image_runner, additional_env_vars=No
         raise NotImplementedError("image_runner must be one of 'docker' or 'sarus'")
 
 
+# TODO: convert this to a debug-mode test when that passes.
 @pytest.mark.parametrize(
-    ("config_filename", "tag", "layout"),
+    ("config_filename", "layout", "debug"),
     [
-        ("model-level-coarse-graining.yml", "{version}", [1, 2]),
-        ("pressure-level-coarse-graining.yml", "{version}", [1, 2]),
+        ("model-level-coarse-graining.yml", [1, 2], False),
+        ("pressure-level-coarse-graining.yml", [1, 2], False),
     ],
     ids=lambda x: str(x),
 )
 def test_run_reproduces_across_layouts(
-    config_filename, tag, layout, image, image_version, image_runner, reference_dir
+    config_filename, layout, debug, image, image_version, image_runner, reference_dir
 ):
-    model_image_tag = tag.format(version=image_version)
-    model_image = f"{image}:{model_image_tag}"
+    model_image_tag = get_model_image_tag(image_version, debug)
+    model_image = get_model_image(image, image_version, debug)
     config = get_config(config_filename)
     config["namelist"]["fv_core_nml"]["layout"] = layout
-    layout_x, layout_y = layout
-    run_name = f"{config['experiment_name']}_{layout_x}x{layout_y}"
-    run_dir = join(OUTPUT_DIR, model_image_tag, run_name)
+    run_name = get_run_name(config["experiment_name"], debug, layout=layout)
+    run_dir = get_run_dir(model_image_tag, run_name)
     run_model(config, run_dir, model_image, image_runner)
 
-    reference_run_name = config["experiment_name"]
+    reference_run_name = get_run_name(config["experiment_name"], debug)
     run_reference_dir = join(reference_dir, reference_run_name)
     md5sum_filename = join(run_reference_dir, MD5SUM_FILENAME)
     check_rundir_md5sum(run_dir, md5sum_filename)
