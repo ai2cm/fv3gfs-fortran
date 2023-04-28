@@ -96,14 +96,6 @@ def get_n_processes(config):
     return 6 * layout[0] * layout[1]
 
 
-# Note the non-debug-mode coarse-graining test cases were added to establish
-# new checksums for test cases with the TKE-EDMF turbulence scheme active.
-# When we fix the bug in the deep convection scheme these will be used to
-# demonstrate that answers do not change, at which point we can remove the
-# xfail marks on the debug mode tests, and remove the non-debug-mode versions.
-# As of GNU version 9, versions of the model compiled in REPRO mode and DEBUG
-# mode do not produce identical results, and therefore must have different
-# checksums defined for each.
 @pytest.mark.parametrize(
     ("config_filename", "debug"),
     [
@@ -113,8 +105,8 @@ def get_n_processes(config):
         ("restart.yml", False),
         ("model-level-coarse-graining.yml", False),
         ("pressure-level-coarse-graining.yml", False),
-        pytest.param("model-level-coarse-graining.yml", True, marks=pytest.mark.xfail),
-        pytest.param("pressure-level-coarse-graining.yml", True, marks=pytest.mark.xfail),
+        ("model-level-coarse-graining.yml", True),
+        ("pressure-level-coarse-graining.yml", True),
     ],
 )
 def test_regression(
@@ -456,12 +448,11 @@ def run_model(config, run_dir, model_image, image_runner, additional_env_vars=No
         raise NotImplementedError("image_runner must be one of 'docker' or 'sarus'")
 
 
-# TODO: convert this to a debug-mode test when that passes.
 @pytest.mark.parametrize(
     ("config_filename", "layout", "debug"),
     [
-        ("model-level-coarse-graining.yml", [1, 2], False),
-        ("pressure-level-coarse-graining.yml", [1, 2], False),
+        ("model-level-coarse-graining.yml", [1, 2], True),
+        ("pressure-level-coarse-graining.yml", [1, 2], True),
     ],
     ids=lambda x: str(x),
 )
