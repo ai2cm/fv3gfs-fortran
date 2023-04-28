@@ -103,8 +103,6 @@ def get_n_processes(config):
         ("baroclinic.yml", True),
         ("default.yml", False),
         ("restart.yml", False),
-        ("model-level-coarse-graining.yml", False),
-        ("pressure-level-coarse-graining.yml", False),
         ("model-level-coarse-graining.yml", True),
         ("pressure-level-coarse-graining.yml", True),
     ],
