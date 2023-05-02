@@ -179,7 +179,7 @@ public Atm_block, IPD_Data, IPD_Control
                                                          ! to calculate gradient on cubic sphere grid.
 !</PUBLICTYPE >
 
-integer :: fv3Clock, getClock, overrideClock, updClock, setupClock, radClock, physClock, diagClock, otherClock
+integer :: fv3Clock, getClock, overrideClock, updClock, setupClock, radClock, physClock, diagClock, otherClock, coarsePhysicsRestartClock, nativePhysicsRestartClock, nativeDynamicsRestartClock, coarseDynamicsRestartClock, diagClockNative, diagClockCoarse, diagClockCoarse2d, diagClockCoarse3d
 
 !-----------------------------------------------------------------------
 integer :: blocksize    = 1
@@ -862,6 +862,14 @@ subroutine atmos_model_init (Atmos, Time_init, Time, Time_step)
    physClock  = mpp_clock_id( ' 3.5-GFS-Physics', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    updClock   = mpp_clock_id( ' 3.6-atmosphere_state_update', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    diagClock  = mpp_clock_id( ' 3.7-Diagnostics', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+   diagClockNative  = mpp_clock_id( '  3.7.1-phys-diags-native', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+   diagClockCoarse  = mpp_clock_id( '  3.7.2-phys-diags-coarse', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+   diagClockCoarse2d  = mpp_clock_id( '  3.7.2.1-phys-diags-coarse-2d', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+   diagClockCoarse3d  = mpp_clock_id( '  3.7.2.2-phys-diags-coarse-3d', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+   nativeDynamicsRestartClock  = mpp_clock_id( '  3.8.1-dyn-restarts-native', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+   coarseDynamicsRestartClock  = mpp_clock_id( '  3.8.2-dyn-restarts-coarse', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+   nativePhysicsRestartClock  = mpp_clock_id( '  3.8.3-phys-restarts-native', flags=clock_flag_default, grain=CLOCK_COMPONENT )
+   coarsePhysicsRestartClock  = mpp_clock_id( '  3.8.4-phys-restarts-coarse', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    ! 3.8-Write-restart is timed on the coupler_main.F90 level
    otherClock = mpp_clock_id( ' 3.9-Other', flags=clock_flag_default, grain=CLOCK_COMPONENT )
    overrideClock = mpp_clock_id(' 3.10-sfc_data_override', flags=clock_flag_default, grain=CLOCK_COMPONENT )
@@ -1009,7 +1017,7 @@ subroutine update_atmos_model_state (Atmos)
       Atm_block, IPD_Data, IPD_Control%nx, IPD_Control%ny, IPD_Control%levs, &
       Atm(mytile)%coarse_graining%write_coarse_diagnostics, &
       IPD_Diag_coarse, Atm(mytile)%delp(is:ie,js:je,:), &
-      Atmos%coarsening_strategy, Atm(mytile)%ptop)
+      Atmos%coarsening_strategy, Atm(mytile)%ptop, diagClockNative, diagClockCoarse, diagClockCoarse2d, diagClockCoarse3d)
     is_diagnostics_time = (use_fdiag .and. (ANY(nint(fdiag(:)*3600.0) == seconds))) .or. &
                           ((.not. use_fdiag) .and. (mod(seconds, nint(fhout * 3600.0)) == 0))
     if (is_diagnostics_time .or. (IPD_Control%kdt == first_kdt) .or. nsout > 0) then
@@ -1038,7 +1046,7 @@ subroutine update_atmos_model_state (Atmos)
                             IPD_Control%fhswr, IPD_Control%fhlwr, &
                             Atm(mytile)%coarse_graining%write_coarse_diagnostics, &
                             IPD_Diag_coarse, &
-                            Atm(mytile)%delp(is:ie,js:je,:), Atmos%coarsening_strategy, Atm(mytile)%ptop)
+                            Atm(mytile)%delp(is:ie,js:je,:), Atmos%coarsening_strategy, Atm(mytile)%ptop, diagClockNative, diagClockCoarse, diagClockCoarse2d, diagClockCoarse3d)
       if (nint(IPD_Control%fhzero) > 0) then 
         if (mod(isec,3600*nint(IPD_Control%fhzero)) == 0) diag_time = Atmos%Time
       else
@@ -1102,13 +1110,17 @@ subroutine atmos_model_end (Atmos)
 !-----------------------------------------------------------------------
 !---- termination routine for atmospheric model ----
                                               
-    call atmosphere_end (Atmos % Time, Atmos%grid)
+    call atmosphere_end (Atmos % Time, Atmos%grid, nativeDynamicsRestartClock, coarseDynamicsRestartClock)
     if (.not. disable_phys_restart_write) then
+       call mpp_clock_begin(nativePhysicsRestartClock)
        call FV3GFS_restart_write (IPD_Data, IPD_Restart, Atm_block, &
                                   IPD_Control, Atmos%domain)
+       call mpp_clock_end(nativePhysicsRestartClock)
        if (Atmos%write_coarse_restart_files) then
+         call mpp_clock_begin(coarsePhysicsRestartClock)
          call FV3GFS_restart_write_coarse(IPD_Data, IPD_Restart, Atm_block, &
             IPD_Control, Atmos%coarse_domain)
+         call mpp_clock_end(coarsePhysicsRestartClock)
        endif
     endif
 
@@ -1132,15 +1144,19 @@ subroutine atmos_model_restart(Atmos, timestamp)
   type (atmos_data_type),   intent(inout) :: Atmos
   character(len=*),  intent(in)           :: timestamp
 
-    call atmosphere_restart(timestamp)
+    call atmosphere_restart(timestamp, nativeDynamicsRestartClock, coarseDynamicsRestartClock)
     if (.not. disable_phys_restart_write) then
        if (.not. Atmos%write_only_coarse_intermediate_restarts) then
+        call mpp_clock_begin(nativePhysicsRestartClock)
         call FV3GFS_restart_write (IPD_Data, IPD_Restart, Atm_block, &
                                     IPD_Control, Atmos%domain, timestamp)
+        call mpp_clock_end(nativePhysicsRestartClock)
        endif
        if (Atmos%write_coarse_restart_files) then
+        call mpp_clock_begin(coarsePhysicsRestartClock)
         call FV3GFS_restart_write_coarse(IPD_Data, IPD_Restart, Atm_block, &
           IPD_Control, Atmos%coarse_domain, timestamp)
+        call mpp_clock_end(coarsePhysicsRestartClock)
        endif
     endif
 end subroutine atmos_model_restart

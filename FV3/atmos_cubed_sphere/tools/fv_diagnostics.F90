@@ -150,6 +150,7 @@ module fv_diagnostics_mod
 #endif
 
  implicit none
+ public compute_column_integral
  private
 
 
@@ -1235,7 +1236,24 @@ contains
          allocate(Atm(n)%physics_tendency_diag%qg_dt(isc:iec,jsc:jec,npz))
          Atm(n)%physics_tendency_diag%qg_dt = 0.0
     endif
-    
+
+    idiag%id_column_physics_heating = register_diag_field('dynamics', &
+          'column_physics_heating', axes(1:2), Time, &
+          'column integrated heating from physics', 'W/m**2', &
+          missing_value=missing_value)
+    if (idiag%id_column_physics_heating > 0 .and. .not. allocated(Atm(n)%physics_tendency_diag%t_dt)) then
+         allocate(Atm(n)%physics_tendency_diag%t_dt(isc:iec,jsc:jec,npz))
+         Atm(n)%physics_tendency_diag%t_dt = 0.0
+    endif
+
+    idiag%id_column_physics_moistening = register_diag_field('dynamics', &
+          'column_physics_moistening', axes(1:2), Time, &
+          'column integrated moistening from physics', 'mm/s', &
+          missing_value=missing_value)
+    if (idiag%id_column_physics_moistening > 0 .and. .not. allocated(Atm(n)%physics_tendency_diag%qv_dt)) then
+         allocate(Atm(n)%physics_tendency_diag%qv_dt(isc:iec,jsc:jec,npz))
+         Atm(n)%physics_tendency_diag%qv_dt = 0.0
+    endif
     
     !---------------------------------------
     ! fast saturation adjustment diagnostics
@@ -1388,7 +1406,7 @@ contains
     real, parameter:: ws_1 = 20.
     real, parameter:: vort_c0= 2.2e-5 
     logical, allocatable :: storm(:,:), cat_crt(:,:)
-    real :: tmp2, pvsum, e2, einf, qm, mm, maxdbz, allmax, rgrav
+    real :: tmp2, pvsum, e2, einf, qm, mm, maxdbz, allmax, rgrav, specific_heat
     integer :: Cl, Cl2
     !!! CLEANUP: does it really make sense to have this routine loop over Atm% anymore? We assume n=1 below anyway
 
@@ -2531,6 +2549,26 @@ contains
             used = send_data(idiag%id_vertically_integrated_tracers(tracer_index), a2, Time)
          endif
        enddo
+
+       if (idiag%id_column_physics_heating > 0) then
+         if (Atm(n)%flagstruct%hydrostatic .or. Atm(n)%flagstruct%phys_hydrostatic) then
+            specific_heat = cp_air
+         else
+            specific_heat = cp_air - rdgas
+         endif
+
+         call compute_column_integral(&
+           Atm(n)%physics_tendency_diag%t_dt(isc:iec,jsc:jec,1:npz), &
+           Atm(n)%delp(isc:iec,jsc:jec,1:npz), isc, iec, jsc, jec, npz, a2)
+         a2 = specific_heat * a2
+         used = send_data(idiag%id_column_physics_heating, a2, Time)
+       endif
+       if (idiag%id_column_physics_moistening > 0) then
+         call compute_column_integral(&
+           Atm(n)%physics_tendency_diag%qv_dt(isc:iec,jsc:jec,1:npz), &
+           Atm(n)%delp(isc:iec,jsc:jec,1:npz), isc, iec, jsc, jec, npz, a2)
+         used = send_data(idiag%id_column_physics_moistening, a2, Time)
+       endif
 
 ! Cloud top temperature & cloud top press:
        if ( (idiag%id_ctt>0 .or. idiag%id_ctp>0 .or. idiag%id_ctz>0).and. Atm(n)%flagstruct%nwat==6) then
@@ -5964,6 +6002,14 @@ end subroutine eqv_pot
       enddo
    enddo
   end subroutine transpose_unit_vector
+
+  subroutine compute_column_integral(integrand, delp, is, ie, js, je, npz, column_integral)
+   integer, intent(in) :: is, ie, js, je, npz
+   real, intent(in), dimension(is:ie,js:je,1:npz) :: integrand, delp
+   real, intent(out) :: column_integral(is:ie,js:je)
+
+   column_integral = sum(integrand * delp, 3) / grav
+  end subroutine compute_column_integral
 !-----------------------------------------------------------------------
 
 end module fv_diagnostics_mod

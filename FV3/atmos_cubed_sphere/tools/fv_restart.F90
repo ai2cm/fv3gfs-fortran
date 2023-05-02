@@ -151,6 +151,7 @@ module fv_restart_mod
   use mpp_mod,             only: get_unit, mpp_sum
   use mpp_mod,             only: mpp_get_current_pelist, mpp_set_current_pelist
   use mpp_mod,             only: mpp_send, mpp_recv, mpp_sync_self, mpp_npes, mpp_pe, mpp_sync
+  use mpp_mod,             only: mpp_clock_begin, mpp_clock_end
   use test_cases_mod,      only: test_case, alpha, init_case, init_double_periodic, init_latlon
   use fv_mp_mod,           only: is_master, switch_current_Atm, mp_reduce_min, mp_reduce_max
   use fv_surf_map_mod,     only: sgh_g, oro_g
@@ -1424,19 +1425,26 @@ contains
   !>@brief The subroutine 'fv_write_restart' writes restart files to disk.
   !>@details This subroutine may be called during an integration to write out
   !! intermediate restart files.
-  subroutine fv_write_restart(Atm, grids_on_this_pe, timestamp)
+  subroutine fv_write_restart(Atm, grids_on_this_pe, timestamp, native_clock_id, coarse_clock_id)
     type(fv_atmos_type), intent(inout) :: Atm(:)
     character(len=*),    intent(in)    :: timestamp
     logical, intent(IN) :: grids_on_this_pe(:)
+    integer, intent(inout) :: native_clock_id, coarse_clock_id
     integer n
 
     if (all(Atm%coarse_graining%write_coarse_restart_files)) then
+       call mpp_clock_begin(coarse_clock_id)
        call fv_io_write_restart_coarse(Atm, grids_on_this_pe, timestamp)
+       call mpp_clock_end(coarse_clock_id)
        if (all(.not. Atm%coarse_graining%write_only_coarse_intermediate_restarts)) then
+          call mpp_clock_begin(native_clock_id)
           call fv_io_write_restart(Atm, grids_on_this_pe, timestamp)
+          call mpp_clock_end(native_clock_id)
        endif
     else
+       call mpp_clock_begin(native_clock_id)
        call fv_io_write_restart(Atm, grids_on_this_pe, timestamp)
+       call mpp_clock_end(native_clock_id)
     endif
     do n=1,size(Atm)
        if (Atm(n)%neststruct%nested .and. grids_on_this_pe(n)) then
@@ -1449,9 +1457,10 @@ contains
   !>@brief The subroutine 'fv_restart_end' writes ending restart files,
   !! terminates I/O, and prints out diagnostics including global totals
   !! and checksums.
-  subroutine fv_restart_end(Atm, grids_on_this_pe)
+  subroutine fv_restart_end(Atm, grids_on_this_pe, native_clock_id, coarse_clock_id)
     type(fv_atmos_type), intent(inout) :: Atm(:)
     logical, intent(INOUT) :: grids_on_this_pe(:)
+    integer, intent(inout) :: native_clock_id, coarse_clock_id
 
     integer :: isc, iec, jsc, jec
     integer :: iq, n, ntileMe, ncnst, ntprog, ntdiag
@@ -1534,9 +1543,13 @@ contains
    enddo
 
    if (all(Atm%coarse_graining%write_coarse_restart_files)) then
+      call mpp_clock_begin(coarse_clock_id)
       call fv_io_write_restart_coarse(Atm, grids_on_this_pe)
+      call mpp_clock_end(coarse_clock_id)
    endif
+   call mpp_clock_begin(native_clock_id)
    call fv_io_write_restart(Atm, grids_on_this_pe)
+   call mpp_clock_end(native_clock_id)
    do n=1,ntileMe
       if (Atm(n)%neststruct%nested .and. grids_on_this_pe(n)) call fv_io_write_BCs(Atm(n))
     end do
