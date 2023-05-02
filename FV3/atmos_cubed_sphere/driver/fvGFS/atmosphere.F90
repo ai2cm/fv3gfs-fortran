@@ -247,6 +247,8 @@ character(len=20)   :: mod_name = 'fvGFS/atmosphere_mod'
   integer :: sec, seconds, days
   integer :: id_dynam = -1, id_subgridz = -1, id_dynam_other = -1
   integer :: id_update = -1, id_fv_diag = -1, id_update_other = -1
+  integer :: id_fv_diag_native = -1, id_fv_diag_coarse = -1
+  integer :: id_fv_diag_coarse_2d = -1, id_fv_diag_coarse_3d = -1
   logical :: cold_start = .false.     !  used in initial condition
 
   integer, dimension(:), allocatable :: id_tracerdt_dyn
@@ -496,7 +498,11 @@ contains
    id_dynam_other  = mpp_clock_id ('  3.1.3-Other',      flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
 
    id_update       = mpp_clock_id ('  3.6.1-fv_update_phys', flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
-   id_fv_diag      = mpp_clock_id ('  3.6.2-fv_diag',        flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_fv_diag      = mpp_clock_id ('  3.6.2-dyn-diags',        flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_fv_diag_native = mpp_clock_id ('  3.6.2.1-dyn-diags-native', flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_fv_diag_coarse = mpp_clock_id ('  3.6.2.2-dyn-diags-coarse', flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_fv_diag_coarse_2d = mpp_clock_id ('  3.6.2.2.1-dyn-diags-coarse-2d', flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_fv_diag_coarse_3d = mpp_clock_id ('  3.6.2.2.1-dyn-diags-coarse-3d', flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
    id_update_other = mpp_clock_id ('  3.6.3-Other',          flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
 
                     call timing_off('ATMOS_INIT')
@@ -890,7 +896,7 @@ contains
 
 !>@brief The subroutine 'atmosphere_end' is an API for the termination of the
 !! FV3 dynamical core responsible for writing out a restart and final diagnostic state.
- subroutine atmosphere_end (Time, Grid_box)
+ subroutine atmosphere_end (Time, Grid_box, native_clock_id, coarse_clock_id)
 #ifdef CCPP
 #ifdef STATIC
 ! For static builds, the ccpp_physics_{init,run,finalize} calls
@@ -905,6 +911,7 @@ contains
 #endif
    type (time_type),      intent(in)    :: Time
    type(grid_box_type),   intent(inout) :: Grid_box
+   integer, intent(inout) :: native_clock_id, coarse_clock_id
 
 #ifdef CCPP
    integer :: ierr
@@ -927,16 +934,20 @@ contains
    call nullify_domain ( )
    if (first_diag) then
       call timing_on('FV_DIAG')
+      call mpp_clock_begin(id_fv_diag_native)
       call fv_diag(Atm(mytile:mytile), zvir, fv_time, Atm(mytile)%flagstruct%print_freq)
       call fv_nggps_diag(Atm(mytile:mytile), zvir, fv_time)
+      call mpp_clock_end(id_fv_diag_native)
       if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
-         call fv_coarse_diag(Atm(mytile:mytile), fv_time, zvir)
+         call mpp_clock_begin(id_fv_diag_coarse)
+         call fv_coarse_diag(Atm(mytile:mytile), fv_time, zvir, id_fv_diag_coarse_2d, id_fv_diag_coarse_3d)
+         call mpp_clock_end(id_fv_diag_coarse)
       endif
       first_diag = .false.
       call timing_off('FV_DIAG')
    endif
 
-   call fv_end(Atm, grids_on_this_pe)
+   call fv_end(Atm, grids_on_this_pe, native_clock_id, coarse_clock_id)
    deallocate (Atm)
 
    deallocate( u_dt, v_dt, t_dt, pref, dum1d )
@@ -948,10 +959,11 @@ contains
 !! at a given timestamp.
 !>@detail This API is used to provide intermediate restart capability to the atmospheric
 !! driver.
-  subroutine atmosphere_restart(timestamp)
+  subroutine atmosphere_restart(timestamp, native_clock_id, coarse_clock_id)
     character(len=*),  intent(in) :: timestamp
+    integer, intent(inout) :: native_clock_id, coarse_clock_id
 
-    if (.not. Atm(mytile)%flagstruct%disable_fv_restart_write) call fv_write_restart(Atm, grids_on_this_pe, timestamp)
+    if (.not. Atm(mytile)%flagstruct%disable_fv_restart_write) call fv_write_restart(Atm, grids_on_this_pe, timestamp, native_clock_id, coarse_clock_id)
 
   end subroutine atmosphere_restart
  
@@ -1850,9 +1862,13 @@ contains
 
      call nullify_domain()
      call timing_on('FV_DIAG')
+     call mpp_clock_begin(id_fv_diag_native)
      call fv_diag(Atm(mytile:mytile), zvir, fv_time, Atm(mytile)%flagstruct%print_freq)
+     call mpp_clock_end(id_fv_diag_native)
      if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
-        call fv_coarse_diag(Atm(mytile:mytile), fv_time, zvir)
+        call mpp_clock_begin(id_fv_diag_coarse)
+        call fv_coarse_diag(Atm(mytile:mytile), fv_time, zvir, id_fv_diag_coarse_2d, id_fv_diag_coarse_3d)
+        call mpp_clock_end(id_fv_diag_coarse)
      endif
      first_diag = .false.
      call timing_off('FV_DIAG')

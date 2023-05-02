@@ -19,6 +19,7 @@ module FV3GFS_io_mod
   use block_control_mod,  only: block_control_type
   use mpp_mod,            only: mpp_error,  mpp_pe, mpp_root_pe, &
                                 mpp_chksum, NOTE,   FATAL
+  use mpp_mod,            only: mpp_clock_begin, mpp_clock_end
   use fms_mod,            only: file_exist, stdout
   use fms_io_mod,         only: restart_file_type, free_restart_type, &
                                 register_restart_field,               &
@@ -2971,7 +2972,8 @@ module FV3GFS_io_mod
 !-------------------------------------------------------------------------      
 
   subroutine send_diag_manager_controlled_diagnostic_data(Time, Diag, Atm_block, IPD_Data, nx, ny, levs, &
-    write_coarse_diagnostics, Diag_coarse, delp, coarsening_strategy, ptop)
+    write_coarse_diagnostics, Diag_coarse, delp, coarsening_strategy, ptop, native_clock_id, coarse_clock_id,&
+    coarse_clock_2d_id, coarse_clock_3d_id)
     type(time_type),           intent(in) :: Time
     type(IPD_diag_type),       intent(in) :: Diag(:)
     type(block_control_type),  intent(in) :: Atm_block
@@ -2982,6 +2984,7 @@ module FV3GFS_io_mod
     real(kind=kind_phys),      intent(in) :: delp(isco:ieco,jsco:jeco,1:levo)
     character(len=64),         intent(in) :: coarsening_strategy
     real(kind=kind_phys),      intent(in) :: ptop
+    integer, intent(inout) :: native_clock_id, coarse_clock_id, coarse_clock_2d_id, coarse_clock_3d_id
 
     logical :: require_area, require_masked_area, require_mass, require_vertical_remapping
     real(kind=kind_phys), allocatable :: area(:,:)
@@ -2997,25 +3000,36 @@ module FV3GFS_io_mod
     jsc   = atm_block%jsc
 
     if (write_coarse_diagnostics) then
+      call mpp_clock_begin(coarse_clock_id)
       call determine_required_coarse_graining_weights(diag_coarse, coarsening_strategy, require_area, require_masked_area, require_mass, require_vertical_remapping)
       if (.not. require_vertical_remapping) then
         if (require_area) then
+          call mpp_clock_begin(coarse_clock_2d_id)
           allocate(area(nx, ny))
           call get_area(Atm_block, IPD_Data, nx, ny, area)
+          call mpp_clock_begin(coarse_clock_2d_id)
         endif
         if (require_mass) then
+          call mpp_clock_begin(coarse_clock_3d_id)
           allocate(mass(nx, ny, levs))
           call get_mass(Atm_block, IPD_Data, delp, nx, ny, levs, mass)
+          call mpp_clock_end(coarse_clock_3d_id)
         endif
       else
+        call mpp_clock_begin(coarse_clock_2d_id)
         allocate(area(nx, ny))
+        call get_area(Atm_block, IPD_Data, nx, ny, area)
+        call mpp_clock_end(coarse_clock_2d_id)
+
+        call mpp_clock_begin(coarse_clock_3d_id)
         allocate(phalf(nx, ny, levs + 1))
         allocate(phalf_coarse_on_fine(nx, ny, levs + 1))
         allocate(masked_area(nx, ny, levs))
-        call get_area(Atm_block, IPD_Data, nx, ny, area)
         call vertical_remapping_requirements(delp, area, ptop, phalf, phalf_coarse_on_fine)
         call mask_area_weights(area, phalf, phalf_coarse_on_fine, masked_area)
+        call mpp_clock_end(coarse_clock_3d_id)
       endif
+      call mpp_clock_end(coarse_clock_id)
     endif
 
     do index = 1, DIAG_SIZE
@@ -3033,11 +3047,17 @@ module FV3GFS_io_mod
             enddo
           enddo
           if (Diag(index)%id > 0) then
+            call mpp_clock_begin(native_clock_id)
             used = send_data(Diag(index)%id, var2d, Time)
+            call mpp_clock_end(native_clock_id)
           endif
           if (Diag_coarse(index)%id > 0) then
+            call mpp_clock_begin(coarse_clock_id)
+            call mpp_clock_begin(coarse_clock_2d_id)
             call store_data2D_coarse(Diag_coarse(index)%id, Diag_coarse(index)%name, &
               Diag_coarse(index)%coarse_graining_method, nx, ny, var2d, area, Time)
+            call mpp_clock_end(coarse_clock_2d_id)
+            call mpp_clock_end(coarse_clock_id)
           endif
         elseif (Diag(index)%axes .eq. 3) then
           do k=1, levs
@@ -3052,9 +3072,13 @@ module FV3GFS_io_mod
             enddo
           enddo
           if (Diag(index)%id .gt. 0) then
+            call mpp_clock_begin(native_clock_id)
             used = send_data(Diag(index)%id, var3d, Time)
+            call mpp_clock_end(native_clock_id)
           endif
           if (Diag_coarse(index)%id > 0) then
+            call mpp_clock_begin(coarse_clock_id)
+            call mpp_clock_begin(coarse_clock_3d_id)
             if (trim(coarsening_strategy) .eq. MODEL_LEVEL) then
               call store_data3D_coarse_model_level(Diag_coarse(index)%id, Diag_coarse(index)%name, &
                   Diag_coarse(index)%coarse_graining_method, &
@@ -3066,6 +3090,8 @@ module FV3GFS_io_mod
             else
               call mpp_error(FATAL, 'Invalid coarse-graining strategy provided.')
             endif
+            call mpp_clock_end(coarse_clock_3d_id)
+            call mpp_clock_end(coarse_clock_id)
           endif
         endif
       endif
@@ -3083,7 +3109,8 @@ module FV3GFS_io_mod
   subroutine fv3gfs_diag_output(time, diag, atm_block, IPD_Data, nx, ny, levs, ntcw, ntoz, &
                                 dt, time_int, time_intfull, time_radsw, &
                                 time_radlw, write_coarse_diagnostics,&
-                                diag_coarse, delp, coarsening_strategy, ptop)
+                                diag_coarse, delp, coarsening_strategy, ptop, native_clock_id, coarse_clock_id,&
+                                coarse_clock_2d_id, coarse_clock_3d_id)
 !--- subroutine interface variable definitions
     type(time_type),           intent(in) :: time
     type(IPD_diag_type),       intent(in) :: diag(:)
@@ -3100,6 +3127,7 @@ module FV3GFS_io_mod
     real(kind=kind_phys),      intent(in) :: delp(isco:ieco,jsco:jeco,1:levo)
     character(len=64),         intent(in) :: coarsening_strategy
     real,                      intent(in) :: ptop
+    integer, intent(inout) :: native_clock_id, coarse_clock_id, coarse_clock_2d_id, coarse_clock_3d_id
 !--- local variables
     integer :: i, j, k, idx, nblks, nb, ix, ii, jj
     integer :: is_in, js_in, isc, jsc
@@ -3133,21 +3161,30 @@ module FV3GFS_io_mod
         call determine_required_coarse_graining_weights(diag_coarse, coarsening_strategy, require_area, require_masked_area, require_mass, require_vertical_remapping)
         if (.not. require_vertical_remapping) then
           if (require_area) then
+            call mpp_clock_begin(coarse_clock_2d_id)
             allocate(area(nx, ny))
             call get_area(Atm_block, IPD_Data, nx, ny, area)
+            call mpp_clock_end(coarse_clock_2d_id)
           endif
           if (require_mass) then
+            call mpp_clock_begin(coarse_clock_3d_id)
             allocate(mass(nx, ny, levs))
             call get_mass(Atm_block, IPD_Data, delp, nx, ny, levs, mass)
+            call mpp_clock_end(coarse_clock_3d_id)
           endif
         else
+          call mpp_clock_begin(coarse_clock_2d_id)
           allocate(area(nx, ny))
+          call get_area(Atm_block, IPD_Data, nx, ny, area)
+          call mpp_clock_end(coarse_clock_2d_id)
+
+          call mpp_clock_begin(coarse_clock_3d_id)
           allocate(phalf(nx, ny, levs + 1))
           allocate(phalf_coarse_on_fine(nx, ny, levs + 1))
           allocate(masked_area(nx, ny, levs))
-          call get_area(Atm_block, IPD_Data, nx, ny, area)
           call vertical_remapping_requirements(delp, area, ptop, phalf, phalf_coarse_on_fine)
           call mask_area_weights(area, phalf, phalf_coarse_on_fine, masked_area)
+          call mpp_clock_end(coarse_clock_3d_id)
         endif
      endif
      
@@ -3272,11 +3309,17 @@ module FV3GFS_io_mod
 !           used=send_data(Diag(idx)%id, var2, Time)
 !           print *,'in phys, after store_data, idx=',idx,' var=', trim(Diag(idx)%name)
            if (Diag(idx)%id > 0) then
+              call mpp_clock_begin(native_clock_id)
               call store_data(Diag(idx)%id, var2, Time, idx, Diag(idx)%intpl_method, Diag(idx)%name)
+              call mpp_clock_end(native_clock_id)
            endif
            if (Diag_coarse(idx)%id > 0) then
+              call mpp_clock_begin(coarse_clock_id)
+              call mpp_clock_begin(coarse_clock_2d_id)
               call store_data2D_coarse(Diag_coarse(idx)%id, Diag_coarse(idx)%name, &
                    Diag_coarse(idx)%coarse_graining_method, nx, ny, var2, area, Time)
+              call mpp_clock_end(coarse_clock_2d_id)
+              call mpp_clock_end(coarse_clock_id)
            endif
 !           if(trim(Diag(idx)%name) == 'totprcp_ave' ) print *,'in gfs_io, totprcp=',Diag(idx)%data(1)%var2(1:3), &
 !             ' lcnvfac=', lcnvfac
@@ -3305,9 +3348,13 @@ module FV3GFS_io_mod
                   enddo
                enddo
                if (Diag(idx)%id > 0) then
+                  call mpp_clock_begin(native_clock_id)
                   call store_data3D(Diag(idx)%id, var3, Time, idx, Diag(idx)%intpl_method, Diag(idx)%name)
+                  call mpp_clock_end(native_clock_id)
                endif
                if (Diag_coarse(idx)%id > 0) then
+                  call mpp_clock_begin(coarse_clock_id)
+                  call mpp_clock_begin(coarse_clock_3d_id)
                   if (trim(coarsening_strategy) .eq. MODEL_LEVEL) then
                     call store_data3D_coarse_model_level(Diag_coarse(idx)%id, Diag_coarse(idx)%name, &
                         Diag_coarse(idx)%coarse_graining_method, &
@@ -3319,6 +3366,8 @@ module FV3GFS_io_mod
                   else
                     call mpp_error(FATAL, 'Invalid coarse-graining strategy provided.')
                   endif
+                  call mpp_clock_end(coarse_clock_3d_id)
+                  call mpp_clock_end(coarse_clock_id)
                endif
             endif
 #ifdef JUNK

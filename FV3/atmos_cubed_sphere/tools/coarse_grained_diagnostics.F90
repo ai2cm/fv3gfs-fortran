@@ -7,7 +7,7 @@ module coarse_grained_diagnostics_mod
   use fv_diagnostics_mod, only: cs3_interpolator, get_height_field, get_height_given_pressure, get_vorticity, interpolate_vertical
   use fv_mapz_mod, only: moist_cp, moist_cv
   use mpp_domains_mod, only: domain2d, EAST, NORTH
-  use mpp_mod, only: FATAL, mpp_error
+  use mpp_mod, only: FATAL, mpp_error, mpp_clock_begin, mpp_clock_end
   use coarse_graining_mod, only: block_sum, get_fine_array_bounds, get_coarse_array_bounds, MODEL_LEVEL, &
                                  weighted_block_average, PRESSURE_LEVEL, vertically_remap_field, &
                                  vertical_remapping_requirements, mask_area_weights, &
@@ -835,10 +835,11 @@ contains
          Domain2=coarse_domain, tile_count=tile_count)
   end subroutine initialize_coarse_diagnostic_axes
   
-  subroutine fv_coarse_diag(Atm, Time, zvir)
+  subroutine fv_coarse_diag(Atm, Time, zvir, id_clock_2d, id_clock_3d)
     type(fv_atmos_type), intent(in), target :: Atm(:)
     type(time_type), intent(in) :: Time
     real, intent(in) :: zvir
+    integer, intent(inout) :: id_clock_2d, id_clock_3d
     
     real, allocatable :: work_2d(:,:), work_2d_coarse(:,:), work_3d_coarse(:,:,:)
     real, allocatable :: mass(:,:,:), height_on_interfaces(:,:,:), masked_area(:,:,:)
@@ -871,10 +872,13 @@ contains
     npz = Atm(tile_count)%npz
 
     if (need_2d_work_array) then
+      call mpp_clock_begin(id_clock_2d)
       allocate(work_2d_coarse(is_coarse:ie_coarse,js_coarse:je_coarse))
+      call mpp_clock_end(id_clock_2d)
     endif
 
     if (need_3d_work_array) then
+       call mpp_clock_begin(id_clock_3d)
        allocate(work_3d_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz))   
        if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL) then
         allocate(phalf(is:ie,js:je,1:npz+1))      
@@ -887,23 +891,29 @@ contains
               phalf, &
               upsampled_coarse_phalf)
        endif
+       call mpp_clock_end(id_clock_3d)
     endif
 
     if (need_mass_array) then
+      call mpp_clock_begin(id_clock_3d)
       allocate(mass(is:ie,js:je,1:npz))
       call compute_mass(Atm(tile_count), is, ie, js, je, npz, mass)
+      call mpp_clock_begin(id_clock_2d)
     endif
 
     if (need_masked_area_array) then
+      call mpp_clock_begin(id_clock_3d)
       allocate(masked_area(is:ie,js:je,1:npz))
       call mask_area_weights( &
            Atm(tile_count)%gridstruct%area(is:ie,js:je), &
            phalf, &
            upsampled_coarse_phalf, &
            masked_area)
+      call mpp_clock_end(id_clock_3d)
     endif
 
     if (need_height_array) then
+      call mpp_clock_begin(id_clock_2d)
       allocate(height_on_interfaces(is:ie,js:je,1:npz+1))
       call get_height_field(is, ie, js, je, Atm(tile_count)%ng, npz, &
            Atm(tile_count)%flagstruct%hydrostatic, &
@@ -916,22 +926,28 @@ contains
       )
       if (.not. allocated(work_2d_coarse)) allocate(work_2d_coarse(is_coarse:ie_coarse,js_coarse:je_coarse))
       allocate(work_2d(is:ie,js:je))
+      call mpp_clock_end(id_clock_2d)
     endif
 
     if (need_vorticity_array()) then
+      call mpp_clock_begin(id_clock_2d)
       allocate(vorticity(is:ie,js:je,1:npz))
       call get_vorticity(is, ie, js, je, isd, ied, jsd, jed, npz, Atm(tile_count)%u, Atm(tile_count)%v, vorticity, &
               Atm(tile_count)%gridstruct%dx, Atm(tile_count)%gridstruct%dy, Atm(tile_count)%gridstruct%rarea)
       call associate_vorticity_pointers(is, ie, js, je, npz, vorticity)
+      call mpp_clock_end(id_clock_2d)
    endif
 
     do index = 1, DIAG_SIZE
       if (coarse_diagnostics(index)%id .gt. 0) then
         if (coarse_diagnostics(index)%axes .eq. 2) then
+          call mpp_clock_begin(id_clock_2d)
           call coarse_grain_2D_field(is, ie, js, je, npz, is_coarse, ie_coarse, js_coarse, je_coarse, &
                                      Atm(tile_count), coarse_diagnostics(index), height_on_interfaces, work_2d_coarse)
           used = send_data(coarse_diagnostics(index)%id, work_2d_coarse, Time)
+          call mpp_clock_end(id_clock_2d)
        elseif (coarse_diagnostics(index)%axes .eq. 3) then
+          call mpp_clock_begin(id_clock_3d)
           if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. MODEL_LEVEL .or. coarse_diagnostics(index)%always_model_level_coarse_grain) then
             call coarse_grain_3D_field_on_model_levels(is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz, &
                                                        coarse_diagnostics(index), Atm(tile_count)%gridstruct%area(is:ie,js:je),&
@@ -950,6 +966,7 @@ contains
             call mpp_error(FATAL, error_message)
           endif
           used = send_data(coarse_diagnostics(index)%id, work_3d_coarse, Time)
+          call mpp_clock_end(id_clock_3d)
         endif
       endif
     enddo 
