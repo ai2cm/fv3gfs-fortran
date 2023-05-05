@@ -7,7 +7,7 @@ module coarse_grained_diagnostics_mod
   use fv_diagnostics_mod, only: cs3_interpolator, get_height_field, get_height_given_pressure, get_vorticity, interpolate_vertical
   use fv_mapz_mod, only: moist_cp, moist_cv
   use mpp_domains_mod, only: domain2d, EAST, NORTH
-  use mpp_mod, only: FATAL, mpp_error, mpp_clock_begin, mpp_clock_end
+  use mpp_mod, only: FATAL, mpp_error, mpp_clock_begin, mpp_clock_end, mpp_pe
   use coarse_graining_mod, only: block_sum, get_fine_array_bounds, get_coarse_array_bounds, MODEL_LEVEL, &
                                  weighted_block_average, PRESSURE_LEVEL, vertically_remap_field, &
                                  vertical_remapping_requirements, mask_area_weights, &
@@ -746,12 +746,24 @@ contains
              Atm(tile_count)%nudge_diag%nudge_u_dt(is:ie,js:je,1:npz) = 0.0
           endif
           coarse_diagnostic%data%var3 => Atm(tile_count)%nudge_diag%nudge_u_dt(is:ie,js:je,1:npz)
+       ! elseif (ends_with(coarse_diagnostic%name, 'u_dt_phys_coarse')) then
+       !    if (.not. allocated(Atm(tile_count)%physics_tendency_diag%u_dt)) then
+       !       allocate(Atm(tile_count)%physics_tendency_diag%u_dt(is:ie,js:je,1:npz))
+       !       Atm(tile_count)%physics_tendency_diag%u_dt(is:ie,js:je,1:npz) = 0.0
+       !    endif
+       !    coarse_diagnostic%data%var3 => Atm(tile_count)%physics_tendency_diag%u_dt(is:ie,js:je,1:npz)
        elseif (ends_with(coarse_diagnostic%name, 'v_dt_nudge_coarse')) then
           if (.not. allocated(Atm(tile_count)%nudge_diag%nudge_v_dt)) then
              allocate(Atm(tile_count)%nudge_diag%nudge_v_dt(is:ie,js:je,1:npz))
              Atm(tile_count)%nudge_diag%nudge_v_dt(is:ie,js:je,1:npz) = 0.0
           endif
           coarse_diagnostic%data%var3 => Atm(tile_count)%nudge_diag%nudge_v_dt(is:ie,js:je,1:npz)
+       ! elseif (ends_with(coarse_diagnostic%name, 'v_dt_phys_coarse')) then
+       !    if (.not. allocated(Atm(tile_count)%physics_tendency_diag%v_dt)) then
+       !       allocate(Atm(tile_count)%physics_tendency_diag%v_dt(is:ie,js:je,1:npz))
+       !       Atm(tile_count)%physics_tendency_diag%v_dt(is:ie,js:je,1:npz) = 0.0
+       !    endif
+       !    coarse_diagnostic%data%var3 => Atm(tile_count)%physics_tendency_diag%v_dt(is:ie,js:je,1:npz)
        elseif (starts_with(coarse_diagnostic%name, 'omega') .or. starts_with(coarse_diagnostic%name, 'omg')) then
           if (.not. allocated(Atm(tile_count)%lagrangian_tendency_of_hydrostatic_pressure)) then
              allocate(Atm(tile_count)%lagrangian_tendency_of_hydrostatic_pressure(isd:ied,jsd:jed,1:npz))
@@ -939,7 +951,8 @@ contains
    endif
 
     do index = 1, DIAG_SIZE
-      if (coarse_diagnostics(index)%id .gt. 0) then
+       if (coarse_diagnostics(index)%id .gt. 0) then
+        ! if (mpp_pe() == 0) write(*,*) coarse_diagnostics(index)%name
         if (coarse_diagnostics(index)%axes .eq. 2) then
           call mpp_clock_begin(id_clock_2d)
           call coarse_grain_2D_field(is, ie, js, je, npz, is_coarse, ie_coarse, js_coarse, je_coarse, &

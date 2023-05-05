@@ -3007,7 +3007,7 @@ module FV3GFS_io_mod
           call mpp_clock_begin(coarse_clock_2d_id)
           allocate(area(nx, ny))
           call get_area(Atm_block, IPD_Data, nx, ny, area)
-          call mpp_clock_begin(coarse_clock_2d_id)
+          call mpp_clock_end(coarse_clock_2d_id)
         endif
         if (require_mass) then
           call mpp_clock_begin(coarse_clock_3d_id)
