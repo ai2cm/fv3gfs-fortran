@@ -247,6 +247,7 @@ character(len=20)   :: mod_name = 'fvGFS/atmosphere_mod'
   integer :: sec, seconds, days
   integer :: id_dynam = -1, id_subgridz = -1, id_dynam_other = -1
   integer :: id_update = -1, id_fv_diag = -1, id_update_other = -1
+  integer :: id_fv_diag_native = -1, id_fv_diag_coarse = -1
   logical :: cold_start = .false.     !  used in initial condition
 
   integer, dimension(:), allocatable :: id_tracerdt_dyn
@@ -497,6 +498,8 @@ contains
 
    id_update       = mpp_clock_id ('  3.6.1-fv_update_phys', flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
    id_fv_diag      = mpp_clock_id ('  3.6.2-fv_diag',        flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_fv_diag_native      = mpp_clock_id ('  3.6.2-fv_diag_native',        flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
+   id_fv_diag_coarse      = mpp_clock_id ('  3.6.2-fv_diag_coarse',        flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
    id_update_other = mpp_clock_id ('  3.6.3-Other',          flags = clock_flag_default, grain=CLOCK_SUBCOMPONENT )
 
                     call timing_off('ATMOS_INIT')
@@ -1850,9 +1853,17 @@ contains
 
      call nullify_domain()
      call timing_on('FV_DIAG')
+     call timing_on('FV_DIAG_NATIVE')
+     call mpp_clock_begin(id_fv_diag_native)
      call fv_diag(Atm(mytile:mytile), zvir, fv_time, Atm(mytile)%flagstruct%print_freq)
+     call mpp_clock_end(id_fv_diag_native)
+     call timing_off('FV_DIAG_NATIVE')
      if (Atm(mytile)%coarse_graining%write_coarse_diagnostics) then
+        call timing_on('FV_DIAG_COARSE')
+        call mpp_clock_begin(id_fv_diag_coarse)
         call fv_coarse_diag(Atm(mytile:mytile), fv_time, zvir)
+        call mpp_clock_end(id_fv_diag_coarse)
+        call timing_off('FV_DIAG_COARSE')
      endif
      first_diag = .false.
      call timing_off('FV_DIAG')
