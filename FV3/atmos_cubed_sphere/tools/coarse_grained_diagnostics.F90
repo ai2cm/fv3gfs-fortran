@@ -52,11 +52,6 @@ module coarse_grained_diagnostics_mod
   character(len=15) :: EDDY_COVARIANCE = 'eddy_covariance'
   character(len=5) :: pressure_level_label
 
-  interface coarse_grain_3D_field_on_pressure_levels
-     module procedure coarse_grain_3D_field_on_pressure_levels_2D_weights
-     module procedure coarse_grain_3D_field_on_pressure_levels_3D_weights
-  end interface coarse_grain_3D_field_on_pressure_levels
-
 contains
 
   subroutine populate_coarse_diag_type(Atm, coarse_diagnostics)
@@ -853,6 +848,7 @@ contains
     integer :: isd, ied, jsd, jed
     logical :: used
     logical :: need_2d_work_array, need_3d_work_array, need_mass_array, need_height_array, need_masked_area_array
+    logical :: extrapolate
     integer :: index, i, j
     character(len=256) :: error_message
 
@@ -861,7 +857,9 @@ contains
     call get_need_mass_array(Atm(tile_count)%coarse_graining%strategy, need_mass_array)
     call get_need_height_array(need_height_array)
 
-    if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL) then
+    if (&
+      trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL .or. &
+      trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL_EXTRAPOLATE) then
       call get_need_masked_area_array(need_masked_area_array)
     else
       need_masked_area_array = .false.
@@ -902,10 +900,12 @@ contains
 
     if (need_masked_area_array) then
       allocate(masked_area(is:ie,js:je,1:npz))
+      extrapolate = trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL_EXTRAPOLATE
       call mask_area_weights( &
            Atm(tile_count)%gridstruct%area(is:ie,js:je), &
            phalf, &
            upsampled_coarse_phalf, &
+           extrapolate, &
            masked_area)
     endif
 
@@ -944,18 +944,14 @@ contains
                                                        mass, &
                                                        Atm(tile_count)%lagrangian_tendency_of_hydrostatic_pressure(is:ie,js:je,1:npz), &
                                                        work_3d_coarse)
-          else if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL) then
+          elseif (&
+            trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL .or. &
+            trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL_EXTRAPOLATE) then
              call coarse_grain_3D_field_on_pressure_levels(is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz, &
                                                           coarse_diagnostics(index), masked_area, phalf, &
                                                           upsampled_coarse_phalf, Atm(tile_count)%ptop, &
                                                           Atm(tile_count)%lagrangian_tendency_of_hydrostatic_pressure(is:ie,js:je,1:npz), &
                                                           work_3d_coarse)
-          else if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL_EXTRAPOLATE) then
-             call coarse_grain_3D_field_on_pressure_levels(is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz, &
-                                                           coarse_diagnostics(index), Atm(tile_count)%gridstruct%area(is:ie,js:je), phalf, &
-                                                           upsampled_coarse_phalf, Atm(tile_count)%ptop, &
-                                                           Atm(tile_count)%lagrangian_tendency_of_hydrostatic_pressure(is:ie,js:je,1:npz), &
-                                                           work_3d_coarse)
           else
             write(error_message, *) 'fv_coarse_diag: invalid coarse-graining strategy provided for 3D variables, ' // &
             trim(Atm(tile_count)%coarse_graining%strategy)
@@ -1004,7 +1000,7 @@ contains
     endif
    end subroutine coarse_grain_3D_field_on_model_levels
 
-   subroutine coarse_grain_3D_field_on_pressure_levels_3D_weights(is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, &
+   subroutine coarse_grain_3D_field_on_pressure_levels(is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, &
     npz, coarse_diag, masked_area, phalf, upsampled_coarse_phalf, ptop, omega, result)
     integer, intent(in) :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz
     type(coarse_diag_type) :: coarse_diag
@@ -1054,59 +1050,7 @@ contains
         trim(coarse_diag%name)
       call mpp_error(FATAL, error_message)
     endif
-   end subroutine coarse_grain_3D_field_on_pressure_levels_3D_weights
-
-   subroutine coarse_grain_3D_field_on_pressure_levels_2D_weights(is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, &
-     npz, coarse_diag, area, phalf, upsampled_coarse_phalf, ptop, omega, result)
-    integer, intent(in) :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz
-    type(coarse_diag_type) :: coarse_diag
-    real, intent(in) :: area(is:ie,js:je)
-    real, intent(in) :: phalf(is:ie,js:je,1:npz+1), upsampled_coarse_phalf(is:ie,js:je,1:npz+1)
-    real, intent(in) :: ptop
-    real, intent(in) :: omega(is:ie,js:je,1:npz)
-    real, intent(out) :: result(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz)
-
-    real, allocatable :: remapped_field(:,:,:), remapped_omega(:,:,:)
-    character(len=256) :: error_message
-
-    allocate(remapped_field(is:ie,js:je,1:npz))
-
-    call vertically_remap_field( &
-      phalf, &
-      coarse_diag%data%var3, &
-      upsampled_coarse_phalf, &
-      ptop, &
-      remapped_field)
-    if (trim(coarse_diag%reduction_method) .eq. EDDY_COVARIANCE) then
-      allocate(remapped_omega(is:ie,js:je,1:npz))
-      call vertically_remap_field( &
-             phalf, &
-             omega, &
-             upsampled_coarse_phalf, &
-             ptop, &
-             remapped_omega)
-    endif
-    if ((trim(coarse_diag%reduction_method) .eq. AREA_WEIGHTED) .or. (trim(coarse_diag%reduction_method) .eq. MASS_WEIGHTED)) then
-      ! area-weighted and mass-weighted are equivalent when pressure-level coarse-graining
-      call weighted_block_average( &
-        area(is:ie,js:je), &
-        remapped_field(is:ie,js:je,1:npz), &
-        result &
-      )
-    elseif (trim(coarse_diag%reduction_method) .eq. EDDY_COVARIANCE) then
-      call eddy_covariance_2d_weights( &
-        area(is:ie,js:je), &
-        remapped_omega(is:ie,js:je,1:npz), &
-        remapped_field(is:ie,js:je,1:npz), &
-        result &
-      )   
-    else
-      write(error_message, *) 'coarse_grain_3D_field_on_pressure_levels_extrapolate: invalid reduction_method, ' // &
-        trim(coarse_diag%reduction_method) // ', provided for 3D variable, ' // &
-        trim(coarse_diag%name)
-      call mpp_error(FATAL, error_message)
-    endif
-   end subroutine coarse_grain_3D_field_on_pressure_levels_2D_weights
+   end subroutine coarse_grain_3D_field_on_pressure_levels
 
    subroutine coarse_grain_2D_field(is, ie, js, je, npz, is_coarse, ie_coarse, js_coarse, je_coarse, &
                                     Atm, coarse_diag, height_on_interfaces, result)
