@@ -829,7 +829,7 @@ contains
     ! 5. Create mask
     if (extrapolate) then
       allocate(coarse_pfull_d_grid_on_fine(is:ie,js_coarse:je_coarse+1,1:npz))
-      call compute_pfull_from_phalf_d_grid_y(coarse_phalf_d_grid_on_fine, coarse_pfull_d_grid_on_fine)
+      call compute_pfull_from_phalf_d_grid_x(coarse_phalf_d_grid_on_fine, coarse_pfull_d_grid_on_fine)
 
       ! Even in "extrapolation" mode we extrapolate in a limited sense.  We use
       ! nearest neighbor extrapolation in the event that the pressure at the
