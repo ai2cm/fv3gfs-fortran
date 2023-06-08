@@ -4,7 +4,7 @@ module coarse_grained_restart_files_mod
        get_fine_array_bounds, MODEL_LEVEL, PRESSURE_LEVEL, PRESSURE_LEVEL_EXTRAPOLATE, &
        weighted_block_average, weighted_block_edge_average_x, weighted_block_edge_average_y, &
        mask_area_weights, block_upsample, remap_edges_along_x, remap_edges_along_y, &
-       vertically_remap_field
+       vertically_remap_field, vertically_remap_temperature
   use constants_mod, only: GRAV, RDGAS, RVGAS
   use field_manager_mod, only: MODEL_ATMOS
   use fms_io_mod,      only: register_restart_field, save_restart
@@ -451,7 +451,7 @@ contains
        extrapolate, &
        Atm%coarse_graining%restart%v)
 
-     call vertically_remap_field(phalf(is:ie,js:je,1:npz+1), Atm%pt(is:ie,js:je,1:npz), coarse_phalf_on_fine, Atm%ptop, remapped)
+     call vertically_remap_temperature(phalf(is:ie,js:je,1:npz+1), Atm%pt(is:ie,js:je,1:npz), coarse_phalf_on_fine, Atm%ptop, remapped)
      call weighted_block_average(masked_area_weights, remapped, Atm%coarse_graining%restart%pt)
 
      if (.not. Atm%flagstruct%hydrostatic) then

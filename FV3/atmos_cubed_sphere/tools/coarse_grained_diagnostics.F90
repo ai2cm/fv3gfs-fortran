@@ -10,7 +10,7 @@ module coarse_grained_diagnostics_mod
   use mpp_mod, only: FATAL, mpp_error
   use coarse_graining_mod, only: block_sum, get_fine_array_bounds, get_coarse_array_bounds, MODEL_LEVEL, &
                                  weighted_block_average, PRESSURE_LEVEL, PRESSURE_LEVEL_EXTRAPOLATE, vertically_remap_field, &
-                                 vertical_remapping_requirements, mask_area_weights, &
+                                 vertically_remap_temperature, vertical_remapping_requirements, mask_area_weights, &
                                  block_edge_sum_x, block_edge_sum_y, eddy_covariance_2d_weights, eddy_covariance_3d_weights
   use time_manager_mod, only: time_type
   use tracer_manager_mod, only: get_tracer_index, get_tracer_names
@@ -1015,12 +1015,23 @@ contains
 
     allocate(remapped_field(is:ie,js:je,1:npz))
 
-    call vertically_remap_field( &
-      phalf, &
-      coarse_diag%data%var3, &
-      upsampled_coarse_phalf, &
-      ptop, &
-      remapped_field)
+    if (trim(coarse_diag%name) .eq. 'temp_coarse' .or. &
+        trim(coarse_diag%name) .eq. 'vertical_eddy_flux_of_temperature_coarse') then
+      call vertically_remap_temperature( &
+        phalf, &
+        coarse_diag%data%var3, &
+        upsampled_coarse_phalf, &
+        ptop, &
+        remapped_field)
+    else 
+      call vertically_remap_field( &
+        phalf, &
+        coarse_diag%data%var3, &
+        upsampled_coarse_phalf, &
+        ptop, &
+        remapped_field)
+    endif
+
     if (trim(coarse_diag%reduction_method) .eq. EDDY_COVARIANCE) then
       allocate(remapped_omega(is:ie,js:je,1:npz))
       call vertically_remap_field( &
