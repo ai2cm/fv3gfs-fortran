@@ -792,29 +792,11 @@
 !!    and McFarquhar (1996) \cite heymsfield_and_mcfarquhar_1996.
 
       if(.not.effr_in) then
-        do k = 1, NLAY
-          do i = 1, IX
-            tem2 = tlyr(i,k) - con_ttp
-  
-            if (cip(i,k) > 0.0) then
-              tem3 = gord * cip(i,k) * plyr(i,k) / (delp(i,k)*tvly(i,k))
-
-              if (tem2 < -50.0) then
-                rei(i,k) = (1250.0/9.917) * tem3 ** 0.109
-              elseif (tem2 < -40.0) then
-                rei(i,k) = (1250.0/9.337) * tem3 ** 0.08
-              elseif (tem2 < -30.0) then
-                rei(i,k) = (1250.0/9.208) * tem3 ** 0.055
-              else
-                rei(i,k) = (1250.0/9.387) * tem3 ** 0.031
-              endif
-!             rei(i,k)   = max(20.0, min(rei(i,k), 300.0))
-!             rei(i,k)   = max(10.0, min(rei(i,k), 100.0))
-              rei(i,k)   = max(10.0, min(rei(i,k), 150.0))
-!             rei(i,k)   = max(5.0,  min(rei(i,k), 130.0))
-            endif
-          enddo
-        enddo
+        call effective_ice_cloud_radius_heymsfield_mcfarquhar           &
+     &     ( tlyr, cip, plyr, delp, tvly,                               &       !  ---  inputs:
+     &       IX, NLAY,                                                  &
+     &       rei                                                        &       !  ---  outputs:
+     &     )
       endif
 
 !
@@ -1233,35 +1215,11 @@
 
 !> -# Calculate effective ice cloud droplet radius.
 
-      do k = 1, NLAY
-        do i = 1, IX
-          tem1 = tlyr(i,k) - con_ttp
-          tem2 = cip(i,k)
-
-          if (tem2 > 0.0) then
-            tem3 = tem2d(i,k) * tem2 / tvly(i,k)
-
-            if (tem1 < -50.0) then
-              rei(i,k) = (1250.0/9.917) * tem3 ** 0.109
-            elseif (tem1 < -40.0) then
-              rei(i,k) = (1250.0/9.337) * tem3 ** 0.08
-            elseif (tem1 < -30.0) then
-              rei(i,k) = (1250.0/9.208) * tem3 ** 0.055
-            else
-              rei(i,k) = (1250.0/9.387) * tem3 ** 0.031
-            endif
-
-!           if (lprnt .and. k == l) print *,' reiL=',rei(i,k),' icec=', &
-!    &        icec,' cip=',cip(i,k),' tem=',tem,' delt=',delt
-
-            rei(i,k)   = max(10.0, min(rei(i,k), 300.0))
-!           rei(i,k)   = max(20.0, min(rei(i,k), 300.0))
-!!!!        rei(i,k)   = max(30.0, min(rei(i,k), 300.0))
-!           rei(i,k)   = max(50.0, min(rei(i,k), 300.0))
-!           rei(i,k)   = max(100.0, min(rei(i,k), 300.0))
-          endif
-        enddo
-      enddo
+      call effective_ice_cloud_radius_heymsfield_mcfarquhar             &
+     &     ( tlyr, cip, plyr, delp, tvly,                               &       !  ---  inputs:
+     &       IX, NLAY,                                                  &
+     &       rei                                                        &       !  ---  outputs:
+     &     )
 !
       do k = 1, NLAY
         do i = 1, IX
@@ -1633,31 +1591,11 @@
 !> -# Calculate effective ice cloud droplet radius following Heymsfield
 !!    and McFarquhar (1996) \cite heymsfield_and_mcfarquhar_1996.
 
-      do k = 1, nlay
-        do i = 1, ix
-          tem2 = tlyr(i,k) - con_ttp
-
-          if (cip(i,k) > 0.0) then
-!           tem3 = gord * cip(i,k) * (plyr(i,k)/delp(i,k)) / tvly(i,k)
-            tem3 = gord * cip(i,k) * plyr(i,k) / (delp(i,k)*tvly(i,k))
-
-            if (tem2 < -50.0) then
-              rei(i,k) = (1250.0/9.917) * tem3 ** 0.109
-            elseif (tem2 < -40.0) then
-              rei(i,k) = (1250.0/9.337) * tem3 ** 0.08
-            elseif (tem2 < -30.0) then
-              rei(i,k) = (1250.0/9.208) * tem3 ** 0.055
-            else
-              rei(i,k) = (1250.0/9.387) * tem3 ** 0.031
-            endif
-!           rei(i,k)   = max(20.0, min(rei(i,k), 300.0))
-!           rei(i,k)   = max(10.0, min(rei(i,k), 100.0))
-            rei(i,k)   = max(10.0, min(rei(i,k), 150.0))
-!           rei(i,k)   = max(5.0, min(rei(i,k), 130.0))
-          endif
-        enddo
-      enddo
-
+      call effective_ice_cloud_radius_heymsfield_mcfarquhar             &
+     &     ( tlyr, cip, plyr, delp, tvly,                               &       !  ---  inputs:
+     &       IX, NLAY,                                                  &
+     &       rei                                                        &       !  ---  outputs:
+     &     )
 !
       do k = 1, nlay
         do i = 1, ix
@@ -1933,30 +1871,11 @@
 
 !  ---  effective ice cloud droplet radius
 
-      do k = 1, NLAY
-        do i = 1, IX
-          tem2 = tlyr(i,k) - con_ttp
-
-          if (cip(i,k) > 0.0) then
-            tem3 = gord * cip(i,k) * plyr(i,k) / (delp(i,k)*tvly(i,k))
-
-            if (tem2 < -50.0) then
-              rei(i,k) = (1250.0/9.917) * tem3 ** 0.109
-            elseif (tem2 < -40.0) then
-              rei(i,k) = (1250.0/9.337) * tem3 ** 0.08
-            elseif (tem2 < -30.0) then
-              rei(i,k) = (1250.0/9.208) * tem3 ** 0.055
-            else
-              rei(i,k) = (1250.0/9.387) * tem3 ** 0.031
-            endif
-!           rei(i,k)   = max(20.0, min(rei(i,k), 300.0))
-!           rei(i,k)   = max(10.0, min(rei(i,k), 100.0))
-            rei(i,k)   = max(10.0, min(rei(i,k), 150.0))
-!           rei(i,k)   = max(5.0,  min(rei(i,k), 130.0))
-          endif
-        enddo
-      enddo
-
+      call effective_ice_cloud_radius_heymsfield_mcfarquhar             &
+     &     ( tlyr, cip, plyr, delp, tvly,                               &       !  ---  inputs:
+     &       IX, NLAY,                                                  &
+     &       rei                                                        &       !  ---  outputs:
+     &     )
 !
       do k = 1, NLAY
         do i = 1, IX
@@ -2217,30 +2136,11 @@
 
 !  ---  effective ice cloud droplet radius
 
-      do k = 1, NLAY
-        do i = 1, IX
-          tem2 = tlyr(i,k) - con_ttp
-
-          if (cip(i,k) > 0.0) then
-            tem3 = gord * cip(i,k) * plyr(i,k) / (delp(i,k)*tvly(i,k))
-
-            if (tem2 < -50.0) then
-              rei(i,k) = (1250.0/9.917) * tem3 ** 0.109
-            elseif (tem2 < -40.0) then
-              rei(i,k) = (1250.0/9.337) * tem3 ** 0.08
-            elseif (tem2 < -30.0) then
-              rei(i,k) = (1250.0/9.208) * tem3 ** 0.055
-            else
-              rei(i,k) = (1250.0/9.387) * tem3 ** 0.031
-            endif
-!           rei(i,k)   = max(20.0, min(rei(i,k), 300.0))
-!           rei(i,k)   = max(10.0, min(rei(i,k), 100.0))
-            rei(i,k)   = max(10.0, min(rei(i,k), 150.0))
-!           rei(i,k)   = max(5.0,  min(rei(i,k), 130.0))
-          endif
-        enddo
-      enddo
-
+      call effective_ice_cloud_radius_heymsfield_mcfarquhar             &
+     &     ( tlyr, cip, plyr, delp, tvly,                               &       !  ---  inputs:
+     &       IX, NLAY,                                                  &
+     &       rei                                                        &       !  ---  outputs:
+     &     )
 !
       do k = 1, NLAY
         do i = 1, IX
@@ -2910,29 +2810,11 @@
 !> -# Compute effective ice cloud droplet radius following Heymsfield 
 !!    and McFarquhar (1996) \cite heymsfield_and_mcfarquhar_1996.
 
-        do k = 1, NLAY
-          do i = 1, IX
-            tem2 = tlyr(i,k) - con_ttp
-
-            if (cip(i,k) > 0.0) then
-              tem3 = gord * cip(i,k) * plyr(i,k) / (delp(i,k)*tvly(i,k))
-
-              if (tem2 < -50.0) then
-                rei(i,k) = (1250.0/9.917) * tem3 ** 0.109
-              elseif (tem2 < -40.0) then
-                rei(i,k) = (1250.0/9.337) * tem3 ** 0.08
-              elseif (tem2 < -30.0) then
-                rei(i,k) = (1250.0/9.208) * tem3 ** 0.055
-              else
-                rei(i,k) = (1250.0/9.387) * tem3 ** 0.031
-              endif
-!             rei(i,k)   = max(20.0, min(rei(i,k), 300.0))
-!             rei(i,k)   = max(10.0, min(rei(i,k), 100.0))
-              rei(i,k)   = max(10.0, min(rei(i,k), 150.0))
-!             rei(i,k)   = max(5.0,  min(rei(i,k), 130.0))
-            endif
-          enddo
-        enddo
+        call effective_ice_cloud_radius_heymsfield_mcfarquhar           &
+     &     ( tlyr, cip, plyr, delp, tvly,                               &       !  ---  inputs:
+     &       IX, NLAY,                                                  &
+     &       rei                                                        &       !  ---  outputs:
+     &     )
       endif
 !
       do k = 1, NLAY
@@ -3401,6 +3283,69 @@
 !-----------------------------------
 !! @}
 
+
+
+       subroutine effective_ice_cloud_radius_heymsfield_mcfarquhar      &
+     &     ( tlyr, cip, plyr, delp, tvly,                               &       !  ---  inputs:
+     &       IX, NLAY,                                                  &
+     &       rei                                                        &       !  ---  outputs:
+     &     )
+!  ===================================================================  !
+!                                                                       !
+! abstract: compute cloud ice droplet effective radius, according to    !
+!   the Heymsfield and McFaruhar (1996) scheme
+!                                                                       !
+!  ====================  definition of variables  ====================  !
+!                                                                       !
+! input variables:                                                      !
+!   tlyr  (IX,NLAY) : model layer mean temperature in k                 !
+!   cip   (IX,NLAY) : ice condensate path in g/m**2                     !
+!   plyr  (IX,NLAY) : model layer mean pressure in mb (100Pa)           !
+!   delp  (ix,nlay) : model layer pressure thickness in mb (100Pa)      !
+!   tvly  (IX,NLAY) : model layer virtual temperature in k              !
+!   IX              : horizontal dimention                              !
+!   NLAY            : vertical layer dimensions                         !
+!                                                                       !
+! output variables:                                                     !
+!   rei  (IX,NLAY)  : effective cloud ice droplet radius                !
+
+      implicit none
+
+      integer,  intent(in) :: IX, NLAY
+
+      real (kind=kind_phys), dimension(:,:), intent(in) :: tlyr, cip,   &
+     &       plyr, delp, tvly
+
+      real (kind=kind_phys), dimension(:,:), intent(out) :: rei
+
+      integer :: i, k
+
+      real (kind=kind_phys) :: tem, tem2
+
+      do k = 1, NLAY
+        do i = 1, IX
+          tem = tlyr(i,k) - con_ttp
+
+          if (cip(i,k) > 0.0) then
+            tem2 = gord * cip(i,k) * plyr(i,k) / (delp(i,k)*tvly(i,k))
+
+            if (tem < -50.0) then
+              rei(i,k) = (1250.0/9.917) * tem2 ** 0.109
+            elseif (tem < -40.0) then
+              rei(i,k) = (1250.0/9.337) * tem2 ** 0.08
+            elseif (tem < -30.0) then
+              rei(i,k) = (1250.0/9.208) * tem2 ** 0.055
+            else
+              rei(i,k) = (1250.0/9.387) * tem2 ** 0.031
+            endif
+            rei(i,k)   = max(10.0, min(rei(i,k), 150.0))
+          endif
+        enddo
+      enddo
+
+!...................................
+      end subroutine effective_ice_cloud_radius_heymsfield_mcfarquhar
+!-----------------------------------
 !
 !........................................!
       end module module_radiation_clouds !
