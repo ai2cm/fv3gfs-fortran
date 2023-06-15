@@ -246,7 +246,8 @@
 !
       use physparam,           only : icldflg, iovrsw, iovrlw,          &
      &                                lcrick, lcnorm, lnoprec,          &
-     &                                ivflip, kind_phys, kind_io4
+     &                                ivflip, kind_phys, kind_io4,      &
+     &                                reiflagrad
       use physcons,            only : con_fvirt, con_ttp, con_rocp,     &
      &                                con_t0c, con_pi, con_g, con_rd,   &
      &                                con_thgni
@@ -293,6 +294,8 @@
       real (kind=kind_phys), parameter :: cldssa_def = 0.99  
 !> default cld asymmetry factor
       real (kind=kind_phys), parameter :: cldasy_def = 0.84 
+!> default min value for cloud condensates (kg/kg)
+      real (kind=kind_phys), parameter :: qcmin = 1.0e-15 
 
 !> upper limit of boundary layer clouds
       integer  :: llyr   = 2          
@@ -792,12 +795,25 @@
 !!    and McFarquhar (1996) \cite heymsfield_and_mcfarquhar_1996.
 
       if(.not.effr_in) then
-        call effective_ice_cloud_radius_heymsfield_mcfarquhar           &
+        if (reiflagrad .eq. 1) then
+          call effective_ice_cloud_radius_heymsfield_mcfarquhar         &
      &     ( tlyr, cip, plyr, delp, tvly,                               &       !  ---  inputs:
      &       IX, NLAY,                                                  &
      &       rei                                                        &       !  ---  outputs:
      &     )
+        elseif (reiflagrad .eq. 4) then
+          call effective_ice_cloud_radius_kristjansson                  &
+     &     ( tlyr, cip, plyr, delp, tvly,                               &       !  ---  inputs:
+     &       IX, NLAY,                                                  &
+     &       rei                                                        &       !  ---  outputs:
+     &     )
+        else
+          print *,'ERROR in reiflag_rad specification, valid options ', &
+     &            'are 1 and 4; reiflag_rad = ',reiflagrad
+          stop
+        endif
       endif
+      
 
 !
       do k = 1, NLAY
@@ -3283,8 +3299,6 @@
 !-----------------------------------
 !! @}
 
-
-
        subroutine effective_ice_cloud_radius_heymsfield_mcfarquhar      &
      &     ( tlyr, cip, plyr, delp, tvly,                               &       !  ---  inputs:
      &       IX, NLAY,                                                  &
@@ -3347,6 +3361,61 @@
       end subroutine effective_ice_cloud_radius_heymsfield_mcfarquhar
 !-----------------------------------
 !
+      subroutine effective_ice_cloud_radius_kristjansson                   &
+        &     ( tlyr, cip, plyr, delp, tvly,                               &       !  ---  inputs:
+        &       IX, NLAY,                                                  &
+        &       rei                                                        &       !  ---  outputs:
+        &     )
+   !  ===================================================================  !
+   !                                                                       !
+   ! abstract: compute cloud ice droplet effective radius, according to    !
+   !   the Kristjansson (2000) scheme                                      !
+   !                                                                       !
+   !  ====================  definition of variables  ====================  !
+   !                                                                       !
+   ! input variables:                                                      !
+   !   tlyr  (IX,NLAY) : model layer mean temperature in k                 !
+   !   cip   (IX,NLAY) : ice condensate path in g/m**2                     !
+   !   plyr  (IX,NLAY) : model layer mean pressure in mb (100Pa)           !
+   !   delp  (ix,nlay) : model layer pressure thickness in mb (100Pa)      !
+   !   tvly  (IX,NLAY) : model layer virtual temperature in k              !
+   !   IX              : horizontal dimention                              !
+   !   NLAY            : vertical layer dimensions                         !
+   !                                                                       !
+   ! output variables:                                                     !
+   !   rei  (IX,NLAY)  : effective cloud ice droplet radius                !
+
+      implicit none
+
+      integer,  intent(in) :: IX, NLAY
+
+      real (kind=kind_phys), dimension(:,:), intent(in) :: tlyr, cip,   &
+      &       plyr, delp, tvly
+
+      real (kind=kind_phys), dimension(:,:), intent(out) :: rei
+
+      integer :: i, k
+
+      real (kind=kind_phys) :: tem, tem2
+
+      ! do k = 1, NLAY
+      !   do i = 1, IX
+      !     if (qmi (i, k) .gt. qcmin) then
+      !       qci (i, k) = dpg * qmi (i, k) * 1.0e3
+      !       ind = min (max (int (tlyr (i, k) - 136.0), 44), 138 - 1)
+      !       cor = tlyr (i, k) - int (tlyr (i, k))
+      !       rei (i, k) = retab (ind) * (1. - cor) + retab (ind + 1) * cor
+      !       rei (i, k) = max (reimin, min (reimax, rei (i, k)))
+      !     else
+      !       qci (i, k) = 0.0
+      !       rei (i, k) = reimin
+      !     endif
+      !   enddo
+      ! enddo
+!...................................  
+      end subroutine effective_ice_cloud_radius_kristjansson
+!-----------------------------------
+
 !........................................!
       end module module_radiation_clouds !
 !========================================!

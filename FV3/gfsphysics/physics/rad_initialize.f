@@ -4,7 +4,7 @@
 !  ---  inputs:
      &     ( si,levr,ictm,isol,ico2,iaer,ialb,iems,ntcw, num_p2d,       &
      &       num_p3d,npdf3d,ntoz,iovr_sw,iovr_lw,isubc_sw,isubc_lw,     &
-     &       icliq_sw,crick_proof,ccnorm,                               &                  
+     &       icliq_sw,crick_proof,ccnorm,reiflag_rad,                   &                  
      &       imp_physics,norad_precip,idate,iflip,me )
 !  ---  outputs: ( none )
 
@@ -99,6 +99,7 @@
 !                     =2: mcica sub-col approx. provided random seed    !
 !   crick_proof      : control flag for eliminating CRICK               !
 !   ccnorm           : control flag for in-cloud condensate mixing ratio!
+!   reiflag_rad      : control flag for ice effective radius method     !
 !   norad_precip     : control flag for not using precip in radiation   !
 !   idate(4)         : ncep absolute date and time of initial condition !
 !                      (hour, month, day, year)                         !
@@ -116,7 +117,7 @@
      &             iaermdl,                            icldflg,         &
      &             iovrsw , iovrlw , lcrick , lcnorm , lnoprec,         &
      &             ialbflg, iemsflg, isubcsw, isubclw, ivflip , ipsd0,  &
-     &             iswcliq,                                             &
+     &             iswcliq, reiflagrad,                                 &
      &             kind_phys
 
       use module_radiation_driver, only : radinit
@@ -126,7 +127,8 @@
 !  ---  input:
       integer,  intent(in) :: levr, ictm, isol, ico2, iaer, num_p2d,    &
      &       ntcw, ialb, iems, num_p3d, npdf3d, ntoz, iovr_sw, iovr_lw, &
-     &       isubc_sw, isubc_lw, icliq_sw, iflip, me, idate(4)
+     &       isubc_sw, isubc_lw, icliq_sw, iflip, me, idate(4),         &
+     &       reiflag_rad
 
       real (kind=kind_phys), intent(in) :: si(levr+1)
       integer, intent(in) :: imp_physics
@@ -179,6 +181,8 @@
       iemsflg= iems                     ! surface emissivity control flag
 
       ivflip = iflip                    ! vertical index direction control flag
+
+      reiflagrad = reiflag_rad          ! ice effective radius flag
 
 !  ---  assign initial permutation seed for mcica cloud-radiation
       if ( isubc_sw>0 .or. isubc_lw>0 ) then
