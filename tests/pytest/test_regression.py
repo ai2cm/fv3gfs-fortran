@@ -85,6 +85,7 @@ def get_n_processes(config):
         ("restart.yml", "{version}"),
         ("model-level-coarse-graining.yml", "{version}-debug"),
         ("pressure-level-coarse-graining.yml", "{version}-debug"),
+        ("pressure-level-extrapolate-coarse-graining.yml", "{version}-debug"),
     ],
 )
 def test_regression(
@@ -113,6 +114,7 @@ def test_regression(
         pytest.param("default.yml", marks=pytest.mark.basic),
         pytest.param("model-level-coarse-graining.yml", marks=pytest.mark.coarse),
         pytest.param("pressure-level-coarse-graining.yml", marks=pytest.mark.coarse),
+        pytest.param("pressure-level-extrapolate-coarse-graining.yml", marks=pytest.mark.coarse),
         "baroclinic.yml",
         "restart.yml",
     ],
@@ -436,6 +438,7 @@ def run_model(config, run_dir, model_image, image_runner, additional_env_vars=No
     [
         ("model-level-coarse-graining.yml", "{version}", [1, 2]),
         ("pressure-level-coarse-graining.yml", "{version}", [1, 2]),
+        ("pressure-level-extrapolate-coarse-graining.yml", "{version}", [1, 2]),
     ],
     ids=lambda x: str(x),
 )

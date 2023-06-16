@@ -12,8 +12,8 @@ module coarse_graining_mod
   public :: block_sum, compute_mass_weights, get_fine_array_bounds, &
        get_coarse_array_bounds, coarse_graining_init, weighted_block_average, &
        weighted_block_edge_average_x, weighted_block_edge_average_y, MODEL_LEVEL, &
-       block_upsample, mask_area_weights, PRESSURE_LEVEL, vertical_remapping_requirements, &
-       vertically_remap_field, block_mode, block_min, block_max, &
+       block_upsample, mask_area_weights, PRESSURE_LEVEL, PRESSURE_LEVEL_EXTRAPOLATE, &
+       vertical_remapping_requirements, vertically_remap_field, block_mode, block_min, block_max, &
        remap_edges_along_x, remap_edges_along_y, block_edge_sum_x, block_edge_sum_y, &
        eddy_covariance_2d_weights, eddy_covariance_3d_weights
 
@@ -80,6 +80,7 @@ module coarse_graining_mod
   integer :: is_coarse, ie_coarse, js_coarse, je_coarse
   character(len=11) :: MODEL_LEVEL = 'model_level'
   character(len=14) :: PRESSURE_LEVEL = 'pressure_level'
+  character(len=26) :: PRESSURE_LEVEL_EXTRAPOLATE = 'pressure_level_extrapolate'
 
   ! Namelist parameters initialized with default values
   integer :: coarsening_factor = 8
@@ -160,8 +161,10 @@ contains
 
     character(len=256) :: error_message
 
-    if (trim(strategy) .ne. MODEL_LEVEL .and. trim(strategy) .ne. PRESSURE_LEVEL) then
-       write(error_message, *) 'Invalid coarse graining strategy provided.'
+    if (trim(strategy) .ne. MODEL_LEVEL .and. &
+        trim(strategy) .ne. PRESSURE_LEVEL .and. &
+        trim(strategy) .ne. PRESSURE_LEVEL_EXTRAPOLATE) then
+       write(error_message, *) 'Invalid coarse graining strategy provided, ', trim(strategy)
        call mpp_error(FATAL, error_message)
     endif
   end subroutine assert_valid_strategy
@@ -582,21 +585,45 @@ contains
     deallocate(coarse_phalf)
    end subroutine vertical_remapping_requirements
 
-   subroutine mask_area_weights(area, phalf, upsampled_coarse_phalf, masked_area_weights)
+   subroutine mask_area_weights(area, phalf, upsampled_coarse_phalf, extrapolate, masked_area_weights)
     real, intent(in) :: area(is:ie,js:je)
     real, intent(in) :: phalf(is:ie,js:je,1:npz+1)
     real, intent(in) :: upsampled_coarse_phalf(is:ie,js:je,1:npz+1)
+    logical, intent(in) :: extrapolate
     real, intent(out) :: masked_area_weights(is:ie,js:je,1:npz)
 
+    real, allocatable :: upsampled_coarse_pfull(:,:,:)
     integer :: k
 
-    do k = 1, npz
-      where (upsampled_coarse_phalf(is:ie,js:je,k+1) .lt. phalf(is:ie,js:je,npz+1))
-        masked_area_weights(is:ie,js:je,k) = area(is:ie,js:je)
-      elsewhere
-        masked_area_weights(is:ie,js:je,k) = 0.0
-      endwhere
-    enddo
+    ! Even in "extrapolation" mode we extrapolate in a limited sense.  We use
+    ! nearest neighbor extrapolation in the event that the pressure at the
+    ! vertical midpoint of the cell is less than that of the surface pressure
+    ! in the fine-grid column; otherwise do not attempt to extrapolate and
+    ! mask the points when computing horizontal averages.  This approach
+    ! allows us to generally use all grid cells in the lowest model level
+    ! over ocean, while maintaining masking in land regions with variable
+    ! topography; our stricter no-extrapolation approach often masks 50% or so
+    ! of the grid cells there.
+    if (extrapolate) then
+      allocate(upsampled_coarse_pfull(is:ie,js:je,1:npz))
+      call compute_pfull_from_phalf(upsampled_coarse_phalf, upsampled_coarse_pfull)
+
+      do k = 1, npz
+         where (upsampled_coarse_pfull(is:ie,js:je,k) .lt. phalf(is:ie,js:je,npz+1))
+           masked_area_weights(is:ie,js:je,k) = area(is:ie,js:je)
+         elsewhere
+           masked_area_weights(is:ie,js:je,k) = 0.0
+         endwhere
+      enddo
+    else
+      do k = 1, npz
+         where (upsampled_coarse_phalf(is:ie,js:je,k+1) .lt. phalf(is:ie,js:je,npz+1))
+           masked_area_weights(is:ie,js:je,k) = area(is:ie,js:je)
+         elsewhere
+           masked_area_weights(is:ie,js:je,k) = 0.0
+         endwhere
+      enddo
+    endif
    end subroutine mask_area_weights
 
    subroutine block_mode_2d(fine, coarse)
@@ -757,14 +784,16 @@ contains
     enddo
    end subroutine upsample_d_grid_x
 
-   subroutine remap_edges_along_x(field, phalf, dx, ptop, result)
+   subroutine remap_edges_along_x(field, phalf, dx, ptop, extrapolate, result)
     real, intent(in) :: field(is:ie,js:je+1,1:npz)
     real, intent(in) :: phalf(is-1,ie+1,js-1,je+1,1:npz+1)
     real, intent(in) :: dx(is:ie,js:je+1)
     real, intent(in) :: ptop
+    logical, intent(in) :: extrapolate
     real, intent(out) :: result(is_coarse:ie_coarse,js_coarse:je_coarse+1,1:npz)
 
     real, allocatable, dimension(:,:,:) :: phalf_d_grid, coarse_phalf_d_grid, coarse_phalf_d_grid_on_fine, remapped
+    real, allocatable, dimension(:,:,:) :: coarse_pfull_d_grid_on_fine
     logical, allocatable :: mask(:,:,:)
 
     integer :: i, i_coarse, j, j_coarse, k, kn, km, kord, iv
@@ -798,13 +827,35 @@ contains
     enddo
 
     ! 5. Create mask
-    do k = 1, npz
-      where (coarse_phalf_d_grid_on_fine(:,:,k+1) .lt. phalf_d_grid(:,:,npz+1))
-        mask(:,:,k) = .true.
-      elsewhere
-        mask(:,:,k) = .false.
-      endwhere
-    enddo
+    if (extrapolate) then
+      allocate(coarse_pfull_d_grid_on_fine(is:ie,js_coarse:je_coarse+1,1:npz))
+      call compute_pfull_from_phalf_d_grid_x(coarse_phalf_d_grid_on_fine, coarse_pfull_d_grid_on_fine)
+
+      ! Even in "extrapolation" mode we extrapolate in a limited sense.  We use
+      ! nearest neighbor extrapolation in the event that the pressure at the
+      ! vertical midpoint of the cell is less than that of the surface pressure
+      ! in the fine-grid column; otherwise do not attempt to extrapolate and
+      ! mask the points when computing horizontal averages.  This approach
+      ! allows us to generally use all grid cells in the lowest model level
+      ! over ocean, while maintaining masking in land regions with variable
+      ! topography; our stricter no-extrapolation approach often masks 50% or so
+      ! of the grid cells there.
+      do k = 1, npz
+         where (coarse_pfull_d_grid_on_fine(:,:,k) .lt. phalf_d_grid(:,:,npz+1))
+           mask(:,:,k) = .true.
+         elsewhere
+           mask(:,:,k) = .false.
+         endwhere
+       enddo
+    else
+      do k = 1, npz
+        where (coarse_phalf_d_grid_on_fine(:,:,k+1) .lt. phalf_d_grid(:,:,npz+1))
+          mask(:,:,k) = .true.
+        elsewhere
+          mask(:,:,k) = .false.
+        endwhere
+      enddo
+    endif
 
     ! 6. Coarsen the remapped field
     call weighted_block_edge_average_x_pre_downsampled(remapped, dx, result, mask, npz)
@@ -902,14 +953,16 @@ contains
     enddo
   end subroutine upsample_d_grid_y
 
-  subroutine remap_edges_along_y(field, phalf, dy, ptop, result)
+  subroutine remap_edges_along_y(field, phalf, dy, ptop, extrapolate, result)
     real, intent(in) :: field(is:ie+1,js:je,1:npz)
     real, intent(in) :: phalf(is-1:ie+1,js-1:je+1,1:npz+1)
     real, intent(in) :: dy(is:ie+1,js:je)
     real, intent(in) :: ptop
+    logical, intent(in) :: extrapolate
     real, intent(out) :: result(is_coarse:ie_coarse+1,js_coarse:je_coarse,1:npz)
 
     real, allocatable, dimension(:,:,:) :: phalf_d_grid, coarse_phalf_d_grid, coarse_phalf_d_grid_on_fine, remapped
+    real, allocatable, dimension(:,:,:) :: coarse_pfull_d_grid_on_fine
     logical, allocatable :: mask(:,:,:)
 
     integer :: i, i_coarse, j, j_coarse, k, kn, km, kord, iv
@@ -943,13 +996,35 @@ contains
     enddo
 
     ! 5. Create mask
-    do k = 1, npz
-      where (coarse_phalf_d_grid_on_fine(:,:,k+1) .lt. phalf_d_grid(:,:,npz+1))
-        mask(:,:,k) = .true.
-      elsewhere
-        mask(:,:,k) = .false.
-      endwhere
-    enddo
+    if (extrapolate) then
+      allocate(coarse_pfull_d_grid_on_fine(is_coarse:ie_coarse+1,js:je,1:npz))
+      call compute_pfull_from_phalf_d_grid_y(coarse_phalf_d_grid_on_fine, coarse_pfull_d_grid_on_fine)
+
+      ! Even in "extrapolation" mode we extrapolate in a limited sense.  We use
+      ! nearest neighbor extrapolation in the event that the pressure at the
+      ! vertical midpoint of the cell is less than that of the surface pressure
+      ! in the fine-grid column; otherwise do not attempt to extrapolate and
+      ! mask the points when computing horizontal averages.  This approach
+      ! allows us to generally use all grid cells in the lowest model level
+      ! over ocean, while maintaining masking in land regions with variable
+      ! topography; our stricter no-extrapolation approach often masks 50% or so
+      ! of the grid cells there.
+      do k = 1, npz
+         where (coarse_pfull_d_grid_on_fine(:,:,k) .lt. phalf_d_grid(:,:,npz+1))
+           mask(:,:,k) = .true.
+         elsewhere
+           mask(:,:,k) = .false.
+         endwhere
+       enddo
+    else
+      do k = 1, npz
+        where (coarse_phalf_d_grid_on_fine(:,:,k+1) .lt. phalf_d_grid(:,:,npz+1))
+          mask(:,:,k) = .true.
+        elsewhere
+          mask(:,:,k) = .false.
+        endwhere
+      enddo
+    endif
 
     ! 6. Coarsen the remapped field
     call weighted_block_edge_average_y_pre_downsampled(remapped, dy, result, mask, npz)
@@ -1065,4 +1140,45 @@ contains
    call anomaly_3d_weights_3d_array(weights, field_b, anom_b)
    call weighted_block_average(weights, anom_a * anom_b, coarse)
  end subroutine eddy_covariance_3d_weights
+
+ ! Compute pressure at layer midpoints following Eq. 3.17 of Simmons
+ ! and Burridge (1981), MWR.
+ subroutine compute_pfull_from_phalf(phalf, pfull)
+   real, intent(in) :: phalf(is:ie,js:je,1:npz+1)
+   real, intent(out) :: pfull(is:ie,js:je,1:npz)
+
+   integer :: k
+
+   do k = 1, npz
+      pfull(:,:,k) = &
+         (phalf(:,:,k+1) - phalf(:,:,k)) / &
+         (log(phalf(:,:,k+1)) - log(phalf(:,:,k)))
+   enddo
+ end subroutine
+
+ subroutine compute_pfull_from_phalf_d_grid_y(coarse_phalf_d_grid_on_fine, coarse_pfull_d_grid_on_fine)
+   real, intent(in) :: coarse_phalf_d_grid_on_fine(is_coarse:ie_coarse+1,js:je,1:npz+1)
+   real, intent(out) :: coarse_pfull_d_grid_on_fine(is_coarse:ie_coarse+1,js:je,1:npz)
+
+   integer :: k
+
+   do k = 1, npz
+      coarse_pfull_d_grid_on_fine(:,:,k) = &
+      (coarse_phalf_d_grid_on_fine(:,:,k+1) - coarse_phalf_d_grid_on_fine(:,:,k)) / &
+      (log(coarse_phalf_d_grid_on_fine(:,:,k+1)) - log(coarse_phalf_d_grid_on_fine(:,:,k)))
+   enddo
+ end subroutine
+
+ subroutine compute_pfull_from_phalf_d_grid_x(coarse_phalf_d_grid_on_fine, coarse_pfull_d_grid_on_fine)
+   real, intent(in) :: coarse_phalf_d_grid_on_fine(is:ie,js_coarse:je_coarse+1,1:npz+1)
+   real, intent(out) :: coarse_pfull_d_grid_on_fine(is:ie,js_coarse:je_coarse+1,1:npz)
+
+   integer :: k
+
+   do k = 1, npz
+      coarse_pfull_d_grid_on_fine(:,:,k) = &
+         (coarse_phalf_d_grid_on_fine(:,:,k+1) - coarse_phalf_d_grid_on_fine(:,:,k)) / &
+         (log(coarse_phalf_d_grid_on_fine(:,:,k+1)) - log(coarse_phalf_d_grid_on_fine(:,:,k)))
+   enddo
+ end subroutine
 end module coarse_graining_mod

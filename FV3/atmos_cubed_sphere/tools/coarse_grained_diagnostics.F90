@@ -9,7 +9,7 @@ module coarse_grained_diagnostics_mod
   use mpp_domains_mod, only: domain2d, EAST, NORTH
   use mpp_mod, only: FATAL, mpp_error
   use coarse_graining_mod, only: block_sum, get_fine_array_bounds, get_coarse_array_bounds, MODEL_LEVEL, &
-                                 weighted_block_average, PRESSURE_LEVEL, vertically_remap_field, &
+                                 weighted_block_average, PRESSURE_LEVEL, PRESSURE_LEVEL_EXTRAPOLATE, vertically_remap_field, &
                                  vertical_remapping_requirements, mask_area_weights, &
                                  block_edge_sum_x, block_edge_sum_y, eddy_covariance_2d_weights, eddy_covariance_3d_weights
   use time_manager_mod, only: time_type
@@ -848,6 +848,7 @@ contains
     integer :: isd, ied, jsd, jed
     logical :: used
     logical :: need_2d_work_array, need_3d_work_array, need_mass_array, need_height_array, need_masked_area_array
+    logical :: extrapolate
     integer :: index, i, j
     character(len=256) :: error_message
 
@@ -856,7 +857,9 @@ contains
     call get_need_mass_array(Atm(tile_count)%coarse_graining%strategy, need_mass_array)
     call get_need_height_array(need_height_array)
 
-    if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL) then
+    if (&
+      trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL .or. &
+      trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL_EXTRAPOLATE) then
       call get_need_masked_area_array(need_masked_area_array)
     else
       need_masked_area_array = .false.
@@ -876,7 +879,8 @@ contains
 
     if (need_3d_work_array) then
        allocate(work_3d_coarse(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz))   
-       if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL) then
+       if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL .or. &
+           trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL_EXTRAPOLATE) then
         allocate(phalf(is:ie,js:je,1:npz+1))      
         allocate(upsampled_coarse_phalf(is:ie,js:je,1:npz+1))
 
@@ -896,10 +900,12 @@ contains
 
     if (need_masked_area_array) then
       allocate(masked_area(is:ie,js:je,1:npz))
+      extrapolate = trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL_EXTRAPOLATE
       call mask_area_weights( &
            Atm(tile_count)%gridstruct%area(is:ie,js:je), &
            phalf, &
            upsampled_coarse_phalf, &
+           extrapolate, &
            masked_area)
     endif
 
@@ -938,7 +944,9 @@ contains
                                                        mass, &
                                                        Atm(tile_count)%lagrangian_tendency_of_hydrostatic_pressure(is:ie,js:je,1:npz), &
                                                        work_3d_coarse)
-          else if (trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL) then
+          elseif (&
+            trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL .or. &
+            trim(Atm(tile_count)%coarse_graining%strategy) .eq. PRESSURE_LEVEL_EXTRAPOLATE) then
              call coarse_grain_3D_field_on_pressure_levels(is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz, &
                                                           coarse_diagnostics(index), masked_area, phalf, &
                                                           upsampled_coarse_phalf, Atm(tile_count)%ptop, &
@@ -993,8 +1001,7 @@ contains
    end subroutine coarse_grain_3D_field_on_model_levels
 
    subroutine coarse_grain_3D_field_on_pressure_levels(is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, &
-                                                       npz, coarse_diag, masked_area, phalf, upsampled_coarse_phalf, &
-                                                       ptop, omega, result)
+    npz, coarse_diag, masked_area, phalf, upsampled_coarse_phalf, ptop, omega, result)
     integer, intent(in) :: is, ie, js, je, is_coarse, ie_coarse, js_coarse, je_coarse, npz
     type(coarse_diag_type) :: coarse_diag
     real, intent(in) :: masked_area(is:ie,js:je,1:npz)

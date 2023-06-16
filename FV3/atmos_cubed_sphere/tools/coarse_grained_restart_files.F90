@@ -1,10 +1,10 @@
 module coarse_grained_restart_files_mod
 
   use coarse_graining_mod, only: compute_mass_weights, get_coarse_array_bounds,&
-       get_fine_array_bounds, MODEL_LEVEL, PRESSURE_LEVEL, weighted_block_average, &
-       weighted_block_edge_average_x, weighted_block_edge_average_y, &
-       mask_area_weights, block_upsample, remap_edges_along_x, &
-       remap_edges_along_y, vertically_remap_field
+       get_fine_array_bounds, MODEL_LEVEL, PRESSURE_LEVEL, PRESSURE_LEVEL_EXTRAPOLATE, &
+       weighted_block_average, weighted_block_edge_average_x, weighted_block_edge_average_y, &
+       mask_area_weights, block_upsample, remap_edges_along_x, remap_edges_along_y, &
+       vertically_remap_field
   use constants_mod, only: GRAV, RDGAS, RVGAS
   use field_manager_mod, only: MODEL_ATMOS
   use fms_io_mod,      only: register_restart_field, save_restart
@@ -281,7 +281,9 @@ contains
     if (trim(Atm%coarse_graining%strategy) .eq. MODEL_LEVEL) then
        call coarse_grain_restart_data_on_model_levels(Atm)
     elseif (trim(Atm%coarse_graining%strategy) .eq. PRESSURE_LEVEL) then
-       call coarse_grain_restart_data_on_pressure_levels(Atm)
+       call coarse_grain_restart_data_on_pressure_levels(Atm, extrapolate=.false.)
+    elseif (trim(Atm%coarse_graining%strategy) .eq. PRESSURE_LEVEL_EXTRAPOLATE) then
+       call coarse_grain_restart_data_on_pressure_levels(Atm, extrapolate=.true.)
     else
        write(error_message, *) 'Currently only model_level and pressure_level coarse-graining are supported for restart files.'
        call mpp_error(FATAL, error_message)
@@ -305,8 +307,9 @@ contains
     endif
   end subroutine coarse_grain_restart_data_on_model_levels
 
-  subroutine coarse_grain_restart_data_on_pressure_levels(Atm)
+  subroutine coarse_grain_restart_data_on_pressure_levels(Atm, extrapolate)
      type(fv_atmos_type), intent(inout) :: Atm
+     logical, intent(in) :: extrapolate
 
      real, allocatable, dimension(:,:,:):: phalf, coarse_phalf, coarse_phalf_on_fine
      real, allocatable, dimension(:,:,:) :: masked_area_weights
@@ -320,11 +323,13 @@ contains
      ! are all remapped to surfaces of constant pressure within coarse grid cells before
      ! coarse graining.  At the end, delz and phis are corrected to impose hydrostatic balance.
      call compute_pressure_level_coarse_graining_requirements( &
-       Atm, phalf, coarse_phalf, coarse_phalf_on_fine, masked_area_weights)
+       Atm, extrapolate, phalf, coarse_phalf, coarse_phalf_on_fine, masked_area_weights)
+
      call coarse_grain_fv_core_restart_data_on_pressure_levels( &
-       Atm, phalf, coarse_phalf, coarse_phalf_on_fine, masked_area_weights)
+       Atm, phalf, coarse_phalf, coarse_phalf_on_fine, masked_area_weights, extrapolate)
      call coarse_grain_fv_tracer_restart_data_on_pressure_levels( &
        Atm, phalf, coarse_phalf_on_fine, masked_area_weights)
+
      call coarse_grain_fv_srf_wnd_restart_data(Atm)
      if (Atm%flagstruct%fv_land) then
        call coarse_grain_mg_drag_restart_data(Atm)
@@ -421,12 +426,13 @@ contains
   end subroutine coarse_grain_fv_land_restart_data
 
   subroutine coarse_grain_fv_core_restart_data_on_pressure_levels(& 
-     Atm, phalf, coarse_phalf, coarse_phalf_on_fine, masked_area_weights)
+     Atm, phalf, coarse_phalf, coarse_phalf_on_fine, masked_area_weights, extrapolate)
      type(fv_atmos_type), intent(inout) :: Atm
      real, intent(in) :: phalf(is-1:ie+1,js-1:je+1,1:npz+1)
      real, intent(in) :: coarse_phalf(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz+1)
      real, intent(in) :: coarse_phalf_on_fine(is:ie,js:je,1:npz+1)
      real, intent(in), dimension(is:ie,js:je,1:npz) :: masked_area_weights
+     logical, intent(in) :: extrapolate
 
      real, allocatable :: remapped(:,:,:)  ! Will re-use this to save memory
 
@@ -436,11 +442,13 @@ contains
        phalf(is-1:ie+1,js-1:je+1,1:npz+1), &
        Atm%gridstruct%dx(is:ie,js:je+1), &
        Atm%ptop, &
+       extrapolate, &
        Atm%coarse_graining%restart%u)
      call remap_edges_along_y(Atm%v(is:ie+1,js:je,1:npz), &
        phalf(is-1:ie+1,js-1:je+1,1:npz+1), &
        Atm%gridstruct%dy(is:ie+1,js:je), &
        Atm%ptop, &
+       extrapolate, &
        Atm%coarse_graining%restart%v)
 
      call vertically_remap_field(phalf(is:ie,js:je,1:npz+1), Atm%pt(is:ie,js:je,1:npz), coarse_phalf_on_fine, Atm%ptop, remapped)
@@ -547,8 +555,9 @@ contains
    end subroutine impose_hydrostatic_balance
 
   subroutine compute_pressure_level_coarse_graining_requirements( &
-     Atm, phalf, coarse_phalf, coarse_phalf_on_fine, masked_area_weights)
+     Atm, extrapolate, phalf, coarse_phalf, coarse_phalf_on_fine, masked_area_weights)
      type(fv_atmos_type), intent(inout) :: Atm
+     logical, intent(in) :: extrapolate
      real, intent(out) :: phalf(is-1:ie+1,js-1:je+1,1:npz+1)
      real, intent(out) :: coarse_phalf(is_coarse:ie_coarse,js_coarse:je_coarse,1:npz+1)
      real, intent(out) :: coarse_phalf_on_fine(is:ie,js:je,1:npz+1)
@@ -561,7 +570,7 @@ contains
      call weighted_block_average(Atm%gridstruct%area(is:ie,js:je), Atm%delp(is:ie,js:je,1:npz), Atm%coarse_graining%restart%delp)
      call compute_phalf(is_coarse, ie_coarse, js_coarse, je_coarse, Atm%coarse_graining%restart%delp, Atm%ptop, coarse_phalf)
      call block_upsample(coarse_phalf, coarse_phalf_on_fine, npz+1)
-     call mask_area_weights(Atm%gridstruct%area(is:ie,js:je), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine, masked_area_weights)
+     call mask_area_weights(Atm%gridstruct%area(is:ie,js:je), phalf(is:ie,js:je,1:npz+1), coarse_phalf_on_fine, extrapolate, masked_area_weights)
   end subroutine compute_pressure_level_coarse_graining_requirements
 
   subroutine compute_phalf(i_start, i_end, j_start, j_end, delp, ptop, phalf)
