@@ -676,6 +676,7 @@ module GFS_typedefs
     logical              :: lwhtr           !< flag to output lw heating rate (Radtend%lwhc)
     logical              :: swhtr           !< flag to output sw heating rate (Radtend%swhc)
     logical              :: do_only_clearsky_rad !< flag for whether to do only clear-sky radiation
+    logical              :: rad_progcld6    !< flag for whether to do SHiELD radiation cloud routine
 
 !--- microphysical switch
     integer              :: ncld            !< choice of cloud scheme
@@ -2855,6 +2856,7 @@ module GFS_typedefs
     logical              :: lwhtr             = .true.       !< flag to output lw heating rate (Radtend%lwhc)
     logical              :: swhtr             = .true.       !< flag to output sw heating rate (Radtend%swhc)
     logical              :: do_only_clearsky_rad = .false.   !< flag for whether to do only clear-sky radiation
+    logical              :: rad_progcld6      = .false.      !< flag for whether to do SHiELD radiation cloud routine
 
 !--- Z-C microphysical parameters
     integer              :: ncld              =  1                 !< choice of cloud scheme
@@ -3191,7 +3193,7 @@ module GFS_typedefs
                                fhswr, fhlwr, levr, nfxr, aero_in, iflip, isol, ico2, ialb,  &
                                isot, iems, iaer, icliq_sw, iovr_sw, iovr_lw, ictm, isubc_sw,&
                                isubc_lw, crick_proof, ccnorm, lwhtr, swhtr,                 &
-                               do_only_clearsky_rad,                                        &
+                               do_only_clearsky_rad, rad_progcld6,                          &
                           ! IN CCN forcing
                                iccn,                                                        &
                           !--- microphysical parameterizations
@@ -3440,6 +3442,7 @@ module GFS_typedefs
     Model%lwhtr            = lwhtr
     Model%swhtr            = swhtr
     Model%do_only_clearsky_rad = do_only_clearsky_rad
+    Model%rad_progcld6     = rad_progcld6
 #ifdef CCPP
     ! The CCPP versions of the RRTMG lw/sw schemes are configured
     ! such that lw and sw heating rate are output, i.e. they rely
@@ -4509,6 +4512,7 @@ module GFS_typedefs
       print *, ' lwhtr             : ', Model%lwhtr
       print *, ' swhtr             : ', Model%swhtr
       print *, ' do_only_clearsky_rad: ', Model%do_only_clearsky_rad
+      print *, ' rad_progcld6:     ', Model%rad_progcld6
       print *, ' '
       print *, 'microphysical switch'
       print *, ' ncld              : ', Model%ncld

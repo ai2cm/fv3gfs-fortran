@@ -50,7 +50,7 @@ module gfdl_cloud_microphys_mod
     public wqs1, wqs2, qs_blend, wqsat_moist, wqsat2_moist
     public qsmith_init, qsmith, es2_table1d, es3_table1d, esw_table1d
     public setup_con, wet_bulb
-    public cloud_diagnosis
+    public cloud_diagnosis, cld_eff_rad
     
     real :: missing_value = - 1.e10
     
@@ -61,6 +61,10 @@ module gfdl_cloud_microphys_mod
     
     real, parameter :: n0r = 8.0e6, n0s = 3.0e6, n0g = 4.0e6
     real, parameter :: rhos = 0.1e3, rhog = 0.4e3
+    real, parameter :: rhow = 1.0e3 ! density of cloud water (kg/m^3)
+    real, parameter :: rhoi = 9.17e2 ! density of cloud ice (kg/m^3)
+    real, parameter :: rhor = 1.0e3 ! density of rain (Lin et al. 1983) (kg/m^3)
+    real, parameter :: rhoh = 9.17e2 ! density of hail (Lin et al. 1983) (kg/m^3)
     real, parameter :: grav = 9.80665 !< gfs: acceleration due to gravity
     real, parameter :: rdgas = 287.05 !< gfs: gas constant for dry air
     real, parameter :: rvgas = 461.50 !< gfs: gas constant for water vapor
@@ -68,7 +72,6 @@ module gfdl_cloud_microphys_mod
     real, parameter :: hlv = 2.5e6 !< gfs: latent heat of evaporation
     real, parameter :: hlf = 3.3358e5 !< gfs: latent heat of fusion
     real, parameter :: pi = 3.1415926535897931 !< gfs: ratio of circle circumference to diameter
-    
     ! real, parameter :: rdgas = 287.04 ! gfdl: gas constant for dry air
     
     ! real, parameter :: cp_air = rdgas * 7. / 2. ! 1004.675, heat capacity of dry air at constant pressure
@@ -119,7 +122,8 @@ module gfdl_cloud_microphys_mod
     real, parameter :: dz_min = 1.e-2 ! use for correcting flipped height
     
     real, parameter :: sfcrho = 1.2 !< surface air density
-    real, parameter :: rhor = 1.e3 !< density of rain water, lin83
+
+    integer, parameter :: r8 = 8 ! double precision
     
     real :: cracs, csacr, cgacr, cgacs, csacw, craci, csaci, cgacw, cgaci, cracw !< constants for accretions
     real :: acco (3, 4) !< constants for accretions
@@ -151,7 +155,10 @@ module gfdl_cloud_microphys_mod
     logical :: fix_negative = .false. !< fix negative water species
     logical :: do_setup = .true. !< setup constants and parameters
     logical :: p_nonhydro = .false. !< perform hydrosatic adjustment on air density
-    
+    logical :: liq_ice_combine = .false. ! combine all liquid water, combine all solid water
+    logical :: snow_grauple_combine = .true. ! combine snow and graupel
+    logical :: do_hail = .false. ! use hail parameters instead of graupel
+
     real, allocatable :: table (:), table2 (:), table3 (:), tablew (:)
     real, allocatable :: des (:), des2 (:), des3 (:), desw (:)
     
@@ -183,6 +190,41 @@ module gfdl_cloud_microphys_mod
     real :: t_min = 178. !< min temp to freeze - dry all water vapor
     real :: t_sub = 184. !< min temp for sublimation of cloud ice
     real :: mp_time = 150. !< maximum micro - physics time step (sec)
+
+    real :: n0w_sig = 1.1 ! intercept parameter (significand) of cloud water (Lin et al. 1983) (1/m^4) (Martin et al. 1994)
+    !real :: n0w_sig = 1.4 ! intercept parameter (significand) of cloud water (Lin et al. 1983) (1/m^4) (Martin et al. 1994)
+    real :: n0i_sig = 1.3 ! intercept parameter (significand) of cloud ice (Lin et al. 1983) (1/m^4) (McFarquhar et al. 2015)
+    !real :: n0i_sig = 9.4 ! intercept parameter (significand) of cloud ice (Lin et al. 1983) (1/m^4) (McFarquhar et al. 2015)
+    real :: n0r_sig = 8.0 ! intercept parameter (significand) of rain (Lin et al. 1983) (1/m^4) (Marshall and Palmer 1948)
+    real :: n0s_sig = 3.0 ! intercept parameter (significand) of snow (Lin et al. 1983) (1/m^4) (Gunn and Marshall 1958)
+    real :: n0g_sig = 4.0 ! intercept parameter (significand) of graupel (Rutledge and Hobbs 1984) (1/m^4) (Houze et al. 1979)
+    real :: n0h_sig = 4.0 ! intercept parameter (significand) of hail (Lin et al. 1983) (1/m^4) (Federer and Waldvogel 1975)
+
+    real :: n0w_exp = 41 ! intercept parameter (exponent) of cloud water (Lin et al. 1983) (1/m^4) (Martin et al. 1994)
+    !real :: n0w_exp = 91 ! intercept parameter (exponent) of cloud water (Lin et al. 1983) (1/m^4) (Martin et al. 1994)
+    real :: n0i_exp = 18 ! intercept parameter (exponent) of cloud ice (Lin et al. 1983) (1/m^4) (McFarquhar et al. 2015)
+    !real :: n0i_exp = 17 ! intercept parameter (exponent) of cloud ice (Lin et al. 1983) (1/m^4) (McFarquhar et al. 2015)
+    real :: n0r_exp = 6 ! intercept parameter (exponent) of rain (Lin et al. 1983) (1/m^4) (Marshall and Palmer 1948)
+    real :: n0s_exp = 6 ! intercept parameter (exponent) of snow (Lin et al. 1983) (1/m^4) (Gunn and Marshall 1958)
+    real :: n0g_exp = 6 ! intercept parameter (exponent) of graupel (Rutledge and Hobbs 1984) (1/m^4) (Houze et al. 1979)
+    real :: n0h_exp = 4 ! intercept parameter (exponent) of hail (Lin et al. 1983) (1/m^4) (Federer and Waldvogel 1975)
+
+    real :: muw = 6.0 ! shape parameter of cloud water in Gamma distribution (Martin et al. 1994)
+    real :: mui = 3.35 ! shape parameter of cloud ice in Gamma distribution (McFarquhar et al. 2015)
+    real :: mur = 1.0 ! shape parameter of rain in Gamma distribution (Marshall and Palmer 1948)
+    real :: mus = 1.0 ! shape parameter of snow in Gamma distribution (Gunn and Marshall 1958)
+    real :: mug = 1.0 ! shape parameter of graupel in Gamma distribution (Houze et al. 1979)
+    real :: muh = 1.0 ! shape parameter of hail in Gamma distribution (Federer and Waldvogel 1975)
+
+    real :: blinw = 2.0 ! "b" in Lin et al. (1983) for cloud water (Ikawa and Saito 1990)
+    real :: blini = 1.0 ! "b" in Lin et al. (1983) for cloud ice (Ikawa and Saita 1990)
+    real :: blinr = 0.8 ! "b" in Lin et al. (1983) for rain (Liu and Orville 1969)
+    real :: blins = 0.25 ! "b" in Lin et al. (1983) for snow (straka 2009)
+    real :: bling = 0.5 ! "b" in Lin et al. (1983), similar to b, but for graupel (Pruppacher and Klett 2010)
+    real :: blinh = 0.5 ! "b" in Lin et al. (1983), similar to b, but for hail (Pruppacher and Klett 2010)
+
+    real (kind = r8) :: edaw, edar, edai, edas, edag, edah
+    real (kind = r8) :: edbw, edbr, edbi, edbs, edbg, edbh
     
     ! relative humidity increment
     
@@ -292,10 +334,30 @@ module gfdl_cloud_microphys_mod
     
     real :: log_10, tice0, t_wfr
     
-    integer :: reiflag = 1
-    ! 1: Heymsfield and Mcfarquhar, 1996
-    ! 2: Wyser, 1998
-     
+    integer :: rewflag = 1 ! cloud water effective radius scheme
+    ! 1: Martin et al. (1994)
+    ! 2: Martin et al. (1994), GFDL revision
+    ! 3: Kiehl et al. (1994)
+    ! 4: effective radius
+
+    integer :: reiflag = 5 ! cloud ice effective radius scheme
+    ! 1: Heymsfield and Mcfarquhar (1996)
+    ! 2: Donner et al. (1997)
+    ! 3: Fu (2007)
+    ! 4: Kristjansson et al. (2000)
+    ! 5: Wyser (1998)
+    ! 6: Sun and Rikus (1999), Sun (2001)
+    ! 7: effective radius
+
+    integer :: rerflag = 1 ! rain effective radius scheme
+    ! 1: effective radius
+
+    integer :: resflag = 1 ! snow effective radius scheme
+    ! 1: effective radius
+
+    integer :: regflag = 1 ! graupel effective radius scheme
+    ! 1: effective radius
+
     logical :: tintqs = .false. !< use temperature in the saturation mixing in PDF 
 
     real :: rewmin = 5.0, rewmax = 10.0
@@ -303,6 +365,15 @@ module gfdl_cloud_microphys_mod
     real :: rermin = 10.0, rermax = 10000.0
     real :: resmin = 150.0, resmax = 10000.0
     real :: regmin = 300.0, regmax = 10000.0
+
+    real :: rewfac = 1.0 ! this is a tuning parameter to compromise the inconsistency between
+    ! GFDL MP's PSD and cloud water radiative property's PSD assumption.
+    ! after the cloud water radiative property's PSD is rebuilt,
+    ! this parameter should be 1.0.
+    real :: reifac = 1.0 ! this is a tuning parameter to compromise the inconsistency between
+    ! GFDL MP's PSD and cloud ice radiative property's PSD assumption.
+    ! after the cloud ice radiative property's PSD is rebuilt,
+    ! this parameter should be 1.0.
     
     ! -----------------------------------------------------------------------
     ! namelist
@@ -3454,6 +3525,20 @@ subroutine setupm
     
     es0 = 6.107799961e2 ! ~6.1 mb
     ces0 = eps * es0
+
+    edaw = exp (- 1. / (muw + 3) * log (n0w_sig)) * (muw + 2) * exp (- n0w_exp / (muw + 3) * log (10.))
+    edai = exp (- 1. / (mui + 3) * log (n0i_sig)) * (mui + 2) * exp (- n0i_exp / (mui + 3) * log (10.))
+    edar = exp (- 1. / (mur + 3) * log (n0r_sig)) * (mur + 2) * exp (- n0r_exp / (mur + 3) * log (10.))
+    edas = exp (- 1. / (mus + 3) * log (n0s_sig)) * (mus + 2) * exp (- n0s_exp / (mus + 3) * log (10.))
+    edag = exp (- 1. / (mug + 3) * log (n0g_sig)) * (mug + 2) * exp (- n0g_exp / (mug + 3) * log (10.))
+    edah = exp (- 1. / (muh + 3) * log (n0h_sig)) * (muh + 2) * exp (- n0h_exp / (muh + 3) * log (10.))
+
+    edbw = exp (1. / (muw + 3) * log (pi * rhow * gamma (muw + 3)))
+    edbi = exp (1. / (mui + 3) * log (pi * rhoi * gamma (mui + 3)))
+    edbr = exp (1. / (mur + 3) * log (pi * rhor * gamma (mur + 3)))
+    edbs = exp (1. / (mus + 3) * log (pi * rhos * gamma (mus + 3)))
+    edbg = exp (1. / (mug + 3) * log (pi * rhog * gamma (mug + 3)))
+    edbh = exp (1. / (muh + 3) * log (pi * rhoh * gamma (muh + 3)))
     
 end subroutine setupm
 
@@ -4862,6 +4947,456 @@ subroutine cloud_diagnosis (is, ie, ks, ke, den, delp, lsm, qmw, qmi, qmr, qms, 
     
 end subroutine cloud_diagnosis
 
+! =======================================================================
+! cloud radii diagnosis built for gfdl cloud microphysics
+! =======================================================================
+
+subroutine cld_eff_rad (is, ie, ks, ke, lsm, p, delp, t, qv, qw, qi, qr, qs, qg, qa, &
+        qcw, qci, qcr, qcs, qcg, rew, rei, rer, res, reg, cld, cloud, snowd, &
+        cnvw, cnvi, cnvc)
+
+    implicit none
+
+    ! -----------------------------------------------------------------------
+    ! input / output arguments
+    ! -----------------------------------------------------------------------
+
+    integer, intent (in) :: is, ie, ks, ke
+
+    real, intent (in), dimension (is:ie) :: lsm, snowd
+
+    real, intent (in), dimension (is:ie, ks:ke) :: delp, t, p, cloud
+    real, intent (in), dimension (is:ie, ks:ke) :: qv, qw, qi, qr, qs, qg, qa
+
+    real, intent (in), dimension (is:ie, ks:ke), optional :: cnvw, cnvi, cnvc
+
+    real, intent (inout), dimension (is:ie, ks:ke) :: qcw, qci, qcr, qcs, qcg
+    real, intent (inout), dimension (is:ie, ks:ke) :: rew, rei, rer, res, reg
+    real, intent (inout), dimension (is:ie, ks:ke) :: cld
+
+    ! -----------------------------------------------------------------------
+    ! local variables
+    ! -----------------------------------------------------------------------
+
+    integer :: i, k, ind
+
+    real, dimension (is:ie, ks:ke) :: qmw, qmr, qmi, qms, qmg
+
+    real :: dpg, rho, ccnw, mask, cor, tc, bw
+    real :: lambdaw, lambdar, lambdai, lambdas, lambdag, rei_fac
+    real :: beta = 1.22
+
+    real :: retab (138) = (/ &
+        0.05000, 0.05000, 0.05000, 0.05000, 0.05000, 0.05000, &
+        0.05500, 0.06000, 0.07000, 0.08000, 0.09000, 0.10000, &
+        0.20000, 0.30000, 0.40000, 0.50000, 0.60000, 0.70000, &
+        0.80000, 0.90000, 1.00000, 1.10000, 1.20000, 1.30000, &
+        1.40000, 1.50000, 1.60000, 1.80000, 2.00000, 2.20000, &
+        2.40000, 2.60000, 2.80000, 3.00000, 3.20000, 3.50000, &
+        3.80000, 4.10000, 4.40000, 4.70000, 5.00000, 5.30000, &
+        5.60000, 5.92779, 6.26422, 6.61973, 6.99539, 7.39234, &
+        7.81177, 8.25496, 8.72323, 9.21800, 9.74075, 10.2930, &
+        10.8765, 11.4929, 12.1440, 12.8317, 13.5581, 14.2319, &
+        15.0351, 15.8799, 16.7674, 17.6986, 18.6744, 19.6955, &
+        20.7623, 21.8757, 23.0364, 24.2452, 25.5034, 26.8125, &
+        27.7895, 28.6450, 29.4167, 30.1088, 30.7306, 31.2943, &
+        31.8151, 32.3077, 32.7870, 33.2657, 33.7540, 34.2601, &
+        34.7892, 35.3442, 35.9255, 36.5316, 37.1602, 37.8078, &
+        38.4720, 39.1508, 39.8442, 40.5552, 41.2912, 42.0635, &
+        42.8876, 43.7863, 44.7853, 45.9170, 47.2165, 48.7221, &
+        50.4710, 52.4980, 54.8315, 57.4898, 60.4785, 63.7898, &
+        65.5604, 71.2885, 75.4113, 79.7368, 84.2351, 88.8833, &
+        93.6658, 98.5739, 103.603, 108.752, 114.025, 119.424, &
+        124.954, 130.630, 136.457, 142.446, 148.608, 154.956, &
+        161.503, 168.262, 175.248, 182.473, 189.952, 197.699, &
+        205.728, 214.055, 222.694, 231.661, 240.971, 250.639 /)
+
+    qmw = qw
+    qmi = qi
+    qmr = qr
+    qms = qs
+    qmg = qg
+    cld = cloud
+
+    ! -----------------------------------------------------------------------
+    ! merge convective cloud to total cloud
+    ! -----------------------------------------------------------------------
+
+    if (present (cnvw)) then
+        qmw = qmw + cnvw
+    endif
+    if (present (cnvi)) then
+        qmi = qmi + cnvi
+    endif
+    if (present (cnvc)) then
+        cld = cnvc + (1 - cnvc) * cld
+    endif
+
+    ! -----------------------------------------------------------------------
+    ! combine liquid and solid phases
+    ! -----------------------------------------------------------------------
+
+    if (liq_ice_combine) then
+        do i = is, ie
+            do k = ks, ke
+                qmw (i, k) = qmw (i, k) + qmr (i, k)
+                qmr (i, k) = 0.0
+                qmi (i, k) = qmi (i, k) + qms (i, k) + qmg (i, k)
+                qms (i, k) = 0.0
+                qmg (i, k) = 0.0
+            enddo
+        enddo
+    endif
+
+    ! -----------------------------------------------------------------------
+    ! combine snow and graupel
+    ! -----------------------------------------------------------------------
+
+    if (snow_grauple_combine) then
+        do i = is, ie
+            do k = ks, ke
+                qms (i, k) = qms (i, k) + qmg (i, k)
+                qmg (i, k) = 0.0
+            enddo
+        enddo
+    endif
+
+    do i = is, ie
+
+        do k = ks, ke
+
+            qmw (i, k) = max (qmw (i, k), qcmin)
+            qmi (i, k) = max (qmi (i, k), qcmin)
+            qmr (i, k) = max (qmr (i, k), qcmin)
+            qms (i, k) = max (qms (i, k), qcmin)
+            qmg (i, k) = max (qmg (i, k), qcmin)
+
+            cld (i, k) = min (max (cld (i, k), 0.0), 1.0)
+
+            mask = min (max (lsm (i), 0.0), 2.0)
+
+            dpg = abs (delp (i, k)) / grav
+            rho = p (i, k) / (rdgas * t (i, k) * (1. + zvir * qv (i, k)))
+
+            tc = t (i, k) - tice
+
+            if (rewflag .eq. 1) then
+
+                ! -----------------------------------------------------------------------
+                ! cloud water (Martin et al. 1994)
+                ! -----------------------------------------------------------------------
+
+                if (prog_ccn) then
+                    ! boucher and lohmann (1995)
+                    ccnw = (1.0 - abs (mask - 1.0)) * &
+                        (10. ** 2.24 * (qa (i, k) * rho * 1.e9) ** 0.257) + &
+                        abs (mask - 1.0) * &
+                        (10. ** 2.06 * (qa (i, k) * rho * 1.e9) ** 0.48)
+                else
+                    ccnw = ccn_o * abs (mask - 1.0) + ccn_l * (1.0 - abs (mask - 1.0))
+                endif
+
+                if (qmw (i, k) .gt. qcmin) then
+                    qcw (i, k) = dpg * qmw (i, k) * 1.0e3
+                    rew (i, k) = exp (1.0 / 3.0 * log ((3.0 * qmw (i, k) * rho) / &
+                        (4.0 * pi * rhow * ccnw))) * 1.0e4
+                    rew (i, k) = max (rewmin, min (rewmax, rew (i, k)))
+                else
+                    qcw (i, k) = 0.0
+                    rew (i, k) = rewmin
+                endif
+
+            endif
+
+            if (rewflag .eq. 2) then
+
+                ! -----------------------------------------------------------------------
+                ! cloud water (Martin et al. 1994, gfdl revision)
+                ! -----------------------------------------------------------------------
+
+                if (prog_ccn) then
+                    ! boucher and lohmann (1995)
+                    ccnw = (1.0 - abs (mask - 1.0)) * &
+                        (10. ** 2.24 * (qa (i, k) * rho * 1.e9) ** 0.257) + &
+                        abs (mask - 1.0) * &
+                        (10. ** 2.06 * (qa (i, k) * rho * 1.e9) ** 0.48)
+                else
+                    ccnw = 1.077 * ccn_o * abs (mask - 1.0) + 1.143 * ccn_l * (1.0 - abs (mask - 1.0))
+                endif
+
+                if (qmw (i, k) .gt. qcmin) then
+                    qcw (i, k) = dpg * qmw (i, k) * 1.0e3
+                    rew (i, k) = exp (1.0 / 3.0 * log ((3.0 * qmw (i, k) * rho) / &
+                        (4.0 * pi * rhow * ccnw))) * 1.0e4
+                    rew (i, k) = max (rewmin, min (rewmax, rew (i, k)))
+                else
+                    qcw (i, k) = 0.0
+                    rew (i, k) = rewmin
+                endif
+
+            endif
+
+            if (rewflag .eq. 3) then
+
+                ! -----------------------------------------------------------------------
+                ! cloud water (Kiehl et al. 1994)
+                ! -----------------------------------------------------------------------
+
+                if (qmw (i, k) .gt. qcmin) then
+                    qcw (i, k) = dpg * qmw (i, k) * 1.0e3
+                    rew (i, k) = 14.0 * abs (mask - 1.0) + &
+                        (8.0 + (14.0 - 8.0) * min (1.0, max (0.0, - tc / 30.0))) * &
+                        (1.0 - abs (mask - 1.0))
+                    rew (i, k) = rew (i, k) + (14.0 - rew (i, k)) * &
+                        min (1.0, max (0.0, snowd (i) / 1000.0))
+                    rew (i, k) = max (rewmin, min (rewmax, rew (i, k)))
+                else
+                    qcw (i, k) = 0.0
+                    rew (i, k) = rewmin
+                endif
+
+            endif
+
+            if (rewflag .eq. 4) then
+
+                ! -----------------------------------------------------------------------
+                ! cloud water derived from PSD
+                ! -----------------------------------------------------------------------
+
+                if (qmw (i, k) .gt. qcmin) then
+                    qcw (i, k) = dpg * qmw (i, k) * 1.0e3
+                    call cal_pc_ed_oe_rr_tv (qmw (i, k), rho, blinw, muw, &
+                        eda = edaw, edb = edbw, ed = rew (i, k))
+                    rew (i, k) = rewfac * 0.5 * rew (i, k) * 1.0e6
+                    rew (i, k) = max (rewmin, min (rewmax, rew (i, k)))
+                else
+                    qcw (i, k) = 0.0
+                    rew (i, k) = rewmin
+                endif
+
+            endif
+
+            if (reiflag .eq. 1) then
+
+                ! -----------------------------------------------------------------------
+                ! cloud ice (Heymsfield and Mcfarquhar 1996)
+                ! -----------------------------------------------------------------------
+
+                if (qmi (i, k) .gt. qcmin) then
+                    qci (i, k) = dpg * qmi (i, k) * 1.0e3
+                    rei_fac = log (1.0e3 * qmi (i, k) * rho)
+                    if (tc .lt. - 50) then
+                        rei (i, k) = beta / 9.917 * exp (0.109 * rei_fac) * 1.0e3
+                    elseif (tc .lt. - 40) then
+                        rei (i, k) = beta / 9.337 * exp (0.080 * rei_fac) * 1.0e3
+                    elseif (tc .lt. - 30) then
+                        rei (i, k) = beta / 9.208 * exp (0.055 * rei_fac) * 1.0e3
+                    else
+                        rei (i, k) = beta / 9.387 * exp (0.031 * rei_fac) * 1.0e3
+                    endif
+                    rei (i, k) = max (reimin, min (reimax, rei (i, k)))
+                else
+                    qci (i, k) = 0.0
+                    rei (i, k) = reimin
+                endif
+
+            endif
+
+            if (reiflag .eq. 2) then
+
+                ! -----------------------------------------------------------------------
+                ! cloud ice (Donner et al. 1997)
+                ! -----------------------------------------------------------------------
+
+                if (qmi (i, k) .gt. qcmin) then
+                    qci (i, k) = dpg * qmi (i, k) * 1.0e3
+                    if (tc .le. - 55) then
+                        rei (i, k) = 15.41627
+                    elseif (tc .le. - 50) then
+                        rei (i, k) = 16.60895
+                    elseif (tc .le. - 45) then
+                        rei (i, k) = 32.89967
+                    elseif (tc .le. - 40) then
+                        rei (i, k) = 35.29989
+                    elseif (tc .le. - 35) then
+                        rei (i, k) = 55.65818
+                    elseif (tc .le. - 30) then
+                        rei (i, k) = 85.19071
+                    elseif (tc .le. - 25) then
+                        rei (i, k) = 72.35392
+                    else
+                        rei (i, k) = 92.46298
+                    endif
+                    rei (i, k) = max (reimin, min (reimax, rei (i, k)))
+                else
+                    qci (i, k) = 0.0
+                    rei (i, k) = reimin
+                endif
+
+            endif
+
+            if (reiflag .eq. 3) then
+
+                ! -----------------------------------------------------------------------
+                ! cloud ice (Fu 2007)
+                ! -----------------------------------------------------------------------
+
+                if (qmi (i, k) .gt. qcmin) then
+                    qci (i, k) = dpg * qmi (i, k) * 1.0e3
+                    rei (i, k) = 47.05 + tc * (0.6624 + 0.001741 * tc)
+                    rei (i, k) = max (reimin, min (reimax, rei (i, k)))
+                else
+                    qci (i, k) = 0.0
+                    rei (i, k) = reimin
+                endif
+
+            endif
+
+            if (reiflag .eq. 4) then
+
+                ! -----------------------------------------------------------------------
+                ! cloud ice (Kristjansson et al. 2000)
+                ! -----------------------------------------------------------------------
+
+                if (qmi (i, k) .gt. qcmin) then
+                    qci (i, k) = dpg * qmi (i, k) * 1.0e3
+                    ind = min (max (int (t (i, k) - 136.0), 44), 138 - 1)
+                    cor = t (i, k) - int (t (i, k))
+                    rei (i, k) = retab (ind) * (1. - cor) + retab (ind + 1) * cor
+                    rei (i, k) = max (reimin, min (reimax, rei (i, k)))
+                else
+                    qci (i, k) = 0.0
+                    rei (i, k) = reimin
+                endif
+
+            endif
+
+            if (reiflag .eq. 5) then
+
+                ! -----------------------------------------------------------------------
+                ! cloud ice (Wyser 1998)
+                ! -----------------------------------------------------------------------
+
+                if (qmi (i, k) .gt. qcmin) then
+                    qci (i, k) = dpg * qmi (i, k) * 1.0e3
+                    bw = - 2. + 1.e-3 * log10 (rho * qmi (i, k) / 50.e-3) * &
+                        exp (1.5 * log (max (1.e-10, - tc)))
+                    rei (i, k) = 377.4 + bw * (203.3 + bw * (37.91 + 2.3696 * bw))
+                    rei (i, k) = max (reimin, min (reimax, rei (i, k)))
+                else
+                    qci (i, k) = 0.0
+                    rei (i, k) = reimin
+                endif
+
+            endif
+
+            if (reiflag .eq. 6) then
+
+                ! -----------------------------------------------------------------------
+                ! cloud ice (Sun and Rikus 1999, Sun 2001)
+                ! -----------------------------------------------------------------------
+
+                if (qmi (i, k) .gt. qcmin) then
+                    qci (i, k) = dpg * qmi (i, k) * 1.0e3
+                    rei_fac = log (1.0e3 * qmi (i, k) * rho)
+                    rei (i, k) = 45.8966 * exp (0.2214 * rei_fac) + &
+                        0.7957 * exp (0.2535 * rei_fac) * (tc + 190.0)
+                    rei (i, k) = (1.2351 + 0.0105 * tc) * rei (i, k)
+                    rei (i, k) = max (reimin, min (reimax, rei (i, k)))
+                else
+                    qci (i, k) = 0.0
+                    rei (i, k) = reimin
+                endif
+
+            endif
+
+            if (reiflag .eq. 7) then
+
+                ! -----------------------------------------------------------------------
+                ! cloud ice derived from PSD
+                ! -----------------------------------------------------------------------
+
+                if (qmi (i, k) .gt. qcmin) then
+                    qci (i, k) = dpg * qmi (i, k) * 1.0e3
+                    call cal_pc_ed_oe_rr_tv (qmi (i, k), rho, blini, mui, &
+                        eda = edai, edb = edbi, ed = rei (i, k))
+                    rei (i, k) = reifac * 0.5 * rei (i, k) * 1.0e6
+                    rei (i, k) = max (reimin, min (reimax, rei (i, k)))
+                else
+                    qci (i, k) = 0.0
+                    rei (i, k) = reimin
+                endif
+
+            endif
+
+            if (rerflag .eq. 1) then
+
+                ! -----------------------------------------------------------------------
+                ! rain derived from PSD
+                ! -----------------------------------------------------------------------
+
+                if (qmr (i, k) .gt. qcmin) then
+                    qcr (i, k) = dpg * qmr (i, k) * 1.0e3
+                    call cal_pc_ed_oe_rr_tv (qmr (i, k), rho, blinr, mur, &
+                        eda = edar, edb = edbr, ed = rer (i, k))
+                    rer (i, k) = 0.5 * rer (i, k) * 1.0e6
+                    rer (i, k) = max (rermin, min (rermax, rer (i, k)))
+                else
+                    qcr (i, k) = 0.0
+                    rer (i, k) = rermin
+                endif
+
+            endif
+
+            if (resflag .eq. 1) then
+
+                ! -----------------------------------------------------------------------
+                ! snow derived from PSD
+                ! -----------------------------------------------------------------------
+
+                if (qms (i, k) .gt. qcmin) then
+                    qcs (i, k) = dpg * qms (i, k) * 1.0e3
+                    call cal_pc_ed_oe_rr_tv (qms (i, k), rho, blins, mus, &
+                        eda = edas, edb = edbs, ed = res (i, k))
+                    res (i, k) = 0.5 * res (i, k) * 1.0e6
+                    res (i, k) = max (resmin, min (resmax, res (i, k)))
+                else
+                    qcs (i, k) = 0.0
+                    res (i, k) = resmin
+                endif
+
+            endif
+
+            if (regflag .eq. 1) then
+
+                ! -----------------------------------------------------------------------
+                ! graupel derived from PSD
+                ! -----------------------------------------------------------------------
+
+                if (qmg (i, k) .gt. qcmin) then
+                    qcg (i, k) = dpg * qmg (i, k) * 1.0e3
+                    if (do_hail) then
+                        call cal_pc_ed_oe_rr_tv (qmg (i, k), rho, blinh, muh, &
+                            eda = edah, edb = edbh, ed = reg (i, k))
+                    else
+                        call cal_pc_ed_oe_rr_tv (qmg (i, k), rho, bling, mug, &
+                            eda = edag, edb = edbg, ed = reg (i, k))
+                    endif
+                    reg (i, k) = 0.5 * reg (i, k) * 1.0e6
+                    reg (i, k) = max (regmin, min (regmax, reg (i, k)))
+                else
+                    qcg (i, k) = 0.0
+                    reg (i, k) = regmin
+                endif
+
+            endif
+
+        enddo
+
+    enddo
+
+end subroutine cld_eff_rad
+
 !+---+-----------------------------------------------------------------+
 
       subroutine refl10cm_gfdl (qv1d, qr1d, qs1d, qg1d,                 &
@@ -5030,5 +5565,46 @@ end subroutine cloud_diagnosis
 
       end subroutine refl10cm_gfdl
 !+---+-----------------------------------------------------------------+
+
+! =======================================================================
+! calculation of particle concentration (pc), effective diameter (ed),
+! optical extinction (oe), radar reflectivity factor (rr), and
+! mass-weighted terminal velocity (tv)
+! =======================================================================
+
+subroutine cal_pc_ed_oe_rr_tv (q, den, blin, mu, pca, pcb, pc, eda, edb, ed, &
+      oea, oeb, oe, rra, rrb, rr, tva, tvb, tv)
+
+    implicit none
+
+    ! -----------------------------------------------------------------------
+    ! input / output arguments
+    ! -----------------------------------------------------------------------
+
+    real, intent (in) :: blin, mu
+
+    real, intent (in) :: q, den
+
+    real, intent (in), optional :: pca, pcb, eda, edb, oea, oeb, rra, rrb, tva, tvb
+
+    real, intent (out), optional :: pc, ed, oe, rr, tv
+
+    if (present (pca) .and. present (pcb) .and. present (pc)) then
+        pc = pca / pcb * exp (mu / (mu + 3) * log (6 * den * q))
+    endif
+    if (present (eda) .and. present (edb) .and. present (ed)) then
+        ed = eda / edb * exp (1. / (mu + 3) * log (6 * den * q))
+    endif
+    if (present (oea) .and. present (oeb) .and. present (oe)) then
+        oe = oea / oeb * exp ((mu + 2) / (mu + 3) * log (6 * den * q))
+    endif
+    if (present (rra) .and. present (rrb) .and. present (rr)) then
+        rr = rra / rrb * exp ((mu + 6) / (mu + 3) * log (6 * den * q))
+    endif
+    if (present (tva) .and. present (tvb) .and. present (tv)) then
+        tv = tva / tvb * exp (blin / (mu + 3) * log (6 * den * q))
+    endif
+
+end subroutine cal_pc_ed_oe_rr_tv
 
 end module gfdl_cloud_microphys_mod
