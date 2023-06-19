@@ -3003,8 +3003,8 @@
       subroutine progcld6                                               &
      &     ( plyr,plvl,tlyr,tvly,qlyr,qstl,rhly,cnvw,cnvc,              & !  ---  inputs
      &       xlat,qw,qi,qr,qs,qg,qa,slmsk,snowd,cldtot,dz,delp,         &
-     &       IX, NLAY, NLP1,                                            & !  ---  outputs
-     &       clouds,clds,mtop,mbot,de_lgth                              &
+     &       IX, NLAY, NLP1,                                            & 
+     &       clouds,clds,mtop,mbot,de_lgth                              & !  ---  outputs
      &      )
         
 ! =================   subprogram documentation block   ================ !

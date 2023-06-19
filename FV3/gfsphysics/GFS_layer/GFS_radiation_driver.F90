@@ -1799,11 +1799,6 @@
                             tracer1(:,1:lmk,Model%ntclamt), dz, delp,   &
                             im, lmk, lmp, clouds, cldsa, mtopa, mbota,  & !  ---  outputs
                             de_lgth)    
-            ! call progcld4 (plyr, plvl, tlyr, tvly, qlyr, qstl, rhly,    &!  ---  inputs
-            !                 ccnd(1:IM,1:LMK,1), cnvw, cnvc,             &
-            !                 Grid%xlat, Grid%xlon, Sfcprop%slmsk,        &
-            !                 cldcov, dz, delp, im, lmk, lmp,             &
-            !                 clouds, cldsa, mtopa, mbota, de_lgth)        !  ---  outputs
           else
             if (.not.Model%lgfdlmprad) then
               call progcld4 (plyr, plvl, tlyr, tvly, qlyr, qstl, rhly,  &!  ---  inputs
