@@ -3138,6 +3138,21 @@
         enddo
       enddo
 
+      if ( lcnorm ) then
+        do k = 1, NLAY
+          do i = 1, IX
+            if (cldtot(i,k) >= climit) then
+              tem1 = 1.0 / max(climit2, cldtot(i,k))
+              qw(i,k) = qw(i,k) * tem1
+              qi(i,k) = qi(i,k) * tem1
+              qr(i,k) = qr(i,k) * tem1
+              qs(i,k) = qs(i,k) * tem1
+              qg(i,k) = qg(i,k) * tem1
+            endif
+          enddo
+        enddo
+      endif
+
       call cld_eff_rad (1, IX, 1, NLAY, slmsk, plyr*100,                &
      &                  abs(plvl(:,1:NLAY)-plvl(:,2:NLAY+1))*100, tlyr, &
      &                  qlyr, qw, qi, qr, qs, qg, qa, cwp, cip, crp,    &
