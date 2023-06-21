@@ -3118,7 +3118,7 @@
 !  ---  local variables:
       real (kind=kind_phys), dimension(IX,NLAY) :: cldcnv,              &
      &       cwp, cip, crp, csp, cgp, rew, rei, res, rer, reg,          &
-     &       tem2d
+     &       tem2d, qwc, qrc, qic, qsc, qgc
 
       real (kind=kind_phys) :: ptop1(IX,NK_CLDS+1), rxlat(ix)
 
@@ -3143,12 +3143,22 @@
           do i = 1, IX
             if (cldtot(i,k) >= climit) then
               tem1 = 1.0 / max(climit2, cldtot(i,k))
-              qw(i,k) = qw(i,k) * tem1
-              qi(i,k) = qi(i,k) * tem1
-              qr(i,k) = qr(i,k) * tem1
-              qs(i,k) = qs(i,k) * tem1
-              qg(i,k) = qg(i,k) * tem1
+              qwc(i,k) = qw(i,k) * tem1
+              qic(i,k) = qi(i,k) * tem1
+              qrc(i,k) = qr(i,k) * tem1
+              qsc(i,k) = qs(i,k) * tem1
+              qgc(i,k) = qg(i,k) * tem1
             endif
+          enddo
+        enddo
+      else
+        do k = 1, NLAY
+          do i = 1, IX
+              qwc(i,k) = qw(i,k)
+              qic(i,k) = qi(i,k)
+              qrc(i,k) = qr(i,k)
+              qsc(i,k) = qs(i,k)
+              qgc(i,k) = qg(i,k)
           enddo
         enddo
       endif
