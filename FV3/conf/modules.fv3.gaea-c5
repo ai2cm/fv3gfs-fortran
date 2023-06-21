@@ -5,8 +5,8 @@
 ## this typically includes compiler, MPI and job scheduler
 ##
 module load PrgEnv-intel/8.3.3
-module load intel-classic/2022.0.2
-module load cray-mpich/8.1.16
+module load intel-classic/2022.2.1
+module load cray-mpich/8.1.25
 module load cray-hdf5/1.12.2.3
 module load cray-netcdf/4.9.0.3
 module load cmake/3.23.1
