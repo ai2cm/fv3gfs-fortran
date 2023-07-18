@@ -74,7 +74,7 @@ module FV3GFS_io_mod
 !-----------------------------------------------------------------------
   implicit none
   private
-
+ 
   !--- public interfaces ---
   public  FV3GFS_restart_read, FV3GFS_restart_write
   public  FV3GFS_IPD_checksum
@@ -3016,9 +3016,7 @@ module FV3GFS_io_mod
         allocate(phalf(nx, ny, levs + 1))
         allocate(phalf_coarse_on_fine(nx, ny, levs + 1))
         allocate(masked_area(nx, ny, levs))
-
         extrapolate = trim(coarsening_strategy) .eq. PRESSURE_LEVEL_EXTRAPOLATE
-
         call get_area(Atm_block, IPD_Data, nx, ny, area)
         if (trim(coarsening_strategy) .eq. PRESSURE_LEVEL) then
           call vertical_remapping_requirements(delp, area, ptop, phalf, phalf_coarse_on_fine)
@@ -3140,19 +3138,19 @@ module FV3GFS_io_mod
     real(kind=kind_phys), allocatable :: mass(:,:,:), phalf(:,:,:), phalf_coarse_on_fine(:,:,:)
     real(kind=kind_phys), allocatable :: masked_area(:,:,:), blending_weights(:,:,:)
     
-    nblks         = atm_block%nblks
-    rdt           = 1.0d0/dt
-    rtime_int     = 1.0d0/time_int
-    rtime_intfull = 1.0d0/time_intfull
-    rtime_radsw   = 1.0d0/time_radsw
-    rtime_radlw   = 1.0d0/time_radlw
+     nblks         = atm_block%nblks
+     rdt           = 1.0d0/dt
+     rtime_int     = 1.0d0/time_int
+     rtime_intfull = 1.0d0/time_intfull
+     rtime_radsw   = 1.0d0/time_radsw
+     rtime_radlw   = 1.0d0/time_radlw
 
-    isc   = atm_block%isc
-    jsc   = atm_block%jsc
-    is_in = atm_block%isc
-    js_in = atm_block%jsc
+     isc   = atm_block%isc
+     jsc   = atm_block%jsc
+     is_in = atm_block%isc
+     js_in = atm_block%jsc
 
-      if (write_coarse_diagnostics) then
+     if (write_coarse_diagnostics) then
         call determine_required_coarse_graining_weights(diag_coarse, coarsening_strategy, require_area, require_masked_area, require_mass, require_vertical_remapping)
         if (.not. require_vertical_remapping) then
           if (require_area) then
@@ -3168,9 +3166,7 @@ module FV3GFS_io_mod
           allocate(phalf(nx, ny, levs + 1))
           allocate(phalf_coarse_on_fine(nx, ny, levs + 1))
           allocate(masked_area(nx, ny, levs))
-
           extrapolate = trim(coarsening_strategy) .eq. PRESSURE_LEVEL_EXTRAPOLATE
-
           call get_area(Atm_block, IPD_Data, nx, ny, area)
           if (trim(coarsening_strategy) .eq. PRESSURE_LEVEL) then
             call vertical_remapping_requirements(delp, area, ptop, phalf, phalf_coarse_on_fine)
@@ -3183,8 +3179,8 @@ module FV3GFS_io_mod
           endif
           call mask_area_weights(area, phalf, phalf_coarse_on_fine, extrapolate, masked_area)
         endif
-      endif
-      
+     endif
+     
 !     if(mpp_pe()==mpp_root_pe())print *,'in,fv3gfs_io. time avg, time_int=',time_int
      do idx = 1,tot_diag_idx
        requested = diag(idx)%id > 0 .or. diag_coarse(idx)%id > 0
