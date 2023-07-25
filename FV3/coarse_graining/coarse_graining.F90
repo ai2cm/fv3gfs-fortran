@@ -90,15 +90,15 @@ module coarse_graining_mod
   character(len=11) :: MODEL_LEVEL = 'model_level'
   character(len=14) :: PRESSURE_LEVEL = 'pressure_level'
   character(len=21) :: BLENDED_AREA_WEIGHTED = 'blended_area_weighted'
-  real :: sigma_blend = 0.9  ! Constant defining sigma level at which we switch to pressure-level coarsening in the blended method.
   character(len=26) :: PRESSURE_LEVEL_EXTRAPOLATE = 'pressure_level_extrapolate'
 
   ! Namelist parameters initialized with default values
   integer :: coarsening_factor = 8
   integer :: coarse_io_layout(2) = (/1, 1/)
   character(len=64) :: strategy = 'model_level'  ! Valid values are 'model_level', 'pressure_level', and 'blended_area_weighted'
+  real :: sigma_blend = 0.9  ! Constant defining sigma level at which we switch to pressure-level coarsening in the blended method.
   
-  namelist /coarse_graining_nml/ coarsening_factor, coarse_io_layout, strategy
+  namelist /coarse_graining_nml/ coarsening_factor, coarse_io_layout, strategy, sigma_blend
 
 contains
 
@@ -744,6 +744,9 @@ contains
     enddo
    end subroutine masked_block_max_2d
 
+   ! Compute the minimum of the input array along the x-dimension within coarse
+   ! grid cell edges assuming that the input array is pre-downsampled to the
+   ! coarse grid along the y-dimension.
    subroutine block_edge_min_x(fine, coarse)
      real, intent(in) :: fine(is:ie,js_coarse:je_coarse+1)
      real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse+1)
@@ -759,6 +762,9 @@ contains
      enddo
    end subroutine block_edge_min_x
 
+   ! Compute the minimum of the input array along the y-dimension within coarse
+   ! grid cell edges assuming that the input array is pre-downsampled to the
+   ! coarse grid along the x-dimension.
    subroutine block_edge_min_y(fine, coarse)
      real, intent(in) :: fine(is_coarse:ie_coarse+1,js:je)
      real, intent(out) :: coarse(is_coarse:ie_coarse+1,js_coarse:je_coarse)
