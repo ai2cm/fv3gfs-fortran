@@ -13,7 +13,7 @@ module coarse_graining_mod
        get_coarse_array_bounds, coarse_graining_init, weighted_block_average, &
        weighted_block_edge_average_x, weighted_block_edge_average_y, MODEL_LEVEL, &
        block_upsample, mask_area_weights, PRESSURE_LEVEL, PRESSURE_LEVEL_EXTRAPOLATE, &
-       vertical_remapping_requirements, vertically_remap_field, block_mode, block_min, block_max, &
+       vertical_remapping_requirements, vertically_remap_field, block_mode, &
        remap_edges_along_x, remap_edges_along_y, block_edge_sum_x, block_edge_sum_y, &
        eddy_covariance_2d_weights, eddy_covariance_3d_weights
 
@@ -58,13 +58,6 @@ module coarse_graining_mod
      module procedure masked_block_mode_2d
   end interface block_mode
 
-  interface block_min
-     module procedure masked_block_min_2d
-  end interface block_min
-
-  interface block_max
-     module procedure masked_block_max_2d
-  end interface block_max
   interface weighted_block_edge_average_x_pre_downsampled
      module procedure weighted_block_edge_average_x_pre_downsampled_unmasked
      module procedure weighted_block_edge_average_x_pre_downsampled_masked
@@ -658,40 +651,6 @@ contains
        enddo
     enddo
    end subroutine masked_block_mode_2d
-
-   subroutine masked_block_min_2d(fine, mask, coarse)
-    real, intent(in) :: fine(is:ie,js:je)
-    logical, intent(in) :: mask(is:ie,js:je)
-    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse)
-
-    integer :: i, j, i_coarse, j_coarse, offset
-
-    offset = coarsening_factor - 1
-    do i = is, ie, coarsening_factor
-       i_coarse = (i - 1) / coarsening_factor + 1
-       do j = js, je, coarsening_factor
-          j_coarse = (j - 1) / coarsening_factor + 1
-          coarse(i_coarse, j_coarse) = minval(fine(i:i+offset,j:j+offset), mask=mask(i:i + offset,j:j + offset))
-       enddo
-    enddo
-   end subroutine masked_block_min_2d
-
-   subroutine masked_block_max_2d(fine, mask, coarse)
-    real, intent(in) :: fine(is:ie,js:je)
-    logical, intent(in) :: mask(is:ie,js:je)
-    real, intent(out) :: coarse(is_coarse:ie_coarse,js_coarse:je_coarse)
-
-    integer :: i, j, i_coarse, j_coarse, offset
-
-    offset = coarsening_factor - 1
-    do i = is, ie, coarsening_factor
-       i_coarse = (i - 1) / coarsening_factor + 1
-       do j = js, je, coarsening_factor
-          j_coarse = (j - 1) / coarsening_factor + 1
-          coarse(i_coarse, j_coarse) = maxval(fine(i:i+offset,j:j+offset), mask=mask(i:i + offset,j:j + offset))
-       enddo
-    enddo
-   end subroutine masked_block_max_2d
 
    ! A naive routine for interpolating a field from the A-grid to the y-boundary
    ! of the D-grid; this is a specialized function that automatically
