@@ -13,6 +13,7 @@ CONFIG_PARAMS = [
     pytest.param("model-level-coarse-graining.yml", marks=pytest.mark.coarse),
     pytest.param("pressure-level-coarse-graining.yml", marks=pytest.mark.coarse),
     pytest.param("pressure-level-extrapolate-coarse-graining.yml", marks=pytest.mark.coarse),
+    pytest.param("blended-area-weighted-coarse-graining.yml", marks=pytest.mark.coarse),
     "restart.yml",
     "baroclinic.yml"
 ]
