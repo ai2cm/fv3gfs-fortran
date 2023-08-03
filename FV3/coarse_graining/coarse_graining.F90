@@ -13,8 +13,8 @@ module coarse_graining_mod
   public :: block_sum, compute_mass_weights, get_fine_array_bounds, &
        get_coarse_array_bounds, coarse_graining_init, weighted_block_average, &
        weighted_block_edge_average_x, weighted_block_edge_average_y, MODEL_LEVEL, &
-       block_upsample, mask_area_weights, PRESSURE_LEVEL, PRESSURE_LEVEL_EXTRAPOLATE, &
-       vertical_remapping_requirements, vertically_remap_field, block_min, block_mode, &
+       block_upsample, mask_area_weights, vertical_remapping_requirements, &
+       vertically_remap_field, block_min, block_mode, &
        remap_edges_along_x, remap_edges_along_y, block_edge_sum_x, block_edge_sum_y, &
        eddy_covariance_2d_weights, eddy_covariance_3d_weights
   public :: compute_blending_weights_agrid, compute_blending_weights_dgrid_u, compute_blending_weights_dgrid_v
