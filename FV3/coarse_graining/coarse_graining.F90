@@ -9,10 +9,10 @@ module coarse_graining_mod
   implicit none
   private
 
-  public :: PRESSURE_LEVEL, PRESSURE_LEVEL_EXTRAPOLATE, BLENDED_AREA_WEIGHTED
+  public :: MODEL_LEVEL, PRESSURE_LEVEL, PRESSURE_LEVEL_EXTRAPOLATE, BLENDED_AREA_WEIGHTED
   public :: block_sum, compute_mass_weights, get_fine_array_bounds, &
        get_coarse_array_bounds, coarse_graining_init, weighted_block_average, &
-       weighted_block_edge_average_x, weighted_block_edge_average_y, MODEL_LEVEL, &
+       weighted_block_edge_average_x, weighted_block_edge_average_y, &
        block_upsample, mask_area_weights, vertical_remapping_requirements, &
        vertically_remap_field, block_min, block_mode, &
        remap_edges_along_x, remap_edges_along_y, block_edge_sum_x, block_edge_sum_y, &
