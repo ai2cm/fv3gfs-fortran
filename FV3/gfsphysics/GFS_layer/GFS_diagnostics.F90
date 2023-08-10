@@ -3812,6 +3812,45 @@ module GFS_diagnostics
     ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%q_dt_int(:,5)
   enddo
 
+  idx = idx + 1
+  ExtDiag(idx)%axes = 2
+  ExtDiag(idx)%name = 'tsfc_via_diagnostics_manager'
+  ExtDiag(idx)%desc = 'surface temperature'
+  ExtDiag(idx)%unit = 'K'
+  ExtDiag(idx)%mod_name = 'gfs_sfc'
+  ExtDiag(idx)%coarse_graining_method = 'area_weighted'
+  ExtDiag(idx)%diag_manager_controlled = .TRUE.
+  allocate (ExtDiag(idx)%data(nblks))
+  do nb = 1,nblks
+    ExtDiag(idx)%data(nb)%var2 => Sfcprop(nb)%tsfc(:)
+  enddo
+
+  idx = idx + 1
+  ExtDiag(idx)%axes = 2
+  ExtDiag(idx)%name = 'u10m_via_diagnostics_manager'
+  ExtDiag(idx)%desc = '10 meter u wind'
+  ExtDiag(idx)%unit = 'm/s'
+  ExtDiag(idx)%mod_name = 'gfs_phys'
+  ExtDiag(idx)%coarse_graining_method = 'area_weighted'
+  ExtDiag(idx)%diag_manager_controlled = .TRUE.
+  allocate (ExtDiag(idx)%data(nblks))
+  do nb = 1,nblks
+    ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%u10m(:)
+  enddo
+
+  idx = idx + 1
+  ExtDiag(idx)%axes = 2
+  ExtDiag(idx)%name = 'v10m_via_diagnostics_manager'
+  ExtDiag(idx)%desc = '10 meter v wind'
+  ExtDiag(idx)%unit = 'm/s'
+  ExtDiag(idx)%mod_name = 'gfs_phys'
+  ExtDiag(idx)%coarse_graining_method = 'area_weighted'
+  ExtDiag(idx)%diag_manager_controlled = .TRUE.
+  allocate (ExtDiag(idx)%data(nblks))
+  do nb = 1,nblks
+    ExtDiag(idx)%data(nb)%var2 => IntDiag(nb)%v10m(:)
+  enddo
+
   call populate_emulator_diagnostics(&
     ExtDiag, IntDiag(:)%zhao_carr_emulator, 'zhao_carr_microphysics', 'emulator', nblks, idx)
   call populate_emulator_diagnostics(&
