@@ -1387,6 +1387,7 @@ contains
     integer :: ngc, nwater
 
     real, allocatable :: a2(:,:),a3(:,:,:), wk(:,:,:), wz(:,:,:), ucoor(:,:,:), vcoor(:,:,:)
+    real, allocatable :: equivalent_potential_temperature(:,:,:)
     real, allocatable :: ustm(:,:), vstm(:,:)
     real, allocatable :: slp(:,:), depress(:,:), ws_max(:,:), tc_count(:,:)
     real, allocatable :: u2(:,:), v2(:,:), x850(:,:), var1(:,:), var2(:,:), var3(:,:)
@@ -2813,8 +2814,8 @@ contains
           !wk here contains layer-mean pressure
 
           allocate(var2(isc:iec,jsc:jec))
-          allocate(a3(isc:iec,jsc:jec,npz))
-          call eqv_pot(a3, Atm(n)%pt, Atm(n)%delp, Atm(n)%delz, Atm(n)%peln, Atm(n)%pkz, Atm(n)%q(isd:ied,jsd:jed,1:npz,sphum), &
+          allocate(equivalent_potential_temperature(isc:iec,jsc:jec,npz))
+          call eqv_pot(equivalent_potential_temperature, Atm(n)%pt, Atm(n)%delp, Atm(n)%delz, Atm(n)%peln, Atm(n)%pkz, Atm(n)%q(isd:ied,jsd:jed,1:npz,sphum), &
                        isc, iec, jsc, jec, ngc, npz, Atm(n)%flagstruct%hydrostatic, Atm(n)%flagstruct%moist_phys)
 
 !$OMP parallel do default(shared)
@@ -2823,7 +2824,7 @@ contains
              a2(i,j) = 0.
              var2(i,j) = 0.
 
-             call getcape(npz, wk(i,j,:), Atm(n)%pt(i,j,:), -Atm(n)%delz(i,j,:), Atm(n)%q(i,j,:,sphum), a3(i,j,:), a2(i,j), var2(i,j), source_in=1)
+             call getcape(npz, wk(i,j,:), Atm(n)%pt(i,j,:), -Atm(n)%delz(i,j,:), Atm(n)%q(i,j,:,sphum), equivalent_potential_temperature(i,j,:), a2(i,j), var2(i,j), source_in=1)
           enddo
           enddo
 
@@ -2841,7 +2842,7 @@ contains
           endif
 
           deallocate(var2)
-          deallocate(a3)
+          deallocate(equivalent_potential_temperature)
 
        endif
 
