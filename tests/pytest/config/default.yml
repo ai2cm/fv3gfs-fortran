@@ -63,6 +63,8 @@ diag_table:
     - {module_name: dynamics, field_name: ctt, output_name: TMPctp}
     - {module_name: dynamics, field_name: ctp, output_name: PRESctp}
     - {module_name: dynamics, field_name: ctz, output_name: HGTctp}
+    - {module_name: dynamics, field_name: z500, output_name: z500}
+    - {module_name: dynamics, field_name: cape, output_name: cape}
     name: atmos_dt_atmos
     frequency: 0
     frequency_units: hours
