@@ -1238,7 +1238,7 @@ contains
    call interpolate_to_d_grid_and_downsample_along_y(phalf, phalf_d_grid, npz+1)
    call weighted_block_edge_average_x_pre_downsampled(phalf_d_grid, dx, coarse_phalf_d_grid, npz+1)
    call compute_coarse_pfull(coarse_phalf_d_grid, coarse_pfull_d_grid, x_pad=0, y_pad=1)
-   call block_edge_min_x(phalf_d_grid(is:ie,js_coarse:je_coarse,npz+1), blending_pressure)
+   call block_edge_min_x(phalf_d_grid(is:ie,js_coarse:je_coarse+1,npz+1), blending_pressure)
    coarse_surface_pressure = coarse_phalf_d_grid(is_coarse:ie_coarse,js_coarse:je_coarse+1,npz+1)
    blending_pressure = sigma_blend * blending_pressure
 
