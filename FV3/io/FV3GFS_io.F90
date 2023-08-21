@@ -3036,15 +3036,21 @@ module FV3GFS_io_mod
       requested = Diag(index)%id .gt. 0 .or. Diag_coarse(index)%id .gt. 0
       if (requested .and. Diag(index)%diag_manager_controlled) then
         if (Diag(index)%axes .eq. 2) then
-          do j = 1, ny
-            jj = j + jsc - 1
-            do i = 1, nx
-                ii = i + isc - 1
-                nb = Atm_block%blkno(ii,jj)
-                ix = Atm_block%ixp(ii,jj)
-                var2d(i,j) = Diag(index)%data(nb)%var2(ix)
+          if (trim(Diag(index)%name) .eq. 'ocean_fraction' .or. &
+              trim(Diag(index)%name) .eq. 'land_fraction' .or. &
+              trim(Diag(index)%name) .eq. 'sea_ice_fraction') then
+            call compute_surface_type_fraction(Atm_block, isc, jsc, nx, ny, Diag(index), var2d)
+          else
+            do j = 1, ny
+              jj = j + jsc - 1
+              do i = 1, nx
+                  ii = i + isc - 1
+                  nb = Atm_block%blkno(ii,jj)
+                  ix = Atm_block%ixp(ii,jj)
+                  var2d(i,j) = Diag(index)%data(nb)%var2(ix)
+              enddo
             enddo
-          enddo
+          endif
           if (Diag(index)%id > 0) then
             used = send_data(Diag(index)%id, var2d, Time)
           endif
@@ -3809,6 +3815,38 @@ subroutine store_data3D_coarse_blended_area_weighted(id, name, method, nx, ny, n
 
     used = send_data(id, coarse, Time)
 end subroutine store_data3D_coarse_blended_area_weighted
+
+subroutine compute_surface_type_fraction(Atm_block, isc, jsc, nx, ny, diagnostic, result)
+  type(block_control_type), intent(in) :: Atm_block
+  integer, intent(in) :: isc, jsc, nx, ny
+  type(IPD_diag_type), intent(in) :: diagnostic
+  real, intent(out) :: result(nx, ny)
+
+  integer :: i, j, ii, jj, nb, ix, surface_type_code
+
+  select case(trim(diagnostic%name))
+    case ('ocean_fraction')
+      surface_type_code = 0
+    case ('land_fraction')
+      surface_type_code = 1
+    case ('sea_ice_fraction')
+      surface_type_code = 2
+  end select
+
+  do j = 1, ny
+    jj = j + jsc - 1
+    do i = 1, nx
+        ii = i + isc - 1
+        nb = Atm_block%blkno(ii,jj)
+        ix = Atm_block%ixp(ii,jj)
+        if (nint(diagnostic%data(nb)%var2(ix)) .eq. surface_type_code) then
+          result(i,j) = 1.0
+        else
+          result(i,j) = 0.0
+        endif
+    enddo
+  enddo
+end subroutine compute_surface_type_fraction
 
 subroutine sfc_data_override(Time, IPD_data, Atm_block, Model)
   ! Ported from the GFDL SHiELD_physics repository.

@@ -145,6 +145,15 @@ diag_table:
     frequency_units: hours
     time_axis_name: time
     time_axis_units: hours
+  - field_configs:
+    - {module_name: gfs_sfc, field_name: ocean_fraction, output_name: ocean_fraction}
+    - {module_name: gfs_sfc, field_name: land_fraction, output_name: land_fraction}
+    - {module_name: gfs_sfc, field_name: sea_ice_fraction, output_name: sea_ice_fraction}
+    name: sfc_dt_atmos_diag_manager_controlled
+    frequency: 15
+    frequency_units: minutes
+    time_axis_name: time
+    time_axis_units: minutes
 experiment_name: default
 forcing: "gs://vcm-fv3config/data/base_forcing/v1.1/"
 orographic_forcing: gs://vcm-fv3config/data/orographic_data/v1.0

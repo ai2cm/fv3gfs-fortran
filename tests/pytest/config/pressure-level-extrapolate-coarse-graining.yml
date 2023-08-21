@@ -264,6 +264,15 @@ diag_table:
     frequency_units: minutes
     time_axis_name: time
     time_axis_units: minutes
+  - field_configs:
+    - {module_name: gfs_sfc, field_name: ocean_fraction_coarse, output_name: ocean_fraction_coarse}
+    - {module_name: gfs_sfc, field_name: land_fraction_coarse, output_name: land_fraction_coarse}
+    - {module_name: gfs_sfc, field_name: sea_ice_fraction_coarse, output_name: sea_ice_fraction_coarse}
+    name: sfc_dt_atmos_diag_manager_controlled_coarse
+    frequency: 15
+    frequency_units: minutes
+    time_axis_name: time
+    time_axis_units: minutes
 field_table: gs://vcm-fv3config/config/field_table/TKE-EDMF/v1.1/field_table
 experiment_name: pressure-level-extrapolate-coarse-graining
 forcing: "gs://vcm-fv3config/data/base_forcing/v1.1/"

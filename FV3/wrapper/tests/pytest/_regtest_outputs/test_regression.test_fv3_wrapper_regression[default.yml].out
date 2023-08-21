@@ -22,6 +22,12 @@
 ./sfc_dt_atmos.tile4.nc 97b6f4e6a535389852e777df02c60a27
 ./sfc_dt_atmos.tile5.nc 47378788d8bb062b567c38fc01434a84
 ./sfc_dt_atmos.tile6.nc ffb00da06b9d14f6936132f58e322ca8
+./sfc_dt_atmos_diag_manager_controlled.tile1.nc 1eaaa160b01fe8e6bf4ba907e6609bf7
+./sfc_dt_atmos_diag_manager_controlled.tile2.nc 042f134636cde39e068bf8f887e46c1e
+./sfc_dt_atmos_diag_manager_controlled.tile3.nc ea4051d0cf84a32dfe1adee454f5aa1b
+./sfc_dt_atmos_diag_manager_controlled.tile4.nc 7c99f8b1113dedcec2a49f3ef0be56f8
+./sfc_dt_atmos_diag_manager_controlled.tile5.nc f864cdb9882c151bcc605d92d52dba5b
+./sfc_dt_atmos_diag_manager_controlled.tile6.nc 125f663392c2922da88521ba08e34a35
 INPUT/gfs_ctrl.nc 72479dcd4e5e38f802cd1ac9bc71aa8b
 INPUT/gfs_data.tile1.nc c0bba587540ba06a45a16ef06134224b
 INPUT/gfs_data.tile2.nc d14b7b0ffc2853431014e56feaf7476a

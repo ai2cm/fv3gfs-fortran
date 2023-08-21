@@ -22,6 +22,12 @@ ff729abfa0b6758b941777f1aa9b9115  sfc_dt_atmos.tile3.nc
 cba4d01629debd5e1bfd3f0759a62b37  sfc_dt_atmos.tile4.nc
 83f6c96905047dec2a154ee3a6076bc5  sfc_dt_atmos.tile5.nc
 14253c7ce21c9007eaf4844906586445  sfc_dt_atmos.tile6.nc
+1eaaa160b01fe8e6bf4ba907e6609bf7  sfc_dt_atmos_diag_manager_controlled.tile1.nc
+042f134636cde39e068bf8f887e46c1e  sfc_dt_atmos_diag_manager_controlled.tile2.nc
+ea4051d0cf84a32dfe1adee454f5aa1b  sfc_dt_atmos_diag_manager_controlled.tile3.nc
+7c99f8b1113dedcec2a49f3ef0be56f8  sfc_dt_atmos_diag_manager_controlled.tile4.nc
+f864cdb9882c151bcc605d92d52dba5b  sfc_dt_atmos_diag_manager_controlled.tile5.nc
+125f663392c2922da88521ba08e34a35  sfc_dt_atmos_diag_manager_controlled.tile6.nc
 03f92921ec61bc2e8650bcc3b1cc3971  RESTART/fv_core.res.nc
 1742fd7ffd5e2e1d2d7a8acc0f4450e4  RESTART/fv_core.res.tile1.nc
 846e689e0bd572179f7bd42562b1a9c1  RESTART/fv_core.res.tile2.nc
