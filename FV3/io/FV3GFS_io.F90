@@ -3018,7 +3018,8 @@ module FV3GFS_io_mod
         allocate(masked_area(nx, ny, levs))
         extrapolate = trim(coarsening_strategy) .eq. PRESSURE_LEVEL_EXTRAPOLATE
         call get_area(Atm_block, IPD_Data, nx, ny, area)
-        if (trim(coarsening_strategy) .eq. PRESSURE_LEVEL) then
+        if (trim(coarsening_strategy) .eq. PRESSURE_LEVEL .or. &
+            trim(coarsening_strategy) .eq. PRESSURE_LEVEL_EXTRAPOLATE) then
           call vertical_remapping_requirements(delp, area, ptop, phalf, phalf_coarse_on_fine)
         else
           call get_coarse_array_bounds(is_coarse, ie_coarse, js_coarse, je_coarse)
@@ -3168,7 +3169,8 @@ module FV3GFS_io_mod
           allocate(masked_area(nx, ny, levs))
           extrapolate = trim(coarsening_strategy) .eq. PRESSURE_LEVEL_EXTRAPOLATE
           call get_area(Atm_block, IPD_Data, nx, ny, area)
-          if (trim(coarsening_strategy) .eq. PRESSURE_LEVEL) then
+          if (trim(coarsening_strategy) .eq. PRESSURE_LEVEL .or. &
+              trim(coarsening_strategy) .eq. PRESSURE_LEVEL_EXTRAPOLATE) then
             call vertical_remapping_requirements(delp, area, ptop, phalf, phalf_coarse_on_fine)
           else
             call get_coarse_array_bounds(is_coarse, ie_coarse, js_coarse, je_coarse)
