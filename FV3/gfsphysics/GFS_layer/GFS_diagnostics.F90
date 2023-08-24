@@ -3020,7 +3020,7 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 2
     ExtDiag(idx)%name = 'ocean_fraction'
-    ExtDiag(idx)%desc = 'fraction of grid cell covered by ocean'
+    ExtDiag(idx)%desc = 'fraction of grid cell classified as ocean type'
     ExtDiag(idx)%unit = 'fraction'
     ExtDiag(idx)%mod_name = 'gfs_sfc'
     ExtDiag(idx)%diag_manager_controlled = .true.
@@ -3033,7 +3033,7 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 2
     ExtDiag(idx)%name = 'land_fraction'
-    ExtDiag(idx)%desc = 'fraction of grid cell covered by land'
+    ExtDiag(idx)%desc = 'fraction of grid cell classified as land type'
     ExtDiag(idx)%unit = 'fraction'
     ExtDiag(idx)%mod_name = 'gfs_sfc'
     ExtDiag(idx)%diag_manager_controlled = .true.
@@ -3046,7 +3046,7 @@ module GFS_diagnostics
     idx = idx + 1
     ExtDiag(idx)%axes = 2
     ExtDiag(idx)%name = 'sea_ice_fraction'
-    ExtDiag(idx)%desc = 'fraction of grid cell covered by sea ice'
+    ExtDiag(idx)%desc = 'fraction of grid cell classified as sea ice type'
     ExtDiag(idx)%unit = 'fraction'
     ExtDiag(idx)%mod_name = 'gfs_sfc'
     ExtDiag(idx)%diag_manager_controlled = .true.
