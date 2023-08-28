@@ -100,21 +100,17 @@ def test_regression(executable, config_filename: str, check_layout_invariance, t
     _checksum_rundir(str(rundir), file=system_regtest)
 
     if check_layout_invariance:
-        config_1x2_layout = get_config(config_filename)
-        config_1x2_layout["namelist"]["fv_core_nml"]["layout"] = [1, 2]
-        rundir_1x2_layout = tmpdir.join("rundir-1x2-layout")
-        run_native(executable, config_1x2_layout, rundir_1x2_layout)
+        config_modified_layout = get_config(config_filename)
+        config_modified_layout["namelist"]["fv_core_nml"]["layout"] = [1, 2]
+        rundir_modified_layout = tmpdir.join("rundir-modified-layout")
+        run_native(executable, config_modified_layout, rundir_modified_layout)
 
-        expected_diagnostic_checksums = _checksum_diagnostics(rundir)
-        expected_restart_checksums = _checksum_restart_files(rundir)
+        expected_checksums = _checksum_restart_files_and_diagnostics(rundir)
+        result_checksums = _checksum_restart_files_and_diagnostics(rundir_modified_layout)
 
-        result_diagnostic_checksums = _checksum_diagnostics(rundir_1x2_layout)
-        result_restart_checksums = _checksum_restart_files(rundir_1x2_layout)
+        assert result_checksums == expected_checksums
 
-        assert result_diagnostic_checksums == expected_diagnostic_checksums
-        assert result_restart_checksums == expected_restart_checksums
-
-        shutil.rmtree(rundir_1x2_layout)
+        shutil.rmtree(rundir_modified_layout)
     shutil.rmtree(rundir)
 
 
@@ -326,6 +322,13 @@ def _checksum_restart_files(rundir: str) -> typing.Dict[str, str]:
 def _checksum_diagnostics(rundir: str):
     files = glob.glob(os.path.join(rundir, "*.nc"))
     return {os.path.basename(file): checksum_file(file) for file in files}
+
+
+def _checksum_restart_files_and_diagnostics(rundir: str):
+    checksums = {}
+    checksums["restart_files"] = _checksum_diagnostics(rundir)
+    checksums["diagnostics"] = _checksum_diagnostics(rundir)
+    return checksums
 
 
 def _checksum_rundir(rundir: str, file):
