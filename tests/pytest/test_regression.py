@@ -4,7 +4,6 @@ import glob
 import os
 import shutil
 import textwrap
-import platform
 import subprocess
 import pytest
 import fv3config
@@ -51,13 +50,6 @@ def executable(request):
     return EXECUTABLES[request.param]
 
 
-@pytest.fixture(params=[platform.system()])
-def system_regtest(regtest):
-    # A hack to get the system name into the regtest names
-    # e.g. tests/pytest/test_regression.py::test_checksum_emulation[Linux]
-    return regtest
-
-
 def run_native(executable, config, run_dir: str, error_expected=False):
     fv3config.write_run_directory(config, run_dir)
     n_processes = fv3config.config.get_n_processes(config)
@@ -93,11 +85,11 @@ def get_config(filename):
         pytest.param("blended-area-weighted-coarse-graining.yml", True, marks=pytest.mark.coarse)
     ],
 )
-def test_regression(executable, config_filename: str, check_layout_invariance, tmpdir, system_regtest):
+def test_regression(executable, config_filename: str, check_layout_invariance, tmpdir, regtest):
     config = get_config(config_filename)
     rundir = tmpdir.join("rundir")
     run_native(executable, config, str(rundir))
-    _checksum_rundir(str(rundir), file=system_regtest)
+    _checksum_rundir(str(rundir), file=regtest)
 
     if check_layout_invariance:
         config_modified_layout = get_config(config_filename)
@@ -340,9 +332,9 @@ def _checksum_rundir(rundir: str, file):
 
 
 @pytest.mark.emulation
-def test_checksum_emulation(emulation_run, system_regtest):
+def test_checksum_emulation(emulation_run, regtest):
     _, run_dir = emulation_run
-    _checksum_rundir(run_dir, file=system_regtest)
+    _checksum_rundir(run_dir, file=regtest)
 
 
 if __name__ == "__main__":
