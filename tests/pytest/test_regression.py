@@ -2,13 +2,12 @@ import copy
 import datetime
 import glob
 import os
-from os.path import join
 import shutil
+import textwrap
 import pytest
 import fv3config
 import numpy as np
 import xarray
-import subprocess
 import typing
 import hashlib
 
@@ -16,47 +15,14 @@ import re
 import prescribed_ssts
 
 
+EMULATION_DEBUG_MODE_ISSUE = textwrap.dedent("""
+    We do not build the fortran model in debug mode with call_py_fort, because
+    it leads to errors even in non-emulation cases.  This means that we cannot
+    run emulation-related tests in debug mode.  See GitHub issue #365 for more
+    details.
+""")
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
-REFERENCE_DIR = os.path.join(TEST_DIR, "reference")
-OUTPUT_DIR = os.path.join(TEST_DIR, "output")
 CONFIG_DIR = os.path.join(TEST_DIR, "config")
-SUBMIT_JOB_FILENAME = os.path.join(TEST_DIR, "run_files/submit_job.sh")
-STDOUT_FILENAME = "stdout.log"
-STDERR_FILENAME = "stderr.log"
-MD5SUM_FILENAME = "md5.txt"
-SERIALIZE_MD5SUM_FILENAME = "md5_serialize.txt"
-GOOGLE_APP_CREDS = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", None)
-
-USE_LOCAL_ARCHIVE = True
-
-config_filenames = os.listdir(CONFIG_DIR)
-
-
-@pytest.fixture
-def image_version(request):
-    return request.config.getoption("--image_version")
-
-
-@pytest.fixture
-def image(request):
-    return request.config.getoption("--image")
-
-
-@pytest.fixture
-def reference_dir(request):
-    return request.config.getoption("--refdir")
-
-
-@pytest.fixture
-def code_root(request):
-    return request.config.getoption("--code_root")
-
-
-@pytest.fixture
-def image_runner(request):
-    if request.config.getoption("--native"):
-        pytest.skip()
-    return request.config.getoption("--image_runner")
 
 
 def get_config(filename):
@@ -65,67 +31,41 @@ def get_config(filename):
         return fv3config.load(f)
 
 
-def get_run_dir(model_image_tag, config):
-    run_name = config["experiment_name"]
-    return os.path.join(OUTPUT_DIR, model_image_tag, run_name)
-
-
-def get_n_processes(config):
-    layout = config["namelist"]["fv_core_nml"]["layout"]
-    return 6 * layout[0] * layout[1]
-
-
 @pytest.mark.parametrize(
-    ("config_filename", "tag"),
+    ("config_filename", "check_layout_invariance"),
     [
-        ("default.yml", "{version}-debug"),
-        ("baroclinic.yml", "{version}-debug"),
-        ("default.yml", "{version}"),
-        ("default.yml", "{version}-serialize"),
-        ("restart.yml", "{version}"),
-        ("model-level-coarse-graining.yml", "{version}-debug"),
-        ("pressure-level-coarse-graining.yml", "{version}-debug"),
-        ("pressure-level-extrapolate-coarse-graining.yml", "{version}-debug"),
-        ("blended-area-weighted-coarse-graining.yml", "{version}-debug")
+        pytest.param("default.yml", False, marks=pytest.mark.basic),
+        pytest.param("model-level-coarse-graining.yml", True, marks=pytest.mark.coarse),
+        pytest.param("pressure-level-coarse-graining.yml", True, marks=pytest.mark.coarse),
+        pytest.param("pressure-level-extrapolate-coarse-graining.yml", True, marks=pytest.mark.coarse),
+        pytest.param("baroclinic.yml", False, marks=pytest.mark.basic),
+        pytest.param("restart.yml", False, marks=pytest.mark.basic),
+        pytest.param("blended-area-weighted-coarse-graining.yml", True, marks=pytest.mark.coarse)
     ],
 )
-def test_regression(
-    config_filename, tag, image, image_version, reference_dir, image_runner
-):
-    model_image_tag = tag.format(version=image_version)
-    model_image = f"{image}:{model_image_tag}"
-    config = get_config(config_filename)
-    run_dir = get_run_dir(model_image_tag, config)
-    run_model(config, run_dir, model_image, image_runner)
-    run_name = config["experiment_name"]
-    run_reference_dir = os.path.join(reference_dir, run_name)
-    md5sum_filename = os.path.join(run_reference_dir, MD5SUM_FILENAME)
-    check_rundir_md5sum(run_dir, md5sum_filename)
-    if "serialize" in model_image:
-        serialize_md5sum_filename = os.path.join(
-            run_reference_dir, SERIALIZE_MD5SUM_FILENAME
-        )
-        check_rundir_md5sum(run_dir, serialize_md5sum_filename)
-    shutil.rmtree(run_dir)
-
-
-@pytest.mark.parametrize(
-    "config_filename",
-    [
-        pytest.param("default.yml", marks=pytest.mark.basic),
-        pytest.param("model-level-coarse-graining.yml", marks=pytest.mark.coarse),
-        pytest.param("pressure-level-coarse-graining.yml", marks=pytest.mark.coarse),
-        pytest.param("pressure-level-extrapolate-coarse-graining.yml", marks=pytest.mark.coarse),
-        "baroclinic.yml",
-        "restart.yml",
-        pytest.param("blended-area-weighted-coarse-graining.yml", marks=pytest.mark.coarse)
-    ],
-)
-def test_regression_native(run_native, config_filename: str, tmpdir, system_regtest):
+def test_regression(run_native, config_filename: str, check_layout_invariance, tmpdir, system_regtest):
     config = get_config(config_filename)
     rundir = tmpdir.join("rundir")
     run_native(config, str(rundir))
     _checksum_rundir(str(rundir), file=system_regtest)
+
+    if check_layout_invariance:
+        config_1x2_layout = get_config(config_filename)
+        config_1x2_layout["namelist"]["fv_core_nml"]["layout"] = [1, 2]
+        rundir_1x2_layout = tmpdir.join("rundir-1x2-layout")
+        run_native(config_1x2_layout, rundir_1x2_layout)
+
+        expected_diagnostic_checksums = _checksum_diagnostics(rundir)
+        expected_restart_checksums = _checksum_restart_files(rundir)
+
+        result_diagnostic_checksums = _checksum_diagnostics(rundir_1x2_layout)
+        result_restart_checksums = _checksum_restart_files(rundir_1x2_layout)
+
+        assert result_diagnostic_checksums == expected_diagnostic_checksums
+        assert result_restart_checksums == expected_restart_checksums
+
+        shutil.rmtree(rundir_1x2_layout)
+    shutil.rmtree(rundir)
 
 
 @pytest.mark.parametrize(
@@ -133,10 +73,13 @@ def test_regression_native(run_native, config_filename: str, tmpdir, system_regt
     [
         pytest.param("default.yml", marks=pytest.mark.basic),
         pytest.param("emulation.yml", marks=pytest.mark.emulation),
-        "restart.yml"
+        pytest.param("restart.yml", marks=pytest.mark.basic)
     ],
 )
-def test_restart_reproducibility(run_native, config_filename, tmpdir):
+def test_restart_reproducibility(run_native, executable, config_filename, tmpdir):
+    if "emulation" in config_filename and "debug" in str(executable):
+        pytest.skip(reason=EMULATION_DEBUG_MODE_ISSUE)
+
     config_template = get_config(config_filename)
     config_template["diag_table"] = "no_output"
     config_template["namelist"]["gfs_physics_nml"]["fhswr"] = 900
@@ -164,6 +107,9 @@ def test_restart_reproducibility(run_native, config_filename, tmpdir):
     segmented_checksums = _checksum_restart_files(segment_2_rundir)
 
     assert segmented_checksums == continuous_checksums
+    shutil.rmtree(segment_1_rundir)
+    shutil.rmtree(segment_2_rundir)
+    shutil.rmtree(continuous_rundir)
 
 
 def test_indefinite_physics_diagnostics(run_native, tmpdir):
@@ -238,7 +184,10 @@ def test_use_prescribed_sea_surface_properties_error(run_native, tmpdir, message
 
 
 @pytest.fixture(scope="session")
-def emulation_run(run_native, tmpdir_factory):
+def emulation_run(run_native, executable, tmpdir_factory):
+    if "debug" in str(executable):
+        pytest.skip(reason=EMULATION_DEBUG_MODE_ISSUE)
+
     config = get_config("emulation.yml")
     rundir = tmpdir_factory.mktemp("rundir")
     run_dir = str(rundir)
@@ -263,7 +212,10 @@ def test_zhao_carr_diagnostics(emulation_run, regtest, tile):
 
 
 @pytest.mark.emulation
-def test_gscond_logs(run_native, regtest, tmpdir):
+def test_gscond_logs(run_native, executable, regtest, tmpdir):
+    if "debug" in str(executable):
+        pytest.skip(reason=EMULATION_DEBUG_MODE_ISSUE)
+
     config = get_config("emulation.yml")
     config["namelist"]["gfs_physics_nml"]["emulate_gscond_only"] = True
     rundir = tmpdir.join("rundir")
@@ -338,130 +290,6 @@ def _checksum_rundir(rundir: str, file):
 def test_checksum_emulation(emulation_run, system_regtest):
     _, run_dir = emulation_run
     _checksum_rundir(run_dir, file=system_regtest)
-
-
-def check_rundir_md5sum(run_dir, md5sum_filename):
-    ensure_reference_exists(md5sum_filename)
-    subprocess.check_call(["md5sum", "-c", md5sum_filename], cwd=run_dir)
-
-
-def ensure_reference_exists(filename):
-    if not os.path.isfile(filename):
-        raise AssertionError(
-            f"reference md5sum does not exist at " + filename + ","
-            f" you can create it with `set_reference.sh` -- refer to README.md"
-        )
-
-
-def run_model_docker(rundir, model_image, n_processes, additional_env_vars=None):
-    if USE_LOCAL_ARCHIVE:
-        archive = fv3config.get_cache_dir()
-        archive_mount = ["-v", f"{archive}:{archive}"]
-    else:
-        archive_mount = []
-
-    if GOOGLE_APP_CREDS is not None:
-        secret_mount = ["-v", f"{GOOGLE_APP_CREDS}:/tmp/key.json"]
-        env_vars = ["--env", "GOOGLE_APPLICATION_CREDENTIALS"]
-    else:
-        secret_mount = []
-        env_vars = []
-
-    if additional_env_vars is not None:
-        env_vars += additional_env_vars
-
-    docker_runpath = ""
-    docker_run = ["docker", "run", "--rm"]
-    rundir_abs = os.path.abspath(rundir)
-    rundir_mount = ["-v", f"{rundir_abs}:" + docker_runpath + "/rundir"]
-    data_abs = os.path.abspath(os.path.join(rundir_abs, "test_data"))
-    os.makedirs(data_abs, exist_ok=True)
-    data_mount = ["-v", f"{data_abs}:" + docker_runpath + "/rundir/test_data"]
-    fv3out_filename = join(rundir, "stdout.log")
-    fv3err_filename = join(rundir, "stderr.log")
-    call = (
-        docker_run
-        + rundir_mount
-        + archive_mount
-        + data_mount
-        + secret_mount
-        + env_vars
-        + [model_image]
-        + ["bash", "/rundir/submit_job.sh", str(n_processes)]
-    )
-    with open(fv3out_filename, "w") as fv3out_f, open(fv3err_filename, "w") as fv3err_f:
-        subprocess.check_call(
-            call,
-            stdout=fv3out_f,
-            stderr=fv3err_f,
-        )
-
-
-def run_model_sarus(rundir, model_image, n_processes):
-    shutil.copy(
-        os.path.join(TEST_DIR, "run_files/job_jenkins_sarus"),
-        os.path.join(rundir, "job_jenkins_sarus"),
-    )
-    # run job_jenkins_sarus with env var FV3_CONTAINER set to model_image
-    env = os.environ.copy()
-    env["FV3_CONTAINER"] = model_image
-    env["SCRATCH_DIR"] = rundir
-    call = ["sbatch", "--wait", f"--ntasks={n_processes}", "job_jenkins_sarus"]
-    subprocess.check_call(call, env=env, cwd=rundir)
-
-
-def check_md5sum(run_dir, md5sum_filename):
-    subprocess.check_call(["md5sum", "-c", md5sum_filename], cwd=run_dir)
-
-
-def write_run_directory(config, dirname):
-    fv3config.write_run_directory(config, dirname)
-    shutil.copy(SUBMIT_JOB_FILENAME, os.path.join(dirname, "submit_job.sh"))
-
-
-def run_model(config, run_dir, model_image, image_runner, additional_env_vars=None):
-    if os.path.isdir(run_dir):
-        shutil.rmtree(run_dir)
-    os.makedirs(run_dir)
-    write_run_directory(config, run_dir)
-    n_processes = get_n_processes(config)
-    if image_runner == "docker":
-        run_model_docker(
-            run_dir, model_image, n_processes, additional_env_vars=additional_env_vars
-        )
-    elif image_runner == "sarus":
-        run_model_sarus(run_dir, model_image, n_processes)
-    else:
-        raise NotImplementedError("image_runner must be one of 'docker' or 'sarus'")
-
-
-@pytest.mark.parametrize(
-    ("config_filename", "tag", "layout"),
-    [
-        ("model-level-coarse-graining.yml", "{version}", [1, 2]),
-        ("pressure-level-coarse-graining.yml", "{version}", [1, 2]),
-        ("pressure-level-extrapolate-coarse-graining.yml", "{version}", [1, 2]),
-        ("blended-area-weighted-coarse-graining.yml", "{version}", [1, 2])
-    ],
-    ids=lambda x: str(x),
-)
-def test_run_reproduces_across_layouts(
-    config_filename, tag, layout, image, image_version, image_runner, reference_dir
-):
-    model_image_tag = tag.format(version=image_version)
-    model_image = f"{image}:{model_image_tag}"
-    config = get_config(config_filename)
-    config["namelist"]["fv_core_nml"]["layout"] = layout
-    layout_x, layout_y = layout
-    run_name = f"{config['experiment_name']}_{layout_x}x{layout_y}"
-    run_dir = join(OUTPUT_DIR, model_image_tag, run_name)
-    run_model(config, run_dir, model_image, image_runner)
-
-    reference_run_name = config["experiment_name"]
-    run_reference_dir = join(reference_dir, reference_run_name)
-    md5sum_filename = join(run_reference_dir, MD5SUM_FILENAME)
-    check_rundir_md5sum(run_dir, md5sum_filename)
-    shutil.rmtree(run_dir)
 
 
 if __name__ == "__main__":
