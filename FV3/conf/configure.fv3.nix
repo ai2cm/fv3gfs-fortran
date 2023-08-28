@@ -68,7 +68,7 @@ endif
 
 FFLAGS_OPT = -O2 
 FFLAGS_REPRO = -O2 -g -fbacktrace
-FFLAGS_DEBUG = -O0 -g -fbacktrace -fno-fast-math -ffree-line-length-none -fno-backslash -pedantic -Waliasing -Wampersand -Wline-truncation -Wsurprising -Wtabs -Wunderflow -fdump-core -ffpe-trap=invalid,zero,overflow -fbounds-check -finit-real=nan -finit-integer=9999999 -finit-character=35
+FFLAGS_DEBUG = -O0 -g -fbacktrace -fno-fast-math -ffree-line-length-none -fno-backslash -pedantic -Waliasing -Wampersand -Wline-truncation -Wsurprising -Wtabs -Wunderflow -fdump-core -ffpe-trap=invalid,zero,overflow -fbounds-check -finit-real=nan -finit-integer=9999999 -finit-logical=true -finit-character=35
 
 TRANSCENDENTALS := -fast-transcendentals
 FFLAGS_OPENMP = -fopenmp

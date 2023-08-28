@@ -17,12 +17,18 @@ import prescribed_ssts
 from pathlib import Path
 
 
-EMULATION_DEBUG_MODE_ISSUE = textwrap.dedent("""
-    We do not build the fortran model in debug mode with call_py_fort, because
-    it leads to errors even in non-emulation cases.  This means that we cannot
-    run emulation-related tests in debug mode.  See GitHub issue #365 for more
-    details.
-""")
+EMULATION_DEBUG_MODE_ISSUE = (
+    "We do not build the fortran model in debug mode with call_py_fort, because "
+    "it leads to errors even in non-emulation cases.  This means that we cannot "
+    "run emulation-related tests in debug mode.  See GitHub issue #365 for more "
+    "details."
+)
+RESTART_REPRODUCIBILITY_DEBUG_MODE_ISSUE = (
+    "The model does not restart reproducibly when compiled in debug mode, due to "
+    "the -finit-logical=true compiler flag.  If this flag is removed and all "
+    "other debug-mode compiler flags are retained, the model restarts "
+    "reproducibly.  See GitHub issue #381 for more details."
+)
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
 CONFIG_DIR = os.path.join(TEST_DIR, "config")
 
@@ -115,8 +121,11 @@ def test_regression(executable, config_filename: str, check_layout_invariance, t
     ],
 )
 def test_restart_reproducibility(executable, config_filename, tmpdir):
-    if "emulation" in config_filename and "debug" in str(executable):
-        pytest.skip(reason=EMULATION_DEBUG_MODE_ISSUE)
+    if config_filename == "emulation.yml" and "debug" in str(executable):
+        pytest.skip(EMULATION_DEBUG_MODE_ISSUE)
+
+    if "debug" in str(executable):
+        pytest.skip(RESTART_REPRODUCIBILITY_DEBUG_MODE_ISSUE)
 
     config_template = get_config(config_filename)
     config_template["diag_table"] = "no_output"
