@@ -12,7 +12,7 @@ build:
 build_repro: ## build FV3 locally (assuming all tools and dependencies are available in the environment)
 	$(MAKE) -j 8 -C FV3
 	mkdir -p bin
-	mv FV3/fv3.exe bin/fv3.repro.exe
+	cp FV3/fv3.exe bin/fv3.repro.exe
 
 build_wrapper:
 	$(MAKE) -j 8 -C FV3 wrapper_build
@@ -20,10 +20,7 @@ build_wrapper:
 build_debug: ## build FV3 locally in debug mode (DEBUG and REPRO cannot be set to Y simultaneously)
 	CALLPYFORT= DEBUG=Y REPRO= $(MAKE) -j 8 -C FV3
 	mkdir -p bin
-	mv FV3/fv3.exe bin/fv3.debug.exe
-
-build_wrapper_debug: ## build FV3 locally in debug mode (DEBUG and REPRO cannot be set to Y simultaneously)
-	CALLPYFORT= DEBUG=Y REPRO= $(MAKE) -j 8 -C FV3 wrapper_build
+	cp FV3/fv3.exe bin/fv3.debug.exe
 
 test_native: DIR=coverage_$(shell date -Is)
 test_native: ## run native tests (all tools and build dependencies are assumed to be available in the environment)
