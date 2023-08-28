@@ -48,19 +48,23 @@ commands:
           key: nix-fv3gfs-fortran-debug-{{ .Environment.CIRCLE_SHA1 }}
           paths:
             - FV3/
-  test_basic:
+  test_fortran_basic:
     steps:
       - run:
           name: Test fortran
           command: nix-shell --run "make test_fortran_basic"
+  test_wrapper_basic:
+    steps:
       - run:
           name: Test wrapper
           command: nix-shell --run "make -C FV3/wrapper test_basic"
-  test_coarse_graining:
+  test_fortran_coarse_graining:
     steps:
       - run:
           name: Test fortran
           command: nix-shell --run "make test_fortran_coarse_graining"
+  test_wrapper_coarse_graining:
+    steps:
       - run:
           name: Test wrapper
           command: nix-shell --run "make -C FV3/wrapper test_coarse_graining"
@@ -105,7 +109,8 @@ jobs:
     steps:
       - initialize_nix
       - build_repro
-      - test_basic
+      - test_fortran_basic
+      - test_wrapper_basic
   nix-basic-debug:
     docker:
       - image: nixos/nix
@@ -116,7 +121,7 @@ jobs:
     steps:
       - initialize_nix
       - build_debug
-      - test_basic
+      - test_fortran_basic
   nix-coarse-graining-repro:
     docker:
       - image: nixos/nix
@@ -127,7 +132,8 @@ jobs:
     steps:
       - initialize_nix
       - build_repro
-      - test_coarse_graining
+      - test_fortran_coarse_graining
+      - test_wrapper_coarse_graining
   nix-coarse-graining-debug:
     docker:
       - image: nixos/nix
@@ -138,7 +144,7 @@ jobs:
     steps:
       - initialize_nix
       - build_debug
-      - test_coarse_graining
+      - test_fortran_coarse_graining
   nix-emulation-repro:
     docker:
       - image: nixos/nix
