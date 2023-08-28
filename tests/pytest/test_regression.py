@@ -236,8 +236,8 @@ def emulation_run(executable, tmpdir_factory):
 @pytest.mark.emulation
 def test_callpyfort_integration(emulation_run):
     _, run_dir = emulation_run
-    assert os.path.exists(join(run_dir, "microphysics_success.txt"))
-    assert os.path.exists(join(run_dir, "store_success.txt"))
+    assert os.path.exists(os.path.join(run_dir, "microphysics_success.txt"))
+    assert os.path.exists(os.path.join(run_dir, "store_success.txt"))
 
 
 @pytest.mark.emulation
