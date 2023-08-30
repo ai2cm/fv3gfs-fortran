@@ -47,8 +47,9 @@ EXECUTABLES = get_executables()
 
 def run_executable(executable: Path, config: dict, run_dir: str, error_expected: bool = False):
     fv3config.write_run_directory(config, run_dir)
+    n_processes = fv3config.config.get_n_processes(config)
     completed_process = subprocess.run(
-        ["mpirun", "-n", "6", executable.absolute().as_posix()],
+        ["mpirun", "-n", f"{n_processes}", executable.absolute().as_posix()],
         cwd=run_dir,
         capture_output=True,
     )
@@ -67,23 +68,36 @@ def executable(request):
 
 
 @pytest.mark.parametrize(
-    "config_filename",
+    ("config_filename", "check_layout_invariance"),
     [
-        pytest.param("default.yml", marks=pytest.mark.basic),
-        pytest.param("model-level-coarse-graining.yml", marks=pytest.mark.coarse),
-        pytest.param("pressure-level-coarse-graining.yml", marks=pytest.mark.coarse),
-        pytest.param("pressure-level-extrapolate-coarse-graining.yml", marks=pytest.mark.coarse),
-        "baroclinic.yml",
-        "restart.yml",
-        pytest.param("blended-area-weighted-coarse-graining.yml", marks=pytest.mark.coarse)
+        pytest.param("default.yml", False, marks=pytest.mark.basic),
+        pytest.param("model-level-coarse-graining.yml", True, marks=pytest.mark.coarse),
+        pytest.param("pressure-level-coarse-graining.yml", True, marks=pytest.mark.coarse),
+        pytest.param("pressure-level-extrapolate-coarse-graining.yml", True, marks=pytest.mark.coarse),
+        ("baroclinic.yml", False),
+        ("restart.yml", False),
+        pytest.param("blended-area-weighted-coarse-graining.yml", True, marks=pytest.mark.coarse)
     ],
 )
-def test_regression(executable: Path, config_filename: str, tmpdir, regtest):
+def test_regression(executable: Path, config_filename: str, check_layout_invariance: bool, tmpdir, regtest):
     config = get_config(config_filename)
     rundir = tmpdir.join("rundir")
     run_executable(executable, config, str(rundir))
     _checksum_rundir(str(rundir), file=regtest)
 
+    if check_layout_invariance:
+        config_modified_layout = get_config(config_filename)
+        config_modified_layout["namelist"]["fv_core_nml"]["layout"] = [1, 2]
+        rundir_modified_layout = tmpdir.join("rundir-modified-layout")
+        run_executable(executable, config_modified_layout, rundir_modified_layout)
+
+        expected_checksums = _checksum_restart_files_and_diagnostics(rundir)
+        result_checksums = _checksum_restart_files_and_diagnostics(rundir_modified_layout)
+
+        assert result_checksums == expected_checksums
+
+        shutil.rmtree(rundir_modified_layout)
+    shutil.rmtree(rundir)
 
 @pytest.mark.parametrize(
     "config_filename",
@@ -285,6 +299,13 @@ def _checksum_restart_files(rundir: str) -> typing.Dict[str, str]:
 def _checksum_diagnostics(rundir: str):
     files = glob.glob(os.path.join(rundir, "*.nc"))
     return {os.path.basename(file): checksum_file(file) for file in files}
+
+
+def _checksum_restart_files_and_diagnostics(rundir: str):
+    checksums = {}
+    checksums["restart_files"] = _checksum_diagnostics(rundir)
+    checksums["diagnostics"] = _checksum_diagnostics(rundir)
+    return checksums
 
 
 def _checksum_rundir(rundir: str, file):
