@@ -5,6 +5,7 @@ import os
 from os.path import join
 from pathlib import Path
 import pytest
+import shutil
 import subprocess
 import fv3config
 import numpy as np
@@ -144,6 +145,8 @@ def test_indefinite_physics_diagnostics(tmpdir):
     fdiag_checksums = _checksum_diagnostics(fdiag_rundir)
     indefinite_checksums = _checksum_diagnostics(indefinite_rundir)
     assert fdiag_checksums == indefinite_checksums
+    shutil.rmtree(fdiag_rundir)
+    shutil.rmtree(indefinite_rundir)
 
 
 def open_tiles(prefix):
@@ -169,6 +172,7 @@ def test_use_prescribed_sea_surface_properties(executable, tmpdir):
 
     results = open_tiles(os.path.join(rundir, "sfc_dt_atmos"))
     prescribed_ssts.validate_ssts(results)
+    shutil.rmtree(rundir)
 
 
 PRESCRIBED_SST_ERRORS = {
@@ -191,6 +195,7 @@ def test_use_prescribed_sea_surface_properties_error(executable, tmpdir, message
     rundir = os.path.join(str(tmpdir), "rundir")
     result = run_executable(executable, config, rundir, error_expected=True)
     assert message in result.stderr.decode()
+    shutil.rmtree(rundir)
 
 
 @pytest.fixture(scope="session")
