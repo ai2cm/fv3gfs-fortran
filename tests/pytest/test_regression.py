@@ -5,6 +5,7 @@ import os
 from os.path import join
 from pathlib import Path
 import pytest
+import shutil
 import subprocess
 import fv3config
 import numpy as np
@@ -16,6 +17,18 @@ import re
 import prescribed_ssts
 
 
+EMULATION_DEBUG_MODE_ISSUE = (
+    "We do not build the fortran model in debug mode with call_py_fort, because "
+    "it leads to errors even in non-emulation cases.  This means that we cannot "
+    "run emulation-related tests in debug mode.  See GitHub issue #365 for more "
+    "details."
+)
+RESTART_REPRODUCIBILITY_DEBUG_MODE_ISSUE = (
+    "The model does not restart reproducibly when compiled in debug mode, due to "
+    "the -finit-logical=true compiler flag.  If this flag is removed and all "
+    "other debug-mode compiler flags are retained, the model restarts "
+    "reproducibly.  See GitHub issue #381 for more details."
+)
 TEST_DIR = os.path.dirname(os.path.realpath(__file__))
 CONFIG_DIR = os.path.join(TEST_DIR, "config")
 
@@ -93,6 +106,12 @@ def test_regression(executable: Path, config_filename: str, tmpdir, regtest):
     ],
 )
 def test_restart_reproducibility(executable, config_filename, tmpdir):
+    if config_filename == "emulation.yml" and "debug" in str(executable):
+        pytest.skip(EMULATION_DEBUG_MODE_ISSUE)
+
+    if "debug" in str(executable):
+        pytest.skip(RESTART_REPRODUCIBILITY_DEBUG_MODE_ISSUE)
+
     config_template = get_config(config_filename)
     config_template["diag_table"] = "no_output"
     config_template["namelist"]["gfs_physics_nml"]["fhswr"] = 900
@@ -120,9 +139,12 @@ def test_restart_reproducibility(executable, config_filename, tmpdir):
     segmented_checksums = _checksum_restart_files(segment_2_rundir)
 
     assert segmented_checksums == continuous_checksums
+    shutil.rmtree(segment_1_rundir)
+    shutil.rmtree(segment_2_rundir)
+    shutil.rmtree(continuous_rundir)
 
 
-def test_indefinite_physics_diagnostics(tmpdir):
+def test_indefinite_physics_diagnostics(executable, tmpdir):
     config_template = get_config("default.yml")
 
     fdiag = copy.deepcopy(config_template)
@@ -144,6 +166,8 @@ def test_indefinite_physics_diagnostics(tmpdir):
     fdiag_checksums = _checksum_diagnostics(fdiag_rundir)
     indefinite_checksums = _checksum_diagnostics(indefinite_rundir)
     assert fdiag_checksums == indefinite_checksums
+    shutil.rmtree(fdiag_rundir)
+    shutil.rmtree(indefinite_rundir)
 
 
 def open_tiles(prefix):
@@ -169,6 +193,7 @@ def test_use_prescribed_sea_surface_properties(executable, tmpdir):
 
     results = open_tiles(os.path.join(rundir, "sfc_dt_atmos"))
     prescribed_ssts.validate_ssts(results)
+    shutil.rmtree(rundir)
 
 
 PRESCRIBED_SST_ERRORS = {
@@ -191,10 +216,14 @@ def test_use_prescribed_sea_surface_properties_error(executable, tmpdir, message
     rundir = os.path.join(str(tmpdir), "rundir")
     result = run_executable(executable, config, rundir, error_expected=True)
     assert message in result.stderr.decode()
+    shutil.rmtree(rundir)
 
 
 @pytest.fixture(scope="session")
 def emulation_run(executable, tmpdir_factory):
+    if "debug" in str(executable):
+        pytest.skip(reason=EMULATION_DEBUG_MODE_ISSUE)
+
     config = get_config("emulation.yml")
     rundir = tmpdir_factory.mktemp("rundir")
     run_dir = str(rundir)
@@ -220,6 +249,9 @@ def test_zhao_carr_diagnostics(emulation_run, regtest, tile):
 
 @pytest.mark.emulation
 def test_gscond_logs(executable, regtest, tmpdir):
+    if "debug" in str(executable):
+        pytest.skip(reason=EMULATION_DEBUG_MODE_ISSUE)
+
     config = get_config("emulation.yml")
     config["namelist"]["gfs_physics_nml"]["emulate_gscond_only"] = True
     rundir = tmpdir.join("rundir")

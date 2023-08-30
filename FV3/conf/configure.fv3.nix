@@ -16,8 +16,8 @@ NETCDF_DIR = /usr
 # flags #
 #########
 # default is 64-bit OpenMP non-hydrostatic build
-DEBUG = 
-REPRO = Y
+DEBUG ?= N
+REPRO ?= Y
 VERBOSE =
 OPENMP = Y
 AVX2 = N
