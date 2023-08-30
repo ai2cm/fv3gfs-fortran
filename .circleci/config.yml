@@ -126,64 +126,7 @@ jobs:
       - checkout
       - run: sudo pip3 install pre-commit==2.15.0
       - run: pre-commit
-  build_default:
-    machine:
-      docker_layer_caching: true
-      image: ubuntu-2004:202111-02
-    environment:
-      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
-      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
-      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
-    steps:
-      - checkout
-      - run:
-          name: "gcloud auth"
-          command: |
-            echo $ENCODED_GCR_KEY | base64 -d > $GOOGLE_APPLICATION_CREDENTIALS
-            echo "export GCLOUD_SERVICE_KEY=\$(echo \$ENCODED_GCR_KEY | base64 --decode)" >> $BASH_ENV
-      - gcp-gcr/gcr-auth
-      - run: 
-          name: "Pull dependency images"
-          command: |
-            echo "$ENCODED_GCR_KEY" | base64 --decode | docker login --username _json_key --password-stdin https://gcr.io
-            make pull_deps
-      - run:
-          name: "Pull Submodules"
-          command: |
-            git submodule init
-            git submodule update
-      - run: DOCKER_BUILDKIT=1 BUILDKIT_PROGRESS=plain BUILD_FROM_INTERMEDIATE=y make build build_debug build_serialize
-      - restore_cache:
-          keys:
-            - v1.4-{{ checksum "requirements.txt"}}
-      - run: 
-          name: "Install Python test dependencies"
-          command: |
-            pyenv versions
-            [ -d /opt/circleci/.pyenv/versions/3.9.7 ] || pyenv install 3.9.7
-            pyenv global 3.9.7
-            pip install -r requirements.txt
-      - save_cache:
-          paths:
-            - $FV3CONFIG_CACHE_DIR
-            - /opt/circleci/.pyenv/versions/3.9.7
-          key: v1.4-{{ checksum "requirements.txt"}}
-      # tests
-      - run: 
-          name: "Run pytest tests"
-          # -s to avoid capturing stdout/stderr of md5sum call
-          command: |
-            make test
-          no_output_timeout: 1200
-      - run: make push_deps
-      - run:
-          name: "Delete data files"
-          command: |
-            rm ./tests/pytest/output/*/*/INPUT/*.nc
-            rm ./tests/pytest/output/*/*/*/*.grb
-          when: on_fail
-      - store_artifacts:
-          path: ./tests/pytest/output
+
 workflows:
   version: 2
   build:
@@ -250,7 +193,6 @@ workflows:
           filters:
             branches:
               ignore: master
-      - build_default
       - nix-full:
           name: "Full native tests"
           filters:
