@@ -1,11 +1,19 @@
 # setup (use XXX=<value> make <target> to override)
-.PHONY: help clean
+.PHONY: help build build_repro build_wrapper clean
 
 help:
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 build_native: ## build FV3 locally (assuming all tools and dependencies are available in the environment)
+	$(MAKE) build_repro
+
+build_repro: ## build FV3 locally (assuming all tools and dependencies are available in the environment)
 	$(MAKE) -j 8 -C FV3
+	mkdir -p bin
+	cp FV3/fv3.exe bin/fv3.repro.exe
+
+build_wrapper:
+	$(MAKE) -j 8 -C FV3 wrapper_build
 
 test_native: DIR=coverage_$(shell date -Is)
 test_native: ## run native tests (all tools and build dependencies are assumed to be available in the environment)
@@ -18,19 +26,19 @@ test_native: ## run native tests (all tools and build dependencies are assumed t
 		gcovr -d -r ../FV3 --html --html-details -o index.html
 
 test_native_fortran:
-	pytest --native tests/pytest -v
+	pytest tests/pytest -v
 
 test_native_fortran_basic:
-	pytest --native tests/pytest -v -m 'basic'
+	pytest tests/pytest -v -m 'basic'
 
 test_native_fortran_coarse_graining:
-	pytest --native tests/pytest -v -m 'coarse'
+	pytest tests/pytest -v -m 'coarse'
 
 test_native_fortran_emulation:
-	pytest --native tests/pytest -v -m 'emulation'
+	pytest tests/pytest -v -m 'emulation'
 
 test_native_fortran_unmarked:
-	pytest --native tests/pytest -v -m 'not basic and not coarse and not emulation'
+	pytest tests/pytest -v -m 'not basic and not coarse and not emulation'
 
 test_wrapper:
 	$(MAKE) -C FV3/wrapper/ test
@@ -44,8 +52,15 @@ lint:
 reformat:
 	pre-commit run --all-files
 
-clean: ## cleanup source tree
-	(cd FV3 && make clean)
+clean_fortran_build_artifacts:
+	$(MAKE) -C FV3 clean
+
+clean_executables:
+	$(RM) -rf bin
+
+clean: ## cleanup source tree and executables
+	$(MAKE) clean_fortran_build_artifacts
+	$(MAKE) clean_executables
 
 setup-hooks:
 	pre-commit install
