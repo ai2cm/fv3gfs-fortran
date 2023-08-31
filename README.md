@@ -24,6 +24,18 @@ repositories associated with different subtrees of this repository:
 In some cases these are actual submodules, and in other cases they are
 subtrees.
 
+## Deprecation of serialize build support
+
+As September, 2023 we have deprecated the infrastructure for building and
+testing the model in a Docker container.  All development and testing now occurs
+in the nix environment, described below.  This means that the latest version of
+the repository no longer includes code to facilitate building the model to
+output serialized data through `serialbox`, which previously was done using a
+Docker image; if you would still like to use this functionality, be sure to
+check out commit
+[`b3793303df9800de341a3f8e8b234c6f4dc2b7a1`](https://github.com/ai2cm/fv3gfs-fortran/tree/b3793303df9800de341a3f8e8b234c6f4dc2b7a1)
+or earlier.
+
 ## Developing the model and running tests
 
 ### Nix
@@ -35,19 +47,6 @@ environments.
 
 To begin, install nix following [these
 instructions](https://nixos.org/download.html).
-
-(optional) We host binaries using a tool called cachix, and this will greatly
-speed up any builds. To use our binaries, [install
-cachix](https://github.com/cachix/cachix#installation) and then run
-
-    cachix use vulcanclimatemodeling
-
-Without using the cachix cache, FV3 and all its dependencies will need to build
-from source (~20 minutes). This only happens once per machine, but it is slow.
-
-#### Installation
-
-To begin, install nix following [these instructions](https://nixos.org/download.html).
 
 (optional) We host binaries using a tool called cachix, and this will greatly
 speed up any builds. To use our binaries, [install
