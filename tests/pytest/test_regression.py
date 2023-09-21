@@ -330,7 +330,7 @@ def _checksum_diagnostics(rundir: str):
 
 def _checksum_restart_files_and_diagnostics(rundir: str):
     checksums = {}
-    checksums["restart_files"] = _checksum_diagnostics(rundir)
+    checksums["restart_files"] = _checksum_restart_files(rundir)
     checksums["diagnostics"] = _checksum_diagnostics(rundir)
     return checksums
 
