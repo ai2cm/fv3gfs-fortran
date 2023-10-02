@@ -2,8 +2,7 @@ version: 2.1
 orbs:
   gcp-gcr: circleci/gcp-gcr@0.15.0
 commands:
-  nix:
-    description: "Build fortran and wrapper in nix environment"
+  initialize_nix:
     steps:
       - run: nix-env -i git openssh google-cloud-sdk
       - checkout
@@ -16,71 +15,62 @@ commands:
           command: |
             git submodule init
             git submodule update
-      - restore_cache:
-          name: Restore nix build cache
-          keys:
-            - nix-fv3gfs-fortran-{{ .Environment.CIRCLE_SHA1 }}
       - run: |
           nix-env -iA cachix -f https://cachix.org/api/v1/install
           cachix use vulcanclimatemodeling
-      - run: |
           nix-build -j 4 -A fms | cachix push vulcanclimatemodeling
-          nix-shell --run "cd FV3 && bash configure nix && make -j 4"
+  build_repro:
+    steps:
+      - restore_cache:
+          name: Restore nix build cache
+          keys:
+            - nix-fv3gfs-fortran-repro-{{ .Environment.CIRCLE_SHA1 }}
+      - run: |
+          nix-shell --run "cd FV3 && bash configure nix && cd .. && make build_repro"
       - run:
           name: Build wrapper
-          command: nix-shell --run "make -j 4 -C FV3 wrapper_build"
+          command: nix-shell --run "make build_wrapper"
       - save_cache:
           name: Save nix build cache
-          key: nix-fv3gfs-fortran-{{ .Environment.CIRCLE_SHA1 }}
+          key: nix-fv3gfs-fortran-repro-{{ .Environment.CIRCLE_SHA1 }}
           paths:
             - FV3/
-jobs:
-  nix-full:
-    docker:
-      - image: nixos/nix
-    environment:
-      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
-      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
-      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+  build_debug:
     steps:
-      - nix
+      - restore_cache:
+          name: Restore nix build cache
+          keys:
+            - nix-fv3gfs-fortran-debug-{{ .Environment.CIRCLE_SHA1 }}
+      - run: |
+          nix-shell --run "cd FV3 && bash configure nix && cd .. && make build_debug"
+      - save_cache:
+          name: Save nix build cache
+          key: nix-fv3gfs-fortran-debug-{{ .Environment.CIRCLE_SHA1 }}
+          paths:
+            - FV3/
+  test_fortran_basic:
+    steps:
       - run:
           name: Test fortran
-          command: nix-shell --run "make test_native_fortran"
-      - run:
-          name: Test wrapper
-          command: nix-shell --run "make -C FV3/wrapper test"
-  nix-basic:
-    docker:
-      - image: nixos/nix
-    environment:
-      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
-      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
-      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+          command: nix-shell --run "make test_fortran_basic"
+  test_wrapper_basic:
     steps:
-      - nix
-      - run:
-          name: Test fortran
-          command: nix-shell --run "make test_native_fortran_basic"
       - run:
           name: Test wrapper
           command: nix-shell --run "make -C FV3/wrapper test_basic"
-  nix-coarse-graining:
-    docker:
-      - image: nixos/nix
-    environment:
-      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
-      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
-      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+  test_fortran_coarse_graining:
     steps:
-      - nix
       - run:
           name: Test fortran
-          command: nix-shell --run "make test_native_fortran_coarse_graining"
+          command: nix-shell --run "make test_fortran_coarse_graining"
+  test_wrapper_coarse_graining:
+    steps:
       - run:
           name: Test wrapper
           command: nix-shell --run "make -C FV3/wrapper test_coarse_graining"
-  nix-emulation:
+
+jobs:
+  nix-full-repro:
     docker:
       - image: nixos/nix
     environment:
@@ -88,14 +78,90 @@ jobs:
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
       FSSPEC_GS_REQUESTER_PAYS: vcm-ml
     steps:
-      - nix
+      - initialize_nix
+      - build_repro
       - run:
           name: Test fortran
-          command: nix-shell --run "make test_native_fortran_emulation"
+          command: nix-shell --run "make test_fortran"
+      - run:
+          name: Test wrapper
+          command: nix-shell --run "make -C FV3/wrapper test"
+  nix-full-debug:
+    docker:
+      - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    steps:
+      - initialize_nix
+      - build_debug
+      - run:
+          name: Test fortran
+          command: nix-shell --run "make test_fortran"
+  nix-basic-repro:
+    docker:
+      - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    steps:
+      - initialize_nix
+      - build_repro
+      - test_fortran_basic
+      - test_wrapper_basic
+  nix-basic-debug:
+    docker:
+      - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    steps:
+      - initialize_nix
+      - build_debug
+      - test_fortran_basic
+  nix-coarse-graining-repro:
+    docker:
+      - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    steps:
+      - initialize_nix
+      - build_repro
+      - test_fortran_coarse_graining
+      - test_wrapper_coarse_graining
+  nix-coarse-graining-debug:
+    docker:
+      - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    steps:
+      - initialize_nix
+      - build_debug
+      - test_fortran_coarse_graining
+  nix-emulation-repro:
+    docker:
+      - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    steps:
+      - initialize_nix
+      - build_repro
+      - run:
+          name: Test fortran
+          command: nix-shell --run "make test_fortran_emulation"
       - run:
           name: Test wrapper
           command: nix-shell --run "make -C FV3/wrapper test_emulation"
-  nix-unmarked:
+  nix-unmarked-repro:
     docker:
       - image: nixos/nix
     environment:
@@ -103,11 +169,12 @@ jobs:
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
       FSSPEC_GS_REQUESTER_PAYS: vcm-ml
     steps:
-      - nix
+      - initialize_nix
+      - build_repro
       - run:
           name: Test fortran
-          command: nix-shell --run "make test_native_fortran_unmarked"
-  nix-wrapper:
+          command: nix-shell --run "make test_fortran_unmarked"
+  nix-wrapper-repro:
     docker:
       - image: nixos/nix
     environment:
@@ -115,7 +182,8 @@ jobs:
       GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
       FSSPEC_GS_REQUESTER_PAYS: vcm-ml
     steps:
-      - nix
+      - initialize_nix
+      - build_repro
       - run:
           name: Test wrapper
           command: nix-shell --run "make -C FV3/wrapper test"
@@ -126,71 +194,19 @@ jobs:
       - checkout
       - run: sudo pip3 install pre-commit==2.15.0
       - run: pre-commit
-  build_default:
-    machine:
-      docker_layer_caching: true
-      image: ubuntu-2004:202111-02
-    environment:
-      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
-      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
-      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
-    steps:
-      - checkout
-      - run:
-          name: "gcloud auth"
-          command: |
-            echo $ENCODED_GCR_KEY | base64 -d > $GOOGLE_APPLICATION_CREDENTIALS
-            echo "export GCLOUD_SERVICE_KEY=\$(echo \$ENCODED_GCR_KEY | base64 --decode)" >> $BASH_ENV
-      - gcp-gcr/gcr-auth
-      - run: 
-          name: "Pull dependency images"
-          command: |
-            echo "$ENCODED_GCR_KEY" | base64 --decode | docker login --username _json_key --password-stdin https://gcr.io
-            make pull_deps
-      - run:
-          name: "Pull Submodules"
-          command: |
-            git submodule init
-            git submodule update
-      - run: DOCKER_BUILDKIT=1 BUILDKIT_PROGRESS=plain BUILD_FROM_INTERMEDIATE=y make build build_debug build_serialize
-      - restore_cache:
-          keys:
-            - v1.4-{{ checksum "requirements.txt"}}
-      - run: 
-          name: "Install Python test dependencies"
-          command: |
-            pyenv versions
-            [ -d /opt/circleci/.pyenv/versions/3.9.7 ] || pyenv install 3.9.7
-            pyenv global 3.9.7
-            pip install -r requirements.txt
-      - save_cache:
-          paths:
-            - $FV3CONFIG_CACHE_DIR
-            - /opt/circleci/.pyenv/versions/3.9.7
-          key: v1.4-{{ checksum "requirements.txt"}}
-      # tests
-      - run: 
-          name: "Run pytest tests"
-          # -s to avoid capturing stdout/stderr of md5sum call
-          command: |
-            make test
-          no_output_timeout: 1200
-      - run: make push_deps
-      - run:
-          name: "Delete data files"
-          command: |
-            rm ./tests/pytest/output/*/*/INPUT/*.nc
-            rm ./tests/pytest/output/*/*/*/*.grb
-          when: on_fail
-      - store_artifacts:
-          path: ./tests/pytest/output
+
 workflows:
   version: 2
   build:
     jobs:
       - lint
-      - nix-basic:
-          name: Minimal native fortran and wrapper tests
+      - nix-basic-repro:
+          name: Minimal fortran and wrapper tests in repro mode
+          filters:
+            branches:
+              ignore: master
+      - nix-basic-debug:
+          name: Minimal fortran tests in debug mode
           filters:
             branches:
               ignore: master
@@ -200,59 +216,71 @@ workflows:
           filters:
             branches:
               ignore: master
-      - nix-coarse-graining:
-          name: Coarse graining tests
+      - nix-coarse-graining-repro:
+          name: Coarse graining tests in repro mode
           requires:
-            - Minimal native fortran and wrapper tests
+            - Minimal fortran and wrapper tests in repro mode
             - Launch coarse graining tests
           filters:
             branches:
               ignore: master
-      - hold-nix-emulation:
+      - nix-coarse-graining-debug:
+          name: Coarse graining tests in debug mode
+          requires:
+            - Minimal fortran tests in debug mode
+            - Launch coarse graining tests
+          filters:
+            branches:
+              ignore: master
+      - hold-nix-emulation-repro:
           name: Launch emulation tests
           type: approval
           filters:
             branches:
               ignore: master
-      - nix-emulation:
+      - nix-emulation-repro:
           name: Emulation tests
           requires:
-            - Minimal native fortran and wrapper tests
+            - Minimal fortran and wrapper tests in repro mode
             - Launch emulation tests
           filters:
             branches:
               ignore: master
-      - hold-nix-unmarked:
+      - hold-nix-unmarked-repro:
           name: Launch unmarked fortran tests
           type: approval
           filters:
             branches:
               ignore: master
-      - nix-unmarked:
+      - nix-unmarked-repro:
           name: Unmarked fortran tests
           requires:
-            - Minimal native fortran and wrapper tests
+            - Minimal fortran and wrapper tests in repro mode
             - Launch unmarked fortran tests
           filters:
             branches:
               ignore: master
-      - hold-nix-wrapper:
+      - hold-nix-wrapper-repro:
           name: Launch wrapper tests
           type: approval
           filters:
             branches:
               ignore: master
-      - nix-wrapper:
+      - nix-wrapper-repro:
           name: Wrapper tests
           requires:
-            - Minimal native fortran and wrapper tests
+            - Minimal fortran and wrapper tests in repro mode
             - Launch wrapper tests
           filters:
             branches:
               ignore: master
-      - build_default
-      - nix-full:
-          name: "Full native tests"
+      - nix-full-repro:
+          name: "Full tests in repro mode"
+          filters:
+            branches:
+              only: master
+      - nix-full-debug:
+          name: "Full tests in debug mode"
           filters:
             branches:
               only: master
