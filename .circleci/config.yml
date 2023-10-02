@@ -161,6 +161,19 @@ jobs:
       - run:
           name: Test wrapper
           command: nix-shell --run "make -C FV3/wrapper test_emulation"
+  nix-emulation-debug:
+    docker:
+      - image: nixos/nix
+    environment:
+      FV3CONFIG_CACHE_DIR: /tmp/.fv3config
+      GOOGLE_APPLICATION_CREDENTIALS: /tmp/key.json
+      FSSPEC_GS_REQUESTER_PAYS: vcm-ml
+    steps:
+      - initialize_nix
+      - build_debug
+      - run:
+          name: Test fortran
+          command: nix-shell --run "make test_fortran_emulation"
   nix-unmarked-repro:
     docker:
       - image: nixos/nix
@@ -232,16 +245,24 @@ workflows:
           filters:
             branches:
               ignore: master
-      - hold-nix-emulation-repro:
+      - hold-nix-emulation:
           name: Launch emulation tests
           type: approval
           filters:
             branches:
               ignore: master
       - nix-emulation-repro:
-          name: Emulation tests
+          name: Emulation tests in repro mode
           requires:
             - Minimal fortran and wrapper tests in repro mode
+            - Launch emulation tests
+          filters:
+            branches:
+              ignore: master
+      - nix-emulation-debug:
+          name: Emulation tests in debug mode
+          requires:
+            - Minimal fortran tests in debug mode
             - Launch emulation tests
           filters:
             branches:

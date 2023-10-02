@@ -236,7 +236,7 @@ def test_use_prescribed_sea_surface_properties_error(executable, tmpdir, message
 @pytest.fixture(scope="session")
 def emulation_run(executable, tmpdir_factory):
     if "debug" in str(executable):
-        pytest.skip(reason=EMULATION_DEBUG_MODE_ISSUE)
+        pytest.skip(EMULATION_DEBUG_MODE_ISSUE)
 
     config = get_config("emulation.yml")
     rundir = tmpdir_factory.mktemp("rundir")
@@ -264,7 +264,7 @@ def test_zhao_carr_diagnostics(emulation_run, regtest, tile):
 @pytest.mark.emulation
 def test_gscond_logs(executable, regtest, tmpdir):
     if "debug" in str(executable):
-        pytest.skip(reason=EMULATION_DEBUG_MODE_ISSUE)
+        pytest.skip(EMULATION_DEBUG_MODE_ISSUE)
 
     config = get_config("emulation.yml")
     config["namelist"]["gfs_physics_nml"]["emulate_gscond_only"] = True
@@ -330,7 +330,7 @@ def _checksum_diagnostics(rundir: str):
 
 def _checksum_restart_files_and_diagnostics(rundir: str):
     checksums = {}
-    checksums["restart_files"] = _checksum_diagnostics(rundir)
+    checksums["restart_files"] = _checksum_restart_files(rundir)
     checksums["diagnostics"] = _checksum_diagnostics(rundir)
     return checksums
 
