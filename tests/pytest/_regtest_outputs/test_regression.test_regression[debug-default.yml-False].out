@@ -22,6 +22,12 @@
 <tmpdir_from_fixture>/rundir/sfc_dt_atmos.tile4.nc c4585b3c008e71487f00197688b62d90
 <tmpdir_from_fixture>/rundir/sfc_dt_atmos.tile5.nc 23dfd38289cb3ce8ec4e2504e76e405b
 <tmpdir_from_fixture>/rundir/sfc_dt_atmos.tile6.nc 5cad2a009d8a4b1f5d2ce096e33a027f
+<tmpdir_from_fixture>/rundir/sfc_dt_atmos_diag_manager_controlled.tile1.nc bdfee0c8022a130d9140c0ec81fd648d
+<tmpdir_from_fixture>/rundir/sfc_dt_atmos_diag_manager_controlled.tile2.nc 6e9ab44265444ec79f8fcdcf6d009d7c
+<tmpdir_from_fixture>/rundir/sfc_dt_atmos_diag_manager_controlled.tile3.nc e574875441c77529d1dc5020a428a67e
+<tmpdir_from_fixture>/rundir/sfc_dt_atmos_diag_manager_controlled.tile4.nc 399133b01784aebab995e62f002434f6
+<tmpdir_from_fixture>/rundir/sfc_dt_atmos_diag_manager_controlled.tile5.nc ab4e99e42f0a66222ea2552a2fc089d2
+<tmpdir_from_fixture>/rundir/sfc_dt_atmos_diag_manager_controlled.tile6.nc f6037db063bd3f35c70e575b17fee7cd
 <tmpdir_from_fixture>/rundir/RESTART/fv_core.res.nc 03f92921ec61bc2e8650bcc3b1cc3971
 <tmpdir_from_fixture>/rundir/RESTART/fv_core.res.tile1.nc c957529bea6d386bd759a76d22f2e7cd
 <tmpdir_from_fixture>/rundir/RESTART/fv_core.res.tile2.nc 0deec6f8605841075a24ba463727fe91
