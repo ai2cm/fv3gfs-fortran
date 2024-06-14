@@ -334,7 +334,7 @@
      &                                     progcld1, progcld2,          &
      &                                     progcld3, progcld4,          &
      &                                     progcld5, progcld4o,         &
-     &                                     progclduni
+     &                                     progclduni, progcld6
 
       use module_radsw_parameters,   only: topfsw_type, sfcfsw_type,    &
      &                                     profsw_type,cmpfsw_type,NBDSW
@@ -1225,7 +1225,8 @@
       real(kind=kind_phys), dimension(size(Grid%xlon,1),Model%levr+ltp) :: &
            htswc, htlwc, gcice, grain, grime, htsw0,  htlw0, plyr, tlyr,   &
            qlyr,  olyr,  rhly,  tvly,  qstl,  prslk1, tem2da,              &
-           dz,delp,cldcov, deltaq, cnvc, cnvw, effrl, effri, effrr, effrs
+           dz,delp,cldcov, deltaq, cnvc, cnvw, effrl, effri, effrr, effrs, &
+           qa
 
       real(kind=kind_phys), dimension(size(Grid%xlon,1),Model%levr+ltp+1) :: plvl, tlvl
       real(kind=kind_phys), dimension(size(Grid%xlon,1),Model%levr+ltp+1) :: tem2db
@@ -1781,27 +1782,46 @@
 
         elseif (Model%imp_physics == 11) then           ! GFDL cloud scheme
 
-          if (.not.Model%lgfdlmprad) then
-            call progcld4 (plyr, plvl, tlyr, tvly, qlyr, qstl, rhly,     &!  ---  inputs
-                           ccnd(1:IM,1:LMK,1), cnvw, cnvc,               &
-                           Grid%xlat, Grid%xlon, Sfcprop%slmsk,          &
-                           cldcov, dz, delp, im, lmk, lmp,               &
-                           clouds, cldsa, mtopa, mbota, de_lgth)          !  ---  outputs
+          if (Model%rad_progcld6) then    ! port of SHiELD radiation's cloud scheme
+            if (Model%ntwa .gt. 0) then
+              qa(:,:) = tracer1(:,1:lmk,Model%ntwa)
+            else
+              qa(:,:) = tracer1(:,1:lmk,2) * 0.0
+            endif
+            call progcld6 (plyr, plvl, tlyr, tvly, qlyr, qstl, rhly,    & !  ---  inputs
+                            cnvw, cnvc, Grid%xlat,         &
+                            tracer1(:,1:lmk,Model%ntcw),                &
+                            tracer1(:,1:lmk,Model%ntiw),                &
+                            tracer1(:,1:lmk,Model%ntrw),                &
+                            tracer1(:,1:lmk,Model%ntsw),                &
+                            tracer1(:,1:lmk,Model%ntgl), qa,            &
+                            Sfcprop%slmsk, Sfcprop%snowd,               &
+                            tracer1(:,1:lmk,Model%ntclamt), dz, delp,   &
+                            im, lmk, lmp, clouds, cldsa, mtopa, mbota,  & !  ---  outputs
+                            de_lgth)    
           else
+            if (.not.Model%lgfdlmprad) then
+              call progcld4 (plyr, plvl, tlyr, tvly, qlyr, qstl, rhly,  &!  ---  inputs
+                            ccnd(1:IM,1:LMK,1), cnvw, cnvc,             &
+                            Grid%xlat, Grid%xlon, Sfcprop%slmsk,        &
+                            cldcov, dz, delp, im, lmk, lmp,             &
+                            clouds, cldsa, mtopa, mbota, de_lgth)        !  ---  outputs
+            else
 
-            call progclduni (plyr, plvl, tlyr, tvly, ccnd, ncndl,        &!  ---  inputs
-                            Grid%xlat, Grid%xlon, Sfcprop%slmsk, dz,delp,&
-                            IM, LMK, LMP, cldcov,                        &
-                            effrl, effri, effrr, effrs, Model%effr_in,   &
-                            clouds, cldsa, mtopa, mbota, de_lgth)         !  ---  outputs
-!           call progcld4o (plyr, plvl, tlyr, tvly, qlyr, qstl, rhly,       &    !  ---  inputs
-!                           tracer1, Grid%xlat, Grid%xlon, Sfcprop%slmsk,   &
-!                           dz, delp,                                       &
-!                           ntrac-1, Model%ntcw-1,Model%ntiw-1,Model%ntrw-1,& 
-!                           Model%ntsw-1,Model%ntgl-1,Model%ntclamt-1,      &
-!                           im, lmk, lmp,                                   &
-!                           clouds, cldsa, mtopa, mbota, de_lgth)         !  ---  outputs
-          endif 
+              call progclduni (plyr, plvl, tlyr, tvly, ccnd, ncndl,     &!  ---  inputs
+                              Grid%xlat, Grid%xlon, Sfcprop%slmsk, dz,  &
+                              delp, IM, LMK, LMP, cldcov,               &
+                              effrl, effri, effrr, effrs, Model%effr_in,&
+                              clouds, cldsa, mtopa, mbota, de_lgth)      !  ---  outputs
+  !           call progcld4o (plyr, plvl, tlyr, tvly, qlyr, qstl, rhly,       &    !  ---  inputs
+  !                           tracer1, Grid%xlat, Grid%xlon, Sfcprop%slmsk,   &
+  !                           dz, delp,                                       &
+  !                           ntrac-1, Model%ntcw-1,Model%ntiw-1,Model%ntrw-1,& 
+  !                           Model%ntsw-1,Model%ntgl-1,Model%ntclamt-1,      &
+  !                           im, lmk, lmp,                                   &
+  !                           clouds, cldsa, mtopa, mbota, de_lgth)         !  ---  outputs
+            endif 
+          endif
 
         elseif(Model%imp_physics == 8 .or. Model%imp_physics == 6) then   ! Thompson / WSM6 cloud micrphysics scheme 
 
