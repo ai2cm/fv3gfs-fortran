@@ -270,6 +270,8 @@
       logical, save :: lnoprec =.false.
 !> shallow convetion flag
       logical, save :: lsashal =.false.
+!> ice effective radius flag
+      integer, save :: reiflagrad = 1
 
 ! ............................................. !
 !>\name  -2.5- For module radiation_surface
